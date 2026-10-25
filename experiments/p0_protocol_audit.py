@@ -318,9 +318,15 @@ def save_diagnostics(out: Path, prefix: str, y: list[int],
     return audit
 
 
-def score_image(impl, backbone, bank, path: str, cfg: Config) -> float:
+def encode_query(impl, backbone, path: str, cfg: Config):
+    """Separate GPU feature extraction from bank retrieval for replay attribution."""
     img = impl.load_rgb(path)
     feat, _ = impl.encode_pil(backbone, img, cfg.feature_fuse)
+    return img, feat
+
+
+def score_encoded(impl, bank, img, feat, cfg: Config) -> float:
+    """Score the *same* frozen feature tensors against a provided bank."""
     value, _, _ = bank.score_sample_multiview(
         cls_name="p0", view_to_feats={"id": feat}, mode=0,
         views={"id": impl.ViewSpec("id", "id")},
@@ -333,6 +339,35 @@ def score_image(impl, backbone, bank, path: str, cfg: Config) -> float:
         concept_assign_view="id", img_hw=(img.height, img.width),
     )
     return float(value)
+
+
+def score_image(impl, backbone, bank, path: str, cfg: Config) -> float:
+    img, feat = encode_query(impl, backbone, path, cfg)
+    return score_encoded(impl, bank, img, feat, cfg)
+
+
+def compare_repeated_case_csv(first: Path, second: Path, atol: float) -> dict[str, Any]:
+    """Compare matched per-image predictions without demanding bitwise GPU identity."""
+    def load(path):
+        with path.open('r', encoding='utf-8', newline='') as fh:
+            result = list(csv.DictReader(fh))
+        return [(row['path'], int(row['label']), float(row['score'])) for row in result]
+    lhs, rhs = load(first), load(second)
+    if len(lhs) != len(rhs):
+        raise AssertionError(f'Score CSV row-count mismatch: {len(lhs)} vs {len(rhs)}')
+    if [(p, y) for p, y, _ in lhs] != [(p, y) for p, y, _ in rhs]:
+        raise AssertionError('Frozen evaluation stream paths/labels differ')
+    diffs = np.abs(np.asarray([z for _, _, z in lhs]) - np.asarray([z for _, _, z in rhs]))
+    if not np.isfinite(diffs).all():
+        raise AssertionError('Nonfinite replay differences')
+    maximum = float(diffs.max()) if len(diffs) else 0.0
+    return {
+        'n': len(diffs), 'max_abs_delta': maximum,
+        'mean_abs_delta': float(diffs.mean()) if len(diffs) else 0.0,
+        'n_above_1e-6': int((diffs > 1e-6).sum()),
+        'n_above_atol': int((diffs > atol).sum()),
+        'tolerance': atol, 'within_tolerance': maximum <= atol,
+    }
 
 
 def run_one(args, impl, backbone, index, cfg: Config,
@@ -391,15 +426,39 @@ def run_one(args, impl, backbone, index, cfg: Config,
         second = fixed_bank_profile(replay_bank)
         if second != bank_audit:
             raise AssertionError("Fixed bank changed on rebuild with identical inputs/seeds")
-        initial_score = score_image(impl, backbone, bank, tests[0].path, cfg)
-        replay_score = score_image(impl, backbone, replay_bank, tests[0].path, cfg)
-        if not np.isclose(initial_score, replay_score, rtol=0, atol=args.replay_tolerance):
-            raise AssertionError(f"Replay score mismatch {initial_score} vs {replay_score}")
-        repeatability = {"bank_fingerprint_equal": True,
-                         "same_image_score_1": initial_score,
-                         "same_image_score_2": replay_score,
-                         "score_delta": abs(initial_score - replay_score),
-                         "tolerance": args.replay_tolerance}
+        query_image, query_feats = encode_query(impl, backbone, tests[0].path, cfg)
+        initial_score = score_encoded(impl, bank, query_image, query_feats, cfg)
+        replay_score = score_encoded(impl, replay_bank, query_image, query_feats, cfg)
+        bank_scoring_delta = abs(initial_score - replay_score)
+        if bank_scoring_delta > args.replay_tolerance:
+            raise AssertionError(
+                f'Bank scoring mismatch on IDENTICAL encoded features: '
+                f'{initial_score} vs {replay_score}, delta={bank_scoring_delta:.3g}. '
+                'This is a scoring-level difference, not a re-encoding difference.'
+            )
+        # Independent forward pass: CUDA memory-efficient SDPA is not guaranteed
+        # bitwise reproducible. Track the drift without conflating it with bank.
+        independent_score = score_image(impl, backbone, bank, tests[0].path, cfg)
+        encoder_delta = abs(initial_score - independent_score)
+        repeatability = {
+            'bank_fingerprint_equal': True,
+            'same_encoded_features_score_bank_1': initial_score,
+            'same_encoded_features_score_bank_2': replay_score,
+            'fixed_feature_bank_score_delta': bank_scoring_delta,
+            'fixed_feature_bank_score_tolerance': args.replay_tolerance,
+            'independent_forward_score': independent_score,
+            'reencoding_score_delta': encoder_delta,
+            'reencoding_tolerance': args.inference_tolerance,
+            'reencoding_within_tolerance': encoder_delta <= args.inference_tolerance,
+        }
+        if encoder_delta > args.inference_tolerance:
+            raise AssertionError(
+                f'Independent GPU re-encoding drift {encoder_delta:.3g} exceeds '
+                f'--inference-tolerance={args.inference_tolerance}. '
+                'Try --math-sdpa or investigate GPU nondeterminism.'
+            )
+        print(f'  replay: bank_hash=equal fixed_feature_delta={bank_scoring_delta:.3g}'
+              f' reencoding_delta={encoder_delta:.3g}', flush=True)
         del replay_bank
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -447,7 +506,11 @@ def run_one(args, impl, backbone, index, cfg: Config,
                      "use_fp16": getattr(backbone, "use_fp16", None)},
         "effective_config": asdict(cfg),
         "runtime": {"python": platform.python_version(),
-                    "numpy": np.__version__, "torch": torch.__version__},
+                    "numpy": np.__version__, "torch": torch.__version__,
+                    "sdpa_math_only": args.math_sdpa,
+                    "cuda_math_sdp_enabled": bool(torch.backends.cuda.math_sdp_enabled()) if torch.cuda.is_available() else None,
+                    "cuda_flash_sdp_enabled": bool(torch.backends.cuda.flash_sdp_enabled()) if torch.cuda.is_available() else None,
+                    "cuda_mem_efficient_sdp_enabled": bool(torch.backends.cuda.mem_efficient_sdp_enabled()) if torch.cuda.is_available() else None},
         "class_name": args.class_name, "protocol": protocol,
         "support_seed": seed, "stream_seed": args.stream_seed,
         "supports": chosen, "commissioning_paths": cal_paths,
@@ -474,6 +537,7 @@ def run_one(args, impl, backbone, index, cfg: Config,
             "This audit uses v22 scoring classes with independently constructed, cached support features; it is not a byte-for-byte reproduction of historical v22 support-bank sampling.",
             "Both static operating points share exactly the same query/test scores.",
             "Supports are fixed per support_seed; augmentation and bank subsampling are fixed independently.",
+            "Bitwise-identical GPU scores are NOT guaranteed with nondeterministic attention; fixed-feature bank retrieval is verified independently.",
             "LOSO folds still have only three original images and resample the final v22 bank pool; LOSO is diagnostic only.",
             "Any threshold sweep/ROC uses held-out test labels retrospectively, NEVER to choose deployment thresholds.",
         ],
@@ -506,7 +570,12 @@ def parser():
     p.add_argument("--bank-seed", type=int, default=0, help="Fixed across different support draws and folds")
     p.add_argument("--commissioning-seed", type=int, default=100003)
     p.add_argument("--verify-replay", action="store_true", help="Rebuild frozen bank and verify matching scores")
-    p.add_argument("--replay-tolerance", type=float, default=1e-6)
+    p.add_argument("--replay-tolerance", type=float, default=1e-6,
+                   help="Bank scoring tolerance using the IDENTICAL cached query features")
+    p.add_argument("--inference-tolerance", type=float, default=1e-4,
+                   help="Absolute tolerance for independent GPU feature forward passes")
+    p.add_argument("--math-sdpa", action="store_true",
+                   help="Disable flash/memory-efficient CUDA SDPA in this P0 process for reproducibility (slower)")
     p.add_argument("--no-plots", action="store_true", help="Still write threshold curve CSV")
     p.add_argument("--shots", type=int, default=4, choices=[4])
     p.add_argument("--device", default="cuda")
@@ -541,15 +610,30 @@ def main():
         assert any(abs(z["threshold"] - 0.5) < 1e-9 and z["fpr"] == 0 and z["fnr"] == 0 for z in curve)
         assert deterministic_subseed(42, "imageA", 0) == deterministic_subseed(42, "imageA", 0)
         assert deterministic_subseed(42, "imageA", 0) != deterministic_subseed(43, "imageA", 0)
-        print("P0-R1 numerical/reproducibility self-test: PASS")
+        with __import__('tempfile').TemporaryDirectory() as temp:
+            a, b = Path(temp) / 'a.csv', Path(temp) / 'b.csv'
+            for f, delta in [(a, 0.0), (b, 0.000011206)]:
+                with f.open('w', newline='', encoding='utf-8') as fh:
+                    w = csv.DictWriter(fh, fieldnames=['path','label','score'])
+                    w.writeheader()
+                    w.writerow({'path':'x', 'label':0, 'score':0.528495 + delta})
+            c = compare_repeated_case_csv(a, b, 1e-4)
+            assert c['within_tolerance'] and c['max_abs_delta'] > 1e-5
+            assert not compare_repeated_case_csv(a, b, 1e-6)['within_tolerance']
+        print('P0-R2 numerical/reproducibility self-test: PASS')
         return
     if not args.dataset_root:
         raise SystemExit("--dataset-root is required unless --self-test.")
     if args.commissioning_size < 0:
         raise SystemExit("--commissioning-size must be nonnegative.")
-    if args.replay_tolerance < 0:
-        raise SystemExit("--replay-tolerance must be nonnegative.")
+    if args.replay_tolerance < 0 or args.inference_tolerance < 0:
+        raise SystemExit('Replay tolerances must be nonnegative.')
     import torch
+    if args.math_sdpa:
+        torch.backends.cuda.enable_flash_sdp(False)
+        torch.backends.cuda.enable_mem_efficient_sdp(False)
+        torch.backends.cuda.enable_math_sdp(True)
+        print('[P0-R2] CUDA SDPA math-only kernel enabled (slower; monitor memory).', flush=True)
     impl = require_sources()
     json_dir = args.json_dir or str(Path(args.dataset_root) / "jsons" / "realiad_jsons")
     dataset = impl.RealIADJSONIndex(root=args.dataset_root, json_dir=json_dir)
@@ -615,15 +699,31 @@ def main():
         protocol: len({tuple(row["support_paths"]) for row in summary["cases"] if row["protocol"] == protocol})
         for protocol in protocols
     }
-    summary["identical_support_replay"] = [
-        {"protocol": proto, "seeds": [v["seed"] for v in group],
-         "identical_bank": len({v["bank_profile"]["sha256"] for v in group}) == 1,
-         "identical_scores": len({v["score_sha256"] for v in group}) == 1}
-        for (proto, _), group in support_groups.items() if len(group) > 1
-    ]
-    for entry in summary["identical_support_replay"]:
-        if not entry["identical_bank"] or not entry["identical_scores"]:
-            raise AssertionError(f"Identical supports with fixed bank/augmentation seeds did not reproduce: {entry}")
+    summary['identical_support_replay'] = []
+    for (proto, _), group in support_groups.items():
+        if len(group) <= 1:
+            continue
+        base = group[0]
+        checks = [compare_repeated_case_csv(
+            out / f'{base["case_id"]}_scores.csv',
+            out / f'{other["case_id"]}_scores.csv',
+            args.inference_tolerance
+        ) for other in group[1:]]
+        entry = {
+            'protocol': proto, 'seeds': [v['seed'] for v in group],
+            'identical_bank': len({v['bank_profile']['sha256'] for v in group}) == 1,
+            'bitwise_identical_scores': len({v['score_sha256'] for v in group}) == 1,
+            'numeric_score_comparisons': checks,
+            'within_inference_tolerance': all(c['within_tolerance'] for c in checks),
+        }
+        summary['identical_support_replay'].append(entry)
+        if not entry['identical_bank']:
+            raise AssertionError(f'Identical supports produced DIFFERENT fixed-bank data: {entry}')
+        if not entry['within_inference_tolerance']:
+            raise AssertionError(
+                f'Identical supports produced numerically divergent GPU scores: {entry}. '
+                'Try --math-sdpa or diagnose the encoder/scorer.'
+            )
     if len(seeds) > 1 and summary["unique_support_sets_per_protocol"].get("pool_assisted4") == 1:
         print("NOTE: pool-assisted central selection chose identical four supports for all seeds; not independent support draws.")
     (out / "p0_batch_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
