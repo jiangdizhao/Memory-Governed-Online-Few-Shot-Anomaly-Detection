@@ -1,7 +1,7 @@
 name: P0 offline sanity
 on:
   push:
-    branches: [p0-protocol-audit, p0-r1-reproducibility, p0-r2-numerical-replay, e01-v22-initialization-audit, e02-matched-feedback-factorial, e02-r1-r2-probe-calibration, e02-r3-bootstrap-sidecar-audit]
+    branches: [p0-protocol-audit, p0-r1-reproducibility, p0-r2-numerical-replay, e01-v22-initialization-audit, e02-matched-feedback-factorial, e02-r1-r2-probe-calibration, e02-r3-bootstrap-sidecar-audit, e02-r4-abc-query-governance]
   pull_request:
     paths:
       - 'experiments/p0_protocol_audit.py'
@@ -13,6 +13,8 @@ on:
       - 'tests/test_e02_r1_r2.py'
       - 'experiments/e02_r3_bootstrap_sidecar.py'
       - 'tests/test_e02_r3_bootstrap_sidecar.py'
+      - 'experiments/e02_r4_abc_query_governance.py'
+      - 'tests/test_e02_r4_abc_query_governance.py'
       - 'tests/test_p0_protocol_audit.py'
       - 'test_phase3_AIF_simplified_v22.py'
       - 'vmb_visionad_new.py'
@@ -28,7 +30,7 @@ jobs:
       - name: Install numerical test dependencies
         run: python -m pip install numpy scikit-learn
       - name: Compile source and audit module
-        run: python -m py_compile experiments/p0_protocol_audit.py test_phase3_AIF_simplified_v22.py vmb_visionad_new.py tests/test_p0_protocol_audit.py experiments/p0_v22_equivalence.py tests/test_e01_equivalence.py experiments/e02_matched_feedback.py tests/test_e02_matched_feedback.py experiments/e02_r1_r2.py tests/test_e02_r1_r2.py experiments/e02_r3_bootstrap_sidecar.py tests/test_e02_r3_bootstrap_sidecar.py
+        run: python -m py_compile experiments/p0_protocol_audit.py test_phase3_AIF_simplified_v22.py vmb_visionad_new.py tests/test_p0_protocol_audit.py experiments/p0_v22_equivalence.py tests/test_e01_equivalence.py experiments/e02_matched_feedback.py tests/test_e02_matched_feedback.py experiments/e02_r1_r2.py tests/test_e02_r1_r2.py experiments/e02_r3_bootstrap_sidecar.py tests/test_e02_r3_bootstrap_sidecar.py experiments/e02_r4_abc_query_governance.py tests/test_e02_r4_abc_query_governance.py
       - name: P0-R1 numerical self-test
         run: python experiments/p0_protocol_audit.py --self-test
       - name: E01 offline self-test
@@ -39,5 +41,7 @@ jobs:
         run: python experiments/e02_r1_r2.py --self-test
       - name: E02-R3 native bootstrap offline self-test
         run: python experiments/e02_r3_bootstrap_sidecar.py --self-test
+      - name: E02-R4 A-B-C offline self-test
+        run: python experiments/e02_r4_abc_query_governance.py --self-test
       - name: Offline regressions
         run: python -m unittest discover -s tests -v
