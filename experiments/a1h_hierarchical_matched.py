@@ -338,6 +338,17 @@ def main(args):
         "ltm_activation":ltm_activation,
         "elapsed_seconds":time.perf_counter()-tstart,
         "args":vars(args),
+        "source_sha256":{
+            rel:hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
+            for rel in (
+                "experiments/a1h_memory.py",
+                "experiments/a1h_hierarchical_matched.py",
+                "experiments/a0_a1_memory_methods.py",
+                "experiments/a0_a1_strict4_matched.py",
+                "experiments/p0_protocol_audit.py",
+                "test_phase3_AIF_simplified_v22.py",
+            )
+        },
         "limitations":[
             "S0/S1/S2/S3/H1-H4 isolate normal-memory submodules, not complete v22.",
             "H2 stores promoted LTM prototypes but disables their retrieval, yielding a shadow state.",
