@@ -572,6 +572,19 @@ def verify_r3_a(reference_summary: str, reference_csv: str,
             "source_csv":str(reference_csv),
             "test":"prequential scores, all four sidecars, queries and predictions"}
 
+def validated_equal_budget(states: dict) -> int:
+    """Return shared realized label budget, rejecting empty/mismatched arms."""
+    if not states:
+        raise AssertionError("At least one R4 arm is required")
+    limits={name:int(state["budget"].K) for name,state in states.items()}
+    actual={name:int(state["budget"].used) for name,state in states.items()}
+    if len(set(limits.values()))!=1:
+        raise AssertionError(f"R4 variants have unequal label caps: {limits}")
+    if any(actual[name]!=limits[name] for name in states):
+        raise AssertionError(f"R4 variants did not consume their matched budgets: {actual} / {limits}")
+    return next(iter(limits.values()))
+
+
 def main_run(args):
     import torch
     v22,e02,ext,e01=dependencies()
@@ -625,10 +638,13 @@ def main_run(args):
     with csv_path.open("w",newline="",encoding="utf-8") as f:
         writer=csv.DictWriter(f,fieldnames=list(all_rows[0].keys()))
         writer.writeheader();writer.writerows(all_rows)
+    # R4 has no random_tape: each arm owns its own, strictly matched
+    # Budget. Validate these actual budgets before serializing the report.
+    total_budget_each=validated_equal_budget(states)
     report={
         "schema":"e02.r4.abc.query.governance.v1",
         "class_name":args.class_name,"n_stream":len(stream),
-        "total_budget_each":len(random_tape),
+        "total_budget_each":total_budget_each,
         "stream_paths_sha256":sha([z.path for z in stream]),
         "support_paths":canonical["support_paths_per_mode"]["0"],
         "canonical_fixed_sha256":static_sha,
