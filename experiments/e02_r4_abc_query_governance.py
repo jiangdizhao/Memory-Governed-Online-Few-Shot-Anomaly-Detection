@@ -355,7 +355,7 @@ def init_arm(v22, e02, ext, canonical, init, backbone, args, policy_name,
 
 
 def step_state(v22, e02, state, *, t, sample, image, features, global_feat, args,
-               random_tape: set[int], evaluation_rows: list[dict]):
+               evaluation_rows: list[dict]):
     s_static, _ = e02.frozen_score(
         v22, type("_Static", (), {"bank": state["static"]})(),
         args.class_name, features, image, args
@@ -506,6 +506,72 @@ def report_state(e02, ext, e01, state, truth, args) -> dict:
     }
 
 
+
+def verify_r3_a(reference_summary: str, reference_csv: str,
+                current_report: dict, current_rows: list[dict],
+                args) -> dict:
+    """Must be identical to original R3 Bootstrap, not merely similar final AUROC.
+
+    This is a local-file replay audit. Do not compare nonmatching configs.
+    """
+    if "A" not in current_report["schedules"]:
+        raise AssertionError("R3 reference audit requires variant A")
+    prior=json.loads(Path(reference_summary).read_text(encoding="utf-8"))
+    if prior["schema"]!="e02.r3.bootstrap.sidecar.audit.v1":
+        raise AssertionError("Not a valid E02-R3 reference")
+    for key in ("class_name","support_seed","legacy_seed","stream_seed",
+                "query_rate","max_samples","query_cost","beta_entropy",
+                "local_saliency","bootstrap_dynamic_target","bootstrap_max_steps",
+                "bootstrap_band_min_abs"):
+        if prior["parameters"][key]!=getattr(args,key):
+            raise AssertionError(f"Incomparable R3 reference setting: {key}")
+    for key in ("canonical_fixed_sha256","canonical_theta0",
+                "stream_paths_sha256","support_paths","n_stream"):
+        if prior[key]!=current_report[key]:
+            raise AssertionError(f"Canonical mismatch with R3: {key}")
+    previous=prior["schedules"]["bootstrap_simple_aif"]
+    new=current_report["schedules"]["A"]
+    for key in ("query_indices_1based","queried_normals","queried_defects",
+                "first_200_queries","first_400_queries","budget_suppressed",
+                "budget_forced_terminal","stm_prototypes"):
+        if previous[key]!=new[key]:
+            raise AssertionError(f"Variant A diverges from R3 at {key}")
+    n=0
+    with Path(reference_csv).open("r",encoding="utf-8",newline="") as fh:
+        for row in csv.DictReader(fh):
+            if row["policy"]!="bootstrap_simple_aif":
+                continue
+            if n>=len(current_rows):
+                raise AssertionError("Reference contains too many Bootstrap rows")
+            cur=current_rows[n]
+            if cur["policy"]!="A":
+                raise AssertionError("Variant A ordered CSV mismatch")
+            for field in ("t","path","queried","y_eval_only","query_reason",
+                          "budget_reason"):
+                old=row[field]
+                value=cur[field]
+                if field in ("t","queried","y_eval_only"):
+                    if int(old)!=int(value):
+                        raise AssertionError(f"R3 mismatch at t={cur['t']}, {field}")
+                elif old!=str(value):
+                    raise AssertionError(f"R3 mismatch at t={cur['t']}, {field}")
+            for field in ("stm_score","static_score","frozen_theta","guarded_theta",
+                          "balanced_rescue_theta","mistake_feedback_theta"):
+                if abs(float(row[field])-float(cur[field]))>1e-7:
+                    raise AssertionError(f"R3 numeric mismatch t={cur['t']}, {field}")
+            for field in ("static_pred","frozen_pred","guarded_pred",
+                          "balanced_rescue_pred","mistake_feedback_pred"):
+                if int(row[field])!=int(cur[field]):
+                    raise AssertionError(f"R3 prediction mismatch t={cur['t']}, {field}")
+            n+=1
+    if n!=current_report["n_stream"]:
+        raise AssertionError(f"R3 reference has {n} Bootstrap rows; expected "
+                             f"{current_report['n_stream']}")
+    return {"passed":True,"n_compared":n,
+            "source_summary":str(reference_summary),
+            "source_csv":str(reference_csv),
+            "test":"prequential scores, all four sidecars, queries and predictions"}
+
 def main_run(args):
     import torch
     v22,e02,ext,e01=dependencies()
@@ -519,7 +585,6 @@ def main_run(args):
     static_sha=e01.memory_profile(base_bank,args.class_name)["sha256"]
     stream=e02.select_stream(v22,args)
     args.max_steps_effective=len(stream)
-    random_tape=e02.make_query_tape(len(stream),args.query_rate,args.query_seed)
     states={
         name:init_arm(v22,e02,ext,base_bank,canonical,backbone,args,name,
                       static_sha,base_ctrl)
@@ -534,7 +599,7 @@ def main_run(args):
         for state in states.values():
             step_state(v22,e02,state,t=t,sample=sample,image=image,
                        features=features,global_feat=g,args=args,
-                       random_tape=random_tape,evaluation_rows=all_rows)
+                       evaluation_rows=all_rows)
         # Every variant must preserve the canonical static score/threshold.
         reference=all_rows[-len(states)]
         for recent in all_rows[-len(states):]:
@@ -582,6 +647,14 @@ def main_run(args):
             "not a complete SimpleAIF+normal_dyn_plus_correction reproduction;"
         ],
     }
+    if args.reference_r3_summary or args.reference_r3_csv:
+        if not (args.reference_r3_summary and args.reference_r3_csv):
+            raise AssertionError("Provide both R3 summary and CSV for paired replay")
+        a_rows=[r for r in all_rows if r["policy"]=="A"]
+        report["r3_reference_replay"]=verify_r3_a(
+            args.reference_r3_summary,args.reference_r3_csv,
+            report,a_rows,args)
+        print(f"[R4] A matches original R3 at all {len(a_rows)} steps",flush=True)
     (output/"r4_summary.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False,
                    default=lambda x: x.item() if hasattr(x, "item") else str(x)),
@@ -609,6 +682,8 @@ def parser():
     p.add_argument("--bootstrap-max-steps",type=int,default=400)
     p.add_argument("--bootstrap-band-min-abs",type=float,default=.02)
     p.add_argument("--mistake-step",type=float,default=.002)
+    p.add_argument("--reference-r3-summary",default=None)
+    p.add_argument("--reference-r3-csv",default=None)
     p.add_argument("--variants",default="A,B,C",
                    help="Comma separated subset of A,B,C, for lower GPU memory")
     p.add_argument("--stability-window",type=int,default=256)
