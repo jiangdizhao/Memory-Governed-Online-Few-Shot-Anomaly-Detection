@@ -50,6 +50,55 @@ def order_stream(stream, order="native", block_size=256):
     return result
 
 
+
+def profile_counts(samples):
+    """Pre-register cross-category test selection using prevalence, not accuracy."""
+    counts = {}
+    for item in samples:
+        row = counts.setdefault(item.cls_name, {"normal": 0, "defect": 0})
+        row["normal" if item.is_good else "defect"] += 1
+    out = []
+    for name, row in sorted(counts.items()):
+        n = row["normal"] + row["defect"]
+        if n:
+            out.append({"class_name": name, "normal": row["normal"],
+                        "defect": row["defect"], "total": n,
+                        "normal_fraction": row["normal"] / n,
+                        "defect_fraction": row["defect"] / n})
+    return sorted(out, key=lambda r: (r["normal_fraction"], r["class_name"]))
+
+
+def generate_profile(args):
+    v22, _, _, _ = r4.dependencies()
+    idx = v22.RealIADJSONIndex(root=args.dataset_root, json_dir=args.json_dir)
+    classes = profile_counts(idx.test_samples)
+    if not classes:
+        raise RuntimeError("No Real-IAD test categories found")
+    used = set()
+    choices = {}
+    for name, record in (
+        ("defect_dominated", classes[0]),
+        ("normal_dominated", classes[-1]),
+        ("near_balanced", min(classes, key=lambda x: (
+            abs(x["normal_fraction"] - .5), x["class_name"]))),
+    ):
+        if record["class_name"] in used:
+            continue
+        used.add(record["class_name"])
+        choices[name] = record["class_name"]
+    report = {"schema": "e02.r6.class_prevalence.v1",
+              "selection_based_only_on": "test label prevalence, not performance",
+              "classes": classes, "pre_registered_candidates": choices,
+              "notes": ["For observational/stress selection only; label composition "
+                        "must never be given to an online query policy.",
+                        "Temporal permutations do not alter a class's overall prevalence."]}
+    if args.profile_out:
+        dst = Path(args.profile_out)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print(json.dumps(report, indent=2), flush=True)
+
+
 def class_windows(rows, width=256):
     """Independent offline evaluation; undefined class-conditional risks are null."""
     ans = []
@@ -511,6 +560,9 @@ def parser():
     p.description = __doc__
     p.set_defaults(out_dir="outputs/e02_r6_audiojack_native",
                    variants="D")
+    p.add_argument("--profile-classes", action="store_true",
+                   help="Offline class-prevalence manifest; does not load backbone")
+    p.add_argument("--profile-out", default=None)
     p.add_argument("--stream-order", default="native",
                    choices=["native", "normal_first", "defect_first",
                             "alternating_blocks"])
@@ -573,4 +625,7 @@ if __name__ == "__main__":
             raise SystemExit("Set both shadow flags, or neither")
         if args.require_parity and args.stream_order != "native":
             raise SystemExit("Require-parity only applies to native order")
-        main_run(args)
+        if args.profile_classes:
+            generate_profile(args)
+        else:
+            main_run(args)
