@@ -1,3 +1,17 @@
+# E01 — v22 initialization equivalence audit
+
+**Active experiment on this branch:** original v22 initialization versus the
+P0-R2 frozen-bank pilot. Run instructions, scope and output interpretation:
+[docs/E01_V22_INITIALIZATION_AUDIT.md](docs/E01_V22_INITIALIZATION_AUDIT.md).
+
+Run first: `python experiments/p0_v22_equivalence.py --self-test`.
+
+**E01 does not change the original v22 or vmb_new source.** The E01 verdict
+`not_equivalent` is an expected, informative result if the two different
+initialization implementations disagree; it is not a model-crash indication.
+
+---
+
 # P0-R1: Reproducibility and protocol audit
 
 This research branch preserves the ORIGINAL v22 and VisionAD-style baseline files
