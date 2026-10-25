@@ -98,7 +98,7 @@ class CrossClassR6Contracts(unittest.TestCase):
                                         "fpr": .1, "fnr": .7, "theta_final": .44},
                     "mistake_feedback": {"balanced_accuracy": .62},
                     "frozen": {"auroc": .81}
-                }}}
+                }}}}
 
     def test_native_and_stress_lineage(self):
         counts = next(x for x in self.profile["classes"]
