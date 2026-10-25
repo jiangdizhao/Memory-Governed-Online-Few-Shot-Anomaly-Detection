@@ -149,6 +149,17 @@ def validate(path: Path, *, cls: str, seed: int, order: str, smoke: bool,
         raise ValueError("Probe leakage or repeated sample")
     if sum(int(r["queried"]) for r in rows) != j["K"]:
         raise ValueError("Query tape count vs CSV mismatch")
+    actual_normals = sum(int(r["queried"]) for r in rows
+                         if int(r["label_eval_only"]) == 0)
+    actual_defects = sum(int(r["queried"]) for r in rows
+                         if int(r["label_eval_only"]) == 1)
+    if ((actual_normals, actual_defects) !=
+            (spec["observed_query_normals"], spec["observed_query_defects"])):
+        raise ValueError("Queried-label composition differs from CSV")
+    candidate_counts = {v["candidate_patches"] for k, v in j["arms"].items()
+                        if k != "static"}
+    if len(candidate_counts) != 1:
+        raise ValueError("Dynamic arms did not receive the same candidate patches")
     expected_query_indices = [int(r["t"]) for r in rows if int(r["queried"])]
     if expected_query_indices != spec["query_positions_1based"]:
         raise ValueError("Query tape indices mismatch")
