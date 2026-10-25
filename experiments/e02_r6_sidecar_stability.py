@@ -89,6 +89,60 @@ def _jsonable(obj):
     return str(obj)
 
 
+
+def classify_observed_candidates(samples, last_eval, cfg):
+    """Explain actual candidate/objective calls without invoking the controller.
+
+    Guard reasons are reconstructed from the original v22 branches and the
+    *observed* rates. They are diagnostics, not decisions fed back to v22.
+    """
+    if not samples["candidates"]:
+        return []
+    mode = samples["candidates"][-1]["mode"]
+    current = last_eval.get("current_rates", {})
+    anchors = last_eval.get("anchors", {})
+    now = last_eval.get("current_theta")
+    if now is None:
+        return []
+    evaluated = {float(x["theta"]): x["value"]
+                 for x in samples["objectives"]}
+    risk_by_theta = {float(x["theta"]): x["risk"] for x in samples["rates"]}
+    prior_obj = last_eval.get("current_obj")
+    output = []
+    for candidate in samples["candidates"][-1]["theta"]:
+        risk = risk_by_theta.get(candidate)
+        reason = "unknown_not_scored"
+        if candidate in evaluated:
+            if abs(candidate - now) <= 1e-12:
+                reason = "current_theta"
+            elif (prior_obj is not None and
+                  evaluated[candidate] < prior_obj - float(cfg.accept_margin)):
+                reason = "objective_improved"
+            else:
+                reason = "objective_not_improved"
+        elif risk is not None:
+            if mode == "fast_upward_rescue":
+                if risk["FNR"] > current["FNR"] + float(cfg.balanced_guard_delta_fn_up):
+                    reason = "fn_guard_up"
+                else:
+                    theta_d = anchors.get("theta_D")
+                    slack = float(cfg.balanced_up_defect_slack)
+                    if theta_d is not None and candidate > max(
+                            now, theta_d + slack) + 1e-12:
+                        reason = "defect_anchor_ceiling"
+            elif mode == "fast_downward_rescue":
+                if risk["FPR"] > current["FPR"] + float(cfg.balanced_guard_delta_fp_down):
+                    reason = "fp_guard_down"
+            else:
+                if risk["FPR"] > current["FPR"] + float(cfg.balanced_guard_delta_fp_normal):
+                    reason = "fp_guard_normal"
+                elif risk["FNR"] > current["FNR"] + float(cfg.balanced_guard_delta_fn_normal):
+                    reason = "fn_guard_normal"
+        output.append({"candidate": candidate, "reason": reason,
+                       "rates": risk, "evaluated_objective": evaluated.get(candidate)})
+    return output
+
+
 class SidecarAudit:
     """Observe the actual controller methods without re-evaluating or editing them.
 
@@ -178,7 +232,15 @@ class SidecarAudit:
                     outcome = "evaluated_no_move"
                 else:
                     outcome = "no_candidates"
+                candidate_audit = classify_observed_candidates(
+                    sampled, detail if isinstance(detail, dict) else {}, ctrl.cfg)
                 self.events.append({
+                    "candidate_audit": candidate_audit,
+                    "risk_evidence": {
+                        "normal_observed": before["normal_buf"] > 0,
+                        "defect_observed": before["defect_buf"] > 0,
+                        "recent_both": before["recent_normal"] > 0
+                                       and before["recent_defect"] > 0},
                     "event_index": len(self.events) + 1, "step": self.step,
                     "feedback_label": self.label, "feedback_score": self.score,
                     "force_hint": force_hint or "periodic",
@@ -197,8 +259,11 @@ class SidecarAudit:
 def summarize_events(events):
     counts = Counter(e["outcome"] for e in events)
     triggers = Counter(e["force_hint"] for e in events)
+    candidate_counts = Counter(x["reason"] for e in events
+                               for x in e["candidate_audit"])
     return {"n_update_attempts": len(events),
-            "outcome_counts": dict(counts), "trigger_counts": dict(triggers),
+            "outcome_counts": dict(counts),
+            "candidate_disposition_counts": dict(candidate_counts), "trigger_counts": dict(triggers),
             "accepted_steps": [e["step"] for e in events if e["outcome"] == "accepted"],
             "last_accepted_step": max((e["step"] for e in events
                                        if e["outcome"] == "accepted"), default=None),
