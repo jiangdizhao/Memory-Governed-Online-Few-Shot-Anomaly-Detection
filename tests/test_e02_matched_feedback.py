@@ -87,8 +87,9 @@ class E02Tests(unittest.TestCase):
         tree = ast.parse((ROOT / "experiments" / "e02_matched_feedback.py").read_text(encoding="utf-8"))
         run = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name=="audit")
         target = next(n for n in ast.walk(run) if isinstance(n, ast.For)
-                      and isinstance(n.target, ast.Tuple)==False
-                      and isinstance(n.target, ast.Name) and n.target.id=="t")
+                      and isinstance(n.target, ast.Tuple)
+                      and n.target.elts and isinstance(n.target.elts[0], ast.Name)
+                      and n.target.elts[0].id == "t")
         stmts = target.body
         def pos(name):
             return next(i for i,s in enumerate(stmts) if name in ast.unparse(s))
