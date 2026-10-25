@@ -97,7 +97,7 @@ The aggregator validates schema, class/seed/order, four supports and LOSO disjoi
 
 1. First inspect **static self-match diagnostic theta vs LOSO theta**. A large change warns against using original self-matched static classification as the claimed baseline.
 2. Compare AUROC and *same-probe snapshot* metrics; distinguish normal/defect score changes. Do not conflate time-varying pooled AUROC with calibrated classification.
-3. Compare v22 retention to FIFO, reservoir and online greedy **at the same label tape**; report occupancy differences explicitly.
+3. Compare v22 ordinary STM and optional utility retention to FIFO, reservoir and online greedy **at the same label tape**; report occupancy differences explicitly.
 4. Compare BA/FPR/FNR under shared frozen numerical theta; a lower FPR accompanied by a higher FNR is a trade-off, not necessarily a gain.
 5. For any strong outcome, test additional classes/seeds and strengthen greedy coreset with established implementation. Do not make journal SOTA claims from the three-class screen.
 6. If existing v22 utility retention does not beat strong simple methods, do not call its complexity a justified independent contribution. Consider Route B only after documenting this result.
