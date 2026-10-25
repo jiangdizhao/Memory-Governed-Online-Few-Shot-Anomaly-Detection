@@ -67,6 +67,16 @@ def check(a,c,s,b,o,smoke=False):
     if (j.get("schema")!=SCHEMA or not j.get("complete") or
         (j["class_name"],j["support_seed"],j["budget"],j["order"])!=(c,s,b,o)):
         raise ValueError(f"Schema/condition mismatch: {path}")
+    # Prevent reusing a previous experiment after the memory scorer or
+    # baseline code changed, even when class/seed/budget filenames match.
+    if not j.get("source_sha256"):
+        raise ValueError("Missing source provenance fingerprints")
+    for rel,digest in j["source_sha256"].items():
+        src=ROOT/rel
+        if not src.is_file() or hashlib.sha256(src.read_bytes()).hexdigest()!=digest:
+            raise ValueError(f"Code changed since condition was run: {rel}")
+    if j["n_probe"]!=a.probe_count:
+        raise ValueError("Probe configuration changed")
     p=j["protocol"]
     if (not p["strict_four_shot"] or p["support_access"]!=4
         or len(set(p["support_paths"]))!=4
@@ -100,6 +110,8 @@ def check(a,c,s,b,o,smoke=False):
         raise ValueError("Smoke must have 64 stream samples")
     if not smoke and j["n_stream"]<=64:
         raise ValueError("Full must have more than 64 stream samples")
+    if not j.get("ltm_activation"):
+        raise ValueError("No actual LTM activity audit")
     for name,v in j["arms"].items():
         mem=v["memory"]
         if mem["capacity_total"]!=b or mem["occupied_total"]>b:
@@ -130,6 +142,7 @@ def check(a,c,s,b,o,smoke=False):
         if not (path/artifact).is_file():
             raise ValueError(f"Missing artifact {artifact}")
     return {"class_name":c,"seed":s,"budget":b,"order":o,
+            "ltm_activation":j["ltm_activation"],
             "n_stream":j["n_stream"],"normal_queries":j["queried_normal"],
             "defect_queries":j["queried_defect"],
             "result_path":str(path),
