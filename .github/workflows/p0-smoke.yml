@@ -1,9 +1,13 @@
 name: P0 offline sanity
 on:
   push:
-    branches: [p0-protocol-audit]
+    branches: [p0-protocol-audit, p0-r1-reproducibility]
   pull_request:
-    paths: ['experiments/p0_protocol_audit.py', 'test_phase3_AIF_simplified_v22.py', 'vmb_visionad_new.py']
+    paths:
+      - 'experiments/p0_protocol_audit.py'
+      - 'tests/test_p0_protocol_audit.py'
+      - 'test_phase3_AIF_simplified_v22.py'
+      - 'vmb_visionad_new.py'
 
 jobs:
   syntax-and-numeric:
@@ -15,7 +19,9 @@ jobs:
           python-version: '3.11'
       - name: Install numerical test dependencies
         run: python -m pip install numpy scikit-learn
-      - name: Compile untouched research modules and P0
-        run: python -m py_compile experiments/p0_protocol_audit.py test_phase3_AIF_simplified_v22.py vmb_visionad_new.py
-      - name: Offline P0 self-test
+      - name: Compile source and audit module
+        run: python -m py_compile experiments/p0_protocol_audit.py test_phase3_AIF_simplified_v22.py vmb_visionad_new.py tests/test_p0_protocol_audit.py
+      - name: P0-R1 numerical self-test
         run: python experiments/p0_protocol_audit.py --self-test
+      - name: Offline regressions
+        run: python -m unittest discover -s tests -v
