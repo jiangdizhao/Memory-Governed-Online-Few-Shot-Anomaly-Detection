@@ -116,6 +116,7 @@ def init_canonical(args, impl, e01, out: Path):
     config.include_identity = args.include_identity
     config.feature_fuse = args.feature_fuse
 
+    (out / 'canonical').mkdir(parents=True, exist_ok=True)
     captured = {}
     original = impl.GuardedDualAnchorThresholdController.init_from_support
 
