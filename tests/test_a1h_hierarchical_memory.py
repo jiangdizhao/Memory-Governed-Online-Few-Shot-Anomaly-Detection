@@ -58,15 +58,15 @@ class ContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             log = Path(tmp) / "mechanism_test.run.log"
             log.write_text(
-                "UnicodeEncodeError: cp1252 cannot encode arrow\\n"
-                "Exit code: 1\\n", encoding="utf-8")
+                "UnicodeEncodeError: cp1252 cannot encode arrow\n"
+                "Exit code: 1\n", encoding="utf-8")
             archive = runner.archive_failed_mechanism_log(log)
             self.assertFalse(log.exists())
             self.assertTrue(archive.exists())
             self.assertEqual(
                 archive.name, "mechanism_test.run.failed-001.log")
             self.assertIn("UnicodeEncodeError", archive.read_text(encoding="utf-8"))
-            log.write_text("Other exception\\nExit code: 2\\n", encoding="utf-8")
+            log.write_text("Other exception\nExit code: 2\n", encoding="utf-8")
             archive2 = runner.archive_failed_mechanism_log(log)
             self.assertEqual(archive2.name, "mechanism_test.run.failed-002.log")
             self.assertTrue(archive.exists())
@@ -74,7 +74,7 @@ class ContractTests(unittest.TestCase):
     def test_incomplete_or_success_preflight_log_not_discarded(self):
         with tempfile.TemporaryDirectory() as tmp:
             log = Path(tmp) / "mechanism_test.run.log"
-            for body in ("in progress\\n", "Exit code: 0\\n", "Exit code: ????\\n"):
+            for body in ("in progress\n", "Exit code: 0\n", "Exit code: ????\n"):
                 log.write_text(body, encoding="utf-8")
                 with self.assertRaises(RuntimeError):
                     runner.archive_failed_mechanism_log(log)
