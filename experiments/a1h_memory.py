@@ -188,12 +188,19 @@ class Hierarchy:
             for fld in ("count","distinct_events","usefulness_sum",
                         "boundary_sum","fp_rescue_sum","coverage_sum",
                         "last_event","first_step","last_step","promoted_count"))
+        codebook_meta = sum(
+            getattr(c, fld).numel() * getattr(c, fld).element_size()
+            for group in (stm,ltm) for c in group
+            for fld in ("meta_count","meta_utility","meta_boundary",
+                        "meta_fp_rescue","meta_coverage","meta_first_step",
+                        "meta_last_step","meta_last_event","meta_distinct_events"))
         return {
             "method":self.name,"stm":ns,"ltm":nl,"buffer":nb,
             "occupied_total":occupied,"capacity_total":cap,
             "feature_bytes_occupied":feats,
             "feature_bytes_allocated":allocated,
             "tracker_metadata_bytes_allocated":tracker_meta,
+            "codebook_metadata_bytes_allocated":codebook_meta,
             "candidate_events":self.candidate_events,
             "candidate_patches":self.candidate_patches,
             "promotion_triggers":self.promotion_triggers,
@@ -240,6 +247,12 @@ class Flat:
         cbs = self.bank.normal_dyn["p0"][0]["id"]
         occupied_bytes = sum(cb.protos.numel()*cb.protos.element_size()
                              for cb in cbs)
+        meta_bytes = sum(
+            getattr(c, fld).numel()*getattr(c, fld).element_size()
+            for c in cbs
+            for fld in ("meta_count","meta_utility","meta_boundary",
+                        "meta_fp_rescue","meta_coverage","meta_first_step",
+                        "meta_last_step","meta_last_event","meta_distinct_events"))
         return {
             "method":self.name, "stm":d["mutable_prototypes"],
             "ltm":0,"buffer":0,
@@ -248,6 +261,7 @@ class Flat:
             "feature_bytes_occupied":occupied_bytes,
             "feature_bytes_allocated":occupied_bytes,
             "tracker_metadata_bytes_allocated":0,
+            "codebook_metadata_bytes_allocated":meta_bytes,
             "update_seconds":self.update_seconds,
             "candidate_events":d["candidate_events"],
             "candidate_patches":d["candidate_patches"],
