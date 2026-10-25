@@ -74,7 +74,7 @@ class ProtocolTests(unittest.TestCase):
         probes = ["test/heldout"]
         rows = [
             {"t": str(i), "path": f"test/{i}", "label_eval_only": str(i % 2),
-             "queried": str(int(i in (3, 11))), "theta_loso_fixed": "0.5"}
+             "queried": str(int(i in (2, 11))), "theta_loso_fixed": "0.5"}
             for i in range(1, 101)]
         cap = [4,4,4,4]
         arms = {}
@@ -84,7 +84,8 @@ class ProtocolTests(unittest.TestCase):
                 mutable_prototypes=0 if method == "static" else 8,
                 mutable_capacity=16, capacity_per_layer=cap,
                 accepted_patches=0 if method == "static" else 8,
-                candidate_events=0 if method == "static" else 1)
+                candidate_events=0 if method == "static" else 1,
+                candidate_patches=0 if method == "static" else 8)
             arms[method] = arm
         p = {
             "support_selection": "strict_random_four_shot",
@@ -103,17 +104,17 @@ class ProtocolTests(unittest.TestCase):
             "no_adaptive_threshold_in_primary_experiment": True,
             "probe_paths": probes, "probe_paths_sha256": auto.sha(probes),
             "stream_paths_sha256": auto.sha([f"test/{i}" for i in range(1,101)]),
-            "query_rate_target": .03, "query_positions_1based": [3,11],
-            "query_tape_sha256": auto.sha([3,11]),
+            "query_rate_target": .03, "query_positions_1based": [2,11],
+            "query_tape_sha256": auto.sha([2,11]),
             "observed_query_normals": 1, "observed_query_defects": 1,
             "fixed_bank": {"sha256": "test-only"},
             "feature_configuration": {"device": "cuda"}
         }
         # Update fixture to exact 3% (3 query positions).
-        p["query_positions_1based"] = [3, 11, 15]
-        p["query_tape_sha256"] = auto.sha([3,11,15])
+        p["query_positions_1based"] = [2, 11, 15]
+        p["query_tape_sha256"] = auto.sha([2,11,15])
         for r in rows:
-            r["queried"] = str(int(int(r["t"]) in (3,11,15)))
+            r["queried"] = str(int(int(r["t"]) in (2,11,15)))
         p["observed_query_defects"] = 2
         with (output / "prequential.csv").open("w", newline="", encoding="utf-8") as fh:
             w = csv.DictWriter(fh, fieldnames=list(rows[0]))
