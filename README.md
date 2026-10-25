@@ -4,6 +4,56 @@ This research branch preserves the ORIGINAL v22 and VisionAD-style baseline file
 **without edits**. The P0 experiment is a frozen-score diagnostics tool,
 **not a validated full online continual learning evaluation**.
 
+## P0-R2: GPU numerical replay correction (2026-10-25)
+
+The original P0-R1 replay checked two scores computed by **independent DINOv2
+forward passes** with a very strict absolute tolerance of 1e-6. On CUDA
+memory-efficient attention, those two passes can differ slightly even if the
+fixed bank's bytewise fingerprint matches. Example observed locally:
+0.5284950137138367 versus 0.5285062193870544 (delta 1.12e-5).
+
+P0-R2 separates the checks:
+
+1. Exact fixed-bank SHA256 fingerprint comparison (unchanged).
+2. A **shared encoded feature tensor** is scored against both frozen banks;
+   the strict --replay-tolerance=1e-6 applies here.
+3. A second DINOv2 feature forward pass is evaluated and its numerical drift
+   is recorded separately; default --inference-tolerance=1e-4.
+4. When the same four supports occur under different support-selection seeds,
+   bank fingerprints must match; scores are compared with the same GPU inference
+   tolerance, and exact numeric hashes are logged for audit but no longer
+   required to be bitwise identical.
+
+Optional --math-sdpa disables CUDA flash/memory-efficient scaled-dot-product
+attention for this P0 process, forcing the PyTorch math implementation.
+This can reduce nondeterministic attention behavior but may be **slower and
+consume additional GPU memory**. It also changes low-level numerical execution;
+do not compare its scores to an accelerated-attention run as if identical.
+
+**Do NOT simply set --replay-tolerance=1e-4**: that weakens the fixed-feature
+bank-retrieval check. Use --inference-tolerance for actual re-encoding
+variance instead.
+
+### P0-R2 first run
+
+~~~powershell
+git fetch origin
+git switch p0-r2-numerical-replay
+git status --short
+conda activate torch
+python experiments/p0_protocol_audit.py --self-test
+python experiments/p0_protocol_audit.py --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-policy strict4 --seeds 0 --augmentation-seed 0 --bank-seed 0 --stream-seed 0 --max-test 100 --verify-replay --math-sdpa --device cuda --out-dir "outputs/p0_r2_audiojack_smoke"
+~~~
+
+If --math-sdpa causes a CUDA out-of-memory issue, retry after removing
+--math-sdpa, using a **new output directory**. Attach the case JSON
+repeatability section and the threshold plots for review.
+
+After the initial smoke passes, do a full Audiojack run with this SAME
+--math-sdpa mode to avoid changing numerical execution mid-experiment.
+
+---
+
 ## P0-R1: isolation of randomness
 
 - --seeds specifies support-selection seeds. Strict4 randomly chooses four normal images.
@@ -23,7 +73,7 @@ IMPORTANT: pool_assisted4 may deterministically choose the SAME four supports
 for every seed. The summary reports the number of genuinely different support
 sets per protocol. Repeating the same set is NOT support-draw replication.
 
-## Run immediately: Windows PowerShell
+## Historical P0-R1 commands (superseded by P0-R2 above)
 
 If the repo is already cloned:
 
