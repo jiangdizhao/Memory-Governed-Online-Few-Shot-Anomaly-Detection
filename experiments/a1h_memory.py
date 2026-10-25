@@ -80,6 +80,7 @@ class Hierarchy:
         self.name, self.bank, self.budget = name, bank, budget
         self.candidate_events = 0
         self.candidate_patches = 0
+        self.promotion_triggers = 0
         self.promotion_attempts = 0
         self.promotion_successes = 0
         self.promoted_prototypes = 0
@@ -133,6 +134,8 @@ class Hierarchy:
                                 step, score, theta, sigma):
         import time
         import torch
+        if torch.cuda.is_available() and features[0].is_cuda:
+            torch.cuda.synchronize()
         start = time.perf_counter()
         self.candidate_events += 1
         _allow, _topk, _reason, info = impl.select_informative_normal_write(
@@ -152,11 +155,15 @@ class Hierarchy:
             boundary_value=info["boundary"], coverage_gain=0.0)
         trigger = report.get("ltm_trigger_debug", {})
         if trigger.get("mature_trigger") or trigger.get("pressure_trigger"):
-            self.promotion_attempts += 1
+            self.promotion_triggers += 1
+            if self.bank.enable_ltm_promotion:
+                self.promotion_attempts += 1
         if report.get("consolidation", {}).get("consolidated"):
             self.promotion_successes += 1
         after = [cb.size() for cb in self.bank.normal_dyn_ltm["p0"][0]["id"]]
         self.promoted_prototypes += sum(max(0, y-x) for x,y in zip(before,after))
+        if torch.cuda.is_available() and features[0].is_cuda:
+            torch.cuda.synchronize()
         self.update_seconds += time.perf_counter()-start
         return report
 
@@ -189,6 +196,7 @@ class Hierarchy:
             "tracker_metadata_bytes_allocated":tracker_meta,
             "candidate_events":self.candidate_events,
             "candidate_patches":self.candidate_patches,
+            "promotion_triggers":self.promotion_triggers,
             "promotion_attempts":self.promotion_attempts,
             "promotion_successes":self.promotion_successes,
             "promoted_new_prototypes":self.promoted_prototypes,
@@ -202,6 +210,7 @@ class Flat:
     """Existing A1 verified-normal retention primitives, with common scorer."""
     def __init__(self, name, bank, *, budget: Budget, seed: int):
         self.name, self.bank, self.budget = name, bank, budget
+        self.update_seconds = 0.0
         self.inner = a1.MemoryArm(name, bank, dynamic_capacity=budget.total, seed=seed)
         # Flat reference must not accidentally allocate a 4096-track buffer:
         # zero-capacity conceptual sidecars use 1 allocated dummy slot.
@@ -213,22 +222,39 @@ class Flat:
 
     def observe_verified_normal(self, impl, features, patch_indices, *,
                                 step, score, theta, sigma):
-        return self.inner.observe_verified_normal(
+        import time
+        import torch
+        if torch.cuda.is_available() and features[0].is_cuda:
+            torch.cuda.synchronize()
+        started = time.perf_counter()
+        out = self.inner.observe_verified_normal(
             impl, features, patch_indices, step=step, score=score, theta=theta,
             sigma=sigma)
+        if torch.cuda.is_available() and features[0].is_cuda:
+            torch.cuda.synchronize()
+        self.update_seconds += time.perf_counter()-started
+        return out
 
     def state(self):
         d = self.inner.audit()
+        cbs = self.bank.normal_dyn["p0"][0]["id"]
+        occupied_bytes = sum(cb.protos.numel()*cb.protos.element_size()
+                             for cb in cbs)
         return {
             "method":self.name, "stm":d["mutable_prototypes"],
             "ltm":0,"buffer":0,
             "occupied_total":d["mutable_prototypes"],
             "capacity_total":self.budget.total * len(self.inner.sizes()),
+            "feature_bytes_occupied":occupied_bytes,
+            "feature_bytes_allocated":occupied_bytes,
+            "tracker_metadata_bytes_allocated":0,
+            "update_seconds":self.update_seconds,
             "candidate_events":d["candidate_events"],
             "candidate_patches":d["candidate_patches"],
             "accepted_patches":d["accepted_patches"],
             "promotion_attempts":0, "promotion_successes":0,
             "promoted_new_prototypes":0,
+            "promotion_triggers":0,
             "enable_ltm_retrieval":False, "enable_utility":False,
         }
 
