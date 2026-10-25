@@ -1,6 +1,8 @@
-"""CPU-only regression tests for P0-R1 randomization and threshold diagnostics."""
+"""CPU-only regression tests for P0-R2 randomization and replay diagnostics."""
 import sys
 import unittest
+import csv
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "experiments"))
@@ -65,6 +67,60 @@ class P0AuditTests(unittest.TestCase):
         b = p0.metrics(y, scores, 0.5)
         self.assertEqual(a["auroc"], b["auroc"])
         self.assertNotEqual(a["fpr"], b["fpr"])
+
+
+    def test_gpu_scale_drift_is_tolerated_only_at_encoder_level(self):
+        # Reproduces the user's observed 0.528495 vs 0.528506 example.
+        with tempfile.TemporaryDirectory() as dirname:
+            p1, p2 = [Path(dirname) / v for v in ("case1.csv", "case2.csv")]
+            for file, score in [(p1, 0.5284950137138367),
+                                (p2, 0.5285062193870544)]:
+                with file.open("w", newline="", encoding="utf-8") as fh:
+                    writer = csv.DictWriter(fh, fieldnames=["path", "label", "score"])
+                    writer.writeheader()
+                    writer.writerow({"path": "image1", "label": 0, "score": score})
+            tolerated = p0.compare_repeated_case_csv(p1, p2, 1e-4)
+            strict = p0.compare_repeated_case_csv(p1, p2, 1e-6)
+            self.assertTrue(tolerated["within_tolerance"])
+            self.assertFalse(strict["within_tolerance"])
+            self.assertGreater(tolerated["max_abs_delta"], 1e-5)
+            self.assertEqual(tolerated["n_above_1e-6"], 1)
+
+    def test_score_comparison_rejects_stream_and_label_mismatch(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            p1, p2 = [Path(dirname) / v for v in ("a.csv", "b.csv")]
+            for f, label in [(p1, 0), (p2, 1)]:
+                with f.open("w", newline="", encoding="utf-8") as fh:
+                    writer = csv.DictWriter(fh, fieldnames=["path", "label", "score"])
+                    writer.writeheader()
+                    writer.writerow({"path": "image1", "label": label, "score": 0.51})
+            with self.assertRaises(AssertionError):
+                p0.compare_repeated_case_csv(p1, p2, 1e-4)
+
+    def test_identical_encoded_features_bank_retrieval(self):
+        class Impl:
+            @staticmethod
+            def ViewSpec(*args):
+                return tuple(args)
+
+        class Bank:
+            def score_sample_multiview(self, **kwargs):
+                # Simulates deterministic scoring with cached features.
+                return kwargs["view_to_feats"]["id"] * 2, None, None
+
+        class Image:
+            height = 100
+            width = 100
+
+        class Cfg:
+            topk_patches = 32
+            image_aggregation = "max"
+            image_topk = 64
+            image_quantile = .95
+
+        score1 = p0.score_encoded(Impl, Bank(), Image(), 0.25, Cfg())
+        score2 = p0.score_encoded(Impl, Bank(), Image(), 0.25, Cfg())
+        self.assertEqual(score1, score2)
 
 
 if __name__ == "__main__":
