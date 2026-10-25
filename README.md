@@ -1,3 +1,27 @@
+# E02 — Canonical v22 matched-feedback factorial experiment
+
+**Active branch:** `e02-matched-feedback-factorial`.
+
+The new experimental entry point is
+[experiments/e02_matched_feedback.py](experiments/e02_matched_feedback.py).
+The exact local GPU commands, the matched query budget, prequential protocol,
+and output interpretation are in
+[docs/E02_MATCHED_FEEDBACK_PROTOCOL.md](docs/E02_MATCHED_FEEDBACK_PROTOCOL.md).
+
+This branch preserves the original v22, vmb_new, and all P0/E01 experiments.
+E02 runs four arms (Static, STM-only, Theta-only, STM+Theta) from the SAME
+original-v22 initialization, NOT a reimplementation or comparison against
+the non-equivalent standalone P0 bank.
+
+~~~powershell
+git fetch origin
+git switch e02-matched-feedback-factorial
+conda activate torch
+python experiments/e02_matched_feedback.py --self-test
+~~~
+
+---
+
 # E01 — v22 initialization equivalence audit
 
 **Active experiment on this branch:** original v22 initialization versus the
