@@ -1,7 +1,7 @@
 name: P0 offline sanity
 on:
   push:
-    branches: [p0-protocol-audit, p0-r1-reproducibility]
+    branches: [p0-protocol-audit, p0-r1-reproducibility, p0-r2-numerical-replay]
   pull_request:
     paths:
       - 'experiments/p0_protocol_audit.py'
