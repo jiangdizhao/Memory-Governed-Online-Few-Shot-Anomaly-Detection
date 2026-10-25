@@ -1,0 +1,95 @@
+{
+  "schema": "p0.protocol.batch.v2",
+  "fixed_augmentation_seed": 0,
+  "fixed_bank_seed": 0,
+  "effective_config": {
+    "device": "cuda",
+    "augmentation_seed": 0,
+    "bank_seed": 0,
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "augmentations": 4,
+    "include_identity": false,
+    "multiplier": 2.5,
+    "feature_fuse": "concat",
+    "topk_patches": 32,
+    "image_aggregation": "max",
+    "image_topk": 64,
+    "image_quantile": 0.95,
+    "knn": 5
+  },
+  "cases": [
+    {
+      "protocol": "strict4",
+      "seed": 0,
+      "case_id": "audiojack_strict4_support0_aug0_bank0",
+      "bank_profile": {
+        "layers": [
+          {
+            "layer": 0,
+            "n_prototypes": 8192,
+            "feature_dim": 4096,
+            "capacity": 25000,
+            "dtype": "float16",
+            "bytes": 67108864
+          }
+        ],
+        "sha256": "3d284f6c8cf7cd5aa9f859cf1b782d83c4154e3929eb96dfb9f4e231d9d9b463",
+        "total_prototypes": 8192,
+        "total_feature_bytes": 67108864
+      },
+      "score_sha256": "ef1b521d652788e2d4c04fe0f414f2eb4e172f9e6be1db1b2ecaecd0b22aa815",
+      "repeatability": {
+        "bank_fingerprint_equal": true,
+        "same_encoded_features_score_bank_1": 0.5284032225608826,
+        "same_encoded_features_score_bank_2": 0.5284032225608826,
+        "fixed_feature_bank_score_delta": 0.0,
+        "fixed_feature_bank_score_tolerance": 1e-06,
+        "independent_forward_score": 0.5284032225608826,
+        "reencoding_score_delta": 0.0,
+        "reencoding_tolerance": 0.0001,
+        "reencoding_within_tolerance": true
+      },
+      "strict_four_shot_eligible": true,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+      ],
+      "theta_self": 0.5354703437192151,
+      "theta_loso": 0.6259433360321877,
+      "delta_theta": 0.09047299231297257,
+      "self": {
+        "n": 3815,
+        "tp": 775,
+        "tn": 1660,
+        "fp": 859,
+        "fn": 521,
+        "accuracy": 0.6382699868938401,
+        "balanced_accuracy": 0.6284927452594847,
+        "fpr": 0.3410083366415244,
+        "fnr": 0.4020061728395062,
+        "auroc": 0.663733557065071,
+        "theta": 0.5354703437192151
+      },
+      "loso": {
+        "n": 3815,
+        "tp": 1,
+        "tn": 2519,
+        "fp": 0,
+        "fn": 1295,
+        "accuracy": 0.6605504587155964,
+        "balanced_accuracy": 0.5003858024691358,
+        "fpr": 0.0,
+        "fnr": 0.9992283950617284,
+        "auroc": 0.663733557065071,
+        "theta": 0.6259433360321877
+      }
+    }
+  ],
+  "unique_support_sets_per_protocol": {
+    "strict4": 1
+  },
+  "identical_support_replay": []
+}

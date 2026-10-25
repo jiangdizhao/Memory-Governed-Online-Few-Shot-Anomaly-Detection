@@ -1,0 +1,13 @@
+{
+  "n": 100,
+  "query_positions_1based": [
+    12,
+    78,
+    88
+  ],
+  "query_seed": 37,
+  "query_rate": 0.03,
+  "tape_sha256": "1016cf7f1ef850bdc3f2e44168f3f674ffb4cabf733c7dfcf21fc98eefe28478",
+  "stream_paths_sha256": "6642c8dacb58da9763947fa9fef39324bc5da6ed091a7bcbd4c310d919962bdd",
+  "label_blind": true
+}

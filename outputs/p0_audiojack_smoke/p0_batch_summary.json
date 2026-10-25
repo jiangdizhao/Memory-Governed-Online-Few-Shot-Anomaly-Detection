@@ -1,0 +1,45 @@
+{
+  "schema": "p0.protocol.batch.v1",
+  "cases": [
+    {
+      "protocol": "strict4",
+      "seed": 0,
+      "strict_four_shot_eligible": true,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+      ],
+      "theta_self": 0.5589239470761621,
+      "theta_loso": 0.6337967696225506,
+      "delta_theta": 0.0748728225463885,
+      "self": {
+        "n": 100,
+        "tp": 19,
+        "tn": 46,
+        "fp": 10,
+        "fn": 25,
+        "accuracy": 0.65,
+        "balanced_accuracy": 0.6266233766233766,
+        "fpr": 0.17857142857142858,
+        "fnr": 0.5681818181818182,
+        "auroc": 0.768262987012987,
+        "theta": 0.5589239470761621
+      },
+      "loso": {
+        "n": 100,
+        "tp": 0,
+        "tn": 56,
+        "fp": 0,
+        "fn": 44,
+        "accuracy": 0.56,
+        "balanced_accuracy": 0.5,
+        "fpr": 0.0,
+        "fnr": 1.0,
+        "auroc": 0.768262987012987,
+        "theta": 0.6337967696225506
+      }
+    }
+  ]
+}

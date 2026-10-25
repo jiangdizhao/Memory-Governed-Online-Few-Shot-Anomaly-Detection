@@ -1,0 +1,245 @@
+{
+  "schema": "p0.protocol.batch.v1",
+  "cases": [
+    {
+      "protocol": "strict4",
+      "seed": 0,
+      "strict_four_shot_eligible": true,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+      ],
+      "theta_self": 0.5587809869092566,
+      "theta_loso": 0.6338253511973005,
+      "delta_theta": 0.07504436428804395,
+      "self": {
+        "n": 3815,
+        "tp": 490,
+        "tn": 1959,
+        "fp": 560,
+        "fn": 806,
+        "accuracy": 0.6419397116644823,
+        "balanced_accuracy": 0.5778879895510172,
+        "fpr": 0.22231044065105202,
+        "fnr": 0.6219135802469136,
+        "auroc": 0.6576232056126525,
+        "theta": 0.5587809869092566
+      },
+      "loso": {
+        "n": 3815,
+        "tp": 0,
+        "tn": 2519,
+        "fp": 0,
+        "fn": 1296,
+        "accuracy": 0.6602883355176933,
+        "balanced_accuracy": 0.5,
+        "fpr": 0.0,
+        "fnr": 1.0,
+        "auroc": 0.6576232056126525,
+        "theta": 0.6338253511973005
+      }
+    },
+    {
+      "protocol": "strict4",
+      "seed": 1,
+      "strict_four_shot_eligible": true,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0066/audiojack_0066_OK_C5_20231021132131.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0126/audiojack_0126_OK_C1_20231021133445.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0228/audiojack_0228_OK_C3_20231021142614.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0477/audiojack_0477_OK_C1_20231021160145.jpg"
+      ],
+      "theta_self": 0.5518965607952283,
+      "theta_loso": 0.6700838355934621,
+      "delta_theta": 0.11818727479823377,
+      "self": {
+        "n": 3815,
+        "tp": 614,
+        "tn": 1812,
+        "fp": 707,
+        "fn": 682,
+        "accuracy": 0.635910878112713,
+        "balanced_accuracy": 0.5965492503884061,
+        "fpr": 0.28066693132195314,
+        "fnr": 0.5262345679012346,
+        "auroc": 0.6698281333470562,
+        "theta": 0.5518965607952283
+      },
+      "loso": {
+        "n": 3815,
+        "tp": 0,
+        "tn": 2519,
+        "fp": 0,
+        "fn": 1296,
+        "accuracy": 0.6602883355176933,
+        "balanced_accuracy": 0.5,
+        "fpr": 0.0,
+        "fnr": 1.0,
+        "auroc": 0.6698281333470562,
+        "theta": 0.6700838355934621
+      }
+    },
+    {
+      "protocol": "strict4",
+      "seed": 2,
+      "strict_four_shot_eligible": true,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0059/audiojack_0059_OK_C1_20231021132021.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0081/audiojack_0081_OK_C4_20231021132528.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0086/audiojack_0086_OK_C3_20231021132619.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0313/audiojack_0313_OK_C5_20231021144607.jpg"
+      ],
+      "theta_self": 0.5979282156082759,
+      "theta_loso": 0.6405192883595416,
+      "delta_theta": 0.042591072751265724,
+      "self": {
+        "n": 3815,
+        "tp": 24,
+        "tn": 2519,
+        "fp": 0,
+        "fn": 1272,
+        "accuracy": 0.6665792922673657,
+        "balanced_accuracy": 0.5092592592592593,
+        "fpr": 0.0,
+        "fnr": 0.9814814814814815,
+        "auroc": 0.7060650782448453,
+        "theta": 0.5979282156082759
+      },
+      "loso": {
+        "n": 3815,
+        "tp": 1,
+        "tn": 2519,
+        "fp": 0,
+        "fn": 1295,
+        "accuracy": 0.6605504587155964,
+        "balanced_accuracy": 0.5003858024691358,
+        "fpr": 0.0,
+        "fnr": 0.9992283950617284,
+        "auroc": 0.7060650782448453,
+        "theta": 0.6405192883595416
+      }
+    },
+    {
+      "protocol": "pool_assisted4",
+      "seed": 0,
+      "strict_four_shot_eligible": false,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0069/audiojack_0069_OK_C4_20231021132204.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0018/audiojack_0018_OK_C2_20231021131016.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0126/audiojack_0126_OK_C2_20231021133445.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0053/audiojack_0053_OK_C4_20231021131852.jpg"
+      ],
+      "theta_self": 0.4948717403046518,
+      "theta_loso": 0.5698892865982375,
+      "delta_theta": 0.07501754629358565,
+      "self": {
+        "n": 3815,
+        "tp": 1258,
+        "tn": 286,
+        "fp": 2233,
+        "fn": 38,
+        "accuracy": 0.40471821756225423,
+        "balanced_accuracy": 0.5421080651248046,
+        "fpr": 0.8864628820960698,
+        "fnr": 0.029320987654320986,
+        "auroc": 0.5830133883718309,
+        "theta": 0.4948717403046518
+      },
+      "loso": {
+        "n": 3815,
+        "tp": 466,
+        "tn": 1864,
+        "fp": 655,
+        "fn": 830,
+        "accuracy": 0.6107470511140236,
+        "balanced_accuracy": 0.5497720411293919,
+        "fpr": 0.260023818975784,
+        "fnr": 0.6404320987654321,
+        "auroc": 0.5830133883718309,
+        "theta": 0.5698892865982375
+      }
+    },
+    {
+      "protocol": "pool_assisted4",
+      "seed": 1,
+      "strict_four_shot_eligible": false,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0069/audiojack_0069_OK_C4_20231021132204.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0018/audiojack_0018_OK_C2_20231021131016.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0126/audiojack_0126_OK_C2_20231021133445.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0053/audiojack_0053_OK_C4_20231021131852.jpg"
+      ],
+      "theta_self": 0.5604018447146007,
+      "theta_loso": 0.5781765560304698,
+      "delta_theta": 0.01777471131586905,
+      "self": {
+        "n": 3815,
+        "tp": 662,
+        "tn": 1456,
+        "fp": 1063,
+        "fn": 634,
+        "accuracy": 0.5551769331585845,
+        "balanced_accuracy": 0.5444048074142689,
+        "fpr": 0.4219928543072648,
+        "fnr": 0.48919753086419754,
+        "auroc": 0.5620619709957411,
+        "theta": 0.5604018447146007
+      },
+      "loso": {
+        "n": 3815,
+        "tp": 387,
+        "tn": 1964,
+        "fp": 555,
+        "fn": 909,
+        "accuracy": 0.6162516382699869,
+        "balanced_accuracy": 0.5391427925543646,
+        "fpr": 0.2203255260023819,
+        "fnr": 0.7013888888888888,
+        "auroc": 0.5620619709957411,
+        "theta": 0.5781765560304698
+      }
+    },
+    {
+      "protocol": "pool_assisted4",
+      "seed": 2,
+      "strict_four_shot_eligible": false,
+      "support_paths": [
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0069/audiojack_0069_OK_C4_20231021132204.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0018/audiojack_0018_OK_C2_20231021131016.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0126/audiojack_0126_OK_C2_20231021133445.jpg",
+        "G:/dataset/realiad\\images\\audiojack\\OK/S0053/audiojack_0053_OK_C4_20231021131852.jpg"
+      ],
+      "theta_self": 0.569260392912978,
+      "theta_loso": 0.6022462936248761,
+      "delta_theta": 0.03298590071189811,
+      "self": {
+        "n": 3815,
+        "tp": 465,
+        "tn": 1868,
+        "fp": 651,
+        "fn": 831,
+        "accuracy": 0.6115334207077326,
+        "balanced_accuracy": 0.5501802045197242,
+        "fpr": 0.25843588725684796,
+        "fnr": 0.6412037037037037,
+        "auroc": 0.5755969140703493,
+        "theta": 0.569260392912978
+      },
+      "loso": {
+        "n": 3815,
+        "tp": 40,
+        "tn": 2502,
+        "fp": 17,
+        "fn": 1256,
+        "accuracy": 0.6663171690694627,
+        "balanced_accuracy": 0.5120577438626929,
+        "fpr": 0.006748709805478364,
+        "fnr": 0.9691358024691358,
+        "auroc": 0.5755969140703493,
+        "theta": 0.6022462936248761
+      }
+    }
+  ]
+}

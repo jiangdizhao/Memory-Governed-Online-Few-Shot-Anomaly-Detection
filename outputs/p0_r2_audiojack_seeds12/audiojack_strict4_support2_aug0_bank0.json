@@ -1,0 +1,280 @@
+{
+  "schema": "p0.protocol.audit.v2",
+  "case_id": "audiojack_strict4_support2_aug0_bank0",
+  "seeds": {
+    "support": 2,
+    "augmentation": 0,
+    "bank": 0,
+    "stream": 0,
+    "commissioning": 100003
+  },
+  "repeatability": {
+    "bank_fingerprint_equal": true,
+    "same_encoded_features_score_bank_1": 0.5272331237792969,
+    "same_encoded_features_score_bank_2": 0.5272331237792969,
+    "fixed_feature_bank_score_delta": 0.0,
+    "fixed_feature_bank_score_tolerance": 1e-06,
+    "independent_forward_score": 0.5272331237792969,
+    "reencoding_score_delta": 0.0,
+    "reencoding_tolerance": 0.0001,
+    "reencoding_within_tolerance": true
+  },
+  "bank_profile": {
+    "layers": [
+      {
+        "layer": 0,
+        "n_prototypes": 8192,
+        "feature_dim": 4096,
+        "capacity": 25000,
+        "dtype": "float16",
+        "bytes": 67108864
+      }
+    ],
+    "sha256": "ef3bda4ac8dae48934d5401535a1e848dbd4b9a8d7ad265b5392da95a0ffa0ad",
+    "total_prototypes": 8192,
+    "total_feature_bytes": 67108864
+  },
+  "loso_bank_profiles": [
+    {
+      "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0059/audiojack_0059_OK_C1_20231021132021.jpg",
+      "layers": [
+        {
+          "layer": 0,
+          "n_prototypes": 8184,
+          "feature_dim": 4096,
+          "capacity": 25000,
+          "dtype": "float16",
+          "bytes": 67043328
+        }
+      ],
+      "sha256": "5df6ab10c3478eb6841dc3b8c9c12d872cbf60da8851d1ee6d2a3f8abd44e9cd",
+      "total_prototypes": 8184,
+      "total_feature_bytes": 67043328
+    },
+    {
+      "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0081/audiojack_0081_OK_C4_20231021132528.jpg",
+      "layers": [
+        {
+          "layer": 0,
+          "n_prototypes": 8184,
+          "feature_dim": 4096,
+          "capacity": 25000,
+          "dtype": "float16",
+          "bytes": 67043328
+        }
+      ],
+      "sha256": "f0c80ca64642c4b3708c44db7a96ce66a12c7d5b3f025300f71bc913dd7af39b",
+      "total_prototypes": 8184,
+      "total_feature_bytes": 67043328
+    },
+    {
+      "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0086/audiojack_0086_OK_C3_20231021132619.jpg",
+      "layers": [
+        {
+          "layer": 0,
+          "n_prototypes": 8184,
+          "feature_dim": 4096,
+          "capacity": 25000,
+          "dtype": "float16",
+          "bytes": 67043328
+        }
+      ],
+      "sha256": "65c91131d8bd4d53e6303efef81b788c10c85f0ab5eac6ba1a2e75db1ae5cfea",
+      "total_prototypes": 8184,
+      "total_feature_bytes": 67043328
+    },
+    {
+      "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0313/audiojack_0313_OK_C5_20231021144607.jpg",
+      "layers": [
+        {
+          "layer": 0,
+          "n_prototypes": 8184,
+          "feature_dim": 4096,
+          "capacity": 25000,
+          "dtype": "float16",
+          "bytes": 67043328
+        }
+      ],
+      "sha256": "ffcdb38b96e2b23ec5ccc58892ae32e9dced9e32aa740dabb463e5cc3cd7a589",
+      "total_prototypes": 8184,
+      "total_feature_bytes": 67043328
+    }
+  ],
+  "score_sha256": "2c0a0b9cd83ff57e605b9744ac377f7b85ed9ca22a8bf3db04e407d4345121db",
+  "diagnostics": {
+    "score_quantiles_normal": {
+      "0": 0.4473319947719574,
+      "0.05": 0.477367690205574,
+      "0.25": 0.5016560554504395,
+      "0.5": 0.5163490176200867,
+      "0.75": 0.5298569202423096,
+      "0.95": 0.5526628732681275,
+      "1": 0.6041175723075867
+    },
+    "score_quantiles_defect": {
+      "0": 0.4710421562194824,
+      "0.05": 0.5041713416576385,
+      "0.25": 0.5193573385477066,
+      "0.5": 0.5323098003864288,
+      "0.75": 0.5488498359918594,
+      "0.95": 0.5833434164524078,
+      "1": 0.6339629292488098
+    },
+    "n_curve_rows": 3817,
+    "disclaimer": "Retrospective test-label diagnostics; no test-label threshold selection."
+  },
+  "backbone": {
+    "model_name": "dinov2_vitl14_reg",
+    "img_size": 392,
+    "resize_size": 448,
+    "layers": [
+      5,
+      11,
+      17,
+      23
+    ],
+    "use_fp16": true
+  },
+  "effective_config": {
+    "device": "cuda",
+    "augmentation_seed": 0,
+    "bank_seed": 0,
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "augmentations": 4,
+    "include_identity": false,
+    "multiplier": 2.5,
+    "feature_fuse": "concat",
+    "topk_patches": 32,
+    "image_aggregation": "max",
+    "image_topk": 64,
+    "image_quantile": 0.95,
+    "knn": 5
+  },
+  "runtime": {
+    "python": "3.11.14",
+    "numpy": "1.24.1",
+    "torch": "2.0.1+cu117",
+    "sdpa_math_only": true,
+    "cuda_math_sdp_enabled": true,
+    "cuda_flash_sdp_enabled": false,
+    "cuda_mem_efficient_sdp_enabled": false
+  },
+  "class_name": "audiojack",
+  "protocol": "strict4",
+  "support_seed": 2,
+  "stream_seed": 0,
+  "supports": [
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0059/audiojack_0059_OK_C1_20231021132021.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0081/audiojack_0081_OK_C4_20231021132528.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0086/audiojack_0086_OK_C3_20231021132619.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0313/audiojack_0313_OK_C5_20231021144607.jpg"
+  ],
+  "commissioning_paths": [],
+  "n_available_normal_paths_indexed": 1235,
+  "n_predeployment_images_decoded": 4,
+  "n_support_images": 4,
+  "strict_four_shot_eligible": true,
+  "thresholds": {
+    "self": {
+      "mu": 0.5035700052976608,
+      "sigma": 0.026061599390883733,
+      "theta": 0.5687240037748702,
+      "n": 4,
+      "scores": [
+        0.4676694869995117,
+        0.5018302798271179,
+        0.5267117619514465,
+        0.5180684924125671
+      ]
+    },
+    "loso": {
+      "mu": 0.5723871886730194,
+      "sigma": 0.02671330762098749,
+      "theta": 0.6391704577254882,
+      "n": 4,
+      "scores": [
+        0.5465313196182251,
+        0.6003245711326599,
+        0.5527774691581726,
+        0.58991539478302
+      ]
+    }
+  },
+  "metrics": {
+    "self": {
+      "n": 3815,
+      "tp": 142,
+      "tn": 2475,
+      "fp": 44,
+      "fn": 1154,
+      "accuracy": 0.6859764089121887,
+      "balanced_accuracy": 0.5460503261631354,
+      "fpr": 0.017467248908296942,
+      "fnr": 0.8904320987654321,
+      "auroc": 0.7270844973264916,
+      "theta": 0.5687240037748702
+    },
+    "loso": {
+      "n": 3815,
+      "tp": 0,
+      "tn": 2519,
+      "fp": 0,
+      "fn": 1296,
+      "accuracy": 0.6602883355176933,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7270844973264916,
+      "theta": 0.6391704577254882
+    }
+  },
+  "source_sha256": {
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a"
+  },
+  "configuration": {
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "class_name": "audiojack",
+    "support_policy": "strict4",
+    "seeds": "1,2",
+    "stream_seed": 0,
+    "augmentation_seed": 0,
+    "bank_seed": 0,
+    "commissioning_seed": 100003,
+    "verify_replay": true,
+    "replay_tolerance": 1e-06,
+    "inference_tolerance": 0.0001,
+    "math_sdpa": true,
+    "no_plots": false,
+    "shots": 4,
+    "device": "cuda",
+    "max_test": 0,
+    "commissioning_size": 0,
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "augmentations": 4,
+    "include_identity": false,
+    "feature_fuse": "concat",
+    "topk_patches": 32,
+    "image_aggregation": "max",
+    "image_topk": 64,
+    "image_quantile": 0.95,
+    "knn": 5,
+    "multiplier": 2.5,
+    "print_every": 100,
+    "out_dir": "outputs/p0_r2_audiojack_seeds12",
+    "self_test": false
+  },
+  "limits": [
+    "Frozen/static detector only; online full-system P0c remains to be tested.",
+    "LOSO scores are produced with three-shot reference banks and may be pessimistic for a deployed four-shot bank.",
+    "This audit uses v22 scoring classes with independently constructed, cached support features; it is not a byte-for-byte reproduction of historical v22 support-bank sampling.",
+    "Both static operating points share exactly the same query/test scores.",
+    "Supports are fixed per support_seed; augmentation and bank subsampling are fixed independently.",
+    "Bitwise-identical GPU scores are NOT guaranteed with nondeterministic attention; fixed-feature bank retrieval is verified independently.",
+    "LOSO folds still have only three original images and resample the final v22 bank pool; LOSO is diagnostic only.",
+    "Any threshold sweep/ROC uses held-out test labels retrospectively, NEVER to choose deployment thresholds."
+  ]
+}

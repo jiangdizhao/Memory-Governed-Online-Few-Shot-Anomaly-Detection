@@ -1,0 +1,303 @@
+{
+  "schema": "e01.v22.initialization.audit.v1",
+  "protocol": {
+    "dataset": "realiad",
+    "class": "audiojack",
+    "canonical_run": "original v22 run_phase3_streaming_aif(max_samples=0)",
+    "canonical_use_modes": false,
+    "canonical_support_select": "legacy",
+    "canonical_num_test_stream_updates": 0,
+    "candidate_normal_images_indexed": 1235,
+    "strict_four_shot_eligible": true,
+    "p0_supports_forced_to_canonical": true,
+    "notes": [
+      "Canonical v22 uses its native _sample_paths_deterministic_or_seeded selector.",
+      "P0 native uses random.sample; independent selection compared separately.",
+      "P0 uses isolated augmentation/bank seeds, unlike canonical v22 sequential RNG.",
+      "The P0 construction path is a pilot, not asserted to reproduce v22.",
+      "Only frozen probes are scored using shared encoded features; labels are never loaded.",
+      "This run is single-mode, identity-view, no correction, no set membership, no normal-pool calibration.",
+      "Equivalent in this restricted scenario does not establish equivalence to historical 30-class submitted runs."
+    ]
+  },
+  "parameters": {
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "class_name": "audiojack",
+    "legacy_seed": 0,
+    "support_seed": 0,
+    "stream_seed": 0,
+    "augmentation_seed": 0,
+    "bank_seed": 0,
+    "probe_count": 12,
+    "device": "cuda",
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "augmentations": 4,
+    "include_identity": false,
+    "rotation_deg": 15.0,
+    "rotation_p": 0.7,
+    "translate": 0.08,
+    "hflip_p": 0.5,
+    "feature_fuse": "concat",
+    "image_aggregation": "max",
+    "image_topk": 64,
+    "image_quantile": 0.95,
+    "topk_patches": 32,
+    "knn": 5,
+    "multiplier": 2.5,
+    "score_tolerance": 0.0001,
+    "math_sdpa": true,
+    "out_dir": "outputs/e01_audiojack_support0",
+    "self_test": false
+  },
+  "supports": {
+    "canonical_v22": [
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0083/audiojack_0083_OK_C1_20231021132550.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0153/audiojack_0153_OK_C1_20231021134019.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0340/audiojack_0340_OK_C2_20231021145008.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0490/audiojack_0490_OK_C5_20231021160354.jpg"
+    ],
+    "p0_native_selection": [
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+    ],
+    "native_order_identical": false,
+    "p0_bank_supports_used": [
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0083/audiojack_0083_OK_C1_20231021132550.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0153/audiojack_0153_OK_C1_20231021134019.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0340/audiojack_0340_OK_C2_20231021145008.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0490/audiojack_0490_OK_C5_20231021160354.jpg"
+    ]
+  },
+  "backbone": {
+    "model_name": "dinov2_vitl14_reg",
+    "img_size": 392,
+    "resize_size": 448,
+    "layers": [
+      5,
+      11,
+      17,
+      23
+    ],
+    "use_fp16": true
+  },
+  "augmentation": {
+    "original_v22": {
+      "concept_pass": [
+        {
+          "count": 4,
+          "fingerprints": [
+            "29e0eafb68bbbc2e6c9a34740b3e505a29d4b2772c8aea04bc6368217a7254b3",
+            "30f651aad5ef958f0b02f968e8850096876e5bec5817513b3e3469b35aeb3c0a",
+            "24823bff624b69b42f99d1ee4f0170c14ea0502bda41c58f87d6787c19f48571",
+            "0bdc97c7aff6ff3cc942d3c64fe5d9d248b4b46a292b19a97b72c100796d5dbc"
+          ]
+        },
+        {
+          "count": 4,
+          "fingerprints": [
+            "12906d36ef8131ddb43358a982dea00a6e502f4cb7c054fc13b87afe2ea86a06",
+            "59a144d427867d1f6a2df9ede7e275d14fe1c31e9773536fb38ed1939a12564f",
+            "a63f7d41be6ed33cbd1ddb7341a71b5325bdc1e3c7121387454618eafad5f70c",
+            "0334d763211d2e6425ce4c7b14c07a81c784b86f5bce5753c14a24c7179b976d"
+          ]
+        },
+        {
+          "count": 4,
+          "fingerprints": [
+            "a53dad628e1fe9c9bfccdc75fdb22835aa0e38037103e47ddaee4be70ce1e550",
+            "b8db5d633c44825ad2fb23e3019c60bb6c29593e602be58bf89cc2fd293ea86c",
+            "9bd67deae5f224305ff501ad714a2da72eb9e1f771b82d5229fe4a281e335356",
+            "b12afe9f37aa913e5a791fe42182b52852df61f0f4eb90a1bc4f522dec418a70"
+          ]
+        },
+        {
+          "count": 4,
+          "fingerprints": [
+            "86349098254759bcc0878227cabb116ee3fe43cc557da193728b69c59e040beb",
+            "01c987f2b0d12e4393aea814dd5c5ffcbb406ac3d526a8ff6100bd8c80b6ad92",
+            "07f3a72dbda79aa27fe6668503ff321125f2d443e39fd39ffae8565a55a71280",
+            "c68a221c71fc7bfe12768499cc122dd9c2e1834ae515386295086d6b19db5dcc"
+          ]
+        }
+      ],
+      "fixed_pass": [
+        {
+          "count": 4,
+          "fingerprints": [
+            "bbd6025dd2fd81d78d74bd82856919f060a4bfcc87a354b05e5d01075665bd02",
+            "6b37e60e79610cf6e0df648fd931d1a6de03ca4e5a7c70385521696fb8d920c2",
+            "6427b8efbf17d69c46de80d6b6fa8c989b870709d25e4f2f663061a266911178",
+            "4de9ec9fb251321b58804a33847dc4a7028630bf9b39c2a1c0db1e693b6bea46"
+          ]
+        },
+        {
+          "count": 4,
+          "fingerprints": [
+            "fbe3c35546c2ee506fa81299976b7d001a64ce5a31999dc1e5b24be83b8f671a",
+            "4ecd9b9b939761d14a1da306452efd79e3f80a6fd313de3dca894ef7cbc7b68e",
+            "8d4c860f948e342bf22ac24a16cee74bea87f7ec9438867a6658c52c5fc7de59",
+            "f900d24768dab3f8bc82d5b8a782ed5786231cc2ca70c02ae6c5de8bc72fdc90"
+          ]
+        },
+        {
+          "count": 4,
+          "fingerprints": [
+            "cb42315650feb64745acab45cf1aea6323d733cbfc12a47faf3261717d099420",
+            "cebb65d34c2392c0288154d4472ff90849783e4a5d45665a7e938433d3f64da7",
+            "dd9041958a0a99e49dc4cc2d0f43ee8ef4935f9298c4b0a89b02171809ba5e97",
+            "f0b1cb123f1201fce7054466db4150c781bbfb29ab1de09169d7061a5d3df083"
+          ]
+        },
+        {
+          "count": 4,
+          "fingerprints": [
+            "9f8758f60153c9ab56504d3345ebc27be75c8430c382e7530c870a2336d316fc",
+            "f441d426925e7a3ce35a149c5bf3fa4cae5047ce9574196f70d7a37ffee20da0",
+            "ae177241bb2c4f665258cb95200d79be42fde9cc0ea0ad1ed490a2a365066e9d",
+            "d38941719316a9882d140a8a5494639f29ba20621151caacbbbbcfd03382a656"
+          ]
+        }
+      ],
+      "total_calls": 8,
+      "notes": "Order corresponds to support iteration for single-mode, identity-only v22"
+    },
+    "p0_refs": [
+      {
+        "count": 4,
+        "fingerprints": [
+          "487306cef39507e28d8104b06a66e716023f9d449e9057566876ade1a9d225f3",
+          "36275c563123541688836c5bd3e50fe2d5d96d5baf8ac1a843f7a43693844c0c",
+          "78b922b01302eb9fce21f5e8b53b52cb89f3319958c84551430e418051b5596c",
+          "07e9a2cef74b6f5000f6e40901d43068e41c8c19ceebadb53f184336391f2a48"
+        ]
+      },
+      {
+        "count": 4,
+        "fingerprints": [
+          "8b6c08ef3bfa248ba44a9bff314ea7dc5af02c0f9a766a23ee9abaa955cd3ba7",
+          "8f9199144fd186df4f99ab39bba03a9e914b6286fb883492e177047478931b40",
+          "60fd96a4b6982420450bf305ffd9fa0f055b4b688b83dae6f1b766d48387fbef",
+          "9c67224ab10ea39bdc463d3e8fb9f0625b4204f68485bc3c86e5aa21c2e22eeb"
+        ]
+      },
+      {
+        "count": 4,
+        "fingerprints": [
+          "6713db16ca860b54f845fc671b891e93bb1ba51cf432c58683265a09496d14d7",
+          "f1ce02483e573ac0117a98a95acadeea9a811db0f1292a058444f997dcf11397",
+          "255194c13c0b19971b77da2278361b53798c7c85fac8b9d9f4a99e7f31af13e9",
+          "e1f7ab797dca2ee1d60f4e63e2818f508fdac9c44a0f63bce5cf12ea15506f8c"
+        ]
+      },
+      {
+        "count": 4,
+        "fingerprints": [
+          "14e82873610b538333e6358e869c840ded906e44ef0cf2f4b43114d854e63220",
+          "d86d16929098038a35564591fb7992ab65c5f46ed6d1cbfdaa68407d2e212efe",
+          "7d222ccec08383933c19c64959c95048639bdaf2011735bf05f6cd887106a4c3",
+          "d115b4a717567d047da359c958727f6442f83788e58ddb8ae66cda3357ce38b2"
+        ]
+      }
+    ],
+    "fixed_pass_fingerprints_equal": false
+  },
+  "memory": {
+    "canonical_v22": {
+      "layers": [
+        {
+          "layer": 0,
+          "n_prototypes": 8192,
+          "feature_dim": 4096,
+          "dtype": "float16",
+          "capacity": 25000,
+          "bytes": 67108864
+        }
+      ],
+      "sha256": "ceb275704cb1277e8816feede44e9a0957bdeab27916eedf25d254123f0a3f86",
+      "total_prototypes": 8192,
+      "total_feature_bytes": 67108864
+    },
+    "p0": {
+      "layers": [
+        {
+          "layer": 0,
+          "n_prototypes": 8192,
+          "feature_dim": 4096,
+          "dtype": "float16",
+          "capacity": 25000,
+          "bytes": 67108864
+        }
+      ],
+      "sha256": "3c560900b971fc661013a9f3b5a78668f4fee150d2d9092b71afd6b41011a54d",
+      "total_prototypes": 8192,
+      "total_feature_bytes": 67108864
+    }
+  },
+  "threshold": {
+    "canonical_init_source": "support",
+    "canonical_v22_support_scores": [
+      0.4760524332523346,
+      0.48612719774246216,
+      0.5313838720321655,
+      0.48676639795303345
+    ],
+    "canonical_v22_theta0": 0.5568159315735102,
+    "canonical_v22_muN0": 0.4950824975967407,
+    "canonical_v22_sigmaN0": 0.02469337359070778,
+    "canonical_v22_controller": "guarded_dual_anchor",
+    "p0_support_scores": [
+      0.47151660919189453,
+      0.4567048251628876,
+      0.5194354057312012,
+      0.5047319531440735
+    ],
+    "p0_mu": 0.4880971983075142,
+    "p0_sigma": 0.02897812588876273,
+    "p0_theta": 0.560542513029421,
+    "p0_minus_canonical_theta": 0.003726581455910871
+  },
+  "paired_probe": {
+    "n": 12,
+    "mean_abs_delta": 0.007433449228604634,
+    "max_abs_delta": 0.015932679176330566,
+    "n_above_tolerance": 12,
+    "tolerance": 0.0001,
+    "within_tolerance": false,
+    "score_correlation": 0.87867227774913
+  },
+  "verdict": {
+    "status": "not_equivalent",
+    "failed_checks": [
+      "native_support_selection",
+      "augmentation_fingerprints",
+      "prototype_bytes",
+      "frozen_probe_scores",
+      "initial_threshold"
+    ],
+    "native_support_selection_equal": false,
+    "matched_supports_for_bank_comparison": true,
+    "support_selection_difference_separately_recorded": true,
+    "prototype_shapes_equal": true,
+    "prototype_bytes_equal": false,
+    "augmentation_fingerprints_equal": false,
+    "probe_scores_within_tolerance": false,
+    "threshold_within_tolerance": false,
+    "explanation": "Actual v22 initializer is ground truth. A NOT_EQUIVALENT result is an informative E01 finding, NOT a GPU run failure. Do not use the P0 score as a faithful copy of historical v22."
+  },
+  "source_sha256": {
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a",
+    "experiments/p0_protocol_audit.py": "b83918ec5aceb3ef63cca942fc9fb0e241559d9672d20bed422b15fcd48135e7",
+    "experiments/p0_v22_equivalence.py": "b686da28f577d44deab6bc24ff160dd66666d6043dbee7ac11ca6485cfa0b49e"
+  },
+  "runtime": {
+    "elapsed_seconds": 34.45,
+    "torch": "2.0.1+cu117",
+    "numpy": "1.24.1",
+    "math_sdpa_only": true
+  }
+}

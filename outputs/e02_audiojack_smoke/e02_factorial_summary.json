@@ -1,0 +1,166 @@
+{
+  "schema": "e02.matched.feedback.factorial.v1",
+  "class": "audiojack",
+  "canonical_init": {
+    "support_paths": [
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0083/audiojack_0083_OK_C1_20231021132550.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0153/audiojack_0153_OK_C1_20231021134019.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0340/audiojack_0340_OK_C2_20231021145008.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0490/audiojack_0490_OK_C5_20231021160354.jpg"
+    ],
+    "fixed_bank_sha256": "ceb275704cb1277e8816feede44e9a0957bdeab27916eedf25d254123f0a3f86",
+    "theta0": 0.5568159315735102,
+    "backbone": {
+      "name": "dinov2_vitl14_reg",
+      "img_size": 392,
+      "resize_size": 448,
+      "layers": [
+        5,
+        11,
+        17,
+        23
+      ]
+    }
+  },
+  "query_tape": {
+    "stream_length": 100,
+    "query_positions_1based": [
+      12,
+      78,
+      88
+    ],
+    "query_rate_target": 0.03,
+    "query_rate_realized": 0.03,
+    "query_seed": 37,
+    "stream_seed": 0,
+    "sha256": "1016cf7f1ef850bdc3f2e44168f3f674ffb4cabf733c7dfcf21fc98eefe28478",
+    "stream_paths_sha256": "6642c8dacb58da9763947fa9fef39324bc5da6ed091a7bcbd4c310d919962bdd",
+    "label_blind": true
+  },
+  "observed_feedback": {
+    "queried_normals": 1,
+    "queried_defects": 2,
+    "total_queried": 3
+  },
+  "arms": {
+    "static": {
+      "n": 100,
+      "tp": 12,
+      "tn": 51,
+      "fp": 5,
+      "fn": 32,
+      "accuracy": 0.63,
+      "balanced_accuracy": 0.5917207792207793,
+      "fpr": 0.08928571428571429,
+      "fnr": 0.7272727272727273,
+      "auroc": 0.7386363636363636,
+      "query_count_available": 3,
+      "stm_write_events": 0,
+      "stm_update_calls": 0,
+      "dynamic_stm_prototypes": 0,
+      "theta_label_observations": 0,
+      "initial_theta": 0.5568159315735102,
+      "final_theta": 0.5568159315735102
+    },
+    "stm_only": {
+      "n": 100,
+      "tp": 12,
+      "tn": 51,
+      "fp": 5,
+      "fn": 32,
+      "accuracy": 0.63,
+      "balanced_accuracy": 0.5917207792207793,
+      "fpr": 0.08928571428571429,
+      "fnr": 0.7272727272727273,
+      "auroc": 0.7329545454545454,
+      "query_count_available": 3,
+      "stm_write_events": 1,
+      "stm_update_calls": 1,
+      "dynamic_stm_prototypes": 30,
+      "theta_label_observations": 0,
+      "initial_theta": 0.5568159315735102,
+      "final_theta": 0.5568159315735102
+    },
+    "theta_only": {
+      "n": 100,
+      "tp": 12,
+      "tn": 51,
+      "fp": 5,
+      "fn": 32,
+      "accuracy": 0.63,
+      "balanced_accuracy": 0.5917207792207793,
+      "fpr": 0.08928571428571429,
+      "fnr": 0.7272727272727273,
+      "auroc": 0.7386363636363636,
+      "query_count_available": 3,
+      "stm_write_events": 0,
+      "stm_update_calls": 0,
+      "dynamic_stm_prototypes": 0,
+      "theta_label_observations": 3,
+      "initial_theta": 0.5568159315735102,
+      "final_theta": 0.5568159315735102
+    },
+    "stm_theta": {
+      "n": 100,
+      "tp": 12,
+      "tn": 51,
+      "fp": 5,
+      "fn": 32,
+      "accuracy": 0.63,
+      "balanced_accuracy": 0.5917207792207793,
+      "fpr": 0.08928571428571429,
+      "fnr": 0.7272727272727273,
+      "auroc": 0.7329545454545454,
+      "query_count_available": 3,
+      "stm_write_events": 1,
+      "stm_update_calls": 1,
+      "dynamic_stm_prototypes": 30,
+      "theta_label_observations": 3,
+      "initial_theta": 0.5568159315735102,
+      "final_theta": 0.5568159315735102
+    }
+  },
+  "causal_invariants": {
+    "static_and_theta_only_scores_match_stepwise": true,
+    "initial_fixed_bank_hash_equal_four_arms": true,
+    "frozen_threshold_never_updated": true,
+    "no_normal_STM_in_non_memory_arms": true,
+    "label_tape_common_across_all_arms": true,
+    "prediction_before_feedback": true
+  },
+  "settings": {
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "class_name": "audiojack",
+    "device": "cuda",
+    "support_seed": 0,
+    "legacy_seed": 0,
+    "stream_seed": 0,
+    "query_seed": 37,
+    "query_rate": 0.03,
+    "max_samples": 100,
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "augmentations": 4,
+    "include_identity": false,
+    "feature_fuse": "concat",
+    "image_aggregation": "max",
+    "topk_patches": 32,
+    "knn": 5,
+    "math_sdpa": true,
+    "score_tolerance": 1e-05,
+    "print_every": 25,
+    "out_dir": "outputs/e02_audiojack_smoke",
+    "self_test": false
+  },
+  "limitations": [
+    "This is a matched fixed-feedback causal pilot, NOT native BEA.",
+    "STM writes use v22's normal_dyn_only update primitive, with novelty held at zero.",
+    "Only verified normals update STM; threshold controller receives both verified classes.",
+    "No unlabeled pseudo-normal updates, correction, defect bank updates, LTM, or maturation.",
+    "Threshold arm uses verified-label observe_labeled without unlabeled pseudo-observations.",
+    "Canonical initial state is the ORIGINAL v22 initialization, not the P0 pilot.",
+    "Prequential AUROC pools time-varying scores; additionally evaluate on an untouched fixed probe set in later work.",
+    "This is only one category and one support/query seed, not publication-ready evidence."
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "schema": "p0.protocol.audit.v1",
+  "class_name": "audiojack",
+  "protocol": "strict4",
+  "support_seed": 2,
+  "stream_seed": 0,
+  "supports": [
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0059/audiojack_0059_OK_C1_20231021132021.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0081/audiojack_0081_OK_C4_20231021132528.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0086/audiojack_0086_OK_C3_20231021132619.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0313/audiojack_0313_OK_C5_20231021144607.jpg"
+  ],
+  "commissioning_paths": [],
+  "n_available_normal_paths_indexed": 1235,
+  "n_predeployment_images_decoded": 4,
+  "n_support_images": 4,
+  "strict_four_shot_eligible": true,
+  "thresholds": {
+    "self": {
+      "mu": 0.5128542259335518,
+      "sigma": 0.03402959586988964,
+      "theta": 0.5979282156082759,
+      "n": 4,
+      "scores": [
+        0.4807887673377991,
+        0.5587179064750671,
+        0.494838148355484,
+        0.5170720815658569
+      ]
+    },
+    "loso": {
+      "mu": 0.566795289516449,
+      "sigma": 0.02948959953723707,
+      "theta": 0.6405192883595416,
+      "n": 4,
+      "scores": [
+        0.5362658500671387,
+        0.5950866937637329,
+        0.5470103025436401,
+        0.5888183116912842
+      ]
+    }
+  },
+  "metrics": {
+    "self": {
+      "n": 3815,
+      "tp": 24,
+      "tn": 2519,
+      "fp": 0,
+      "fn": 1272,
+      "accuracy": 0.6665792922673657,
+      "balanced_accuracy": 0.5092592592592593,
+      "fpr": 0.0,
+      "fnr": 0.9814814814814815,
+      "auroc": 0.7060650782448453,
+      "theta": 0.5979282156082759
+    },
+    "loso": {
+      "n": 3815,
+      "tp": 1,
+      "tn": 2519,
+      "fp": 0,
+      "fn": 1295,
+      "accuracy": 0.6605504587155964,
+      "balanced_accuracy": 0.5003858024691358,
+      "fpr": 0.0,
+      "fnr": 0.9992283950617284,
+      "auroc": 0.7060650782448453,
+      "theta": 0.6405192883595416
+    }
+  },
+  "source_sha256": {
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a"
+  },
+  "configuration": {
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "class_name": "audiojack",
+    "support_policy": "both",
+    "seeds": "0,1,2",
+    "stream_seed": 0,
+    "shots": 4,
+    "device": "cuda",
+    "max_test": 0,
+    "commissioning_size": 0,
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "augmentations": 4,
+    "include_identity": false,
+    "feature_fuse": "concat",
+    "topk_patches": 32,
+    "image_aggregation": "max",
+    "image_topk": 64,
+    "image_quantile": 0.95,
+    "knn": 5,
+    "multiplier": 2.5,
+    "print_every": 100,
+    "out_dir": "outputs/p0_audiojack_full",
+    "self_test": false
+  },
+  "limits": [
+    "Frozen/static detector only; online full-system P0c remains to be tested.",
+    "LOSO scores are produced with three-shot reference banks and may be pessimistic for a deployed four-shot bank.",
+    "This audit uses v22 scoring classes with independently constructed, cached support features; it is not a byte-for-byte reproduction of historical v22 support-bank sampling.",
+    "Both static operating points share exactly the same query/test scores."
+  ]
+}

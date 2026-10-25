@@ -1,0 +1,43 @@
+{
+  "probe_count": 16,
+  "stream_count": 84,
+  "probe_seed": 97,
+  "probe_paths_sha256": "ec37acbae8dc8797aaaab360c26c4a4a2b7907f0dc8b4c2cc79502a657c12e19",
+  "stream_paths_sha256": "f1a9a7dd26e50c42915b9373191dbfb0a7bedffd4bda175f315835691afe22c2",
+  "probe_paths": [
+    "G:/dataset/realiad\\images\\audiojack\\NG/QS/S0002/audiojack__0002_NG_QS_C2_20231023093925.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0217/audiojack_0217_OK_C3_20231021142410.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0102/audiojack__0102_NG_ZW_C4_20231023103938.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/QS/S0036/audiojack__0036_NG_QS_C3_20231023094607.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/QS/S0042/audiojack__0042_NG_QS_C1_20231023094703.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0084/audiojack__0084_NG_BX_C4_20231023113159.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0009/audiojack_0009_OK_C1_20231021130805.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0003/audiojack__0003_NG_ZW_C1_20231023100748.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0343/audiojack_0343_OK_C1_20231021145318.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0123/audiojack__0123_NG_ZW_C3_20231023104610.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0042/audiojack__0042_NG_BX_C3_20231023112320.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0034/audiojack__0034_NG_BX_C5_20231023112222.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0036/audiojack__0036_NG_BX_C1_20231023112238.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0066/audiojack__0066_NG_ZW_C5_20231023102934.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0311/audiojack_0311_OK_C3_20231021144550.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0066/audiojack__0066_NG_ZW_C4_20231023102934.jpg"
+  ],
+  "stream_probe_disjoint": true,
+  "query_tape_positions_1based": [
+    12,
+    78,
+    80
+  ],
+  "query_tape_sha256": "40036925384eb6c0bd2ac740eb201177c656806954f46c91645711da5687c3c0",
+  "query_count": 3,
+  "query_rate_actual": 0.03571428571428571,
+  "label_blind_selection": true,
+  "checkpoint_steps": [
+    0,
+    21,
+    42,
+    63,
+    84
+  ],
+  "probe_used_for_updates": false
+}
