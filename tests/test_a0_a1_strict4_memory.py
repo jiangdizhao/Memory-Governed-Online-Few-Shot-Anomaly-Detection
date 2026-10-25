@@ -108,7 +108,8 @@ class ProtocolTests(unittest.TestCase):
             "query_tape_sha256": auto.sha([2,11]),
             "observed_query_normals": 1, "observed_query_defects": 1,
             "fixed_bank": {"sha256": "test-only"},
-            "feature_configuration": {"device": "cuda"}
+            "feature_configuration": {"device": "cuda"},
+            "dynamic_capacity_per_layer": 4
         }
         # Update fixture to exact 3% (3 query positions).
         p["query_positions_1based"] = [2, 11, 15]
@@ -134,7 +135,7 @@ class ProtocolTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out, j = self.fixture(Path(tmp))
             args = auto.parser().parse_args(
-                ["--validate", "--probe-count", "1"])
+                ["--validate", "--probe-count", "1", "--dynamic-capacity", "4"])
             row = auto.validate(out, cls="fake", seed=0, order="native",
                                 smoke=False, args=args)
             self.assertEqual(row["normal_queries"], 1)
