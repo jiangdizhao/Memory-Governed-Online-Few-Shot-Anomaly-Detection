@@ -75,6 +75,7 @@ class ContractTests(unittest.TestCase):
                 labels_after_predictions=True,
                 candidate_from_shared_static=True,
                 uniform_retrieval="global_top5_fixed_plus_stm_plus_optional_ltm",
+                evidence_mode="neutral",
                 hierarchical_allocation=dict(stm=64,ltm=32,buffer=32),
                 query_positions=qpos,query_hash=runner.sha(qpos),
                 probe_paths=probe,probe_hash=runner.sha(probe),
