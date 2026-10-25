@@ -126,7 +126,7 @@ neutral primary result is inspected. It does not correct LOSO calibration.
 
 For a smaller first screen the same entrypoint supports `--classes audiojack --seeds 0 --budgets 128`. These change the resulting planned matrix, and should be recorded as exploratory, not silently pooled as full evidence.
 
-If interrupted, re-run the **same** command. Completed valid per-condition directories are rechecked and skipped. Incomplete result directories or leftover failed preflight logs are intentionally not overwritten; inspect error logs and recover by archiving the affected incomplete directory **without changing completed evidence**.
+If interrupted, re-run the **same** command. Completed valid per-condition directories are rechecked and skipped. A CPU mechanism-preflight log with a recorded nonzero exit code (including the original Windows `cp1252` Unicode-arrow print failure) is automatically **archived, not deleted**, and the preflight is retried; a missing or zero exit-code log without a success marker still fails closed for manual inspection. GPU experiment directories and logs remain immutable. If a GPU condition is incomplete, inspect its `.run.log` and archive only that incomplete condition before re-running, preserving completed evidence. The subprocess uses UTF-8 I/O; unrepresentable glyphs are escaped when displayed on legacy Windows consoles.
 
 ### Files
 
