@@ -113,10 +113,19 @@ def score_two(impl, e02, static_bank, arm, image, features, args):
     return s_static, s_stm, amap
 
 
+def dynamic_prototype_fingerprint(bank, cls: str) -> str:
+    """Hash actual STM feature bytes, not only bank size, to exclude probe writes."""
+    h = hashlib.sha256()
+    for cb in bank.normal_dyn[cls][0]["id"]:
+        h.update(cb.protos.detach().cpu().contiguous().numpy().tobytes())
+    return h.hexdigest()
+
+
 def score_probe_set(impl, e02, args, backbone, static_bank, arm,
                     probes, t: int, fixed_theta: float) -> tuple[dict, list[dict]]:
     y, score_static, score_stm, rows = [], [], [], []
     stm_size_before = stm_total(arm.bank, args.class_name)
+    stm_digest_before = dynamic_prototype_fingerprint(arm.bank, args.class_name)
     for sample in probes:
         image, feats = feature_encode(impl, backbone, sample, args)
         sa, sb, _ = score_two(impl, e02, static_bank, arm, image, feats, args)
@@ -130,8 +139,9 @@ def score_probe_set(impl, e02, args, backbone, static_bank, arm,
             "static_score": sa, "stm_score": sb,
             "score_delta": sb - sa,
         })
-    if stm_total(arm.bank, args.class_name) != stm_size_before:
-        raise AssertionError("Probe scoring changed dynamic normal bank size")
+    if stm_total(arm.bank, args.class_name) != stm_size_before or \
+       dynamic_prototype_fingerprint(arm.bank, args.class_name) != stm_digest_before:
+        raise AssertionError("Probe scoring altered STM contents; held-out evaluation leaked state")
     a = e02.metrics(y, score_static, [int(x >= fixed_theta) for x in score_static])
     b = e02.metrics(y, score_stm, [int(x >= fixed_theta) for x in score_stm])
     return {
@@ -304,6 +314,9 @@ def run_r1(args, impl, e02, e01, out):
                   f"AUROC static={item['static']['auroc']} STM={item['stm']['auroc']}", flush=True)
     if len(report_rows) != len(steps) or labels_seen != len(tape):
         raise AssertionError("Probe checkpoints / query tape mismatch")
+    baseline = report_rows[0]
+    if baseline["t"] != 0 or baseline["static"]["auroc"] != baseline["stm"]["auroc"]:
+        raise AssertionError("At t=0 both branches must have the same probe AUROC")
     if e01.memory_profile(static, args.class_name)["sha256"] != sha:
         raise AssertionError("Static initial Fixed Bank mutated")
     if e01.memory_profile(arm.bank, args.class_name)["sha256"] != sha:
@@ -418,6 +431,13 @@ def run_r2(args, impl, e02, e01, out):
                   flush=True)
     if queried_normals + queried_defects != len(tape):
         raise AssertionError("Wrong queried label count")
+    for name, controller in controllers.items():
+        if controller is None:
+            continue
+        received = (controller.observed if hasattr(controller, "observed")
+                    else controller.n_normals_labeled + controller.n_defects_labeled)
+        if received != len(tape):
+            raise AssertionError(f"Controller {name} received {received} instead of {len(tape)} labels")
     if e01.memory_profile(static,args.class_name)["sha256"] != sha or \
        e01.memory_profile(arm.bank,args.class_name)["sha256"] != sha:
         raise AssertionError("Fixed Bank altered during calibration experiment")
