@@ -106,7 +106,8 @@ class ProtocolTests(unittest.TestCase):
             "query_rate_target": .03, "query_positions_1based": [3,11],
             "query_tape_sha256": auto.sha([3,11]),
             "observed_query_normals": 1, "observed_query_defects": 1,
-            "fixed_bank": {"sha256": "test-only"}
+            "fixed_bank": {"sha256": "test-only"},
+            "feature_configuration": {"device": "cuda"}
         }
         # Update fixture to exact 3% (3 query positions).
         p["query_positions_1based"] = [3, 11, 15]
