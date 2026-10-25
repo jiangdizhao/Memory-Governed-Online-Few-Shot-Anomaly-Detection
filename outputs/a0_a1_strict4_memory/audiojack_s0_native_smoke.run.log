@@ -1,0 +1,33 @@
+RUN: D:\anaconda3\envs\torch\python.exe E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection\experiments\a0_a1_strict4_matched.py --dataset-root G:/dataset/realiad --class-name audiojack --support-seed 0 --stream-order native --out-dir outputs\a0_a1_strict4_memory\audiojack_s0_native_smoke --probe-count 32 --dynamic-capacity 128 --probe-every 512 --print-every 100 --max-samples 64 --math-sdpa
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+{
+  "condition": "audiojack/s0/native",
+  "n": 64,
+  "K": 2,
+  "theta": 0.6259433360321877,
+  "memory_AUROCs": {
+    "static": 0.75709,
+    "fifo": 0.81781,
+    "reservoir": 0.81781,
+    "online_greedy_coreset": 0.81781,
+    "v22_normal_stm": 0.81781,
+    "v22_utility_stm": 0.81781
+  },
+  "BA": {
+    "static": 0.5,
+    "fifo": 0.5,
+    "reservoir": 0.5,
+    "online_greedy_coreset": 0.5,
+    "v22_normal_stm": 0.5,
+    "v22_utility_stm": 0.5
+  },
+  "out_dir": "outputs\\a0_a1_strict4_memory\\audiojack_s0_native_smoke"
+}
+
+EXIT CODE 0 elapsed_seconds=93.7

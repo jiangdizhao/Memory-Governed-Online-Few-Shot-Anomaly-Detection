@@ -1,0 +1,555 @@
+{
+  "schema": "a0a1.strict4.loso.matched.v1",
+  "class_name": "audiojack",
+  "support_seed": 0,
+  "stream_order": "native",
+  "protocol": {
+    "support_selection": "strict_random_four_shot",
+    "support_image_access_count": 4,
+    "training_candidate_paths_indexed_not_encoded": 1235,
+    "support_paths": [
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+    ],
+    "support_sha256": "e0081a4ce90de48d98ddf95b02b5b0ce901d5248dd1ad8363a77aabc5b4ac246",
+    "calibration": "four_fold_leave_entire_support_image_and_all_augmentations_out",
+    "loso_fold_lineage": [
+      {
+        "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+        "support_paths": [
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+        ],
+        "fixed_bank_sha256": "a88fbd313f41dce5c458dc5ed482e1233747b29e790922bbce374efe796b6d71"
+      },
+      {
+        "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+        "support_paths": [
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+        ],
+        "fixed_bank_sha256": "20eb44fc904da5e0b576041385c6203d9398025136092181ad0a34e033a83ab7"
+      },
+      {
+        "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg",
+        "support_paths": [
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg"
+        ],
+        "fixed_bank_sha256": "439d4079fd86cd48827c528255eae0905e0116d0627712f6cb97c7018b0b364a"
+      },
+      {
+        "heldout": "G:/dataset/realiad\\images\\audiojack\\OK/S0353/audiojack_0353_OK_C2_20231021145553.jpg",
+        "support_paths": [
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0041/audiojack_0041_OK_C3_20231021131449.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0231/audiojack_0231_OK_C1_20231021142646.jpg",
+          "G:/dataset/realiad\\images\\audiojack\\OK/S0331/audiojack_0331_OK_C4_20231021144836.jpg"
+        ],
+        "fixed_bank_sha256": "35d4b548670e6960e84cfa61cb0be33e6194985c80a91ade6db07743a2e9e901"
+      }
+    ],
+    "loso_scores": [
+      0.571704089641571,
+      0.594268262386322,
+      0.5374050140380859,
+      0.5496764183044434
+    ],
+    "loso_stats": {
+      "mu": 0.5632634460926056,
+      "sigma": 0.025071955975832824,
+      "theta": 0.6259433360321877,
+      "n": 4
+    },
+    "diagnostic_self_match_scores": [
+      0.5040769577026367,
+      0.4730745851993561,
+      0.5010087490081787,
+      0.5070091485977173
+    ],
+    "diagnostic_self_match_stats": {
+      "mu": 0.4962923601269722,
+      "sigma": 0.01567119343689715,
+      "theta": 0.5354703437192151,
+      "n": 4
+    },
+    "theta0_shared_across_all_methods": 0.6259433360321877,
+    "fixed_bank": {
+      "layers": [
+        {
+          "layer": 0,
+          "n_prototypes": 8192,
+          "feature_dim": 4096,
+          "capacity": 25000,
+          "dtype": "float16",
+          "bytes": 67108864
+        }
+      ],
+      "sha256": "3d284f6c8cf7cd5aa9f859cf1b782d83c4154e3929eb96dfb9f4e231d9d9b463",
+      "total_prototypes": 8192,
+      "total_feature_bytes": 67108864
+    },
+    "feature_configuration": {
+      "device": "cuda",
+      "augmentation_seed": 0,
+      "bank_seed": 0,
+      "fixed_capacity": 25000,
+      "fixed_per_image": 5000,
+      "augmentations": 4,
+      "include_identity": false,
+      "multiplier": 2.5,
+      "feature_fuse": "concat",
+      "topk_patches": 32,
+      "image_aggregation": "max",
+      "image_topk": 64,
+      "image_quantile": 0.95,
+      "knn": 5
+    },
+    "stream_paths_sha256": "f5177da69e82d0337c18f7ed80aec8aec21d8e3ee56e41be23d6e8333b696a1e",
+    "probe_paths_sha256": "7d2d5603c2e30d81d56f4029db502e80bc0dc0ee6c335d627ae7f6155d35edfa",
+    "probe_paths": [
+      "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0031/audiojack__0031_NG_ZW_C2_20231023101427.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S0045/audiojack__0045_NG_HS_C1_20231023092200.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0011/audiojack__0011_NG_BX_C4_20231023111824.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0197/audiojack_0197_OK_C2_20231021135033.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S0115/audiojack__0115_NG_HS_C2_20231023093527.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0060/audiojack__0060_NG_BX_C4_20231023112715.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/QS/S0118/audiojack__0118_NG_QS_C5_20231023100026.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0112/audiojack__0112_NG_ZW_C5_20231023104249.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/QS/S0077/audiojack__0077_NG_QS_C1_20231023095251.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0074/audiojack__0074_NG_BX_C2_20231023113004.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0068/audiojack__0068_NG_ZW_C3_20231023102949.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0108/audiojack__0108_NG_ZW_C2_20231023104140.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S0113/audiojack__0113_NG_HS_C5_20231023093509.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0010/audiojack__0010_NG_BX_C2_20231023111812.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0436/audiojack_0436_OK_C4_20231021153021.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0414/audiojack_0414_OK_C3_20231021152636.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S1116/audiojack_1116_NG_HS_C4_20231021133250.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0317/audiojack_0317_OK_C4_20231021144638.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0325/audiojack_0325_OK_C1_20231021144751.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0258/audiojack_0258_OK_C1_20231021143139.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0226/audiojack_0226_OK_C2_20231021142557.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0452/audiojack_0452_OK_C1_20231021153237.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S0085/audiojack__0085_NG_HS_C5_20231023092955.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S0109/audiojack__0109_NG_HS_C5_20231023093427.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/QS/S0102/audiojack__0102_NG_QS_C3_20231023095750.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/QS/S0113/audiojack__0113_NG_QS_C3_20231023095941.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/BX/S0116/audiojack__0116_NG_BX_C3_20231023130638.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0023/audiojack__0023_NG_ZW_C3_20231023101154.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/ZW/S0025/audiojack__0025_NG_ZW_C4_20231023101312.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S0039/audiojack__0039_NG_HS_C3_20231023092100.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\OK/S0070/audiojack_0070_OK_C3_20231021132335.jpg",
+      "G:/dataset/realiad\\images\\audiojack\\NG/HS/S0119/audiojack__0119_NG_HS_C3_20231023093647.jpg"
+    ],
+    "query_positions_1based": [
+      5,
+      12
+    ],
+    "query_tape_sha256": "095a402642c1d24e0ab2e89ff19beefbaf0045c0dfdd5817effc4a72242b37d1",
+    "query_rate_target": 0.03,
+    "observed_query_normals": 1,
+    "observed_query_defects": 1,
+    "candidate_patches_from_shared_static_score": true,
+    "patches_per_layer_per_normal_query": 8,
+    "labels_after_predictions": true,
+    "probe_not_in_training_or_feedback": true,
+    "no_adaptive_threshold_in_primary_experiment": true,
+    "memory_capacity_matched_per_layer": true,
+    "dynamic_capacity_per_layer": 128
+  },
+  "n_stream": 64,
+  "n_probe": 32,
+  "K": 2,
+  "arms": {
+    "static": {
+      "n": 64,
+      "tp": 0,
+      "tn": 38,
+      "fp": 0,
+      "fn": 26,
+      "accuracy": 0.59375,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.757085020242915,
+      "method": "static",
+      "prototype_per_layer": [
+        0
+      ],
+      "capacity_per_layer": [
+        128
+      ],
+      "mutable_prototypes": 0,
+      "mutable_capacity": 128,
+      "candidate_events": 0,
+      "candidate_patches": 0,
+      "accepted_patches": 0,
+      "skipped_patches": 0,
+      "notes": "no mutable memory",
+      "score_sha256": "ab9d8ab8b6263f0da4cf365f3c732dc7dc2fdbe9b821878ddcef10a2e4231650"
+    },
+    "fifo": {
+      "n": 64,
+      "tp": 0,
+      "tn": 38,
+      "fp": 0,
+      "fn": 26,
+      "accuracy": 0.59375,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8178137651821863,
+      "method": "fifo",
+      "prototype_per_layer": [
+        8
+      ],
+      "capacity_per_layer": [
+        128
+      ],
+      "mutable_prototypes": 8,
+      "mutable_capacity": 128,
+      "candidate_events": 1,
+      "candidate_patches": 8,
+      "accepted_patches": 8,
+      "skipped_patches": 0,
+      "notes": "strict patch-level FIFO",
+      "score_sha256": "c08b3ee3ccee69e4d195b8e534daf8a2e4d8bd3458d64ba5d285ebb3331d9a87"
+    },
+    "reservoir": {
+      "n": 64,
+      "tp": 0,
+      "tn": 38,
+      "fp": 0,
+      "fn": 26,
+      "accuracy": 0.59375,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8178137651821863,
+      "method": "reservoir",
+      "prototype_per_layer": [
+        8
+      ],
+      "capacity_per_layer": [
+        128
+      ],
+      "mutable_prototypes": 8,
+      "mutable_capacity": 128,
+      "candidate_events": 1,
+      "candidate_patches": 8,
+      "accepted_patches": 8,
+      "skipped_patches": 0,
+      "notes": "patch-level unbiased reservoir Algorithm R",
+      "score_sha256": "c08b3ee3ccee69e4d195b8e534daf8a2e4d8bd3458d64ba5d285ebb3331d9a87"
+    },
+    "online_greedy_coreset": {
+      "n": 64,
+      "tp": 0,
+      "tn": 38,
+      "fp": 0,
+      "fn": 26,
+      "accuracy": 0.59375,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8178137651821863,
+      "method": "online_greedy_coreset",
+      "prototype_per_layer": [
+        8
+      ],
+      "capacity_per_layer": [
+        128
+      ],
+      "mutable_prototypes": 8,
+      "mutable_capacity": 128,
+      "candidate_events": 1,
+      "candidate_patches": 8,
+      "accepted_patches": 8,
+      "skipped_patches": 0,
+      "notes": "online min-pair-gap greedy replacement; not offline optimal",
+      "score_sha256": "c08b3ee3ccee69e4d195b8e534daf8a2e4d8bd3458d64ba5d285ebb3331d9a87"
+    },
+    "v22_normal_stm": {
+      "n": 64,
+      "tp": 0,
+      "tn": 38,
+      "fp": 0,
+      "fn": 26,
+      "accuracy": 0.59375,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8178137651821863,
+      "method": "v22_normal_stm",
+      "prototype_per_layer": [
+        7
+      ],
+      "capacity_per_layer": [
+        128
+      ],
+      "mutable_prototypes": 7,
+      "mutable_capacity": 128,
+      "candidate_events": 1,
+      "candidate_patches": 8,
+      "accepted_patches": 7,
+      "skipped_patches": 1,
+      "notes": "v22 normal_dyn FixedCapacityCodebook.update, original tau=0.15/0.25, no utility, LTM or maturation",
+      "score_sha256": "c08b3ee3ccee69e4d195b8e534daf8a2e4d8bd3458d64ba5d285ebb3331d9a87"
+    },
+    "v22_utility_stm": {
+      "n": 64,
+      "tp": 0,
+      "tn": 38,
+      "fp": 0,
+      "fn": 26,
+      "accuracy": 0.59375,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8178137651821863,
+      "method": "v22_utility_stm",
+      "prototype_per_layer": [
+        7
+      ],
+      "capacity_per_layer": [
+        128
+      ],
+      "mutable_prototypes": 7,
+      "mutable_capacity": 128,
+      "candidate_events": 1,
+      "candidate_patches": 8,
+      "accepted_patches": 7,
+      "skipped_patches": 1,
+      "notes": "v22 utility-aware FixedCapacityCodebook.update; no LTM/maturation",
+      "score_sha256": "c08b3ee3ccee69e4d195b8e534daf8a2e4d8bd3458d64ba5d285ebb3331d9a87"
+    }
+  },
+  "probe_snapshots": [
+    {
+      "step": 0,
+      "method": "static",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7246376811594203,
+      "n_probe": 32
+    },
+    {
+      "step": 0,
+      "method": "fifo",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7246376811594203,
+      "n_probe": 32
+    },
+    {
+      "step": 0,
+      "method": "reservoir",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7246376811594203,
+      "n_probe": 32
+    },
+    {
+      "step": 0,
+      "method": "online_greedy_coreset",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7246376811594203,
+      "n_probe": 32
+    },
+    {
+      "step": 0,
+      "method": "v22_normal_stm",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7246376811594203,
+      "n_probe": 32
+    },
+    {
+      "step": 0,
+      "method": "v22_utility_stm",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7246376811594203,
+      "n_probe": 32
+    },
+    {
+      "step": 64,
+      "method": "static",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.7246376811594203,
+      "n_probe": 32
+    },
+    {
+      "step": 64,
+      "method": "fifo",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8164251207729468,
+      "n_probe": 32
+    },
+    {
+      "step": 64,
+      "method": "reservoir",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8164251207729468,
+      "n_probe": 32
+    },
+    {
+      "step": 64,
+      "method": "online_greedy_coreset",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8164251207729468,
+      "n_probe": 32
+    },
+    {
+      "step": 64,
+      "method": "v22_normal_stm",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8164251207729468,
+      "n_probe": 32
+    },
+    {
+      "step": 64,
+      "method": "v22_utility_stm",
+      "n": 32,
+      "tp": 0,
+      "tn": 23,
+      "fp": 0,
+      "fn": 9,
+      "accuracy": 0.71875,
+      "balanced_accuracy": 0.5,
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "auroc": 0.8164251207729468,
+      "n_probe": 32
+    }
+  ],
+  "configuration": {
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:\\dataset\\realiad\\jsons\\realiad_jsons",
+    "class_name": "audiojack",
+    "support_seed": 0,
+    "legacy_seed": 0,
+    "stream_seed": 0,
+    "probe_seed": 212,
+    "query_seed": 37,
+    "query_rate": 0.03,
+    "probe_count": 32,
+    "probe_every": 512,
+    "stream_order": "native",
+    "max_samples": 64,
+    "device": "cuda",
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "dynamic_capacity": 128,
+    "augmentations": 4,
+    "augmentation_seed": 0,
+    "bank_seed": 0,
+    "include_identity": false,
+    "multiplier": 2.5,
+    "patches_per_layer": 8,
+    "math_sdpa": true,
+    "print_every": 100,
+    "out_dir": "outputs\\a0_a1_strict4_memory\\audiojack_s0_native_smoke"
+  },
+  "elapsed_seconds": 64.8425146000227,
+  "limitations": [
+    "This is a STRICT-4 and matched-label memory-only test, not full v22.",
+    "LOSO estimates come from 3-support fold banks; calibration can be biased for 4-support deployed bank.",
+    "Frozen theta is numerically identical across all arms; memory scores may shift under mutation.",
+    "Candidates are selected from a shared STATIC reference top-k, isolating retention but not reproducing every arm's native feature selection.",
+    "v22_utility_stm uses the original codebook utility retention, with LTM/maturation/correction disabled.",
+    "Greedy coreset is a streaming min-pair-gap heuristic, not global optimized coreset; O(K^2) ephemeral computation/memory.",
+    "Default dynamic capacity is 128 prototypes per layer (capacity pressure), unlike historical R6 1024; all arms share the same configured bound.",
+    "FIFO and reservoir store all shared candidate patches; utility method novelty-gates writes; compare actual occupancy and runtime.",
+    "Probe images are held-out from online stream; labels used solely for offline evaluation.",
+    "AUROC over evolving prequential scores may confound memory state and stream order.",
+    "No production online policy, adaptive sidecar, bootstrap, or claims of complete architecture equivalence."
+  ]
+}

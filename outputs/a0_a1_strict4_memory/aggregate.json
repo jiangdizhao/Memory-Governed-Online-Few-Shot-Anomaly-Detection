@@ -1,0 +1,417 @@
+{
+  "schema": "a0a1.matched.aggregate.v1",
+  "complete": true,
+  "expected_conditions": 6,
+  "validated_conditions": 6,
+  "methods": [
+    "static",
+    "fifo",
+    "reservoir",
+    "online_greedy_coreset",
+    "v22_normal_stm",
+    "v22_utility_stm"
+  ],
+  "conditions": [
+    {
+      "class_name": "audiojack",
+      "support_seed": 0,
+      "order": "native",
+      "n_stream": 3783,
+      "K": 113,
+      "normal_queries": 77,
+      "defect_queries": 36,
+      "theta0_loso": 0.6259433360321877,
+      "theta0_selfmatch_diagnostic": 0.5354703437192151,
+      "support_hash": "e0081a4ce90de48d98ddf95b02b5b0ce901d5248dd1ad8363a77aabc5b4ac246",
+      "query_hash": "c18aa969ef0c554983d3adb44ba61f1c8d7e0d47b9fa34667e313f3480b26536",
+      "fixed_bank_hash": "3d284f6c8cf7cd5aa9f859cf1b782d83c4154e3929eb96dfb9f4e231d9d9b463",
+      "scores": {
+        "static": {
+          "auroc": 0.6634542229494154,
+          "balanced_accuracy": 0.5003885003885004,
+          "fpr": 0.0,
+          "fnr": 0.9992229992229992,
+          "mutable_prototypes": 0,
+          "accepted_patches": 0
+        },
+        "fifo": {
+          "auroc": 0.7340300813858507,
+          "balanced_accuracy": 0.5003885003885004,
+          "fpr": 0.0,
+          "fnr": 0.9992229992229992,
+          "mutable_prototypes": 128,
+          "accepted_patches": 616
+        },
+        "reservoir": {
+          "auroc": 0.7375815290478753,
+          "balanced_accuracy": 0.5003885003885004,
+          "fpr": 0.0,
+          "fnr": 0.9992229992229992,
+          "mutable_prototypes": 128,
+          "accepted_patches": 334
+        },
+        "online_greedy_coreset": {
+          "auroc": 0.7379549314645468,
+          "balanced_accuracy": 0.5003885003885004,
+          "fpr": 0.0,
+          "fnr": 0.9992229992229992,
+          "mutable_prototypes": 128,
+          "accepted_patches": 272
+        },
+        "v22_normal_stm": {
+          "auroc": 0.7406338097443868,
+          "balanced_accuracy": 0.5003885003885004,
+          "fpr": 0.0,
+          "fnr": 0.9992229992229992,
+          "mutable_prototypes": 128,
+          "accepted_patches": 428
+        },
+        "v22_utility_stm": {
+          "auroc": 0.7412232532424841,
+          "balanced_accuracy": 0.5003885003885004,
+          "fpr": 0.0,
+          "fnr": 0.9992229992229992,
+          "mutable_prototypes": 128,
+          "accepted_patches": 417
+        }
+      },
+      "output": "outputs\\a0_a1_strict4_memory\\audiojack_s0_native_full"
+    },
+    {
+      "class_name": "audiojack",
+      "support_seed": 1,
+      "order": "native",
+      "n_stream": 3783,
+      "K": 113,
+      "normal_queries": 77,
+      "defect_queries": 36,
+      "theta0_loso": 0.6569260478884904,
+      "theta0_selfmatch_diagnostic": 0.5190263653038145,
+      "support_hash": "4163ddb7f96872b13f344166158dbe342dcca4946e2b3d62c75aa99252feea1a",
+      "query_hash": "c18aa969ef0c554983d3adb44ba61f1c8d7e0d47b9fa34667e313f3480b26536",
+      "fixed_bank_hash": "71f37d22f4629ba74bb7fc34ee61994ebcd4c2273bb8ab64af50e8bceb9966c9",
+      "scores": {
+        "static": {
+          "auroc": 0.6774324544757238,
+          "balanced_accuracy": 0.5,
+          "fpr": 0.0,
+          "fnr": 1.0,
+          "mutable_prototypes": 0,
+          "accepted_patches": 0
+        },
+        "fifo": {
+          "auroc": 0.7260813883410037,
+          "balanced_accuracy": 0.5,
+          "fpr": 0.0,
+          "fnr": 1.0,
+          "mutable_prototypes": 128,
+          "accepted_patches": 616
+        },
+        "reservoir": {
+          "auroc": 0.7383982203693743,
+          "balanced_accuracy": 0.5,
+          "fpr": 0.0,
+          "fnr": 1.0,
+          "mutable_prototypes": 128,
+          "accepted_patches": 321
+        },
+        "online_greedy_coreset": {
+          "auroc": 0.7722710649393342,
+          "balanced_accuracy": 0.5,
+          "fpr": 0.0,
+          "fnr": 1.0,
+          "mutable_prototypes": 128,
+          "accepted_patches": 278
+        },
+        "v22_normal_stm": {
+          "auroc": 0.7587228921363537,
+          "balanced_accuracy": 0.5,
+          "fpr": 0.0,
+          "fnr": 1.0,
+          "mutable_prototypes": 128,
+          "accepted_patches": 486
+        },
+        "v22_utility_stm": {
+          "auroc": 0.7634441991413146,
+          "balanced_accuracy": 0.5,
+          "fpr": 0.0,
+          "fnr": 1.0,
+          "mutable_prototypes": 128,
+          "accepted_patches": 458
+        }
+      },
+      "output": "outputs\\a0_a1_strict4_memory\\audiojack_s1_native_full"
+    },
+    {
+      "class_name": "rolled_strip_base",
+      "support_seed": 0,
+      "order": "native",
+      "n_stream": 3773,
+      "K": 113,
+      "normal_queries": 42,
+      "defect_queries": 71,
+      "theta0_loso": 0.4984717519155482,
+      "theta0_selfmatch_diagnostic": 0.48666865176382335,
+      "support_hash": "23cd7f51b6e7575a828b9b5e7c0bdd8749e031aa17fc1ad731819e2163bbd75f",
+      "query_hash": "c18aa969ef0c554983d3adb44ba61f1c8d7e0d47b9fa34667e313f3480b26536",
+      "fixed_bank_hash": "a19b5ffe3fa935683cae94b1a4329550c179f403c8b161d204a737e0a6f9491d",
+      "scores": {
+        "static": {
+          "auroc": 0.9429665503757695,
+          "balanced_accuracy": 0.7443417505292861,
+          "fpr": 0.004724409448818898,
+          "fnr": 0.5065920894926089,
+          "mutable_prototypes": 0,
+          "accepted_patches": 0
+        },
+        "fifo": {
+          "auroc": 0.9602281986026218,
+          "balanced_accuracy": 0.7317393930433087,
+          "fpr": 0.002362204724409449,
+          "fnr": 0.5341590091889732,
+          "mutable_prototypes": 128,
+          "accepted_patches": 336
+        },
+        "reservoir": {
+          "auroc": 0.9603527735221671,
+          "balanced_accuracy": 0.7311401121803442,
+          "fpr": 0.002362204724409449,
+          "fnr": 0.5353575709149021,
+          "mutable_prototypes": 128,
+          "accepted_patches": 252
+        },
+        "online_greedy_coreset": {
+          "auroc": 0.9593954970570747,
+          "balanced_accuracy": 0.730341071029725,
+          "fpr": 0.002362204724409449,
+          "fnr": 0.5369556532161406,
+          "mutable_prototypes": 128,
+          "accepted_patches": 229
+        },
+        "v22_normal_stm": {
+          "auroc": 0.9611241313573319,
+          "balanced_accuracy": 0.731339872467999,
+          "fpr": 0.002362204724409449,
+          "fnr": 0.5349580503395925,
+          "mutable_prototypes": 128,
+          "accepted_patches": 222
+        },
+        "v22_utility_stm": {
+          "auroc": 0.9581145145510427,
+          "balanced_accuracy": 0.7309403518926895,
+          "fpr": 0.002362204724409449,
+          "fnr": 0.5357570914902118,
+          "mutable_prototypes": 128,
+          "accepted_patches": 209
+        }
+      },
+      "output": "outputs\\a0_a1_strict4_memory\\rolled_strip_base_s0_native_full"
+    },
+    {
+      "class_name": "rolled_strip_base",
+      "support_seed": 1,
+      "order": "native",
+      "n_stream": 3773,
+      "K": 113,
+      "normal_queries": 42,
+      "defect_queries": 71,
+      "theta0_loso": 0.5156549305881845,
+      "theta0_selfmatch_diagnostic": 0.47298721621178075,
+      "support_hash": "af0eb1e587a428295a54005638a5f2203f2d1d5204d58e35235b77126dce446c",
+      "query_hash": "c18aa969ef0c554983d3adb44ba61f1c8d7e0d47b9fa34667e313f3480b26536",
+      "fixed_bank_hash": "ec0fe4d1399c1f88943d1867a5c42a6d9aa587e16be6148d2669c602f0bb8b44",
+      "scores": {
+        "static": {
+          "auroc": 0.9056459807286374,
+          "balanced_accuracy": 0.7115267977639431,
+          "fpr": 0.024409448818897637,
+          "fnr": 0.5525369556532161,
+          "mutable_prototypes": 0,
+          "accepted_patches": 0
+        },
+        "fifo": {
+          "auroc": 0.9493747660287971,
+          "balanced_accuracy": 0.6970160217188193,
+          "fpr": 0.007086614173228346,
+          "fnr": 0.598881342389133,
+          "mutable_prototypes": 128,
+          "accepted_patches": 336
+        },
+        "reservoir": {
+          "auroc": 0.951436858447029,
+          "balanced_accuracy": 0.6983968843686789,
+          "fpr": 0.004724409448818898,
+          "fnr": 0.5984818218138234,
+          "mutable_prototypes": 128,
+          "accepted_patches": 258
+        },
+        "online_greedy_coreset": {
+          "auroc": 0.9628332615035187,
+          "balanced_accuracy": 0.6891962715607413,
+          "fpr": 0.0031496062992125984,
+          "fnr": 0.6184578505793048,
+          "mutable_prototypes": 128,
+          "accepted_patches": 226
+        },
+        "v22_normal_stm": {
+          "auroc": 0.956922244487717,
+          "balanced_accuracy": 0.6969869227792791,
+          "fpr": 0.0031496062992125984,
+          "fnr": 0.6028765481422294,
+          "mutable_prototypes": 128,
+          "accepted_patches": 219
+        },
+        "v22_utility_stm": {
+          "auroc": 0.9623952044947638,
+          "balanced_accuracy": 0.6902008927869234,
+          "fpr": 0.003937007874015748,
+          "fnr": 0.6156612065521374,
+          "mutable_prototypes": 128,
+          "accepted_patches": 217
+        }
+      },
+      "output": "outputs\\a0_a1_strict4_memory\\rolled_strip_base_s1_native_full"
+    },
+    {
+      "class_name": "switch",
+      "support_seed": 0,
+      "order": "native",
+      "n_stream": 3788,
+      "K": 114,
+      "normal_queries": 49,
+      "defect_queries": 65,
+      "theta0_loso": 0.6032982804113393,
+      "theta0_selfmatch_diagnostic": 0.5077131353069225,
+      "support_hash": "b0a4625fea6f3c99b7d253bd19978d18c69f5213c76645ba379eb9f9f082c05f",
+      "query_hash": "a4a4c3fe6ce2bfbb0928db1f53806efc3afdd90d4a1801aff65ab0eb1882e00b",
+      "fixed_bank_hash": "689a513351e13cb7ad6c4456178d117d3736ecc2c16b0a08ebe825b1814012b5",
+      "scores": {
+        "static": {
+          "auroc": 0.7621107670043011,
+          "balanced_accuracy": 0.5156328794755421,
+          "fpr": 0.0,
+          "fnr": 0.9687342410489158,
+          "mutable_prototypes": 0,
+          "accepted_patches": 0
+        },
+        "fifo": {
+          "auroc": 0.8545213260079093,
+          "balanced_accuracy": 0.5141200201714574,
+          "fpr": 0.0,
+          "fnr": 0.9717599596570852,
+          "mutable_prototypes": 128,
+          "accepted_patches": 392
+        },
+        "reservoir": {
+          "auroc": 0.8588864070359832,
+          "balanced_accuracy": 0.5143721633888049,
+          "fpr": 0.0,
+          "fnr": 0.9712556732223904,
+          "mutable_prototypes": 128,
+          "accepted_patches": 272
+        },
+        "online_greedy_coreset": {
+          "auroc": 0.8614089567417229,
+          "balanced_accuracy": 0.5148764498234998,
+          "fpr": 0.0,
+          "fnr": 0.9702471003530005,
+          "mutable_prototypes": 128,
+          "accepted_patches": 246
+        },
+        "v22_normal_stm": {
+          "auroc": 0.8595231210441105,
+          "balanced_accuracy": 0.5143721633888049,
+          "fpr": 0.0,
+          "fnr": 0.9712556732223904,
+          "mutable_prototypes": 128,
+          "accepted_patches": 234
+        },
+        "v22_utility_stm": {
+          "auroc": 0.8612620012488423,
+          "balanced_accuracy": 0.5143721633888049,
+          "fpr": 0.0,
+          "fnr": 0.9712556732223904,
+          "mutable_prototypes": 128,
+          "accepted_patches": 222
+        }
+      },
+      "output": "outputs\\a0_a1_strict4_memory\\switch_s0_native_full"
+    },
+    {
+      "class_name": "switch",
+      "support_seed": 1,
+      "order": "native",
+      "n_stream": 3788,
+      "K": 114,
+      "normal_queries": 49,
+      "defect_queries": 65,
+      "theta0_loso": 0.597312762760192,
+      "theta0_selfmatch_diagnostic": 0.47878971386330477,
+      "support_hash": "f38186351917afd752582ff38ad16d9a2da5ce9665bddea1f841a99d7266565e",
+      "query_hash": "a4a4c3fe6ce2bfbb0928db1f53806efc3afdd90d4a1801aff65ab0eb1882e00b",
+      "fixed_bank_hash": "6dfa7be2c4026c6765bdf6f14b1be8e537dc0aee5c20d195977bdefab1b20ba3",
+      "scores": {
+        "static": {
+          "auroc": 0.6704690701991862,
+          "balanced_accuracy": 0.5544629349470499,
+          "fpr": 0.0,
+          "fnr": 0.8910741301059002,
+          "mutable_prototypes": 0,
+          "accepted_patches": 0
+        },
+        "fifo": {
+          "auroc": 0.7394484698887915,
+          "balanced_accuracy": 0.5418557740796772,
+          "fpr": 0.0,
+          "fnr": 0.9162884518406454,
+          "mutable_prototypes": 128,
+          "accepted_patches": 392
+        },
+        "reservoir": {
+          "auroc": 0.7383798296601445,
+          "balanced_accuracy": 0.543368633383762,
+          "fpr": 0.0,
+          "fnr": 0.9132627332324761,
+          "mutable_prototypes": 128,
+          "accepted_patches": 284
+        },
+        "online_greedy_coreset": {
+          "auroc": 0.7393058448334389,
+          "balanced_accuracy": 0.5375693393847706,
+          "fpr": 0.0,
+          "fnr": 0.9248613212304589,
+          "mutable_prototypes": 128,
+          "accepted_patches": 240
+        },
+        "v22_normal_stm": {
+          "auroc": 0.7357122801429883,
+          "balanced_accuracy": 0.5403429147755925,
+          "fpr": 0.0,
+          "fnr": 0.9193141704488149,
+          "mutable_prototypes": 128,
+          "accepted_patches": 237
+        },
+        "v22_utility_stm": {
+          "auroc": 0.7450334770759209,
+          "balanced_accuracy": 0.5393343419062028,
+          "fpr": 0.0,
+          "fnr": 0.9213313161875946,
+          "mutable_prototypes": 128,
+          "accepted_patches": 224
+        }
+      },
+      "output": "outputs\\a0_a1_strict4_memory\\switch_s1_native_full"
+    }
+  ],
+  "fairness_notes": [
+    "Strict 4 source-image access, LOSO normal-only threshold.",
+    "Fixed query tape per condition and equal verified labels.",
+    "One common static-reference patch-selection rule across arms.",
+    "Fixed numeric theta0 across all arms, no adaptive threshold in A1.",
+    "Held-out probe never joined stream, feedback or memory.",
+    "v22_normal_stm isolates R6-style dynamic-normal update, while v22_utility_stm tests optional retention; neither is full STM/LTM.",
+    "Online greedy coreset is approximate, not an optimized offline solver.",
+    "Identical per-layer memory capacity; default 128 to create actual memory pressure; actual occupancy and compute differ.",
+    "Two support seeds are screening evidence, not inferential significance."
+  ]
+}

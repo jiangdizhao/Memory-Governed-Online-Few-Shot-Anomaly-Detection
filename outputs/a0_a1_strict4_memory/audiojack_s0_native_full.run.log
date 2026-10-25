@@ -1,0 +1,70 @@
+RUN: D:\anaconda3\envs\torch\python.exe E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection\experiments\a0_a1_strict4_matched.py --dataset-root G:/dataset/realiad --class-name audiojack --support-seed 0 --stream-order native --out-dir outputs\a0_a1_strict4_memory\audiojack_s0_native_full --probe-count 32 --dynamic-capacity 128 --probe-every 512 --print-every 100 --max-samples 0 --math-sdpa
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[A0A1] audiojack/seed0/native: 100/3783
+[A0A1] audiojack/seed0/native: 200/3783
+[A0A1] audiojack/seed0/native: 300/3783
+[A0A1] audiojack/seed0/native: 400/3783
+[A0A1] audiojack/seed0/native: 500/3783
+[A0A1] audiojack/seed0/native: 600/3783
+[A0A1] audiojack/seed0/native: 700/3783
+[A0A1] audiojack/seed0/native: 800/3783
+[A0A1] audiojack/seed0/native: 900/3783
+[A0A1] audiojack/seed0/native: 1000/3783
+[A0A1] audiojack/seed0/native: 1100/3783
+[A0A1] audiojack/seed0/native: 1200/3783
+[A0A1] audiojack/seed0/native: 1300/3783
+[A0A1] audiojack/seed0/native: 1400/3783
+[A0A1] audiojack/seed0/native: 1500/3783
+[A0A1] audiojack/seed0/native: 1600/3783
+[A0A1] audiojack/seed0/native: 1700/3783
+[A0A1] audiojack/seed0/native: 1800/3783
+[A0A1] audiojack/seed0/native: 1900/3783
+[A0A1] audiojack/seed0/native: 2000/3783
+[A0A1] audiojack/seed0/native: 2100/3783
+[A0A1] audiojack/seed0/native: 2200/3783
+[A0A1] audiojack/seed0/native: 2300/3783
+[A0A1] audiojack/seed0/native: 2400/3783
+[A0A1] audiojack/seed0/native: 2500/3783
+[A0A1] audiojack/seed0/native: 2600/3783
+[A0A1] audiojack/seed0/native: 2700/3783
+[A0A1] audiojack/seed0/native: 2800/3783
+[A0A1] audiojack/seed0/native: 2900/3783
+[A0A1] audiojack/seed0/native: 3000/3783
+[A0A1] audiojack/seed0/native: 3100/3783
+[A0A1] audiojack/seed0/native: 3200/3783
+[A0A1] audiojack/seed0/native: 3300/3783
+[A0A1] audiojack/seed0/native: 3400/3783
+[A0A1] audiojack/seed0/native: 3500/3783
+[A0A1] audiojack/seed0/native: 3600/3783
+[A0A1] audiojack/seed0/native: 3700/3783
+{
+  "condition": "audiojack/s0/native",
+  "n": 3783,
+  "K": 113,
+  "theta": 0.6259433360321877,
+  "memory_AUROCs": {
+    "static": 0.66345,
+    "fifo": 0.73403,
+    "reservoir": 0.73758,
+    "online_greedy_coreset": 0.73795,
+    "v22_normal_stm": 0.74063,
+    "v22_utility_stm": 0.74122
+  },
+  "BA": {
+    "static": 0.50039,
+    "fifo": 0.50039,
+    "reservoir": 0.50039,
+    "online_greedy_coreset": 0.50039,
+    "v22_normal_stm": 0.50039,
+    "v22_utility_stm": 0.50039
+  },
+  "out_dir": "outputs\\a0_a1_strict4_memory\\audiojack_s0_native_full"
+}
+
+EXIT CODE 0 elapsed_seconds=478.7
