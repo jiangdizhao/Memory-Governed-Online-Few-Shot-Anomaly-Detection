@@ -74,10 +74,13 @@ def _codebooks(bank):
 
 
 class Hierarchy:
-    def __init__(self, name, bank, *, budget: Budget):
+    def __init__(self, name, bank, *, budget: Budget, evidence_mode: str="neutral"):
         if name not in HIERARCHIES:
             raise ValueError(name)
         self.name, self.bank, self.budget = name, bank, budget
+        if evidence_mode not in ("neutral","loso_margin"):
+            raise ValueError("unknown evidence signal mode")
+        self.evidence_mode = evidence_mode
         self.candidate_events = 0
         self.candidate_patches = 0
         self.promotion_triggers = 0
@@ -138,9 +141,17 @@ class Hierarchy:
             torch.cuda.synchronize()
         start = time.perf_counter()
         self.candidate_events += 1
-        _allow, _topk, _reason, info = impl.select_informative_normal_write(
-            score=score, theta=theta, sigmaN=sigma,
-            pred_defect=score >= theta, novelty=0.0)
+        if self.evidence_mode == "neutral":
+            # Constant *online-visible* verified-normal evidence: isolates
+            # consolidation/retention from known-invalid four-shot LOSO theta.
+            weight, boundary, outcome = 0.5, 0.5, "TN"
+        else:
+            _allow, _topk, _reason, info = impl.select_informative_normal_write(
+                score=score, theta=theta, sigmaN=sigma,
+                pred_defect=score >= theta, novelty=0.0)
+            weight = float(info["write_value"])
+            boundary = float(info["boundary"])
+            outcome = "FP" if score >= theta else "TN"
         for layer, indices in patch_indices.items():
             if not indices:
                 continue
@@ -150,9 +161,8 @@ class Hierarchy:
             cls_name="p0", feats_per_layer=features,
             which="normal_dyn", mode=0, view="id",
             layer_to_patch_idx=patch_indices, tau_insert=.15,
-            tau_replace=.25, event_id=step, write_value=info["write_value"],
-            outcome="FP" if score >= theta else "TN",
-            boundary_value=info["boundary"], coverage_gain=0.0)
+            tau_replace=.25, event_id=step, write_value=weight,
+            outcome=outcome, boundary_value=boundary, coverage_gain=0.0)
         trigger = report.get("ltm_trigger_debug", {})
         if trigger.get("mature_trigger") or trigger.get("pressure_trigger"):
             self.promotion_triggers += 1
@@ -209,6 +219,7 @@ class Hierarchy:
             "promoted_new_prototypes":self.promoted_prototypes,
             "enable_ltm_retrieval":bool(self.bank.enable_ltm_retrieval),
             "enable_utility":bool(self.bank.enable_utility_aware_stm_retention),
+            "evidence_mode":self.evidence_mode,
             "update_seconds":self.update_seconds,
         }
 
@@ -273,10 +284,10 @@ class Flat:
         }
 
 
-def make_arm(name, bank, budget, seed):
+def make_arm(name, bank, budget, seed, evidence_mode="neutral"):
     if name in FLATS:
         return Flat(name, bank, budget=budget, seed=seed)
-    return Hierarchy(name, bank, budget=budget)
+    return Hierarchy(name, bank, budget=budget, evidence_mode=evidence_mode)
 
 
 def counterfactual_ltm_scores(score_fn, arm, img, feat, cfg):
