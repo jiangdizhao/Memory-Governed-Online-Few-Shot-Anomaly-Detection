@@ -1,3 +1,30 @@
+# E02-R4 — A/B/C Query Governance Stability Audit
+
+**Active branch: e02-r4-abc-query-governance.** New experimental entrypoint:
+[experiments/e02_r4_abc_query_governance.py](experiments/e02_r4_abc_query_governance.py).
+Full preregistered A/B/C comparison, local Real-IAD GPU commands and
+replay acceptance rules:
+[docs/E02_R4_ABC_QUERY_GOVERNANCE_PROTOCOL.md](docs/E02_R4_ABC_QUERY_GOVERNANCE_PROTOCOL.md).
+
+A uses the original R3 bootstrap cost feedback unchanged. B excludes
+Bootstrap queries from adaptive cost feedback while retaining them in the
+actual queried-label budget. C adds score-only region quotas and paced
+query spending to B. All variants use exactly the same full label budget
+and run frozen/guarded/balanced/mistake threshold controls on matched
+within-variant STM scores. **No full v22/correction claims are made.**
+
+~~~powershell
+git fetch origin
+git switch e02-r4-abc-query-governance
+conda activate torch
+python experiments/e02_r4_abc_query_governance.py --self-test
+~~~
+
+**All earlier v22/P0/E01/E02/R1/R2/R3 files and existing outputs
+remain unchanged.**
+
+---
+
 # E02-R3: Original Simple-AIF Bootstrap under matched label budgets
 
 **New active research branch:** `e02-r3-bootstrap-sidecar-audit`.
