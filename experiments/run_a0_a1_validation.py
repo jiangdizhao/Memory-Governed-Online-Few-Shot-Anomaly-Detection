@@ -54,6 +54,7 @@ def argv(args, cls, seed, order, *, smoke=False):
            "--stream-order", order, "--out-dir",
            str(location(args, cls, seed, order, smoke=smoke)),
            "--probe-count", str(args.probe_count),
+           "--dynamic-capacity", str(args.dynamic_capacity),
            "--probe-every", str(args.probe_every),
            "--print-every", str(args.print_every),
            "--max-samples", "64" if smoke else "0"]
@@ -124,12 +125,16 @@ def validate(path: Path, *, cls: str, seed: int, order: str, smoke: bool,
         raise ValueError("Wrong smoke/full size")
     if j["n_probe"] != args.probe_count:
         raise ValueError("Probe count incompatible with requested run")
+    if spec["dynamic_capacity_per_layer"] != args.dynamic_capacity:
+        raise ValueError("Memory capacity incompatible with requested run")
     if (spec["feature_configuration"]["device"] != "cuda"
             and args.require_cuda):
         raise ValueError("Non-CUDA trial where CUDA required")
     capacities = {tuple(v["capacity_per_layer"]) for v in j["arms"].values()}
     if len(capacities) != 1:
         raise ValueError("Unequal memory capacities")
+    if any(any(v != args.dynamic_capacity for v in caps) for caps in capacities):
+        raise ValueError("Reported memory capacity not equal to requested bound")
     if j["arms"]["static"]["mutable_prototypes"] != 0:
         raise ValueError("Static baseline has mutable memory")
     for name, arm in j["arms"].items():
@@ -240,7 +245,7 @@ def write_aggregate(args, rows, *, complete):
             "Held-out probe never joined stream, feedback or memory.",
             "v22_normal_stm isolates R6-style dynamic-normal update, while v22_utility_stm tests optional retention; neither is full STM/LTM.",
             "Online greedy coreset is approximate, not an optimized offline solver.",
-            "Equal configured retrieval capacity; actual occupancy and computational overhead differ.",
+            "Identical per-layer memory capacity; default 128 to create actual memory pressure; actual occupancy and compute differ.",
             "Two support seeds are screening evidence, not inferential significance.",
         ],
     }
@@ -279,6 +284,8 @@ def parser():
     p.add_argument("--with-stress", action="store_true")
     p.add_argument("--out-root", default="outputs/a0_a1_strict4_memory")
     p.add_argument("--probe-count", type=int, default=32)
+    p.add_argument("--dynamic-capacity", type=int, default=128,
+                   help="Per-layer normal STM prototype cap, matched across arms")
     p.add_argument("--probe-every", type=int, default=512)
     p.add_argument("--print-every", type=int, default=100)
     p.add_argument("--math-sdpa", action="store_true")
@@ -306,7 +313,7 @@ if __name__ == "__main__":
         self_test()
     else:
         todo = stream_conditions(a)
-        if a.probe_count < 4 or a.probe_every < 0:
+        if a.probe_count < 4 or a.probe_every < 0 or not 1 <= a.dynamic_capacity <= 1024:
             raise SystemExit("Invalid probe settings")
         if a.all and not a.no_smoke:
             run_one(a, todo[0][0], todo[0][1], "native", smoke=True)
