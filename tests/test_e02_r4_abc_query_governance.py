@@ -30,6 +30,36 @@ class DummyAIF:
 
 
 class ABCContracts(unittest.TestCase):
+    def test_report_budget_regression_after_full_stream(self):
+        """Regression for NameError: stale R3 random_tape in final R4 JSON."""
+        states={}
+        for name in ("A","B","C"):
+            budget=r4.Budget(100,.03)
+            for t in range(1,101):
+                budget.decide(t,t<=3)
+            states[name]={"budget":budget}
+        self.assertEqual(r4.validated_equal_budget(states),3)
+        tree=ast.parse((ROOT/"experiments"/"e02_r4_abc_query_governance.py").read_text(encoding="utf8"))
+        fn=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=="main_run")
+        undefined_legacy=[node for node in ast.walk(fn)
+                          if isinstance(node,ast.Name) and node.id=="random_tape"]
+        self.assertEqual(undefined_legacy,[])
+        report_line=ast.unparse(fn)
+        self.assertIn("'total_budget_each': total_budget_each",report_line)
+
+    def test_report_budget_rejects_nonmatching_arms(self):
+        with self.assertRaises(AssertionError):
+            r4.validated_equal_budget({})
+        a=r4.Budget(100,.03)
+        b=r4.Budget(200,.03)
+        a.used=a.K
+        b.used=b.K
+        with self.assertRaises(AssertionError):
+            r4.validated_equal_budget({"A":{"budget":a},"B":{"budget":b}})
+        b=r4.Budget(100,.03)
+        with self.assertRaises(AssertionError):
+            r4.validated_equal_budget({"A":{"budget":a},"B":{"budget":b}})
+
     def test_budget_inherited_from_r3(self):
         for n in [100,3815]:
             b=r4.Budget(n,.03)
