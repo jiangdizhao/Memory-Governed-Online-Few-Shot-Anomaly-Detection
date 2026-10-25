@@ -54,6 +54,32 @@ class ContractTests(unittest.TestCase):
         self.assertTrue(runner.output_dir(a,"switch",1,256,"native").name.endswith(
             "K256_native_full"))
 
+    def test_known_failed_mechanism_log_is_archived_for_rerun(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "mechanism_test.run.log"
+            log.write_text(
+                "UnicodeEncodeError: cp1252 cannot encode arrow\\n"
+                "Exit code: 1\\n", encoding="utf-8")
+            archive = runner.archive_failed_mechanism_log(log)
+            self.assertFalse(log.exists())
+            self.assertTrue(archive.exists())
+            self.assertEqual(
+                archive.name, "mechanism_test.run.failed-001.log")
+            self.assertIn("UnicodeEncodeError", archive.read_text(encoding="utf-8"))
+            log.write_text("Other exception\\nExit code: 2\\n", encoding="utf-8")
+            archive2 = runner.archive_failed_mechanism_log(log)
+            self.assertEqual(archive2.name, "mechanism_test.run.failed-002.log")
+            self.assertTrue(archive.exists())
+
+    def test_incomplete_or_success_preflight_log_not_discarded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "mechanism_test.run.log"
+            for body in ("in progress\\n", "Exit code: 0\\n", "Exit code: ????\\n"):
+                log.write_text(body, encoding="utf-8")
+                with self.assertRaises(RuntimeError):
+                    runner.archive_failed_mechanism_log(log)
+                self.assertEqual(log.read_text(encoding="utf-8"), body)
+
     def test_a1h_validator_fails_closed_and_accepts_consistent_fixture(self):
         with tempfile.TemporaryDirectory() as tmp:
             a=runner.parser().parse_args([
