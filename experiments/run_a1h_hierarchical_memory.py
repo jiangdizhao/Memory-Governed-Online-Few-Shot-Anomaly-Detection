@@ -13,6 +13,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -155,17 +156,54 @@ def check(a,c,s,b,o,smoke=False):
                 |{"memory":j["arms"][name]["memory"]} for name in ARMS}}
 
 
+def archive_failed_mechanism_log(logpath):
+    """Preserve a known failed preflight log to enable a safe automatic retry.
+
+    Do not silently discard an incomplete log, a successful log missing its
+    marker, or any GPU-condition record. Only this CPU preflight is retried.
+    """
+    if not logpath.exists():
+        return None
+    last = logpath.read_text(encoding="utf-8", errors="replace").strip().splitlines()
+    if not last or not last[-1].startswith("Exit code: "):
+        raise RuntimeError(
+            f"Preflight log has no recorded exit code; inspect before retry: {logpath}")
+    try:
+        rc = int(last[-1].split("Exit code: ", 1)[1])
+    except ValueError as exc:
+        raise RuntimeError(f"Malformed preflight log: {logpath}") from exc
+    if rc == 0:
+        raise RuntimeError(
+            f"Preflight previously succeeded but success marker is absent: {logpath}")
+    for n in range(1, 1000):
+        archived = logpath.with_name(
+            f"{logpath.stem}.failed-{n:03d}{logpath.suffix}")
+        if not archived.exists():
+            logpath.rename(archived)
+            print(f"[A1-H] Archived failed preflight log: {archived}", flush=True)
+            return archived
+    raise RuntimeError(f"Too many archived preflight logs: {logpath}")
+
+
 def subprocess_logged(cmd, logpath):
     if logpath.exists():
         raise FileExistsError(f"Previous incomplete log present: {logpath}")
     logpath.parent.mkdir(parents=True,exist_ok=True)
     print("[A1-H]", " ".join(cmd),flush=True)
     with logpath.open("w",encoding="utf-8") as out:
-        proc=subprocess.Popen(cmd,cwd=ROOT,stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT,text=True,errors="replace")
+        proc=subprocess.Popen(
+            cmd, cwd=ROOT, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+            errors="replace", env={**os.environ, "PYTHONIOENCODING": "utf-8"})
         for line in proc.stdout:
             out.write(line);out.flush()
-            print(line,end="",flush=True)
+            # Respect older Windows consoles using cp1252 while preserving
+            # the original UTF-8 bytes in the audit log.
+            display_encoding = sys.stdout.encoding or "utf-8"
+            printable = line.encode(
+                display_encoding, errors="backslashreplace"
+            ).decode(display_encoding, errors="replace")
+            print(printable, end="", flush=True)
         rc=proc.wait()
         out.write(f"\nExit code: {rc}\n")
     if rc:
@@ -255,11 +293,18 @@ if __name__=="__main__":
     else:
         cases=conditions(args)
         if args.all and not args.skip_mechanism_test:
-            subprocess_logged(
-                [sys.executable,str(ROOT/"experiments"/"a1h_mechanism_test.py")],
-                Path(args.out_root)/"mechanism_test.run.log"
-            ) if not (Path(args.out_root)/"mechanism_test.passed").exists() else None
-            (Path(args.out_root)/"mechanism_test.passed").touch(exist_ok=True)
+            root = Path(args.out_root)
+            marker = root / "mechanism_test.passed"
+            logfile = root / "mechanism_test.run.log"
+            if not marker.is_file():
+                archive_failed_mechanism_log(logfile)
+                subprocess_logged(
+                    [sys.executable, str(ROOT/"experiments"/"a1h_mechanism_test.py")],
+                    logfile)
+                # Only create success marker after the preflight subprocess exits 0.
+                marker.touch()
+            else:
+                print("[A1-H] CPU mechanism preflight already passed", flush=True)
         if args.all and not args.no_smoke:
             run_case(args,*cases[0],smoke=True)
         result=[]
