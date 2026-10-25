@@ -150,6 +150,21 @@ def main(args):
     checkpoint_steps=[]
 
     def checkpoint(t):
+        import torch
+        # Critical causal assertions: H1/H2 can differ in shadow LTM state but
+        # not STM; H2/H3 must have identical STM, LTM, buffer state. Only their
+        # retrieval toggle may change scores.
+        def same_bank(a, b, family):
+            ca=getattr(arms[a].bank,family)["p0"][0]["id"]
+            cb=getattr(arms[b].bank,family)["p0"][0]["id"]
+            for x,y in zip(ca,cb):
+                if x.size()!=y.size() or not torch.equal(
+                        x.protos[:x.size()],y.protos[:y.size()]):
+                    raise AssertionError(
+                        f"Unexpected memory-state coupling between {a}/{b}: {family}")
+        same_bank("H1_track","H2_shadow_promotion","normal_dyn")
+        same_bank("H2_shadow_promotion","H3_ltm_retrieval","normal_dyn")
+        same_bank("H2_shadow_promotion","H3_ltm_retrieval","normal_dyn_ltm")
         before_update={n:a.state() for n,a in arms.items()}
         for name,s in before_update.items():
             occupancy.append({"step":t,**s})
@@ -181,6 +196,25 @@ def main(args):
                 "probe_mean_ltm_score_delta"]=sum(deltas)/len(deltas)
             occupancy[-len(arms)+list(arms).index(name)][
                 "probe_any_ltm_score_effect"]=sum(abs(z)>1e-7 for z in deltas)
+        # Same storage checkpoint, native v22 heterogeneous-k retrieval is
+        # evaluated separately and NEVER used for an online decision/update.
+        if t==len(stream):
+            for name in ("H3_ltm_retrieval","H4_utility"):
+                arm=arms[name]
+                b=arm.bank
+                old=b._dN_min_fixed_dyn
+                try:
+                    b._dN_min_fixed_dyn=type(b)._dN_min_fixed_dyn.__get__(b,type(b))
+                    native=[]
+                    for path,label,img,fts_cpu in probe_cache:
+                        feats=[z.to(args.device) for z in fts_cpu]
+                        native.append((label,scoring(b,img,feats,cfg)))
+                    y=[p[0] for p in native]
+                    scr=[p[1] for p in native]
+                    occupancy[-len(arms)+list(arms).index(name)][
+                        "native_v22_probe_auc_diagnostic"]=auc_metrics(y,scr,theta)["auroc"]
+                finally:
+                    b._dN_min_fixed_dyn=old
         # shadow-promotion invariance: nonretrieved LTM must not affect score.
         for x,y in zip(snapshot["H1_track"],snapshot["H2_shadow_promotion"]):
             if abs(x[1]-y[1])>args.shadow_tolerance:
@@ -256,6 +290,20 @@ def main(args):
     write_csv("probe_scores.csv",probe_records)
     write_csv("probe_summary.csv",probe_summary)
     write_csv("memory_snapshots.csv",occupancy)
+    ltm_activation = {
+        name:{
+            "promotion_count":metric[name]["memory"]["promotion_successes"],
+            "promoted_new_prototypes":metric[name]["memory"]["promoted_new_prototypes"],
+            "final_ltm":metric[name]["memory"]["ltm"],
+            "retrieval_effect_probes_at_final":next(
+                (r.get("probe_any_ltm_score_effect") for r in reversed(occupancy)
+                 if r["method"]==name and r["step"]==len(stream)),None),
+            "interpretation":"unactivated_in_real_stream"
+                if metric[name]["memory"]["ltm"]==0
+                else "ltm_stored_no_retrieval" if name=="H2_shadow_promotion"
+                else "active_ltm_with_evaluation_ablation"
+        } for name in ("H2_shadow_promotion","H3_ltm_retrieval","H4_utility")
+    }
     report={
         "schema":SCHEMA,"complete":True,
         "class_name":args.class_name,
@@ -286,7 +334,9 @@ def main(args):
             "probes_never_used_for_training":True,
             "labels_after_predictions":True,
         },
-        "arms":metric,"elapsed_seconds":time.perf_counter()-tstart,
+        "arms":metric,
+        "ltm_activation":ltm_activation,
+        "elapsed_seconds":time.perf_counter()-tstart,
         "args":vars(args),
         "limitations":[
             "S0/S1/S2/S3/H1-H4 isolate normal-memory submodules, not complete v22.",
