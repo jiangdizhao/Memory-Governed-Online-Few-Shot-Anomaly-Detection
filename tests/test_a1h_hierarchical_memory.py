@@ -88,6 +88,11 @@ class ContractTests(unittest.TestCase):
                                 candidate_events=0 if name=="static" else 1,
                                 candidate_patches=0 if name=="static" else 8))
             j=dict(schema=runner.SCHEMA,complete=True,
+                   source_sha256={
+                       "experiments/a1h_memory.py":
+                       __import__("hashlib").sha256(
+                           (ROOT/"experiments/a1h_memory.py").read_bytes()).hexdigest()},
+                   ltm_activation={"H3_ltm_retrieval":{"final_ltm":0}},
                    class_name="fake",support_seed=0,budget=128,order="native",
                    n_queries=3,queried_normal=1,queried_defect=2,
                    n_stream=100,n_probe=4,protocol=p,arms=arms)
