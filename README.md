@@ -1,3 +1,25 @@
+# E02-R1/R2 — independent probe generalization and legal threshold calibration
+
+**Active follow-up experiments:** `experiments/e02_r1_r2.py`. Two experiments
+reuse the unchanged canonical v22 initializer and E02 verified-normal STM:
+R1 tests held-out probe generalization without probe feedback; R2 tests
+predefined verified-label-only threshold controllers on a **shared STM
+score trajectory**. Neither uses BEA or retrospective test-label tuning.
+
+Local Windows PowerShell instructions, controls, outputs and interpretation:
+[docs/E02_R1_R2_PROTOCOL.md](docs/E02_R1_R2_PROTOCOL.md).
+
+~~~powershell
+git fetch origin
+git switch e02-r1-r2-probe-calibration
+conda activate torch
+python experiments/e02_r1_r2.py --self-test
+~~~
+
+**Original v22, vmb_new, P0, E01 and E02 files are unchanged on this branch.**
+
+---
+
 # E02 — Canonical v22 matched-feedback factorial experiment
 
 **Active branch:** `e02-matched-feedback-factorial`.
