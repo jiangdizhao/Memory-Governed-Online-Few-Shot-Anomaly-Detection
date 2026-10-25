@@ -351,6 +351,12 @@ def main_run(args):
             step_state(v22,e02,state,t=t,sample=sample,image=image,
                        features=features,global_feat=g,args=args,
                        random_tape=random_tape,evaluation_rows=all_rows)
+        # Both query policies must preserve precisely the same frozen baseline.
+        a, b = all_rows[-2], all_rows[-1]
+        if (a["path"] != b["path"] or
+            abs(a["static_score"] - b["static_score"]) > args.score_tolerance or
+            abs(a["static_theta"] - b["static_theta"]) > 1e-12):
+            raise AssertionError(f"Canonical static reference diverged across schedules at t={t}")
         labels.append(0 if sample.is_good else 1)
         if args.print_every and t%args.print_every==0:
             print(f"[R3] {t}/{len(stream)} queries random={states['random']['budget'].used} "
@@ -391,8 +397,11 @@ def main_run(args):
             "not a complete SimpleAIF+normal_dyn_plus_correction reproduction;"
         ],
     }
-    (output/"r3_summary.json").write_text(json.dumps(report,indent=2,ensure_ascii=False),
-                                            encoding="utf-8")
+    (output/"r3_summary.json").write_text(
+        json.dumps(report, indent=2, ensure_ascii=False,
+                   default=lambda x: x.item() if hasattr(x, "item") else str(x)),
+        encoding="utf-8"
+    )
     print(json.dumps({k:{ "queries":v["queries"],"first_200":v["first_200_queries"],
                            "queries_normal":v["queried_normals"],"queries_defect":v["queried_defects"],
                            "metrics":{a:{key:m[key] for key in ("auroc","balanced_accuracy","fpr","fnr")}
