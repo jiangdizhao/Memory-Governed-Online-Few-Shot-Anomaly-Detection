@@ -244,8 +244,10 @@ def compare_reference_csv(rows, path, tolerance=1e-7):
 
 
 def check_summary_reference(old, current, *, native):
-    if old["schema"] != "e02.r5.d.time_only.v1":
-        raise AssertionError("Expected a canonical R5-D summary")
+    if old["schema"] not in ("e02.r5.d.time_only.v1", "e02.r6.sidecar.audit.v1"):
+        raise AssertionError("Expected a native R5-D or R6-D summary")
+    if old["schema"] == "e02.r6.sidecar.audit.v1" and old["stream_order"] != "native":
+        raise AssertionError("Stress trajectory cannot serve as native reference")
     for field in ("class_name", "total_budget_each", "support_paths",
                   "canonical_fixed_sha256", "canonical_theta0"):
         if old[field] != current[field]:
@@ -332,8 +334,10 @@ def main_run(args):
         torch.backends.cuda.enable_flash_sdp(False)
         torch.backends.cuda.enable_mem_efficient_sdp(False)
         torch.backends.cuda.enable_math_sdp(True)
-    # R5 D uses the original R4 B/C summary to validate matched configuration.
-    r5.read_r4_reference(args)
+    # R4 reference is optional for other categories: canonical v22 + R5 D
+    # primitives are still used, with native R6 parity as the local control.
+    if args.reference_r4_summary:
+        r5.read_r4_reference(args)
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     canonical, backbone, bank, theta = e02.init_canonical(args, v22, e01, out)
@@ -394,13 +398,13 @@ def main_run(args):
             "Any single-class window risk and balanced accuracy are undefined (null).",
         ]
     }
-    if args.reference_r5_summary:
-        old = json.loads(Path(args.reference_r5_summary).read_text(encoding="utf-8"))
+    if args.reference_native_summary:
+        old = json.loads(Path(args.reference_native_summary).read_text(encoding="utf-8"))
         report["reference_check"] = check_summary_reference(
             old, report, native=args.stream_order == "native")
-    if args.reference_r5_csv and args.stream_order == "native":
+    if args.reference_native_csv and args.stream_order == "native":
         report["prequential_parity"] = compare_reference_csv(
-            rows, args.reference_r5_csv, args.parity_tolerance)
+            rows, args.reference_native_csv, args.parity_tolerance)
     if args.require_parity:
         if args.stream_order != "native":
             raise AssertionError("R5 parity only meaningful with native order")
@@ -409,10 +413,10 @@ def main_run(args):
         if not report.get("prequential_parity", {}).get("passed"):
             raise AssertionError("Missing full R5 CSV parity")
     if args.stream_order != "native":
-        if not args.reference_r5_summary or not args.reference_r5_csv:
+        if not args.reference_native_summary or not args.reference_native_csv:
             raise AssertionError("Stress ordering needs R5 summary and native CSV")
         # Ensure exact membership. Order is intentionally different.
-        with Path(args.reference_r5_csv).open(encoding="utf-8", newline="") as fh:
+        with Path(args.reference_native_csv).open(encoding="utf-8", newline="") as fh:
             previous = Counter(row["path"] for row in csv.DictReader(fh))
         if previous != Counter(sample.path for sample in stream):
             raise AssertionError("Extreme stream differs in membership from R5")
@@ -446,8 +450,10 @@ def parser():
                    choices=["native", "normal_first", "defect_first",
                             "alternating_blocks"])
     p.add_argument("--block-size", type=int, default=256)
-    p.add_argument("--reference-r5-summary", default=None)
-    p.add_argument("--reference-r5-csv", default=None)
+    p.add_argument("--reference-native-summary", "--reference-r5-summary",
+                   dest="reference_native_summary", default=None)
+    p.add_argument("--reference-native-csv", "--reference-r5-csv",
+                   dest="reference_native_csv", default=None)
     p.add_argument("--require-parity", action="store_true")
     p.add_argument("--parity-tolerance", type=float, default=1e-7)
     p.add_argument("--rescore-every", type=int, default=0,
