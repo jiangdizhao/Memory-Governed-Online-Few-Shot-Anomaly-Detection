@@ -18,12 +18,13 @@ from __future__ import annotations
 import argparse
 import csv
 import gc
+import platform
 import hashlib
 import json
 import math
 import random
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
 
@@ -74,7 +75,8 @@ def sha256_file(path: Path) -> str:
 @dataclass
 class Config:
     device: str
-    seed: int
+    augmentation_seed: int
+    bank_seed: int
     fixed_capacity: int
     fixed_per_image: int
     augmentations: int
@@ -100,6 +102,12 @@ def require_sources():
             "Install torch/torchvision/scipy/sklearn/pandas/timm and put the "
             "original v22 and vmb_visionad_new modules in the repository root."
         ) from exc
+
+
+def deterministic_subseed(seed: int, *identity: object) -> int:
+    """Independent deterministic seed; independent of support order and support draw seed."""
+    key = '|'.join([str(seed), *(str(v) for v in identity)])
+    return int(hashlib.sha256(key.encode('utf-8')).hexdigest()[:8], 16)
 
 
 def select_support(impl, backbone, all_normals: list[str],
@@ -137,10 +145,12 @@ def encode_reference_features(impl, backbone, paths: list[str], cfg: Config):
     for path in paths:
         img = impl.load_rgb(path)
         # Deterministic per-original-image augmentation, independent of fold.
-        image_seed = int(hashlib.sha256((str(cfg.seed) + "|" + path).encode()).hexdigest()[:8], 16)
+        image_seed = deterministic_subseed(cfg.augmentation_seed, path)
         random.seed(image_seed)
         np.random.seed(image_seed % (2**32 - 1))
         torch.manual_seed(image_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(image_seed)
         refs = impl.make_support_refs(
             img, backbone, augmentation, cfg.augmentations,
             baseline_compat=False, include_identity=cfg.include_identity
@@ -174,23 +184,138 @@ def build_vmb(impl, cache, chosen: list[str], cfg: Config):
     init_feat = cache[chosen[0]][0]
     bank._init_concepts_if_needed("p0", [t.to(cfg.device) for t in init_feat])
     bank.concept_cb["p0"][0].update(init_feat[0][:min(256, len(init_feat[0]))].to(cfg.device))
-    rng = np.random.RandomState(cfg.seed)
     refs = []
     for path in chosen:
-        for featset in cache[path]:
+        for view_idx, featset in enumerate(cache[path]):
             slim = []
-            for x in featset:
+            for layer_idx, x in enumerate(featset):
                 k = min(cfg.fixed_per_image, int(x.shape[0]))
-                idx = rng.choice(int(x.shape[0]), size=k, replace=False)
+                # Shared support references are subsampled identically in every
+                # LOSO fold, irrespective of which other support is withheld.
+                local_rng = np.random.RandomState(deterministic_subseed(
+                    cfg.bank_seed, path, view_idx, layer_idx
+                ))
+                idx = local_rng.choice(int(x.shape[0]), size=k, replace=False)
                 slim.append(x[idx].to(cfg.device))
             refs.append(slim)
     bank.build_fixed_normal_from_support(
         cls_name="p0", support_feats=refs, mode=0,
-        view="id", normal_seed_patches=8192, seed=cfg.seed,
+        view="id", normal_seed_patches=8192, seed=cfg.bank_seed,
     )
     if not bank.normal_fixed["p0"][0]["id"][0].size():
         raise RuntimeError("Fixed normal bank is empty.")
     return bank
+
+
+def fixed_bank_profile(bank) -> dict[str, Any]:
+    """Actual stored reference count and fingerprint (not configured capacity)."""
+    layers = bank.normal_fixed["p0"][0]["id"]
+    digest = hashlib.sha256()
+    info = []
+    for i, cb in enumerate(layers):
+        x = cb.protos.detach().to("cpu").contiguous().numpy()
+        digest.update(x.tobytes())
+        info.append({
+            "layer": i, "n_prototypes": int(x.shape[0]),
+            "feature_dim": int(x.shape[1]), "capacity": int(cb.K),
+            "dtype": str(x.dtype), "bytes": int(x.nbytes)
+        })
+    return {
+        "layers": info, "sha256": digest.hexdigest(),
+        "total_prototypes": sum(t["n_prototypes"] for t in info),
+        "total_feature_bytes": sum(t["bytes"] for t in info),
+    }
+
+
+def diagnostic_threshold_curve(y: list[int], scores: list[float],
+                               named_thresholds: dict[str, float]):
+    """Retrospective use of test labels ONLY for *plots*, never calibration."""
+    labels = np.asarray(y, dtype=np.int8)
+    xs = np.asarray(scores, dtype=np.float64)
+    if not len(xs) or not np.isfinite(xs).all():
+        raise ValueError("Invalid evaluation scores")
+    normals = np.sort(xs[labels == 0])
+    defects = np.sort(xs[labels == 1])
+    if not len(normals) or not len(defects):
+        raise ValueError("Need both classes for FPR/FNR diagnostic")
+    thresholds = np.unique(np.concatenate((
+        np.nextafter([xs.min()], -np.inf), xs,
+        np.asarray(list(named_thresholds.values()), dtype=np.float64),
+        np.nextafter([xs.max()], np.inf),
+    )))
+    n0, n1 = len(normals), len(defects)
+    # Predictions use score > theta; searchsorted(..., right) matches equality.
+    fpr = (n0 - np.searchsorted(normals, thresholds, side="right")) / n0
+    fnr = np.searchsorted(defects, thresholds, side="right") / n1
+    out = []
+    for j, th in enumerate(thresholds):
+        out.append({
+            "threshold": float(th), "fpr": float(fpr[j]),
+            "fnr": float(fnr[j]),
+            "tpr": float(1.0 - fnr[j]),
+            "balanced_accuracy": float(1.0 - 0.5 * (fpr[j] + fnr[j])),
+            "is_self": int(th == named_thresholds.get("self")),
+            "is_loso": int(th == named_thresholds.get("loso")),
+            "is_commissioning": int(th == named_thresholds.get("commissioning")),
+        })
+    return out
+
+
+def save_diagnostics(out: Path, prefix: str, y: list[int],
+                     scores: list[float], named_thresholds: dict[str, float],
+                     *, plot: bool = True) -> dict[str, Any]:
+    curve = diagnostic_threshold_curve(y, scores, named_thresholds)
+    with (out / f"{prefix}_threshold_curve.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as f:
+        writer = csv.DictWriter(f, fieldnames=list(curve[0]))
+        writer.writeheader()
+        writer.writerows(curve)
+    normal = np.asarray([s for v, s in zip(y, scores) if v == 0], dtype=float)
+    defect = np.asarray([s for v, s in zip(y, scores) if v == 1], dtype=float)
+    audit = {
+        "score_quantiles_normal": {
+            str(q): float(np.quantile(normal, q)) for q in (0, .05, .25, .5, .75, .95, 1)
+        },
+        "score_quantiles_defect": {
+            str(q): float(np.quantile(defect, q)) for q in (0, .05, .25, .5, .75, .95, 1)
+        },
+        "n_curve_rows": len(curve),
+        "disclaimer": "Retrospective test-label diagnostics; no test-label threshold selection.",
+    }
+    if plot:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        xs = np.array([r["threshold"] for r in curve])
+        fp = np.array([r["fpr"] for r in curve])
+        fn = np.array([r["fnr"] for r in curve])
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(xs, fp, label="FPR")
+        ax.plot(xs, fn, label="FNR")
+        for name, val in named_thresholds.items():
+            ax.axvline(val, linestyle="--", linewidth=1, label=f"{name}: {val:.4f}")
+        ax.set(xlabel="Frozen anomaly-score threshold", ylabel="Error rate",
+               title="Retrospective FPR/FNR vs threshold (NOT training)")
+        ax.set_ylim(-.02, 1.02)
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(out / f"{prefix}_threshold_sweep.png", dpi=140)
+        plt.close(fig)
+        fig, ax = plt.subplots(figsize=(6, 5))
+        ax.plot(fp[::-1], 1.0 - fn[::-1], label="ROC, frozen scores")
+        ax.plot([0, 1], [0, 1], linestyle=":", linewidth=1)
+        for name, val in named_thresholds.items():
+            close = int(np.argmin(np.abs(xs - val)))
+            ax.scatter([fp[close]], [1.0 - fn[close]], s=36,
+                       label=f"{name} ({fp[close]:.3f}, {1-fn[close]:.3f})")
+        ax.set(xlabel="False positive rate", ylabel="True positive rate",
+               title="Frozen-bank ROC with initial operating points")
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(out / f"{prefix}_roc.png", dpi=140)
+        plt.close(fig)
+    return audit
 
 
 def score_image(impl, backbone, bank, path: str, cfg: Config) -> float:
@@ -224,18 +349,20 @@ def run_one(args, impl, backbone, index, cfg: Config,
     )
     if len(chosen) != args.shots or len(set(chosen)) != args.shots:
         raise AssertionError("Support not exactly four distinct images.")
-    cfg.seed = seed
     cache = encode_reference_features(impl, backbone, chosen, cfg)
     bank = build_vmb(impl, cache, chosen, cfg)
+    bank_audit = fixed_bank_profile(bank)
     self_scores = [score_image(impl, backbone, bank, x, cfg) for x in chosen]
     self_stats = threshold_from_scores(self_scores, cfg.multiplier)
 
     loso_scores = []
+    loso_bank_audits = []
     for heldout in chosen:
         remaining = [x for x in chosen if x != heldout]
         assert len(remaining) == args.shots - 1 and heldout not in remaining
         fold_bank = build_vmb(impl, cache, remaining, cfg)
         loso_scores.append(score_image(impl, backbone, fold_bank, heldout, cfg))
+        loso_bank_audits.append({"heldout": heldout, **fixed_bank_profile(fold_bank)})
         del fold_bank
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -248,7 +375,7 @@ def run_one(args, impl, backbone, index, cfg: Config,
         candidates = [x for x in train if x not in set(chosen)]
         if len(candidates) < args.commissioning_size:
             raise ValueError("Not enough held-out normal commissioning images.")
-        cal_paths = sorted(random.Random(seed + 100003).sample(
+        cal_paths = sorted(random.Random(args.commissioning_seed).sample(
             candidates, args.commissioning_size
         ))
         cal_scores = [score_image(impl, backbone, bank, x, cfg) for x in cal_paths]
@@ -258,6 +385,24 @@ def run_one(args, impl, backbone, index, cfg: Config,
     rng.shuffle(tests)
     if args.max_test:
         tests = tests[:args.max_test]
+    repeatability = None
+    if args.verify_replay:
+        replay_bank = build_vmb(impl, cache, chosen, cfg)
+        second = fixed_bank_profile(replay_bank)
+        if second != bank_audit:
+            raise AssertionError("Fixed bank changed on rebuild with identical inputs/seeds")
+        initial_score = score_image(impl, backbone, bank, tests[0].path, cfg)
+        replay_score = score_image(impl, backbone, replay_bank, tests[0].path, cfg)
+        if not np.isclose(initial_score, replay_score, rtol=0, atol=args.replay_tolerance):
+            raise AssertionError(f"Replay score mismatch {initial_score} vs {replay_score}")
+        repeatability = {"bank_fingerprint_equal": True,
+                         "same_image_score_1": initial_score,
+                         "same_image_score_2": replay_score,
+                         "score_delta": abs(initial_score - replay_score),
+                         "tolerance": args.replay_tolerance}
+        del replay_bank
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
     y, scores = [], []
     rows = []
     for idx, sample in enumerate(tests):
@@ -274,8 +419,35 @@ def run_one(args, impl, backbone, index, cfg: Config,
     }
     if cal_stats:
         results["commissioning"] = metrics(y, scores, cal_stats["theta"])
+    out.mkdir(parents=True, exist_ok=True)
+    prefix = (f"{args.class_name}_{protocol}_support{seed}"
+              f"_aug{cfg.augmentation_seed}_bank{cfg.bank_seed}")
+    named_thresholds = {name: stat["theta"] for name, stat in (
+        [("self", self_stats), ("loso", loso_stats)] +
+        ([("commissioning", cal_stats)] if cal_stats is not None else [])
+    )}
+    diag = save_diagnostics(out, prefix, y, scores, named_thresholds,
+                            plot=not args.no_plots)
+    score_digest = hashlib.sha256(np.asarray(scores, dtype="<f8").tobytes()).hexdigest()
     meta = {
-        "schema": "p0.protocol.audit.v1",
+        "schema": "p0.protocol.audit.v2",
+        "case_id": prefix,
+        "seeds": {"support": seed, "augmentation": cfg.augmentation_seed,
+                  "bank": cfg.bank_seed, "stream": args.stream_seed,
+                  "commissioning": args.commissioning_seed},
+        "repeatability": repeatability,
+        "bank_profile": bank_audit,
+        "loso_bank_profiles": loso_bank_audits,
+        "score_sha256": score_digest,
+        "diagnostics": diag,
+        "backbone": {"model_name": getattr(backbone, "model_name", None),
+                     "img_size": getattr(backbone, "img_size", None),
+                     "resize_size": getattr(backbone, "resize_size", None),
+                     "layers": getattr(backbone, "layers", None),
+                     "use_fp16": getattr(backbone, "use_fp16", None)},
+        "effective_config": asdict(cfg),
+        "runtime": {"python": platform.python_version(),
+                    "numpy": np.__version__, "torch": torch.__version__},
         "class_name": args.class_name, "protocol": protocol,
         "support_seed": seed, "stream_seed": args.stream_seed,
         "supports": chosen, "commissioning_paths": cal_paths,
@@ -301,10 +473,11 @@ def run_one(args, impl, backbone, index, cfg: Config,
             "LOSO scores are produced with three-shot reference banks and may be pessimistic for a deployed four-shot bank.",
             "This audit uses v22 scoring classes with independently constructed, cached support features; it is not a byte-for-byte reproduction of historical v22 support-bank sampling.",
             "Both static operating points share exactly the same query/test scores.",
+            "Supports are fixed per support_seed; augmentation and bank subsampling are fixed independently.",
+            "LOSO folds still have only three original images and resample the final v22 bank pool; LOSO is diagnostic only.",
+            "Any threshold sweep/ROC uses held-out test labels retrospectively, NEVER to choose deployment thresholds.",
         ],
     }
-    out.mkdir(parents=True, exist_ok=True)
-    prefix = f"{args.class_name}_{protocol}_seed{seed}"
     with (out / f"{prefix}.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, ensure_ascii=False)
     with (out / f"{prefix}_scores.csv").open("w", encoding="utf-8", newline="") as f:
@@ -329,6 +502,12 @@ def parser():
     p.add_argument("--support-policy", choices=["strict4", "pool_assisted4", "both"], default="strict4")
     p.add_argument("--seeds", default="0", help="Comma-separated support seeds")
     p.add_argument("--stream-seed", type=int, default=0)
+    p.add_argument("--augmentation-seed", type=int, default=0, help="Fixed across different support draws")
+    p.add_argument("--bank-seed", type=int, default=0, help="Fixed across different support draws and folds")
+    p.add_argument("--commissioning-seed", type=int, default=100003)
+    p.add_argument("--verify-replay", action="store_true", help="Rebuild frozen bank and verify matching scores")
+    p.add_argument("--replay-tolerance", type=float, default=1e-6)
+    p.add_argument("--no-plots", action="store_true", help="Still write threshold curve CSV")
     p.add_argument("--shots", type=int, default=4, choices=[4])
     p.add_argument("--device", default="cuda")
     p.add_argument("--max-test", type=int, default=0, help="0=entire class test set")
@@ -358,12 +537,18 @@ def main():
         assert t["n"] == 4 and t["theta"] > 0.3
         m = metrics([0, 1, 0, 1], [0.1, 0.9, 0.2, 0.8], 0.5)
         assert m["accuracy"] == 1.0 and m["fpr"] == 0.0
-        print("P0 numerical self-test: PASS")
+        curve = diagnostic_threshold_curve([0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9], {"self": 0.5, "loso": 0.7})
+        assert any(abs(z["threshold"] - 0.5) < 1e-9 and z["fpr"] == 0 and z["fnr"] == 0 for z in curve)
+        assert deterministic_subseed(42, "imageA", 0) == deterministic_subseed(42, "imageA", 0)
+        assert deterministic_subseed(42, "imageA", 0) != deterministic_subseed(43, "imageA", 0)
+        print("P0-R1 numerical/reproducibility self-test: PASS")
         return
     if not args.dataset_root:
         raise SystemExit("--dataset-root is required unless --self-test.")
     if args.commissioning_size < 0:
         raise SystemExit("--commissioning-size must be nonnegative.")
+    if args.replay_tolerance < 0:
+        raise SystemExit("--replay-tolerance must be nonnegative.")
     import torch
     impl = require_sources()
     json_dir = args.json_dir or str(Path(args.dataset_root) / "jsons" / "realiad_jsons")
@@ -374,7 +559,8 @@ def main():
     if not seeds:
         raise SystemExit("No support seeds.")
     cfg = Config(
-        device=args.device, seed=0, fixed_capacity=args.fixed_capacity,
+        device=args.device, augmentation_seed=args.augmentation_seed,
+        bank_seed=args.bank_seed, fixed_capacity=args.fixed_capacity,
         fixed_per_image=args.fixed_per_image, augmentations=args.augmentations,
         include_identity=args.include_identity, multiplier=args.multiplier,
         feature_fuse=args.feature_fuse, topk_patches=args.topk_patches,
@@ -397,11 +583,18 @@ def main():
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
     summary = {
-        "schema": "p0.protocol.batch.v1",
+        "schema": "p0.protocol.batch.v2",
+        "fixed_augmentation_seed": cfg.augmentation_seed,
+        "fixed_bank_seed": cfg.bank_seed,
+        "effective_config": asdict(cfg),
         "cases": [
             {
                 "protocol": x["protocol"],
                 "seed": x["support_seed"],
+                "case_id": x["case_id"],
+                "bank_profile": x["bank_profile"],
+                "score_sha256": x["score_sha256"],
+                "repeatability": x["repeatability"],
                 "strict_four_shot_eligible": x["strict_four_shot_eligible"],
                 "support_paths": x["supports"],
                 "theta_self": x["thresholds"]["self"]["theta"],
@@ -414,6 +607,25 @@ def main():
     }
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    support_groups = {}
+    for row in summary["cases"]:
+        key = (row["protocol"], tuple(row["support_paths"]))
+        support_groups.setdefault(key, []).append(row)
+    summary["unique_support_sets_per_protocol"] = {
+        protocol: len({tuple(row["support_paths"]) for row in summary["cases"] if row["protocol"] == protocol})
+        for protocol in protocols
+    }
+    summary["identical_support_replay"] = [
+        {"protocol": proto, "seeds": [v["seed"] for v in group],
+         "identical_bank": len({v["bank_profile"]["sha256"] for v in group}) == 1,
+         "identical_scores": len({v["score_sha256"] for v in group}) == 1}
+        for (proto, _), group in support_groups.items() if len(group) > 1
+    ]
+    for entry in summary["identical_support_replay"]:
+        if not entry["identical_bank"] or not entry["identical_scores"]:
+            raise AssertionError(f"Identical supports with fixed bank/augmentation seeds did not reproduce: {entry}")
+    if len(seeds) > 1 and summary["unique_support_sets_per_protocol"].get("pool_assisted4") == 1:
+        print("NOTE: pool-assisted central selection chose identical four supports for all seeds; not independent support draws.")
     (out / "p0_batch_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"\nSaved {len(cases)} cases to {out}")
 
