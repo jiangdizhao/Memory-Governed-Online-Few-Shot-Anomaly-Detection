@@ -49,6 +49,7 @@ def command(a,c,s,b,o,smoke=False):
     args=[sys.executable,str(ROOT/"experiments"/"a1h_hierarchical_matched.py"),
           "--dataset-root",a.dataset_root,"--class-name",c,
           "--support-seed",str(s),"--budget",str(b),"--stream-order",o,
+          "--evidence-mode",a.evidence_mode,
           "--probe-count",str(a.probe_count),
           "--probe-every",str(a.probe_every),
           "--max-samples","64" if smoke else "0",
@@ -93,6 +94,8 @@ def check(a,c,s,b,o,smoke=False):
         raise ValueError("Missing fairness controls")
     if p["hierarchical_allocation"]!={"stm":b//2,"ltm":b//4,"buffer":b//4}:
         raise ValueError("Hierarchy budget mismatch")
+    if p.get("evidence_mode")!=a.evidence_mode:
+        raise ValueError("Evidence protocol changed; use a new --out-root")
     if set(j["arms"])!=set(ARMS):
         raise ValueError("Missing arms")
     if j["n_queries"]!=round(.03*j["n_stream"]) or (
@@ -190,6 +193,7 @@ def write_aggregate(a,rows,complete):
                 "Native ordering first; no claimed real A-B-A drift protocol.",
                 "Probe never used for memory/query/calibration.",
                 "Hierarchy is not scientifically evaluated unless actual LTM promotion/retrieval effects are observed.",
+                "Default neutral evidence fixes constant usefulness and boundary=0.5; v22 margin-based evidence is a separate sensitivity protocol.",
             ]}
     (out/"aggregate.json").write_text(json.dumps(
         status,indent=2,allow_nan=False,ensure_ascii=False,default=str),encoding="utf-8")
@@ -237,6 +241,9 @@ def parser():
     p.add_argument("--probe-count",type=int,default=96)
     p.add_argument("--probe-every",type=int,default=1024)
     p.add_argument("--math-sdpa",action="store_true")
+    p.add_argument("--evidence-mode",choices=("neutral","loso_margin"),
+                   default="neutral",
+                   help="neutral primary; loso_margin is separately reported sensitivity")
     p.add_argument("--no-smoke",action="store_true")
     p.add_argument("--skip-mechanism-test",action="store_true")
     return p
