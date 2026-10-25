@@ -37,6 +37,46 @@ def main():
     fail,_=b2.get_promotion_candidates(
         min_repeat=3,min_usefulness=.1,score_threshold=.45,max_promote=4)
     assert fail.shape[0]==0
+    # End-to-end: actual PatchVMB.update_from_topk must WRITE LTM and use it.
+    support=torch.tensor([[1.,0.,0.,0.],[0.,1.,0.,0.],
+                          [0.,0.,1.,0.],[1.,1.,0.,0.],
+                          [0.,1.,1.,0.],[1.,0.,1.,0.]])
+    bank=impl.PatchVMB(
+        device="cpu",K_normal_fixed=16,K_normal_dyn=8,K_normal_ltm=4,
+        K_defect=4,K_concept=8,knn_k_normal=5,
+        corr_cfg=impl.CorrectionConfig(enabled=False),use_defect_bank=False)
+    bank.bank_dtype=torch.float32
+    bank.build_fixed_normal_from_support(
+        "p0",[[support]],mode=0,view="id",normal_seed_patches=6,seed=0)
+    bank.shadow_ltm=False
+    bank.enable_maturation_buffer=True
+    bank.enable_ltm_promotion=True
+    bank.enable_ltm_retrieval=True
+    bank.mature_promote_every=3
+    bank.mature_min_events=2
+    bank.mature_min_usefulness=0.0
+    bank.mature_score_threshold=.1
+    bank.mature_max_event_protos=1
+    for t in range(1,7):
+        report=bank.update_from_topk(
+            cls_name="p0",feats_per_layer=[v.repeat(8,1)],
+            which="normal_dyn",mode=0,view="id",
+            layer_to_patch_idx={0:[0,1,2,3]},tau_insert=.15,
+            tau_replace=.25,event_id=t,write_value=1.,
+            outcome="FP",boundary_value=.9,coverage_gain=.8)
+    ltm=bank.normal_dyn_ltm["p0"][0]["id"][0]
+    assert ltm.size()>0, (
+        "Real v22 update→maturation→consolidation failed to store LTM")
+    # Isolate the LTM retrieval contribution: STM deliberately cleared AFTER
+    # promotion in this synthetic functionality check only.
+    bank.normal_dyn["p0"][0]["id"][0].clear()
+    bank.enable_ltm_retrieval=False
+    d0,_=bank._dN_min_fixed_dyn("p0",0,"id",0,v)
+    bank.enable_ltm_retrieval=True
+    d1,_=bank._dN_min_fixed_dyn("p0",0,"id",0,v)
+    assert float(d1.mean())+1e-5<float(d0.mean()), (
+        "LTM was stored but did not influence native retrieval")
+    print("A1-H native PatchVMB maturation→promotion→retrieval CPU preflight PASS")
     print("A1-H v22 maturation/recurrence/promotion CPU mechanism preflight PASS")
 
 
