@@ -106,7 +106,7 @@ class CrossClassR6Contracts(unittest.TestCase):
         native = self._minimal_report()
         n = cv._check_report(native, "switch", 0, "native", counts)
         self.assertEqual(n["query_budget"], 115)
-        self.assertIsNone(n["worst_defined_window_balanced_fnr"] if False else None)
+        self.assertEqual(n["worst_defined_window_balanced_fnr"], .6)
         stress = self._minimal_report(order="normal_first")
         stress["stream_paths_sha256"] = "reordered"
         stress["stress_membership_check"] = {"passed": True}
