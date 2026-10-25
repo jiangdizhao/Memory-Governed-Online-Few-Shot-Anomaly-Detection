@@ -1,0 +1,84 @@
+{
+  "script_name": "test_phase3_AIF_simplified_v22.py",
+  "dataset": "realiad",
+  "class_name": "switch",
+  "seed": 0,
+  "support_seed": 1,
+  "stream_seed": 0,
+  "feature_fuse": "concat",
+  "ablation": "static_baseline",
+  "baseline_compat": false,
+  "support_include_identity": false,
+  "K_modes": 1,
+  "shots_per_mode": 4,
+  "support_paths_per_mode": {
+    "0": [
+      "G:\\dataset\\realiad\\images\\switch\\OK/S0028/switch_0028_OK_C5_20231021112637.jpg",
+      "G:\\dataset\\realiad\\images\\switch\\OK/S0067/switch_0067_OK_C3_20231021114422.jpg",
+      "G:\\dataset\\realiad\\images\\switch\\OK/S0326/switch_0326_OK_C1_20231021152133.jpg",
+      "G:\\dataset\\realiad\\images\\switch\\OK/S0381/switch_0381_OK_C5_20231021154001.jpg"
+    ]
+  },
+  "support_scores": [
+    0.43897563219070435,
+    0.49682149291038513,
+    0.46958956122398376,
+    0.4721672236919403
+  ],
+  "threshold_initialization": {
+    "enabled": false,
+    "source": "support",
+    "n_support_scores": 4,
+    "n_calibration_scores": 0,
+    "target_fpr": 0.05,
+    "mode": "zscore_gaussian"
+  },
+  "support_selection": {
+    "enabled": false,
+    "selector": "legacy"
+  },
+  "theta0": 0.5286420583724976,
+  "muN0": 0.469388484954834,
+  "sigmaN0": 0.02370142936706543,
+  "theta_controller_kind": "guarded_dual_anchor",
+  "theta_controller_state": {
+    "controller": "guarded_dual_anchor",
+    "bufN_len": 4,
+    "bufA_len": 0,
+    "recent_labeled_len": 0,
+    "n_normals_total": 4,
+    "n_normals_support": 4,
+    "n_normals_calibration": 0,
+    "n_normals_labeled": 0,
+    "n_defects_labeled": 0,
+    "theta": 0.5286420583724976,
+    "theta0": 0.5286420583724976,
+    "sigmaN": 0.02370142936706543,
+    "support_guard": {
+      "enabled": false,
+      "mu": 0.469388484954834,
+      "sigma_raw": 0.02370142936706543,
+      "sigma_eff": 0.02370142936706543,
+      "sigma_floor": 0.035,
+      "cold_start_risk": false,
+      "theta_raw": 0.5286420583724976,
+      "theta_guard": 0.5286420583724976,
+      "theta0": 0.5286420583724976
+    },
+    "fast_rescue_fp_normals": 0,
+    "fast_rescue_updates": 0,
+    "balanced_rescue_enabled": false,
+    "balanced_rescue_updates": 0,
+    "balanced_rescue_up_updates": 0,
+    "balanced_rescue_down_updates": 0,
+    "balanced_cooldown_remaining": 0,
+    "balanced_anchors": {},
+    "last_mode": "none",
+    "last_move": 0.0,
+    "last_theta_star": 0.5,
+    "last_accept": false,
+    "last_eval": {}
+  },
+  "centroids": [],
+  "mode_labels_preview": []
+}

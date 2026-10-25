@@ -1,0 +1,84 @@
+{
+  "script_name": "test_phase3_AIF_simplified_v22.py",
+  "dataset": "realiad",
+  "class_name": "rolled_strip_base",
+  "seed": 0,
+  "support_seed": 0,
+  "stream_seed": 0,
+  "feature_fuse": "concat",
+  "ablation": "static_baseline",
+  "baseline_compat": false,
+  "support_include_identity": false,
+  "K_modes": 1,
+  "shots_per_mode": 4,
+  "support_paths_per_mode": {
+    "0": [
+      "G:\\dataset\\realiad\\images\\rolled_strip_base\\OK/S0085/rolled_strip_base_0085_OK_C2_20231013091606.jpg",
+      "G:\\dataset\\realiad\\images\\rolled_strip_base\\OK/S0107/rolled_strip_base_0107_OK_C3_20231013092710.jpg",
+      "G:\\dataset\\realiad\\images\\rolled_strip_base\\OK/S0231/rolled_strip_base_0231_OK_C5_20231013101834.jpg",
+      "G:\\dataset\\realiad\\images\\rolled_strip_base\\OK/S0480/rolled_strip_base_0480_OK_C1_20231013132337.jpg"
+    ]
+  },
+  "support_scores": [
+    0.4205167889595032,
+    0.432934433221817,
+    0.44440603256225586,
+    0.36783647537231445
+  ],
+  "threshold_initialization": {
+    "enabled": false,
+    "source": "support",
+    "n_support_scores": 4,
+    "n_calibration_scores": 0,
+    "target_fpr": 0.05,
+    "mode": "zscore_gaussian"
+  },
+  "support_selection": {
+    "enabled": false,
+    "selector": "legacy"
+  },
+  "theta0": 0.5009944960474968,
+  "muN0": 0.4164234399795532,
+  "sigmaN0": 0.03382842242717743,
+  "theta_controller_kind": "guarded_dual_anchor",
+  "theta_controller_state": {
+    "controller": "guarded_dual_anchor",
+    "bufN_len": 4,
+    "bufA_len": 0,
+    "recent_labeled_len": 0,
+    "n_normals_total": 4,
+    "n_normals_support": 4,
+    "n_normals_calibration": 0,
+    "n_normals_labeled": 0,
+    "n_defects_labeled": 0,
+    "theta": 0.5009944960474968,
+    "theta0": 0.5009944960474968,
+    "sigmaN": 0.03382842242717743,
+    "support_guard": {
+      "enabled": false,
+      "mu": 0.4164234399795532,
+      "sigma_raw": 0.03382842242717743,
+      "sigma_eff": 0.03382842242717743,
+      "sigma_floor": 0.035,
+      "cold_start_risk": false,
+      "theta_raw": 0.5009944960474968,
+      "theta_guard": 0.5009944960474968,
+      "theta0": 0.5009944960474968
+    },
+    "fast_rescue_fp_normals": 0,
+    "fast_rescue_updates": 0,
+    "balanced_rescue_enabled": false,
+    "balanced_rescue_updates": 0,
+    "balanced_rescue_up_updates": 0,
+    "balanced_rescue_down_updates": 0,
+    "balanced_cooldown_remaining": 0,
+    "balanced_anchors": {},
+    "last_mode": "none",
+    "last_move": 0.0,
+    "last_theta_star": 0.5,
+    "last_accept": false,
+    "last_eval": {}
+  },
+  "centroids": [],
+  "mode_labels_preview": []
+}
