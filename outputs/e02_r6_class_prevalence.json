@@ -1,0 +1,255 @@
+{
+  "schema": "e02.r6.class_prevalence.v1",
+  "selection_based_only_on": "test label prevalence, not performance",
+  "classes": [
+    {
+      "class_name": "rolled_strip_base",
+      "normal": 1280,
+      "defect": 2525,
+      "total": 3805,
+      "normal_fraction": 0.3363994743758213,
+      "defect_fraction": 0.6636005256241787
+    },
+    {
+      "class_name": "zipper",
+      "normal": 1419,
+      "defect": 2331,
+      "total": 3750,
+      "normal_fraction": 0.3784,
+      "defect_fraction": 0.6216
+    },
+    {
+      "class_name": "pcb",
+      "normal": 1486,
+      "defect": 2289,
+      "total": 3775,
+      "normal_fraction": 0.39364238410596025,
+      "defect_fraction": 0.6063576158940397
+    },
+    {
+      "class_name": "toy",
+      "normal": 1585,
+      "defect": 2190,
+      "total": 3775,
+      "normal_fraction": 0.4198675496688742,
+      "defect_fraction": 0.5801324503311258
+    },
+    {
+      "class_name": "end_cap",
+      "normal": 1622,
+      "defect": 2183,
+      "total": 3805,
+      "normal_fraction": 0.42628120893561106,
+      "defect_fraction": 0.5737187910643889
+    },
+    {
+      "class_name": "button_battery",
+      "normal": 1640,
+      "defect": 2150,
+      "total": 3790,
+      "normal_fraction": 0.43271767810026385,
+      "defect_fraction": 0.5672823218997362
+    },
+    {
+      "class_name": "transistor1",
+      "normal": 1638,
+      "defect": 2117,
+      "total": 3755,
+      "normal_fraction": 0.43621837549933423,
+      "defect_fraction": 0.5637816245006658
+    },
+    {
+      "class_name": "sim_card_set",
+      "normal": 1716,
+      "defect": 2069,
+      "total": 3785,
+      "normal_fraction": 0.45336856010568033,
+      "defect_fraction": 0.5466314398943197
+    },
+    {
+      "class_name": "toothbrush",
+      "normal": 1753,
+      "defect": 2027,
+      "total": 3780,
+      "normal_fraction": 0.46375661375661376,
+      "defect_fraction": 0.5362433862433862
+    },
+    {
+      "class_name": "terminalblock",
+      "normal": 1822,
+      "defect": 2008,
+      "total": 3830,
+      "normal_fraction": 0.47571801566579636,
+      "defect_fraction": 0.5242819843342037
+    },
+    {
+      "class_name": "switch",
+      "normal": 1826,
+      "defect": 1994,
+      "total": 3820,
+      "normal_fraction": 0.4780104712041885,
+      "defect_fraction": 0.5219895287958115
+    },
+    {
+      "class_name": "mint",
+      "normal": 2371,
+      "defect": 2099,
+      "total": 4470,
+      "normal_fraction": 0.5304250559284116,
+      "defect_fraction": 0.46957494407158834
+    },
+    {
+      "class_name": "usb",
+      "normal": 2066,
+      "defect": 1754,
+      "total": 3820,
+      "normal_fraction": 0.5408376963350785,
+      "defect_fraction": 0.45916230366492145
+    },
+    {
+      "class_name": "bottle_cap",
+      "normal": 2154,
+      "defect": 1631,
+      "total": 3785,
+      "normal_fraction": 0.5690885072655218,
+      "defect_fraction": 0.4309114927344782
+    },
+    {
+      "class_name": "wooden_beads",
+      "normal": 2231,
+      "defect": 1684,
+      "total": 3915,
+      "normal_fraction": 0.5698595146871009,
+      "defect_fraction": 0.4301404853128991
+    },
+    {
+      "class_name": "phone_battery",
+      "normal": 2240,
+      "defect": 1550,
+      "total": 3790,
+      "normal_fraction": 0.5910290237467019,
+      "defect_fraction": 0.40897097625329815
+    },
+    {
+      "class_name": "toy_brick",
+      "normal": 2234,
+      "defect": 1536,
+      "total": 3770,
+      "normal_fraction": 0.5925729442970822,
+      "defect_fraction": 0.40742705570291776
+    },
+    {
+      "class_name": "usb_adaptor",
+      "normal": 2340,
+      "defect": 1520,
+      "total": 3860,
+      "normal_fraction": 0.6062176165803109,
+      "defect_fraction": 0.39378238341968913
+    },
+    {
+      "class_name": "vcpill",
+      "normal": 2295,
+      "defect": 1470,
+      "total": 3765,
+      "normal_fraction": 0.6095617529880478,
+      "defect_fraction": 0.3904382470119522
+    },
+    {
+      "class_name": "eraser",
+      "normal": 2347,
+      "defect": 1488,
+      "total": 3835,
+      "normal_fraction": 0.6119947848761408,
+      "defect_fraction": 0.3880052151238592
+    },
+    {
+      "class_name": "plastic_plug",
+      "normal": 2361,
+      "defect": 1419,
+      "total": 3780,
+      "normal_fraction": 0.6246031746031746,
+      "defect_fraction": 0.3753968253968254
+    },
+    {
+      "class_name": "tape",
+      "normal": 2407,
+      "defect": 1443,
+      "total": 3850,
+      "normal_fraction": 0.6251948051948052,
+      "defect_fraction": 0.3748051948051948
+    },
+    {
+      "class_name": "fire_hood",
+      "normal": 2420,
+      "defect": 1350,
+      "total": 3770,
+      "normal_fraction": 0.6419098143236074,
+      "defect_fraction": 0.35809018567639256
+    },
+    {
+      "class_name": "mounts",
+      "normal": 2462,
+      "defect": 1338,
+      "total": 3800,
+      "normal_fraction": 0.6478947368421053,
+      "defect_fraction": 0.35210526315789475
+    },
+    {
+      "class_name": "audiojack",
+      "normal": 2519,
+      "defect": 1296,
+      "total": 3815,
+      "normal_fraction": 0.6602883355176933,
+      "defect_fraction": 0.33971166448230666
+    },
+    {
+      "class_name": "plastic_nut",
+      "normal": 2509,
+      "defect": 1246,
+      "total": 3755,
+      "normal_fraction": 0.6681757656458056,
+      "defect_fraction": 0.3318242343541944
+    },
+    {
+      "class_name": "porcelain_doll",
+      "normal": 2535,
+      "defect": 1255,
+      "total": 3790,
+      "normal_fraction": 0.6688654353562006,
+      "defect_fraction": 0.3311345646437995
+    },
+    {
+      "class_name": "u_block",
+      "normal": 2526,
+      "defect": 1214,
+      "total": 3740,
+      "normal_fraction": 0.6754010695187166,
+      "defect_fraction": 0.3245989304812834
+    },
+    {
+      "class_name": "woodstick",
+      "normal": 2677,
+      "defect": 1073,
+      "total": 3750,
+      "normal_fraction": 0.7138666666666666,
+      "defect_fraction": 0.28613333333333335
+    },
+    {
+      "class_name": "regulator",
+      "normal": 2775,
+      "defect": 1080,
+      "total": 3855,
+      "normal_fraction": 0.7198443579766537,
+      "defect_fraction": 0.2801556420233463
+    }
+  ],
+  "pre_registered_candidates": {
+    "defect_dominated": "rolled_strip_base",
+    "normal_dominated": "regulator",
+    "near_balanced": "switch"
+  },
+  "notes": [
+    "For observational/stress selection only; label composition must never be given to an online query policy.",
+    "Temporal permutations do not alter a class's overall prevalence."
+  ]
+}

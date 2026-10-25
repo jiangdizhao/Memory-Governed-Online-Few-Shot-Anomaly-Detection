@@ -1,0 +1,84 @@
+{
+  "script_name": "test_phase3_AIF_simplified_v22.py",
+  "dataset": "realiad",
+  "class_name": "regulator",
+  "seed": 0,
+  "support_seed": 0,
+  "stream_seed": 0,
+  "feature_fuse": "concat",
+  "ablation": "static_baseline",
+  "baseline_compat": false,
+  "support_include_identity": false,
+  "K_modes": 1,
+  "shots_per_mode": 4,
+  "support_paths_per_mode": {
+    "0": [
+      "G:/dataset/realiad\\images\\regulator\\OK/S0103/regulator_0103_OK_C2_20231010155055.jpg",
+      "G:/dataset/realiad\\images\\regulator\\OK/S0127/regulator_0127_OK_C3_20231010155704.jpg",
+      "G:/dataset/realiad\\images\\regulator\\OK/S0266/regulator_0266_OK_C5_20231010163301.jpg",
+      "G:/dataset/realiad\\images\\regulator\\OK/S0485/regulator_0485_OK_C1_20231010173844.jpg"
+    ]
+  },
+  "support_scores": [
+    0.48175573348999023,
+    0.48108813166618347,
+    0.5264884233474731,
+    0.3663565218448639
+  ],
+  "threshold_initialization": {
+    "enabled": false,
+    "source": "support",
+    "n_support_scores": 4,
+    "n_calibration_scores": 0,
+    "target_fpr": 0.05,
+    "mode": "zscore_gaussian"
+  },
+  "support_selection": {
+    "enabled": false,
+    "selector": "legacy"
+  },
+  "theta0": 0.6349868811666965,
+  "muN0": 0.4639222025871277,
+  "sigmaN0": 0.06842587143182755,
+  "theta_controller_kind": "guarded_dual_anchor",
+  "theta_controller_state": {
+    "controller": "guarded_dual_anchor",
+    "bufN_len": 4,
+    "bufA_len": 0,
+    "recent_labeled_len": 0,
+    "n_normals_total": 4,
+    "n_normals_support": 4,
+    "n_normals_calibration": 0,
+    "n_normals_labeled": 0,
+    "n_defects_labeled": 0,
+    "theta": 0.6349868811666965,
+    "theta0": 0.6349868811666965,
+    "sigmaN": 0.06842587143182755,
+    "support_guard": {
+      "enabled": false,
+      "mu": 0.4639222025871277,
+      "sigma_raw": 0.06842587143182755,
+      "sigma_eff": 0.06842587143182755,
+      "sigma_floor": 0.035,
+      "cold_start_risk": false,
+      "theta_raw": 0.6349868811666965,
+      "theta_guard": 0.6349868811666965,
+      "theta0": 0.6349868811666965
+    },
+    "fast_rescue_fp_normals": 0,
+    "fast_rescue_updates": 0,
+    "balanced_rescue_enabled": false,
+    "balanced_rescue_updates": 0,
+    "balanced_rescue_up_updates": 0,
+    "balanced_rescue_down_updates": 0,
+    "balanced_cooldown_remaining": 0,
+    "balanced_anchors": {},
+    "last_mode": "none",
+    "last_move": 0.0,
+    "last_theta_star": 0.5,
+    "last_accept": false,
+    "last_eval": {}
+  },
+  "centroids": [],
+  "mode_labels_preview": []
+}
