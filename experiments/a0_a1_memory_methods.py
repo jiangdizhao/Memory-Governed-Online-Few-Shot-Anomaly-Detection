@@ -12,7 +12,8 @@ import hashlib
 import random
 from typing import Any
 
-ARM_NAMES = ("static", "fifo", "reservoir", "online_greedy_coreset", "v22_utility_stm")
+ARM_NAMES = ("static", "fifo", "reservoir", "online_greedy_coreset",
+             "v22_normal_stm", "v22_utility_stm")
 
 
 def stable_seed(*items: object) -> int:
@@ -105,7 +106,7 @@ class MemoryArm:
                 raise AssertionError("Invalid shared patch-selection index")
             selected = q[torch.as_tensor(indices, device=cb.device, dtype=torch.long)]
             self.candidate_patches += len(selected)
-            if self.name == "v22_utility_stm":
+            if self.name in ("v22_normal_stm", "v22_utility_stm"):
                 # Preserve the v22 utility-aware FixedCapacityCodebook.update
                 # primitive. Disable external maturation, LTM and correction.
                 _allow, _keep, _reason, info = impl.select_informative_normal_write(
@@ -113,7 +114,7 @@ class MemoryArm:
                     pred_defect=score >= theta, novelty=0.0)
                 report = cb.update(
                     selected, tau_insert=.15, tau_replace=.25, allow_replace=True,
-                    use_utility_retention=True,
+                    use_utility_retention=(self.name == "v22_utility_stm"),
                     utility_score=float(info["write_value"]),
                     outcome="FP" if score >= theta else "TN",
                     boundary_value=float(info["boundary"]), event_id=step,
@@ -176,6 +177,8 @@ class MemoryArm:
             "notes": (
                 "v22 utility-aware FixedCapacityCodebook.update; no LTM/maturation"
                 if self.name == "v22_utility_stm" else
+                "v22 normal_dyn FixedCapacityCodebook.update, original tau=0.15/0.25, no utility, LTM or maturation"
+                if self.name == "v22_normal_stm" else
                 "online min-pair-gap greedy replacement; not offline optimal"
                 if self.name == "online_greedy_coreset" else
                 "strict patch-level FIFO" if self.name == "fifo" else
