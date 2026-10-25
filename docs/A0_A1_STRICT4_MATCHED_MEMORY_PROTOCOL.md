@@ -108,7 +108,7 @@ The aggregator validates schema, class/seed/order, four supports and LOSO disjoi
 
 - Requires the project's existing Python GPU environment (Torch, torchvision, SciPy, NumPy, scikit-learn, DINOv2). GitHub CI only checks offline protocol/tests, **not Real-IAD GPU execution**.
 - Requires Real-IAD at \`G:/dataset/realiad\`, JSON index under \`G:/dataset/realiad/jsons/realiad_jsons\`, unless overridden.
-- Default probe size is 32 and scoring occurs at multiple checkpoints. This is more expensive than the old one-pass R6 benchmark; log time/VRAM.
+- Default probe size is 32 and scoring occurs at multiple checkpoints; dynamic capacity is 128 prototypes per layer for pressure. This is more expensive than the old one-pass R6 benchmark; log time/VRAM.
 - \`online_greedy_coreset\` recomputes an O(K²) pairwise distance matrix when full; this may be CPU/GPU-memory or latency intensive. Report actual execution and do not hide computational differences.
 - Standard P0/VisionAD models may download DINOv2 weights if not already cached; internet/cache prerequisites are inherited, no new trainer is added.
 - This A0/A1 experiment intentionally *does not* add or alter v22/R6 query controllers, Sidecars, correction or prior archives.
