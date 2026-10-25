@@ -1,0 +1,21 @@
+name: P0 offline sanity
+on:
+  push:
+    branches: [p0-protocol-audit]
+  pull_request:
+    paths: ['experiments/p0_protocol_audit.py', 'test_phase3_AIF_simplified_v22.py', 'vmb_visionad_new.py']
+
+jobs:
+  syntax-and-numeric:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical test dependencies
+        run: python -m pip install numpy scikit-learn
+      - name: Compile untouched research modules and P0
+        run: python -m py_compile experiments/p0_protocol_audit.py test_phase3_AIF_simplified_v22.py vmb_visionad_new.py
+      - name: Offline P0 self-test
+        run: python experiments/p0_protocol_audit.py --self-test
