@@ -1,3 +1,29 @@
+# E02-R6 — Sidecar Stability & Extreme-Stream Audit
+
+**Current experiment branch: e02-r6-sidecar-stability-audit.**
+New audit-only entrypoint: [experiments/e02_r6_sidecar_stability.py](experiments/e02_r6_sidecar_stability.py).
+Full parity requirements and local Real-IAD GPU runbook:
+[docs/E02_R6_SIDECAR_STABILITY_PROTOCOL.md](docs/E02_R6_SIDECAR_STABILITY_PROTOCOL.md).
+
+R6 wraps the original R5-D Balanced Sidecar with read-only event tracing
+(candidate decisions, cooldown, missing-class evidence), plus offline-only
+normal-first/defect-first/alternating-block stress permutations. Exact R5-D
+stepwise parity is REQUIRED before interpreting the native Audiojack audit.
+Other classes first build their own native R6 reference trajectory.
+
+Original v22 and all R3/R4/R5 experiments/results remain unchanged. R6 is
+**not a new threshold algorithm and not a full signed-correction/LTM experiment**.
+
+~~~powershell
+git fetch origin
+git switch e02-r6-sidecar-stability-audit
+conda activate torch
+python experiments/e02_r6_sidecar_stability.py --self-test
+python -m unittest discover -s tests -p "test_e02_r6_sidecar_stability.py" -v
+~~~
+
+---
+
 # E02-R4 — A/B/C Query Governance Stability Audit
 
 **Active branch: e02-r4-abc-query-governance.** New experimental entrypoint:
