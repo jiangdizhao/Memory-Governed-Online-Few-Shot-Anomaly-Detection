@@ -301,7 +301,10 @@ def main(args):
             "interpretation":"unactivated_in_real_stream"
                 if metric[name]["memory"]["ltm"]==0
                 else "ltm_stored_no_retrieval" if name=="H2_shadow_promotion"
-                else "active_ltm_with_evaluation_ablation"
+                else "ltm_stored_no_detectable_probe_score_effect"
+                if not any(r.get("probe_any_ltm_score_effect",0)>0 for r in occupancy
+                           if r["method"]==name)
+                else "ltm_retrieval_changes_probe_scores"
         } for name in ("H2_shadow_promotion","H3_ltm_retrieval","H4_utility")
     }
     report={
