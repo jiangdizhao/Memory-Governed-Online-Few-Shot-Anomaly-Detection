@@ -66,7 +66,7 @@ def main():
             outcome="FP",boundary_value=.9,coverage_gain=.8)
     ltm=bank.normal_dyn_ltm["p0"][0]["id"][0]
     assert ltm.size()>0, (
-        "Real v22 update→maturation→consolidation failed to store LTM")
+        "Real v22 update -> maturation -> consolidation failed to store LTM")
     # Isolate the LTM retrieval contribution: STM deliberately cleared AFTER
     # promotion in this synthetic functionality check only.
     bank.normal_dyn["p0"][0]["id"][0].clear()
@@ -76,7 +76,7 @@ def main():
     d1,_=bank._dN_min_fixed_dyn("p0",0,"id",0,v)
     assert float(d1.mean())+1e-5<float(d0.mean()), (
         "LTM was stored but did not influence native retrieval")
-    print("A1-H native PatchVMB maturation→promotion→retrieval CPU preflight PASS")
+    print("A1-H native PatchVMB maturation -> promotion -> retrieval CPU preflight PASS")
     print("A1-H v22 maturation/recurrence/promotion CPU mechanism preflight PASS")
 
 
