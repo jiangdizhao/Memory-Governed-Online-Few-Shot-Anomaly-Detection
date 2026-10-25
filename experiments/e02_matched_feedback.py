@@ -274,6 +274,14 @@ def audit(args) -> dict:
             arm.predictions.append(int(score >= theta))
             state[name] = {"score": score, "theta": theta, "amap": amap}
 
+        # Theta-only must have IDENTICAL anomaly scores to Static. Otherwise
+        # the 2x2 factor attribution is contaminated by a hidden bank mutation.
+        if abs(state["static"]["score"] - state["theta_only"]["score"]) > args.score_tolerance:
+            raise AssertionError(
+                "theta_only changed the anomaly-score path despite STM being disabled: "
+                f"t={t}, static={state['static']['score']}, "
+                f"theta_only={state['theta_only']['score']}"
+            )
         # Audit the identical start BEFORE any label or state update.
         if t == 1:
             probe_scores = [arm.scores[-1] for arm in arms.values()]
@@ -329,6 +337,10 @@ def audit(args) -> dict:
             raise AssertionError(f"Frozen threshold changed: {name}")
         if not arm.stm and arm.verified_normal_update_calls != 0:
             raise AssertionError(f"Unexpected STM writes: {name}")
+        if not arm.stm:
+            no_stm_size = sum(cb.size() for cb in arm.bank.normal_dyn[args.class_name][0]["id"])
+            if no_stm_size != 0:
+                raise AssertionError(f"Unexpected STM prototypes in frozen-memory arm {name}: {no_stm_size}")
         if arm.theta_update and arm.label_observations != len(tape):
             raise AssertionError(f"Threshold saw wrong number of labels: {name}")
     summaries = {}
@@ -370,6 +382,14 @@ def audit(args) -> dict:
             "total_queried": normal_queries + defect_queries,
         },
         "arms": summaries,
+        "causal_invariants": {
+            "static_and_theta_only_scores_match_stepwise": True,
+            "initial_fixed_bank_hash_equal_four_arms": True,
+            "frozen_threshold_never_updated": True,
+            "no_normal_STM_in_non_memory_arms": True,
+            "label_tape_common_across_all_arms": True,
+            "prediction_before_feedback": True,
+        },
         "settings": vars(args),
         "limitations": [
             "This is a matched fixed-feedback causal pilot, NOT native BEA.",
