@@ -46,7 +46,7 @@ class ProtocolTests(unittest.TestCase):
 
     def test_memory_methods_known_without_external_import(self):
         self.assertEqual(mem.ARM_NAMES, auto.ARMS)
-        self.assertEqual(len(mem.ARM_NAMES), 5)
+        self.assertEqual(len(mem.ARM_NAMES), 6)
         self.assertEqual(mem.stable_seed(1, "x"), mem.stable_seed(1, "x"))
         self.assertNotEqual(mem.stable_seed(1, "x"), mem.stable_seed(2, "x"))
 
