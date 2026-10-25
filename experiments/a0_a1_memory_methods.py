@@ -54,10 +54,17 @@ def kcenter_choice(prototypes, candidate):
 
 
 class MemoryArm:
-    def __init__(self, name: str, bank: Any, *, seed: int, cls: str = "p0"):
+    def __init__(self, name: str, bank: Any, *, seed: int,
+                 dynamic_capacity: int = 128, cls: str = "p0"):
         if name not in ARM_NAMES:
             raise ValueError(f"Unknown memory method {name}")
         self.name, self.bank, self.cls = name, bank, cls
+        if not 1 <= dynamic_capacity <= 1024:
+            raise ValueError("dynamic_capacity must be between 1 and 1024 per layer")
+        for cb in bank.normal_dyn[cls][0]["id"]:
+            if cb.size() != 0:
+                raise AssertionError("Dynamic bank must be empty at cold start")
+            cb.K = dynamic_capacity
         self.rng = [random.Random(stable_seed(seed, name, layer))
                     for layer in range(len(bank.normal_fixed[cls][0]["id"]))]
         self.seen = [0 for _ in self.rng]
