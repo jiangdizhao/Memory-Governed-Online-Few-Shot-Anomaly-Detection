@@ -95,7 +95,11 @@ class E02Tests(unittest.TestCase):
             return next(i for i,s in enumerate(stmts) if name in ast.unparse(s))
         self.assertLess(pos("state = {}"), pos("y = 0 if sample.is_good"))
         self.assertLess(pos("y = 0 if sample.is_good"), pos("if asked:"))
-        self.assertLess(pos("if asked:"), pos("write_verified_normal"))
+        asked_node = next(s for s in stmts if isinstance(s, ast.If)
+                          and isinstance(s.test, ast.Name) and s.test.id == "asked")
+        self.assertTrue(any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                            and n.func.id == "write_verified_normal"
+                            for n in ast.walk(asked_node)))
 
     def test_verified_normal_no_other_label_access(self):
         source = (ROOT / "experiments" / "e02_matched_feedback.py").read_text(encoding="utf-8")
