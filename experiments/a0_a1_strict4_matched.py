@@ -144,6 +144,7 @@ def main_run(args):
     tape = e02.make_query_tape(len(stream), args.query_rate, args.query_seed)
     K = len(tape)
     arms = {name: memory.MemoryArm(name, copy.deepcopy(canonical),
+                                   dynamic_capacity=args.dynamic_capacity,
                                    seed=memory.stable_seed(args.support_seed,
                                                            args.class_name, args.query_seed))
             for name in memory.ARM_NAMES}
@@ -289,6 +290,7 @@ def main_run(args):
             "probe_not_in_training_or_feedback": True,
             "no_adaptive_threshold_in_primary_experiment": True,
             "memory_capacity_matched_per_layer": True,
+            "dynamic_capacity_per_layer": args.dynamic_capacity,
         },
         "n_stream": len(stream), "n_probe": len(probe), "K": K,
         "arms": out_arms, "probe_snapshots": probe_summary,
@@ -301,6 +303,7 @@ def main_run(args):
             "Candidates are selected from a shared STATIC reference top-k, isolating retention but not reproducing every arm's native feature selection.",
             "v22_utility_stm uses the original codebook utility retention, with LTM/maturation/correction disabled.",
             "Greedy coreset is a streaming min-pair-gap heuristic, not global optimized coreset; O(K^2) ephemeral computation/memory.",
+            "Default dynamic capacity is 128 prototypes per layer (capacity pressure), unlike historical R6 1024; all arms share the same configured bound.",
             "FIFO and reservoir store all shared candidate patches; utility method novelty-gates writes; compare actual occupancy and runtime.",
             "Probe images are held-out from online stream; labels used solely for offline evaluation.",
             "AUROC over evolving prequential scores may confound memory state and stream order.",
@@ -342,6 +345,8 @@ def parser():
     p.add_argument("--device", default="cuda")
     p.add_argument("--fixed-capacity", type=int, default=25000)
     p.add_argument("--fixed-per-image", type=int, default=5000)
+    p.add_argument("--dynamic-capacity", type=int, default=128,
+                   help="Mutable normal-patch prototypes per layer, same for every arm")
     p.add_argument("--augmentations", type=int, default=4)
     p.add_argument("--augmentation-seed", type=int, default=0)
     p.add_argument("--bank-seed", type=int, default=0)
@@ -359,6 +364,7 @@ if __name__ == "__main__":
     if args.json_dir is None:
         args.json_dir = str(Path(args.dataset_root) / "jsons" / "realiad_jsons")
     if not (0 < args.query_rate <= 1 and 0 <= args.max_samples
-            and 0 < args.patches_per_layer <= 32 and args.probe_count >= 4):
+            and 0 < args.patches_per_layer <= 32 and args.probe_count >= 4
+            and 1 <= args.dynamic_capacity <= 1024):
         raise SystemExit("Invalid query rate/sample/patch/probe settings")
     main_run(args)
