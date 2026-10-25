@@ -1,3 +1,28 @@
+# E02-R3: Original Simple-AIF Bootstrap under matched label budgets
+
+**New active research branch:** `e02-r3-bootstrap-sidecar-audit`.
+Runs native v22 Bootstrap → Simple-AIF query functions and compares the
+original Guarded Sidecar, Balanced Rescue, frozen theta, and a simple
+mistake-feedback reference **under each fixed-feedback trajectory**.
+Two alternative query schedules both have a hard final query cap.
+
+- Source: [experiments/e02_r3_bootstrap_sidecar.py](experiments/e02_r3_bootstrap_sidecar.py)
+- **Runbook:** [docs/E02_R3_BOOTSTRAP_SIDECAR_PROTOCOL.md](docs/E02_R3_BOOTSTRAP_SIDECAR_PROTOCOL.md)
+
+The original v22 research script, E01/E02/R1/R2, and all existing
+reports are unchanged. This is a controlled STM-only mechanism audit,
+**not** an exact replay of the earlier `normal_dyn_plus_correction` historical
+full-system run.
+
+~~~powershell
+git fetch origin
+git switch e02-r3-bootstrap-sidecar-audit
+conda activate torch
+python experiments/e02_r3_bootstrap_sidecar.py --self-test
+~~~
+
+---
+
 # E02-R1/R2 — independent probe generalization and legal threshold calibration
 
 **Active follow-up experiments:** `experiments/e02_r1_r2.py`. Two experiments
