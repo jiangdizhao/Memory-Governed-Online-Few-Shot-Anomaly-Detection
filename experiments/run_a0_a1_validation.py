@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
 SCHEMA = "a0a1.strict4.loso.matched.v1"
 ARMS = ("static", "fifo", "reservoir", "online_greedy_coreset",
-        "v22_utility_stm")
+        "v22_normal_stm", "v22_utility_stm")
 DEFAULT_CLASSES = ("audiojack", "rolled_strip_base", "switch")
 DEFAULT_SEEDS = (0, 1)
 DEFAULT_ORDERS = ("native",)
@@ -227,7 +227,7 @@ def write_aggregate(args, rows, *, complete):
             "One common static-reference patch-selection rule across arms.",
             "Fixed numeric theta0 across all arms, no adaptive threshold in A1.",
             "Held-out probe never joined stream, feedback or memory.",
-            "Utility-aware STM is a v22 submodule not full STM/LTM architecture.",
+            "v22_normal_stm isolates R6-style dynamic-normal update, while v22_utility_stm tests optional retention; neither is full STM/LTM.",
             "Online greedy coreset is approximate, not an optimized offline solver.",
             "Equal configured retrieval capacity; actual occupancy and computational overhead differ.",
             "Two support seeds are screening evidence, not inferential significance.",
