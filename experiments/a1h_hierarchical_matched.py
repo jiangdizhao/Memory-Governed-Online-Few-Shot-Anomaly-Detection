@@ -118,7 +118,8 @@ def main(args):
     arms = {
         name:mem.make_arm(
             name, copy.deepcopy(canonical), budget, seed=mem.a1.stable_seed(
-                args.class_name,args.support_seed,37))
+                args.class_name,args.support_seed,37),
+            evidence_mode=args.evidence_mode)
         for name in mem.ARMS
     }
     del canonical
@@ -334,6 +335,7 @@ def main(args):
             "calibration":"LOSO diagnostic, no adaptive threshold, no reported deployment BA validity",
             "hierarchical_allocation":{
                 "stm":budget.stm,"ltm":budget.ltm,"buffer":budget.buffer},
+            "evidence_mode":args.evidence_mode,
             "probes_never_used_for_training":True,
             "labels_after_predictions":True,
         },
@@ -391,6 +393,9 @@ def parser():
     p.add_argument("--max-samples",type=int,default=0)
     p.add_argument("--device",default="cuda")
     p.add_argument("--math-sdpa",action="store_true")
+    p.add_argument("--evidence-mode",choices=("neutral","loso_margin"),
+                   default="neutral",
+                   help="neutral is primary: no dependence on defective LOSO margin")
     p.add_argument("--print-every",type=int,default=200)
     p.add_argument("--shadow-tolerance",type=float,default=1e-5)
     p.add_argument("--out-dir",required=True)
