@@ -1,0 +1,454 @@
+{
+  "schema": "e02.r3.bootstrap.sidecar.audit.v1",
+  "class_name": "audiojack",
+  "n_stream": 100,
+  "total_budget_each": 3,
+  "stream_paths_sha256": "6642c8dacb58da9763947fa9fef39324bc5da6ed091a7bcbd4c310d919962bdd",
+  "support_paths": [
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0083/audiojack_0083_OK_C1_20231021132550.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0153/audiojack_0153_OK_C1_20231021134019.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0340/audiojack_0340_OK_C2_20231021145008.jpg",
+    "G:/dataset/realiad\\images\\audiojack\\OK/S0490/audiojack_0490_OK_C5_20231021160354.jpg"
+  ],
+  "canonical_fixed_sha256": "ceb275704cb1277e8816feede44e9a0957bdeab27916eedf25d254123f0a3f86",
+  "canonical_theta0": 0.5568159315735102,
+  "random_tape_sha256": "1016cf7f1ef850bdc3f2e44168f3f674ffb4cabf733c7dfcf21fc98eefe28478",
+  "schedules": {
+    "random": {
+      "name": "random",
+      "queries": 3,
+      "queried_normals": 1,
+      "queried_defects": 2,
+      "query_indices_1based": [
+        12,
+        78,
+        88
+      ],
+      "query_tape_sha256": "1016cf7f1ef850bdc3f2e44168f3f674ffb4cabf733c7dfcf21fc98eefe28478",
+      "budget_suppressed": 0,
+      "budget_forced_terminal": 0,
+      "first_200_queries": 3,
+      "first_400_queries": 3,
+      "bootstrap_steps": 0,
+      "bootstrap_proposals": 0,
+      "bootstrap_verified_normals": 1,
+      "query_reasons": {
+        "seeded_uniform_random": 3
+      },
+      "stm_write_calls": 1,
+      "stm_prototypes": 30,
+      "arm_metrics": {
+        "static": {
+          "n": 100,
+          "tp": 12,
+          "tn": 51,
+          "fp": 5,
+          "fn": 32,
+          "accuracy": 0.63,
+          "balanced_accuracy": 0.5917207792207793,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.7272727272727273,
+          "auroc": 0.7386363636363636,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5568159315735102,
+          "theta_changes": 0,
+          "n_labeled": 0
+        },
+        "frozen": {
+          "n": 100,
+          "tp": 12,
+          "tn": 51,
+          "fp": 5,
+          "fn": 32,
+          "accuracy": 0.63,
+          "balanced_accuracy": 0.5917207792207793,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.7272727272727273,
+          "auroc": 0.7329545454545454,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5568159315735102,
+          "theta_changes": 0,
+          "n_labeled": 0
+        },
+        "guarded": {
+          "n": 100,
+          "tp": 12,
+          "tn": 51,
+          "fp": 5,
+          "fn": 32,
+          "accuracy": 0.63,
+          "balanced_accuracy": 0.5917207792207793,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.7272727272727273,
+          "auroc": 0.7329545454545454,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5568159315735102,
+          "theta_changes": 0,
+          "n_labeled": 3
+        },
+        "balanced_rescue": {
+          "n": 100,
+          "tp": 16,
+          "tn": 50,
+          "fp": 6,
+          "fn": 28,
+          "accuracy": 0.66,
+          "balanced_accuracy": 0.6282467532467533,
+          "fpr": 0.10714285714285714,
+          "fnr": 0.6363636363636364,
+          "auroc": 0.7329545454545454,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5473159315735101,
+          "theta_changes": 2,
+          "n_labeled": 3
+        },
+        "mistake_feedback": {
+          "n": 100,
+          "tp": 13,
+          "tn": 51,
+          "fp": 5,
+          "fn": 31,
+          "accuracy": 0.64,
+          "balanced_accuracy": 0.6030844155844156,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.7045454545454546,
+          "auroc": 0.7329545454545454,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5528159315735102,
+          "theta_changes": 2,
+          "n_labeled": 3
+        }
+      },
+      "sidecar_moves": {
+        "frozen": [],
+        "guarded": [],
+        "balanced_rescue": [
+          {
+            "step": 78,
+            "before": 0.5568159315735102,
+            "after": 0.5518159315735102,
+            "last_mode": "normal_guarded",
+            "last_eval": {
+              "status": "balanced_evaluated",
+              "mode": "normal_guarded",
+              "current_theta": 0.5568159315735102,
+              "current_rates": {
+                "n_total": 6,
+                "n_normals": 5,
+                "n_defects": 1,
+                "FPR": 0.0,
+                "FNR": 1.0,
+                "normal_source": "buffer",
+                "defect_source": "buffer"
+              },
+              "current_obj": 1.5,
+              "anchors": {
+                "theta_N": 0.5329099583625794,
+                "theta_D": null,
+                "qN": 0.5279099583625794,
+                "qD": null,
+                "n_normal_anchor": 5,
+                "n_defect_anchor": 1,
+                "min_normals": 8,
+                "min_defects": 3
+              },
+              "best_theta_preclip": 0.5368159315735102,
+              "best_rates": {
+                "n_total": 6,
+                "n_normals": 5,
+                "n_defects": 1,
+                "FPR": 0.0,
+                "FNR": 0.0,
+                "normal_source": "buffer",
+                "defect_source": "buffer"
+              },
+              "best_obj": 0.08695612721225571,
+              "force_hint": "downward",
+              "cooldown_remaining": 0,
+              "accepted_theta": 0.5518159315735102,
+              "accepted_delta": -0.005,
+              "cooldown_remaining_after": 0
+            }
+          },
+          {
+            "step": 88,
+            "before": 0.5518159315735102,
+            "after": 0.5473159315735101,
+            "last_mode": "normal_guarded",
+            "last_eval": {
+              "status": "balanced_evaluated",
+              "mode": "normal_guarded",
+              "current_theta": 0.5518159315735102,
+              "current_rates": {
+                "n_total": 7,
+                "n_normals": 5,
+                "n_defects": 2,
+                "FPR": 0.0,
+                "FNR": 1.0,
+                "normal_source": "buffer",
+                "defect_source": "buffer"
+              },
+              "current_obj": 1.5,
+              "anchors": {
+                "theta_N": 0.5329099583625794,
+                "theta_D": null,
+                "qN": 0.5279099583625794,
+                "qD": null,
+                "n_normal_anchor": 5,
+                "n_defect_anchor": 2,
+                "min_normals": 8,
+                "min_defects": 3
+              },
+              "best_theta_preclip": 0.5368159315735102,
+              "best_rates": {
+                "n_total": 7,
+                "n_normals": 5,
+                "n_defects": 2,
+                "FPR": 0.0,
+                "FNR": 0.0,
+                "normal_source": "buffer",
+                "defect_source": "buffer"
+              },
+              "best_obj": 0.06521709540919178,
+              "force_hint": "downward",
+              "cooldown_remaining": 0,
+              "accepted_theta": 0.5473159315735101,
+              "accepted_delta": -0.004500000000000004,
+              "cooldown_remaining_after": 0
+            }
+          }
+        ],
+        "mistake_feedback": [
+          {
+            "step": 78,
+            "before": 0.5568159315735102,
+            "after": 0.5548159315735102,
+            "last_mode": null,
+            "last_eval": null
+          },
+          {
+            "step": 88,
+            "before": 0.5548159315735102,
+            "after": 0.5528159315735102,
+            "last_mode": null,
+            "last_eval": null
+          }
+        ]
+      },
+      "fixed_sha256": "ceb275704cb1277e8816feede44e9a0957bdeab27916eedf25d254123f0a3f86"
+    },
+    "bootstrap_simple_aif": {
+      "name": "bootstrap_simple_aif",
+      "queries": 3,
+      "queried_normals": 1,
+      "queried_defects": 2,
+      "query_indices_1based": [
+        1,
+        4,
+        5
+      ],
+      "query_tape_sha256": "c026d822c6c805d7cbd0893bbfcaf8d5d185728e71d0cb625b752221ad6502f7",
+      "budget_suppressed": 48,
+      "budget_forced_terminal": 0,
+      "first_200_queries": 3,
+      "first_400_queries": 3,
+      "bootstrap_steps": 100,
+      "bootstrap_proposals": 51,
+      "bootstrap_verified_normals": 1,
+      "query_reasons": {
+        "bootstrap::bootstrap_boundary_band": 3,
+        "bootstrap::bootstrap_outside_band": 0
+      },
+      "stm_write_calls": 1,
+      "stm_prototypes": 32,
+      "arm_metrics": {
+        "static": {
+          "n": 100,
+          "tp": 12,
+          "tn": 51,
+          "fp": 5,
+          "fn": 32,
+          "accuracy": 0.63,
+          "balanced_accuracy": 0.5917207792207793,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.7272727272727273,
+          "auroc": 0.7386363636363636,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5568159315735102,
+          "theta_changes": 0,
+          "n_labeled": 0
+        },
+        "frozen": {
+          "n": 100,
+          "tp": 12,
+          "tn": 51,
+          "fp": 5,
+          "fn": 32,
+          "accuracy": 0.63,
+          "balanced_accuracy": 0.5917207792207793,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.7272727272727273,
+          "auroc": 0.7394480519480519,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5568159315735102,
+          "theta_changes": 0,
+          "n_labeled": 0
+        },
+        "guarded": {
+          "n": 100,
+          "tp": 12,
+          "tn": 51,
+          "fp": 5,
+          "fn": 32,
+          "accuracy": 0.63,
+          "balanced_accuracy": 0.5917207792207793,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.7272727272727273,
+          "auroc": 0.7394480519480519,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5568159315735102,
+          "theta_changes": 0,
+          "n_labeled": 3
+        },
+        "balanced_rescue": {
+          "n": 100,
+          "tp": 17,
+          "tn": 50,
+          "fp": 6,
+          "fn": 27,
+          "accuracy": 0.67,
+          "balanced_accuracy": 0.6396103896103896,
+          "fpr": 0.10714285714285714,
+          "fnr": 0.6136363636363636,
+          "auroc": 0.7394480519480519,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5523159315735102,
+          "theta_changes": 1,
+          "n_labeled": 3
+        },
+        "mistake_feedback": {
+          "n": 100,
+          "tp": 15,
+          "tn": 51,
+          "fp": 5,
+          "fn": 29,
+          "accuracy": 0.66,
+          "balanced_accuracy": 0.6258116883116883,
+          "fpr": 0.08928571428571429,
+          "fnr": 0.6590909090909091,
+          "auroc": 0.7394480519480519,
+          "theta0": 0.5568159315735102,
+          "theta_final": 0.5548159315735102,
+          "theta_changes": 1,
+          "n_labeled": 3
+        }
+      },
+      "sidecar_moves": {
+        "frozen": [],
+        "guarded": [],
+        "balanced_rescue": [
+          {
+            "step": 1,
+            "before": 0.5568159315735102,
+            "after": 0.5523159315735102,
+            "last_mode": "normal_guarded",
+            "last_eval": {
+              "status": "balanced_evaluated",
+              "mode": "normal_guarded",
+              "current_theta": 0.5568159315735102,
+              "current_rates": {
+                "n_total": 5,
+                "n_normals": 4,
+                "n_defects": 1,
+                "FPR": 0.0,
+                "FNR": 1.0,
+                "normal_source": "buffer",
+                "defect_source": "buffer"
+              },
+              "current_obj": 1.5,
+              "anchors": {
+                "theta_N": 0.5296912509202957,
+                "theta_D": null,
+                "qN": 0.5246912509202957,
+                "qD": null,
+                "n_normal_anchor": 4,
+                "n_defect_anchor": 1,
+                "min_normals": 8,
+                "min_defects": 3
+              },
+              "best_theta_preclip": 0.5418159315735102,
+              "best_rates": {
+                "n_total": 5,
+                "n_normals": 4,
+                "n_defects": 1,
+                "FPR": 0.0,
+                "FNR": 0.0,
+                "normal_source": "buffer",
+                "defect_source": "buffer"
+              },
+              "best_obj": 0.06074504135653857,
+              "force_hint": "downward",
+              "cooldown_remaining": 0,
+              "accepted_theta": 0.5523159315735102,
+              "accepted_delta": -0.004500000000000004,
+              "cooldown_remaining_after": 0
+            }
+          }
+        ],
+        "mistake_feedback": [
+          {
+            "step": 1,
+            "before": 0.5568159315735102,
+            "after": 0.5548159315735102,
+            "last_mode": null,
+            "last_eval": null
+          }
+        ]
+      },
+      "fixed_sha256": "ceb275704cb1277e8816feede44e9a0957bdeab27916eedf25d254123f0a3f86"
+    }
+  },
+  "parameters": {
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "class_name": "audiojack",
+    "device": "cuda",
+    "support_seed": 0,
+    "legacy_seed": 0,
+    "stream_seed": 0,
+    "query_seed": 37,
+    "query_rate": 0.03,
+    "max_samples": 100,
+    "fixed_capacity": 25000,
+    "fixed_per_image": 5000,
+    "augmentations": 4,
+    "include_identity": false,
+    "feature_fuse": "concat",
+    "image_aggregation": "max",
+    "topk_patches": 32,
+    "knn": 5,
+    "math_sdpa": true,
+    "score_tolerance": 1e-05,
+    "print_every": 25,
+    "out_dir": "outputs/e02_r3_audiojack_smoke",
+    "self_test": false,
+    "query_cost": 0.8,
+    "beta_entropy": 0.3,
+    "local_saliency": true,
+    "bootstrap_dynamic_target": 16,
+    "bootstrap_max_steps": 400,
+    "bootstrap_band_min_abs": 0.02,
+    "mistake_step": 0.002
+  },
+  "scope_notes": [
+    "Native v22 Bootstrap and SimpleAIF policy *functions*, with NormalCoverageMemory;",
+    "controlled 3% hard cap and deterministic terminal catchup are experimental, not native v22 budget semantics;",
+    "policy uses a frozen canonical theta reference to avoid feedback loops with alternative sidecars;",
+    "memory uses E02 verified-normal update with novelty=0, not full v22 memory governance;",
+    "query schedules lead to DIFFERENT STM and label trajectories: only within-schedule threshold effects are isolated;",
+    "same 3% labels per schedule, but not the same labels across schedules;",
+    "no correction, LTM, maturation, unlabeled writes, warmup budget, FN-audit or defect audit;",
+    "initialization follows E01/E02 baseline_compat=False; not exact submitted historical run;",
+    "not a complete SimpleAIF+normal_dyn_plus_correction reproduction;"
+  ]
+}
