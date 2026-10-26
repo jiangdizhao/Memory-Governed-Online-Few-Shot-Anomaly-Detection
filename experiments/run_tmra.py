@@ -217,6 +217,12 @@ if __name__=="__main__":
         if args.all or args.validate:args.experiment="all"
         tasks=list(cases(args))
         if args.all or args.experiment:
+            if not args.validate:
+                pre=Path(args.out_root)/"native_cpu_preflight.passed"
+                if not pre.is_file():
+                    run([sys.executable,str(ROOT/"experiments"/"tmra_preflight.py")],
+                        Path(args.out_root)/"native_cpu_preflight.run.log")
+                    pre.touch()
             if not args.validate and not args.no_smoke:
                 # CPU operator path for both bridge and compact memory.
                 smokeI=("I","switch",0,None)
