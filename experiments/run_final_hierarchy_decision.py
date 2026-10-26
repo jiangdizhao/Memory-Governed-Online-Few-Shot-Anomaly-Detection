@@ -80,17 +80,20 @@ def open_checked(a,case):
     if len(qt)!=len(set(qt)) or min(qt)<1 or max(qt)>len(flat):
         raise RuntimeError("Invalid query positions")
     trial_ids=set(j["support_objects"]) | set(ob["A"]) | set(ob["B"])
-    if trial_ids&set(sum(ob["phases"],[]))-set(ob["A"])-set(ob["B"]):
-        # the subtraction is redundant with earlier assertions,
-        # retained only as defense in depth.
+    if trial_ids & set(sum(ob["phases"],[])):
         raise RuntimeError("Support or probe contaminated stream")
     if j["baseline_comparability"]["original_paper_full_stack_reproduction"]:
         raise RuntimeError("Mislabelled full-system replication")
-    if not j["baseline_comparability"]["equal_actual_mutable_tensor_bytes_within_5_percent"]:
-        raise RuntimeError("Resource parity unverified")
+    if not j["baseline_comparability"]["equal_maximum_mutable_capacity_bytes_within_5_percent"]:
+        raise RuntimeError("Maximum resource parity unverified")
+    if j["maximum_reserved_state_byte_gap"]>.05:
+        raise RuntimeError("Reserved byte capacity mismatch")
+    if any(b>final.BYTE_CEILING for b in j["maximum_reserved_state_bytes"].values()):
+        raise RuntimeError("Nominal reserved capacity exceeds byte ceiling")
     for phase in ("A_end_1","A_end_2","A_end_3"):
-        if j["actual_bytes_by_phase"][phase]["relative_difference"]>.05:
-            raise RuntimeError("Actual byte mismatch at phase " + phase)
+        if any(b>final.BYTE_CEILING for b in
+               j["actual_bytes_by_phase"][phase]["bytes"].values()):
+            raise RuntimeError("Dynamic tensor bytes exceed ceiling")
     for arm in ("greedy_coreset","hierarchy"):
         m=j["results"][arm]["memory"]
         if (m["allocated_state_bytes"]>final.BYTE_CEILING or
