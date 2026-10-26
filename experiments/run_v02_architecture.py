@@ -37,26 +37,39 @@ def _read_pinned_historical_source(path):
     return result.stdout
 
 
-def _verify_source_manifest(source_hashes):
-    """Verify hashes without rewriting old scientific output.
+def _line_ending_sha256_set(source):
+    """SHA-256 of exact UTF-8 source under Git LF and Windows CRLF checkout.
 
-    Old complete cases are accepted only when changed source bytes exactly
-    match the pinned historical commit. Only two runner/validation files may
-    differ from the current code; all method, data and model code must still
-    match the manifest byte-for-byte. New cases use current hashes.
+    Case manifests from Windows recorded raw working-tree bytes; git-show
+    returns Git blob bytes. CRLF conversion is a representation change, NOT
+    a scientific source modification. No whitespace, code or data changes
+    beyond CRLF <-> LF are permitted by this compatibility rule.
+    """
+    lf=source.replace(b"\r\n",b"\n")
+    if b"\r" in lf:
+        raise RuntimeError("Unexpected bare carriage return in source")
+    crlf=lf.replace(b"\n",b"\r\n")
+    return {hashlib.sha256(v).hexdigest() for v in (source,lf,crlf)}
+
+
+def _verify_source_manifest(source_hashes):
+    """Accept exact sources including Git LF/Windows CRLF checkout variants.
+
+    Existing science code must match the current source except newline
+    conversion. Only the old trial/runner may use pinned prior code, and
+    those too must match a known version (LF or CRLF) by SHA-256.
+    Never modify or re-hash stored 12 successful GPU evidence files.
     """
     old_paths=[]
     for path,digest in source_hashes.items():
         local=ROOT/path
         if not local.is_file():
             raise RuntimeError(f"Missing source file: {path}")
-        actual=hashlib.sha256(local.read_bytes()).hexdigest()
-        if actual==digest:
+        if digest in _line_ending_sha256_set(local.read_bytes()):
             continue
         if path not in LEGACY_CODE_ONLY_ALLOWLIST:
             raise RuntimeError(f"Non-whitelisted science source change: {path}")
-        historical=hashlib.sha256(_read_pinned_historical_source(path)).hexdigest()
-        if historical!=digest:
+        if digest not in _line_ending_sha256_set(_read_pinned_historical_source(path)):
             raise RuntimeError(f"Unrecognized historical source hash: {path}")
         old_paths.append(path)
     return old_paths
