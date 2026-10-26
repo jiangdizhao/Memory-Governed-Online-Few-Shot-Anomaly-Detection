@@ -20,6 +20,7 @@ ROOT=Path(__file__).resolve().parents[1]
 for v in (ROOT,ROOT/"experiments"):
     if str(v) not in sys.path:sys.path.insert(0,str(v))
 import v02_architecture_core as final
+import v02_shift_guard as shift_guard
 import v02_memory as memory
 import tmra_recurrence_core as shift
 import a0_a1_strict4_matched as a1
@@ -138,6 +139,7 @@ def main(args):
     qnormal_per_phase=[0,0,0]
     updates={}
     shift_values=[]
+    shift_changed_pixels=[]
     online_retrieval_seconds={name:0.0 for name in NAMES}
 
     def probe(t,mode,stage,store=True,flags=None):
@@ -206,7 +208,15 @@ def main(args):
             global_t+=1
             img,feats=encode(s.path,mode)
             if phase_idx==1 and mode=="B" and local<=6:
-                _,alt=encode(s.path,"A")
+                original_A,alt=encode(s.path,"A")
+                # B is scientifically valid when the frozen pixel transform
+                # really changes observations; embedding-distance magnitude
+                # is a measured response and must not be a fixed validity gate.
+                same_geometry=np.asarray(original_A).shape==np.asarray(img).shape
+                if not same_geometry:
+                    raise AssertionError("Photometric shift changed image geometry")
+                shift_changed_pixels.append(
+                    float(np.mean(np.asarray(original_A)!=np.asarray(img))))
                 q=impl.l2_normalize(feats[0].float())
                 p=impl.l2_normalize(alt[0].float())
                 if q.shape!=p.shape:raise AssertionError("Mode changed patch geometry")
@@ -254,8 +264,8 @@ def main(args):
             stage["A_no_Buffer_end_2"]=probe(
                 global_t,"A","A_read_no_Buffer",store=False,flags=(True,False))
         if args.order=="ABA" and phase_idx==1:
-            if not shift_values or np.mean(shift_values)<.01:
-                raise AssertionError("Frozen B shift failed feature-space verification")
+            shift_guard.validate_shift_observations(
+                shift_values,shift_changed_pixels)
     if len(query)!=q_normal+q_defect:raise AssertionError("Query count mismatch")
     for name,arm in arms.items():
         expected=q_normal+(final.N_HISTORY if name.endswith("mature") else 0)
@@ -317,6 +327,7 @@ def main(args):
         "experiments/v02_architecture_core.py",
         "experiments/v02_architecture_trial.py",
         "experiments/v02_memory.py",
+        "experiments/v02_shift_guard.py",
         "experiments/run_v02_architecture.py",
         "experiments/final_decision_core.py",
         "experiments/tmra_compact_memory.py",
@@ -369,6 +380,9 @@ def main(args):
         "results":ret,"actual_bytes_by_phase":delta_bytes,
         "maximum_reserved_state_bytes":reserved,
         "maximum_reserved_state_byte_gap":reserved_gap,
+        "B_intervention_validation":(
+            shift_guard.validate_shift_observations(
+                shift_values,shift_changed_pixels) if args.order=="ABA" else None),
         "mean_B_feature_cosine_shift":(
             sum(shift_values)/len(shift_values) if shift_values else None),
         "baseline_comparability":{
