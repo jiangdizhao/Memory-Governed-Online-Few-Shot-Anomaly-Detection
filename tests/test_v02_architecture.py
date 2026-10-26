@@ -104,21 +104,30 @@ class V02ProtocolTests(unittest.TestCase):
                 args,("eraser",0,"ABA")))
 
     def test_historical_source_lineage_allowlist(self):
-        # This runs against the exact Git commit whose twelve complete
-        # outputs were produced, never by trusting claimed SHA metadata.
+        # In the user's Windows checkout, summary.json source hashes can
+        # have CRLF; git show always returns committed LF bytes. Both must
+        # verify without accepting any actual scientific code changes.
         for path in sorted(runner.LEGACY_CODE_ONLY_ALLOWLIST):
-            actual=hashlib.sha256(runner._read_pinned_historical_source(path)).hexdigest()
-            checked=runner._verify_source_manifest({path:actual})
-            self.assertEqual(checked,[path])
-        original=hashlib.sha256(
-            runner._read_pinned_historical_source(
-                "experiments/v02_architecture_core.py")).hexdigest()
-        self.assertEqual(
+            git_blob=runner._read_pinned_historical_source(path)
+            for variant in (git_blob,git_blob.replace(b"\n",b"\r\n")):
+                historical_sha=hashlib.sha256(variant).hexdigest()
+                checked=runner._verify_source_manifest({path:historical_sha})
+                self.assertEqual(checked,[path])
+        path="experiments/v02_architecture_core.py"
+        local_blob=(runner.ROOT/path).read_bytes()
+        for variant in (local_blob.replace(b"\r\n",b"\n"),
+                        local_blob.replace(b"\r\n",b"\n").replace(b"\n",b"\r\n")):
+            valid_sha=hashlib.sha256(variant).hexdigest()
+            self.assertEqual(runner._verify_source_manifest({path:valid_sha}),[])
+        with self.assertRaises(RuntimeError):
+            runner._verify_source_manifest({path:"deadbeef"})
+        with self.assertRaises(RuntimeError):
+            # Whitespace other than line endings must fail closed.
             runner._verify_source_manifest({
-                "experiments/v02_architecture_core.py":original}),[])
+                path:hashlib.sha256(local_blob+b" # changed").hexdigest()})
         with self.assertRaises(RuntimeError):
             runner._verify_source_manifest({
-                "experiments/v02_architecture_core.py":"deadbeef"})
+                "experiments/v02_architecture_trial.py":"deadbeef"})
 
     def test_decision_gate(self):
         def rows(ret,quality=0,source=.006,ltm=1):
