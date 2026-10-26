@@ -100,3 +100,16 @@ Each case stores `summary.json`, `stream.csv`, `probe_scores.csv`, `memory_snaps
 - CI/offline tests do not verify Real-IAD GPU feature extraction. Scientific claims require validated row-level local GPU outputs.
 
 **No modification to historical v22, rejected paper, R6, A1-H, Bridge, TMRA or old final-decision archives.**
+
+
+## 2026-10-27 execution validation correction — before V0.2 outcomes review
+
+The first local GPU execution successfully validated the first twelve class/seed/ABA-AAA runs (all audiojack and bottle_cap conditions). It halted in the 13th run, eraser/s0/ABA, at the *end of Phase II* because the old code imposed an extra `mean cosine embedding distance >=0.01` acceptance condition on six transformed images. This condition was **not** part of the research hypotheses or outcome thresholds: it incorrectly confuses a real RGB image intervention with the encoder's category-specific feature sensitivity.
+
+The fixed photometric B operator and all class/seed/probe/support/query/memory settings remain unchanged. The repaired validator requires a real change in at least one sampled original-vs-B pixel, identical patch geometry and finite feature cosine shift. The measured feature shift is recorded exactly, including values below 0.01; such cases must remain in the full result matrix (no favorable-case selection). B shift is still synthetic and may be weak in feature space for some categories.
+
+**Historical result immutability:** The existing twelve complete `summary.json` records retain their original `source_sha256` fields and files. A source-compatibility verifier pins only the prior trial/runner files to commit `d52331efba827e31ccd9a80e5fe2ba9bb3e1114d`, validates that the stored file hashes equal exact `git show` historical bytes, and requires every remaining scientific code hash to match the current worktree. No existing completed results are modified or recomputed. The final decision includes source lineage for all 36 trials.
+
+**Failed run preservation:** Only the known incomplete `eraser/s0/ABA` run matching that precise traceback and `Exit code: 1` is automatically MOVED with its original log into `outputs/v02_paired_cold_mature/_failed_attempts/eraser_s0_ABA_obsolete_shift_gate/`; its partial records are not deleted or overwritten. The runner then launches a completely new eraser/s0/ABA attempt under the corrected read-only validity check. Other failure signatures still stop and require investigation.
+
+**No outcome-dependent retuning:** This correction adjusts only an ancillary intervention sanity check. It does not change the B gains, noise, capacity, query budget, model scoring, candidate selection, labels, or the frozen engineering selection gates. Do not use observed V0.2 metrics as reasons to select alternative categories or shift intensity.
