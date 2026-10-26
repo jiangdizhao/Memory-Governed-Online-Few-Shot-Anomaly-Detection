@@ -1,0 +1,683 @@
+{
+  "schema": "memory.v02.decision.v1",
+  "complete": true,
+  "source_lineage_by_condition": {
+    "audiojack_s0_ABA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "audiojack_s0_AAA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "audiojack_s1_ABA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "audiojack_s1_AAA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "audiojack_s2_ABA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "audiojack_s2_AAA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "bottle_cap_s0_ABA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "bottle_cap_s0_AAA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "bottle_cap_s1_ABA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "bottle_cap_s1_AAA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "bottle_cap_s2_ABA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "bottle_cap_s2_AAA": {
+      "trial_source_sha256": "ae559038a92e681c4001fbd19cc5e72af7640cc644bfb5abbad6cd3b8cfbe663",
+      "verified_historical_code_only_paths": [
+        "experiments/v02_architecture_trial.py",
+        "experiments/run_v02_architecture.py"
+      ]
+    },
+    "eraser_s0_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "eraser_s0_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "eraser_s1_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "eraser_s1_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "eraser_s2_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "eraser_s2_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "plastic_plug_s0_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "plastic_plug_s0_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "plastic_plug_s1_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "plastic_plug_s1_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "plastic_plug_s2_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "plastic_plug_s2_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "switch_s0_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "switch_s0_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "switch_s1_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "switch_s1_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "switch_s2_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "switch_s2_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "rolled_strip_base_s0_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "rolled_strip_base_s0_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "rolled_strip_base_s1_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "rolled_strip_base_s1_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "rolled_strip_base_s2_ABA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    },
+    "rolled_strip_base_s2_AAA": {
+      "trial_source_sha256": "d9bc23b1e10b1c847be5c58e065ec389c0d4da08410a965ce73aac8ca0885081",
+      "verified_historical_code_only_paths": []
+    }
+  },
+  "planned_conditions": 36,
+  "paired_units": 18,
+  "paired_results": [
+    {
+      "class_name": "audiojack",
+      "seed": 0,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.00347222222222221,
+      "A_quality_cold": 0.0,
+      "B_quality_cold": 0.0,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 2.299087801016867,
+      "greedy_update_seconds_cold": 0.12378159910440445,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": -0.0017361111111111605,
+      "A_quality_mature": 0.006944444444444309,
+      "B_quality_mature": 0.0017361111111110494,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 0,
+      "hierarchy_update_seconds_mature": 8.517229300690815,
+      "greedy_update_seconds_mature": 0.32922920188866556,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "audiojack",
+      "seed": 1,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.00694444444444442,
+      "A_quality_cold": 0.11458333333333326,
+      "B_quality_cold": 0.02951388888888895,
+      "source_effect_cold": 0.11631944444444431,
+      "ltm_cold": 56,
+      "hierarchy_update_seconds_cold": 1.8323443001136184,
+      "greedy_update_seconds_cold": 0.06869879853911698,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 2,
+      "retention_advantage_mature": 0.02430555555555558,
+      "A_quality_mature": 0.01041666666666663,
+      "B_quality_mature": 0.02083333333333348,
+      "source_effect_mature": 0.00347222222222221,
+      "ltm_mature": 101,
+      "hierarchy_update_seconds_mature": 3.0464964013081044,
+      "greedy_update_seconds_mature": 0.10475620068609715,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "audiojack",
+      "seed": 2,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.0,
+      "A_quality_cold": 0.0,
+      "B_quality_cold": 0.0,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.7572307006921619,
+      "greedy_update_seconds_cold": 0.024286898784339428,
+      "hierarchy_reacquisition_cold": null,
+      "greedy_reacquisition_cold": null,
+      "retention_advantage_mature": 0.0,
+      "A_quality_mature": 0.0017361111111111605,
+      "B_quality_mature": -0.0017361111111111605,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 0,
+      "hierarchy_update_seconds_mature": 1.7904770013410598,
+      "greedy_update_seconds_mature": 0.052189198322594166,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "bottle_cap",
+      "seed": 0,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -0.00868055555555547,
+      "A_quality_cold": -0.01041666666666663,
+      "B_quality_cold": -1.1102230246251565e-16,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 16,
+      "hierarchy_update_seconds_cold": 0.660400900291279,
+      "greedy_update_seconds_cold": 0.024239999940618873,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.0,
+      "A_quality_mature": -0.0017361111111112715,
+      "B_quality_mature": -0.0017361111111111605,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 15,
+      "hierarchy_update_seconds_mature": 1.5484292008914053,
+      "greedy_update_seconds_mature": 0.04891919973306358,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "bottle_cap",
+      "seed": 1,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.01736111111111116,
+      "A_quality_cold": -0.012152777777777679,
+      "B_quality_cold": -0.01041666666666663,
+      "source_effect_cold": -0.00868055555555547,
+      "ltm_cold": 55,
+      "hierarchy_update_seconds_cold": 6.304431500378996,
+      "greedy_update_seconds_cold": 0.226569700287655,
+      "hierarchy_reacquisition_cold": 5,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.00347222222222221,
+      "A_quality_mature": 0.0017361111111111605,
+      "B_quality_mature": 0.005208333333333259,
+      "source_effect_mature": 0.003472222222222321,
+      "ltm_mature": 60,
+      "hierarchy_update_seconds_mature": 5.794828500365838,
+      "greedy_update_seconds_mature": 0.23855239967815578,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "bottle_cap",
+      "seed": 2,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.010416666666666852,
+      "A_quality_cold": 0.005208333333333481,
+      "B_quality_cold": -0.0017361111111111605,
+      "source_effect_cold": 0.006944444444444531,
+      "ltm_cold": 19,
+      "hierarchy_update_seconds_cold": 0.8653676994144917,
+      "greedy_update_seconds_cold": 0.028114099986851215,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.0,
+      "A_quality_mature": -0.0017361111111110494,
+      "B_quality_mature": 0.0,
+      "source_effect_mature": 0.0017361111111111605,
+      "ltm_mature": 40,
+      "hierarchy_update_seconds_mature": 1.9527286018710583,
+      "greedy_update_seconds_mature": 0.06574819958768785,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "eraser",
+      "seed": 0,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -0.01215277777777779,
+      "A_quality_cold": -0.00868055555555547,
+      "B_quality_cold": 0.0017361111111110494,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.6229143009986728,
+      "greedy_update_seconds_cold": 0.022130600409582257,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": -0.0017361111111111605,
+      "A_quality_mature": 0.0,
+      "B_quality_mature": 0.01215277777777779,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 33,
+      "hierarchy_update_seconds_mature": 1.5362483991775662,
+      "greedy_update_seconds_mature": 0.051635098876431584,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "eraser",
+      "seed": 1,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -0.00694444444444442,
+      "A_quality_cold": -0.00347222222222221,
+      "B_quality_cold": -0.003472222222222099,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.6691732001490891,
+      "greedy_update_seconds_cold": 0.023401300190016627,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": -0.003472222222222321,
+      "A_quality_mature": 0.0017361111111110494,
+      "B_quality_mature": -0.01215277777777779,
+      "source_effect_mature": 0.0017361111111110494,
+      "ltm_mature": 48,
+      "hierarchy_update_seconds_mature": 1.6550686995033175,
+      "greedy_update_seconds_mature": 0.0559670003131032,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "eraser",
+      "seed": 2,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -0.0017361111111111605,
+      "A_quality_cold": -0.0017361111111111605,
+      "B_quality_cold": 0.01388888888888895,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.7239794000051916,
+      "greedy_update_seconds_cold": 0.0255773002281785,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": -0.00347222222222221,
+      "A_quality_mature": 0.0,
+      "B_quality_mature": 0.012152777777777679,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 52,
+      "hierarchy_update_seconds_mature": 1.72849389933981,
+      "greedy_update_seconds_mature": 0.06081200111657381,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "plastic_plug",
+      "seed": 0,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.0,
+      "A_quality_cold": 0.0017361111111111605,
+      "B_quality_cold": 0.01909722222222221,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.8061407001223415,
+      "greedy_update_seconds_cold": 0.026805700734257698,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.0,
+      "A_quality_mature": 0.01041666666666663,
+      "B_quality_mature": -0.0017361111111111605,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 2,
+      "hierarchy_update_seconds_mature": 1.8642112999223173,
+      "greedy_update_seconds_mature": 0.06420190189965069,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "plastic_plug",
+      "seed": 1,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -0.013888888888888729,
+      "A_quality_cold": 0.0017361111111111605,
+      "B_quality_cold": 0.006944444444444531,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 9,
+      "hierarchy_update_seconds_cold": 0.7831865993794054,
+      "greedy_update_seconds_cold": 0.029923999682068825,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.00520833333333337,
+      "A_quality_mature": 0.03125,
+      "B_quality_mature": 0.015625,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 18,
+      "hierarchy_update_seconds_mature": 1.8467533993534744,
+      "greedy_update_seconds_mature": 0.06244159955531359,
+      "hierarchy_reacquisition_mature": 5,
+      "greedy_reacquisition_mature": null
+    },
+    {
+      "class_name": "plastic_plug",
+      "seed": 2,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.006944444444444531,
+      "A_quality_cold": 0.006944444444444531,
+      "B_quality_cold": 0.0,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 2,
+      "hierarchy_update_seconds_cold": 0.7746094001922756,
+      "greedy_update_seconds_cold": 0.0274125998839736,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.006944444444444531,
+      "A_quality_mature": 0.00868055555555558,
+      "B_quality_mature": 0.00694444444444442,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 2,
+      "hierarchy_update_seconds_mature": 1.912699199281633,
+      "greedy_update_seconds_mature": 0.06252600043080747,
+      "hierarchy_reacquisition_mature": null,
+      "greedy_reacquisition_mature": null
+    },
+    {
+      "class_name": "switch",
+      "seed": 0,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -1.1102230246251565e-16,
+      "A_quality_cold": -0.0017361111111111605,
+      "B_quality_cold": 0.012152777777777679,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.4849658003076911,
+      "greedy_update_seconds_cold": 0.017266200156882405,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 1.1102230246251565e-16,
+      "A_quality_mature": 0.00868055555555558,
+      "B_quality_mature": 0.0017361111111111605,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 0,
+      "hierarchy_update_seconds_mature": 1.552202899940312,
+      "greedy_update_seconds_mature": 0.04547860100865364,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "switch",
+      "seed": 1,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -0.015624999999999889,
+      "A_quality_cold": -0.01736111111111105,
+      "B_quality_cold": -0.00520833333333337,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.5093515990301967,
+      "greedy_update_seconds_cold": 0.016683699330314994,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.005208333333333259,
+      "A_quality_mature": -0.00694444444444442,
+      "B_quality_mature": -0.005208333333333259,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 0,
+      "hierarchy_update_seconds_mature": 1.541520998813212,
+      "greedy_update_seconds_mature": 0.04708990058861673,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "switch",
+      "seed": 2,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": -0.0190972222222221,
+      "A_quality_cold": -0.0017361111111110494,
+      "B_quality_cold": 0.02083333333333337,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.4974227009806782,
+      "greedy_update_seconds_cold": 0.017739100148901343,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": -0.005208333333333259,
+      "A_quality_mature": 0.01736111111111116,
+      "B_quality_mature": 0.01736111111111105,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 0,
+      "hierarchy_update_seconds_mature": 1.5110616004094481,
+      "greedy_update_seconds_mature": 0.04729789914563298,
+      "hierarchy_reacquisition_mature": 15,
+      "greedy_reacquisition_mature": 15
+    },
+    {
+      "class_name": "rolled_strip_base",
+      "seed": 0,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.00347222222222221,
+      "A_quality_cold": 0.00347222222222221,
+      "B_quality_cold": 0.0,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.3346695995423943,
+      "greedy_update_seconds_cold": 0.011406400240957737,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": 0.0,
+      "A_quality_mature": 0.003472222222222099,
+      "B_quality_mature": 0.0,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 37,
+      "hierarchy_update_seconds_mature": 1.2780071992892772,
+      "greedy_update_seconds_mature": 0.044451299821957946,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "rolled_strip_base",
+      "seed": 1,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.0,
+      "A_quality_cold": 0.0,
+      "B_quality_cold": 0.0,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.3053067000582814,
+      "greedy_update_seconds_cold": 0.011178000131621957,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 0,
+      "retention_advantage_mature": -1.1102230246251565e-16,
+      "A_quality_mature": -0.0017361111111111605,
+      "B_quality_mature": 0.0,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 15,
+      "hierarchy_update_seconds_mature": 1.1678874001372606,
+      "greedy_update_seconds_mature": 0.038961800979450345,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    },
+    {
+      "class_name": "rolled_strip_base",
+      "seed": 2,
+      "n_online_queries": 79,
+      "n_mature_extra_normal_history": 64,
+      "retention_advantage_cold": 0.0,
+      "A_quality_cold": 0.0,
+      "B_quality_cold": 0.0,
+      "source_effect_cold": 0.0,
+      "ltm_cold": 0,
+      "hierarchy_update_seconds_cold": 0.3010329003445804,
+      "greedy_update_seconds_cold": 0.01131990016438067,
+      "hierarchy_reacquisition_cold": 0,
+      "greedy_reacquisition_cold": 4,
+      "retention_advantage_mature": -0.0017361111111111605,
+      "A_quality_mature": -0.00347222222222221,
+      "B_quality_mature": 0.0,
+      "source_effect_mature": 0.0,
+      "ltm_mature": 0,
+      "hierarchy_update_seconds_mature": 1.298686700174585,
+      "greedy_update_seconds_mature": 0.03878509975038469,
+      "hierarchy_reacquisition_mature": 0,
+      "greedy_reacquisition_mature": 0
+    }
+  ],
+  "engineering_decision": {
+    "decision": "USE_GREEDY_WITH_RISK_SAFE_ADMISSION",
+    "gate_results": {
+      "mature_retention_gain_0.015": false,
+      "positive_in_four_of_six_classes": true,
+      "mature_A_noninferiority_0.01": true,
+      "mature_B_noninferiority_0.01": true,
+      "cold_A_noninferiority_0.02": true,
+      "source_effect_in_two_classes": false
+    },
+    "macro_retention_advantage": 0.0015432098765432046,
+    "positive_classes": 4,
+    "source_effect_classes": 0,
+    "per_class": {
+      "audiojack": {
+        "retention_advantage_mature": 0.00752314814814814,
+        "A_quality_mature": 0.0063657407407407,
+        "B_quality_mature": 0.006944444444444457,
+        "A_quality_cold": 0.03819444444444442,
+        "real_source_positive": false
+      },
+      "bottle_cap": {
+        "retention_advantage_mature": 0.0011574074074074032,
+        "A_quality_mature": -0.0005787037037037202,
+        "B_quality_mature": 0.0011574074074073664,
+        "A_quality_cold": -0.005787037037036942,
+        "real_source_positive": false
+      },
+      "eraser": {
+        "retention_advantage_mature": -0.002893518518518564,
+        "A_quality_mature": 0.0005787037037036832,
+        "B_quality_mature": 0.004050925925925893,
+        "A_quality_cold": -0.004629629629629613,
+        "real_source_positive": false
+      },
+      "plastic_plug": {
+        "retention_advantage_mature": 0.004050925925925967,
+        "A_quality_mature": 0.016782407407407402,
+        "B_quality_mature": 0.00694444444444442,
+        "A_quality_cold": 0.003472222222222284,
+        "real_source_positive": false
+      },
+      "switch": {
+        "retention_advantage_mature": 3.700743415417188e-17,
+        "A_quality_mature": 0.006365740740740773,
+        "B_quality_mature": 0.00462962962962965,
+        "A_quality_cold": -0.00694444444444442,
+        "real_source_positive": false
+      },
+      "rolled_strip_base": {
+        "retention_advantage_mature": -0.0005787037037037571,
+        "A_quality_mature": -0.0005787037037037571,
+        "B_quality_mature": 0.0,
+        "A_quality_cold": 0.0011574074074074032,
+        "real_source_positive": false
+      }
+    },
+    "interpretation": "Engineering research selection under tested classes, shift, and resource regime; not universal superiority.",
+    "runtime_cost_gate": "Descriptive only; per-operation update/retrieval seconds and allocated tensors must be inspected before deployment."
+  },
+  "warning": "Designed diagnostic six-class study; synthetic photometric B shift. Historical v22 full BEA system not reproduced."
+}

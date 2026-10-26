@@ -1,0 +1,20 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[V02] eraser/s0/ABA 350/2625
+[V02] eraser/s0/ABA 700/2625
+[V02] eraser/s0/ABA 1050/2625
+[V02] eraser/s0/ABA 1400/2625
+[V02] eraser/s0/ABA 1750/2625
+Traceback (most recent call last):
+  File "E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection\experiments\v02_architecture_trial.py", line 424, in <module>
+    main(args)
+  File "E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection\experiments\v02_architecture_trial.py", line 258, in main
+    raise AssertionError("Frozen B shift failed feature-space verification")
+AssertionError: Frozen B shift failed feature-space verification
+
+Exit code: 1

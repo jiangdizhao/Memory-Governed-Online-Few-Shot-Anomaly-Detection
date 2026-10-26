@@ -1,0 +1,37 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[V02] audiojack/s0/ABA 350/2625
+[V02] audiojack/s0/ABA 700/2625
+[V02] audiojack/s0/ABA 1050/2625
+[V02] audiojack/s0/ABA 1400/2625
+[V02] audiojack/s0/ABA 1750/2625
+[V02] audiojack/s0/ABA 2100/2625
+[V02] audiojack/s0/ABA 2450/2625
+{
+  "case": "audiojack/s0/ABA",
+  "queried_normal": 55,
+  "hierarchy_ltm": {
+    "cold": 0,
+    "mature": 0
+  },
+  "object_end2_auc": {
+    "greedy_cold": 0.7447916666666666,
+    "hierarchy_cold": 0.7447916666666666,
+    "greedy_mature": 0.6840277777777779,
+    "hierarchy_mature": 0.6909722222222222
+  },
+  "bytes_end2": {
+    "greedy_cold": 2637888,
+    "hierarchy_cold": 69851248,
+    "greedy_mature": 6832192,
+    "hierarchy_mature": 73410928
+  },
+  "saved_to": "outputs\\v02_paired_cold_mature\\audiojack_s0_ABA"
+}
+
+Exit code: 0
