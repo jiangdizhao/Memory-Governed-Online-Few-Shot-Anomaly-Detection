@@ -106,7 +106,7 @@ def main(args):
     recovery=[]
     qn=qd=0
     query_by_phase=[0,0,0]
-    changed_probe=[]
+    shift_deltas=[]
 
     def eval_probe(t,mode,checkpoint,new_A_normal_labels=0):
         result={}
@@ -145,6 +145,14 @@ def main(args):
         for local_i,item in enumerate(phase,1):
             t=phase_i*config.phase_length+local_i
             img,feat=encoded(item.path,mode)
+            if phase_i==1 and mode=="B" and local_i<=6:
+                _,a_feat=encoded(item.path,"A")
+                xa=impl.l2_normalize(a_feat[0].float())
+                xb=impl.l2_normalize(feat[0].float())
+                if xa.shape!=xb.shape:
+                    raise AssertionError("A/B patch geometry changed")
+                delta=float((1-(xa*xb).sum(dim=1)).mean().item())
+                shift_deltas.append(delta)
             static_score,static_map=score(frozen,img,feat)
             candidate={k:v[:24] for k,v in
                        impl.layer_to_topk_from_amap(static_map).items()}
@@ -180,6 +188,9 @@ def main(args):
         if phase_i==1:
             phase_end["B_probe_end_2"]=eval_probe(
                 finish,"B","B_end_2")
+    if args.order=="ABA" and (not shift_deltas or max(shift_deltas)<1e-4):
+        raise AssertionError(
+            "Synthetic B mode produced negligible frozen-feature shift")
     if qn+qd!=len(tape):
         raise AssertionError("Precommitted tape count mismatch")
     for name,arm in arms.items():
@@ -255,6 +266,8 @@ def main(args):
             "q_normal":qn,"q_defect":qd,
             "q_normal_by_phase":query_by_phase,
             "fixed_bank":bank_profile,
+            "synthetic_shift_audit_mean_cosine_distance":(
+                sum(shift_deltas)/len(shift_deltas) if shift_deltas else None),
             "synthetic_shift_mode_B":{
                 "rgb_gains":[.84,.94,1.08],"rgb_offset":8.,
                 "label_preserving_assumption_not_guaranteed":True},
