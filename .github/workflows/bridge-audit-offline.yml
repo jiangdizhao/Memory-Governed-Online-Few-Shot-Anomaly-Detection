@@ -1,0 +1,26 @@
+name: Bridge Audit offline contracts
+on:
+  push:
+    branches: [bridge-historical-matched-audit]
+  pull_request:
+    paths:
+      - 'experiments/bridge_*.py'
+      - 'experiments/run_bridge_audit.py'
+      - 'tests/test_bridge_audit.py'
+jobs:
+  bridge-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline contract requirements
+        run: python -m pip install numpy scikit-learn
+      - name: Check syntax
+        run: |
+          python -m py_compile experiments/bridge_memory.py experiments/bridge_historical_matched.py experiments/bridge_mechanism_test.py experiments/run_bridge_audit.py tests/test_bridge_audit.py
+      - name: Exercise one-command runner
+        run: python experiments/run_bridge_audit.py --self-test
+      - name: Offline bridge unit tests
+        run: python -m unittest discover -s tests -p 'test_bridge_audit.py' -v
