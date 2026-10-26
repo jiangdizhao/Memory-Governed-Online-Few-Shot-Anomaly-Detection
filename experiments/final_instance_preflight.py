@@ -9,6 +9,52 @@ for p in (ROOT,ROOT/"experiments"):
     if str(p) not in sys.path:sys.path.insert(0,str(p))
 import final_decision_core as core
 
+def verify_native_memory_ops():
+    """Actual v22 CPU operators; no dataset images or GPU required."""
+    import copy
+    import torch
+    import test_phase3_AIF_simplified_v22 as impl
+    import tmra_compact_memory as mm
+    import final_decision_core as core
+    bank=impl.PatchVMB(
+        device="cpu",K_normal_fixed=32,K_normal_dyn=320,
+        K_normal_ltm=64,K_defect=4,K_concept=8,knn_k_normal=5,
+        corr_cfg=impl.CorrectionConfig(enabled=False),
+        use_defect_bank=False)
+    bank.bank_dtype=torch.float16
+    reference=torch.zeros((6,4096),dtype=torch.float32)
+    reference[torch.arange(6),torch.arange(6)]=1.0
+    bank.build_fixed_normal_from_support(
+        "p0",[[reference]],mode=0,view="id",
+        normal_seed_patches=6,seed=0)
+    setting=core.MemorySettings()
+    arms={name:mm.Arm(name,copy.deepcopy(bank),setting,seed=37)
+          for name in ("greedy_coreset","hierarchy")}
+    reserved={}
+    for name,arm in arms.items():
+        stm,ltm,buf=mm.codebooks(arm.bank)
+        nominal=0
+        for cb in stm+ltm:
+            nominal+=cb.K*cb.feat_dim*torch.empty(
+                (),dtype=cb.dtype).element_size()+80*cb.K
+        for cb in buf:
+            nominal+=cb.K*cb.feat_dim*4+80*cb.K
+        reserved[name]=nominal
+        if nominal>core.BYTE_CEILING:
+            raise AssertionError("Nominal byte ceiling exceeded")
+    vals=list(reserved.values())
+    if abs(vals[0]-vals[1])/max(vals)>.05:
+        raise AssertionError(f"Native memory byte-reservation mismatch: {reserved}")
+    torch.manual_seed(100)
+    for step in range(1,4):
+        f=torch.nn.functional.normalize(
+            torch.randn((24,4096),dtype=torch.float32),dim=1)
+        for arm in arms.values():
+            arm.update(impl,[f],{0:list(range(24))},step)
+            if arm.audit()["feedback_events"]!=step:
+                raise AssertionError("CPU synthetic feedback mismatch")
+    print("[FINAL] Real v22 two-arm CPU operator + byte-reservation PASS",reserved,flush=True)
+
 def validate(dataset_root,json_dir):
     import vmb_visionad_new as data
     facts=[]
@@ -50,7 +96,8 @@ def validate(dataset_root,json_dir):
                     core.object_id(flat[t-1].path) for t in query})==len(query),
                 "manifest_digest":core.digest(groups),
             })
-    print(json.dumps({"complete":True,"stage":"metadata_preflight",
+    verify_native_memory_ops()
+    print(json.dumps({"complete":True,"stage":"metadata_plus_native_CPU_preflight",
                       "conditions":facts},indent=2,ensure_ascii=False))
     return facts
 
