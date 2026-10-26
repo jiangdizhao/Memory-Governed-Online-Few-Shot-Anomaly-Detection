@@ -34,7 +34,7 @@ class TestFinalGate(unittest.TestCase):
     def test_frozen_memory_protocol(self):
         self.assertEqual((d.MemorySettings().stm,d.MemorySettings().ltm,
                           d.MemorySettings().buffer,d.MemorySettings().flat),
-                         (128,64,64,256))
+                         (128,64,64,320))
         for bad in ({"flat":384},{"promote_every":16},{"cap_bytes":3_500_000}):
             with self.assertRaises(ValueError):
                 d.MemorySettings(**bad)
