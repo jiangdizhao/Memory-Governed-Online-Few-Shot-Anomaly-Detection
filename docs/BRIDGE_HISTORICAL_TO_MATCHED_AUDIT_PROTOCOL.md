@@ -23,7 +23,7 @@ All eight arms share the original v22 **native** retrieval code: min of fixed k=
 | `full_utility` | LTM + eligible Buffer retrieval + Utility-aware STM | Full historical memory package under fixed supervision |
 | `full_no_utility` | same hierarchy/feedback but utility retention off | Utility retention within hierarchy |
 
-**Warning:** `full_utility` and `ltm_utility` may follow different STM paths because the v22 utility retention rule uses currently retrievable Buffer motifs as a coverage source. A full-system arm comparison is therefore **not** pure retrieval attribution. At each fixed-probe checkpoint, for `full_utility` ONLY, one frozen memory checkpoint is re-scored in four modes: full, LTM-off, Buffer-off, both-off, with no state updates in between. That produces a direct paired read-only retrieval counterfactual.
+**Warning:** `full_utility` and `ltm_utility` may follow different STM paths because the v22 utility retention rule uses currently retrievable Buffer motifs as a coverage source. A full-system arm comparison is therefore **not** pure retrieval attribution. At each fixed-probe checkpoint, for `full_utility` ONLY, one frozen memory checkpoint is re-scored in five modes: full, LTM-off, Buffer-off, both-off, and global unified top-5 without Buffer, with no state updates in between. That produces a direct paired read-only retrieval counterfactual, including the question of whether original v22 k=1 LTM retrieval differs from A1-H global top-5.
 
 `shadow_utility` and `ltm_utility` must have **identical full STM, LTM and Buffer prototypes** at every checkpoint; a mismatch fails execution.
 
