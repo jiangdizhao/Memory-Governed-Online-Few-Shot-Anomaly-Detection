@@ -16,16 +16,16 @@ Conditions: **Switch support seeds 0 and 1**, plus **Audiojack support seed 0** 
 Each run replays exactly the Bridge trial using independent memory banks, then at checkpoints 0, 1024, 2048, 3072 and final, for each of 96 held-out probe images:
 
 - Keep the whole learned memory fixed; change only retrieval flags.
-- Record normal-distance image scores \`S0\` (Fixed+STM), \`SL\` (+LTM), \`SB\` (+eligible Buffer), \`SLB\` (both).
+- Record normal-distance image scores `S0` (Fixed+STM), `SL` (+LTM), `SB` (+eligible Buffer), `SLB` (both).
 - Report per-image dual-player Shapley score-reduction contributions:
-  - \`phi_ltm = ((S0-SL)+(SB-SLB))/2\`
-  - \`phi_buffer = ((S0-SB)+(SL-SLB))/2\`.
+  - `phi_ltm = ((S0-SL)+(SB-SLB))/2`
+  - `phi_buffer = ((S0-SB)+(SL-SLB))/2`.
 - Report signed score reductions for **normal and defect** probes separately. A reduction on a defect is a possible false-negative risk, not a "rescue".
 - If any source changes an image score, inspect a bounded set of high-effect patch indices (top 16 + highest-score patch), storing effective cosine distances to Fixed, STM, LTM, eligible Buffer; identify source with minimum native distance.
 - Patch winners are geometric descriptors, **not** validated semantic/localization masks. This is no pixel AUROC/AUPRO claim.
 - Recorded sample path/label columns are evaluation-only; none influence the memory updater or test split.
 
-**Output:** \`outputs/tmra/I_*/{summary.json,source_image_attribution.csv,source_patch_evidence.csv,retrieval_counterfactual.csv,probe_scores.csv,prequential.csv,...}\`.
+**Output:** `outputs/tmra/I_*/{summary.json,source_image_attribution.csv,source_patch_evidence.csv,retrieval_counterfactual.csv,probe_scores.csv,prequential.csv,...}`.
 
 **Criteria:** independent marginal score effect; overlap/redundancy; normal-score rescue versus anomalous-score suppression; activation time. Aggregate AUROC is NOT enough to claim semantic memory.
 
@@ -36,21 +36,21 @@ Each run replays exactly the Bridge trial using independent memory banks, then a
 - **Support:** exactly four distinct normal-train originals; static bank built with frozen ViT-L/14 DINOv2 register feature fusion. No train/test cross-access.
 - **Raw source split:** label-blind shuffled original test images, 96 held-out A-Probe originals, 96 disjoint B-Probe originals, and **three disjoint sets of 900 stream originals**. Original images never repeat between phases/probes.
 - **A mode:** exact original input image.
-- **B mode:** predeclared clipped channelwise transform \`RGB gains=(0.84,0.94,1.08), additive +8\`; no geometry change, *synthetic covariate shift only*. Defect status is assumed preserved but not externally verified. Six Phase-II B images are additionally encoded in A-mode **for shift diagnostics only**, never added to a memory state; a negligible feature shift fails closed.
+- **B mode:** predeclared clipped channelwise transform `RGB gains=(0.84,0.94,1.08), additive +8`; no geometry change, *synthetic covariate shift only*. Defect status is assumed preserved but not externally verified. Six Phase-II B images are additionally encoded in A-mode **for shift diagnostics only**, never added to a memory state; a negligible feature shift fails closed.
 - **Query tape:** 3% of the **whole 2700-image stream**, label-blind seed 37. Only truly queried normals update the normal banks, **after scoring**. The same image is scored before potential update by all arms. Image defect labels are offline evaluation only unless queried.
 - **Candidate patches:** 24 highest static-anomaly patches from the common immutable fixed scorer in the observed phase image, identical across arms per trial.
 - **Memory arms:**
   - Static (no update; diagnostic)
   - Online Greedy Coreset, flat K=384
   - Flat v22 Utility STM, K=384, constant verified normal utility .5
-  - STM(128) + LTM(64) + Maturation Buffer(64), original v22 native k=1 mature LTM/provisional Buffer retrieval and utility retention, \`E_min=2\`, promotion every **16** verified normal events; this compact stress-protocol promotion period differs intentionally from historical 32 and is fixed before evaluation.
-- **Resource accounting:** every active dynamic PyTorch tensor allocated in STM/LTM/Buffer, including preallocated FP32 Buffer and metadata, is counted with storage deduplication and checked \`<= 3,500,000 bytes\` after every verified feedback. All models have **the same upper ceiling**, not equal actual usage. Frozen reference/model tensors and transient k-center computation are reported as outside this *mutable-state* measure. Exact used bytes appear in every memory snapshot. The simple-memory arms may occupy different byte amounts and have different compute costs.
+  - STM(128) + LTM(64) + Maturation Buffer(64), original v22 native k=1 mature LTM/provisional Buffer retrieval and utility retention, `E_min=2`, promotion every **16** verified normal events; this compact stress-protocol promotion period differs intentionally from historical 32 and is fixed before evaluation.
+- **Resource accounting:** every active dynamic PyTorch tensor allocated in STM/LTM/Buffer, including preallocated FP32 Buffer and metadata, is counted with storage deduplication and checked `<= 3,500,000 bytes` after every verified feedback. All models have **the same upper ceiling**, not equal actual usage. Frozen reference/model tensors and transient k-center computation are reported as outside this *mutable-state* measure. Exact used bytes appear in every memory snapshot. The simple-memory arms may occupy different byte amounts and have different compute costs.
 - **Probe checkpoints:** before learning, after Phase I, after Phase II, immediately at Phase III start **before any A exposure**, then after every Phase III newly verified normal label, then Phase III end. A-Probe is the **same held-out set** at every time point; B-Probe is evaluated at selected checkpoints.
-- **Forgetting:** \`A_probe_AUROC(end I) - A_probe_AUROC(end II)\`; additionally track normal A score drift. A-Probe label evaluation never updates memory.
-- **Reacquisition:** first Phase III normal feedback count for which A-Probe AUROC returns to \`end-I AUROC - 0.01\`. If no recovery, result is **null/censored**, not made-up zero or a fixed maximum. Counts 0 when memory already meets the target before any Phase-III feedback.
-- **Negative control:** AAA uses identical original paths, query positions, supports and stream staging. Compare difference-in-differences \`(forget_ABA - forget_AAA)\`; do not label the shift a real plant operating mode.
+- **Forgetting:** `A_probe_AUROC(end I) - A_probe_AUROC(end II)`; additionally track normal A score drift. A-Probe label evaluation never updates memory.
+- **Reacquisition:** first Phase III normal feedback count for which A-Probe AUROC returns to `end-I AUROC - 0.01`. If no recovery, result is **null/censored**, not made-up zero or a fixed maximum. Counts 0 when memory already meets the target before any Phase-III feedback.
+- **Negative control:** AAA uses identical original paths, query positions, supports and stream staging. Compare difference-in-differences `(forget_ABA - forget_AAA)`; do not label the shift a real plant operating mode.
 
-**Output:** \`outputs/tmra/II_*/{summary.json,probes.csv,prequential.csv,memory_snapshots.csv,reacquisition.csv}\`.
+**Output:** `outputs/tmra/II_*/{summary.json,probes.csv,prequential.csv,memory_snapshots.csv,reacquisition.csv}`.
 
 **Interpretation gate:** A credible long-memory advantage should require actual LTM promotion and demonstrated retention benefit against Greedy/Flat Utility under the common memory ceiling, reproducible across supports. No promotion is a valid negative outcome, NOT a reason to post-hoc adjust gates. If the static bank itself is strong enough to retain A, explain the ceiling effect.
 
@@ -58,29 +58,29 @@ Each run replays exactly the Bridge trial using independent memory banks, then a
 
 From your existing repository root:
 
-\`\`\`powershell
+```powershell
 git fetch origin
 git switch tmra-targeted-audits
 git pull --ff-only origin tmra-targeted-audits
 git rev-parse HEAD
 conda activate torch
-\`\`\`
+```
 
 First run Experiment I **only**:
 
-\`\`\`powershell
+```powershell
 python experiments/run_tmra.py --experiment I --dataset-root "G:/dataset/realiad" --math-sdpa
-\`\`\`
+```
 
-It executes the actual v22 CPU mechanism/physical byte-ceiling preflight, a 64-sample GPU smoke and **3 full Experiment-I conditions**. Collect \`aggregate_i.json\`.
+It executes the actual v22 CPU mechanism/physical byte-ceiling preflight, a 64-sample GPU smoke and **3 full Experiment-I conditions**. Collect `aggregate_i.json`.
 
 Then, if Experiment I completes, run Experiment II:
 
-\`\`\`powershell
+```powershell
 python experiments/run_tmra.py --experiment II --dataset-root "G:/dataset/realiad" --math-sdpa
-\`\`\`
+```
 
-A separate 3×64-sample Phase GPU smoke precedes **eight full Experiment-II conditions**. Collect \`aggregate_ii.json\`. The runner verifies matched ABA/AAA manifests. A combined resumable command also exists: \`--all\`. Inspect outputs and reject failures before ever changing scientific settings.
+A separate 3×64-sample Phase GPU smoke precedes **eight full Experiment-II conditions**. Collect `aggregate_ii.json`. The runner verifies matched ABA/AAA manifests. A combined resumable command also exists: `--all`. Inspect outputs and reject failures before ever changing scientific settings.
 
 Existing complete conditions with unchanged source hashes are validated/skipped. Incomplete results/logs are **never silently overwritten**; inspect and archive only the affected incomplete run before a rerun. Preserve every prior successful experiment's evidence.
 
