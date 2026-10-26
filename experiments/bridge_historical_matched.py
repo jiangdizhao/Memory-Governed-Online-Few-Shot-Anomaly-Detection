@@ -25,6 +25,7 @@ HERE=Path(__file__).resolve().parent
 for d in (ROOT,HERE):
     if str(d) not in sys.path:sys.path.insert(0,str(d))
 import a1h_hierarchical_matched as prev
+import a1h_memory as unified_memory
 import a0_a1_strict4_matched as a1
 import bridge_memory as bridge
 
@@ -132,10 +133,20 @@ def main(args):
 
     def checkpoint(t):
         bridge.assert_same_stm_and_ltm(arms)
+        # Pure maturation tracking with retrieval off must not change STM
+        # compared with the same-size flat utility-retention arm.
+        import torch
+        flat_cbs=bridge.memory_books(arms["flat_utility"].bank)[0]
+        track_cbs=bridge.memory_books(arms["track_utility"].bank)[0]
+        for x,y in zip(flat_cbs,track_cbs):
+            if x.size()!=y.size() or not torch.equal(
+                    x.protos[:x.size()],y.protos[:y.size()]):
+                raise AssertionError("Maturation tracking altered STM unexpectedly")
         state_before={name:a.state() for name,a in arms.items()}
         for name,z in state_before.items():memory_rows.append({"step":t,"method":name,**z})
         p_scores={name:[] for name in bridge.ARM_NAMES}
-        cf={variant:[] for variant in ("full","no_ltm","no_buffer","stm_only")}
+        cf={variant:[] for variant in
+            ("full","no_ltm","no_buffer","stm_only","unified_no_buffer")}
         for path,label,img,cached in probe_cache:
             feats=[v.to(args.device) for v in cached]
             for name,arm in arms.items():
@@ -145,7 +156,23 @@ def main(args):
                                        method=name,score=s))
             full=arms["full_utility"].bank
             def score_one():return score(full,img,feats)
+            # Same-state unified global top-5 on fixed+STM+LTM
+            # (without provisional buffer); NEVER affects online updates.
+            original_dN=full._dN_min_fixed_dyn
+            old_ltm,old_buffer=(
+                full.enable_ltm_retrieval,full.enable_maturation_buffer_retrieval)
+            try:
+                full.enable_ltm_retrieval=True
+                full.enable_maturation_buffer_retrieval=False
+                unified_memory.install_unified_retrieval(
+                    full,include_ltm=True,k=5)
+                unified_score=score(full,img,feats)
+            finally:
+                full._dN_min_fixed_dyn=original_dN
+                full.enable_ltm_retrieval=old_ltm
+                full.enable_maturation_buffer_retrieval=old_buffer
             values={
+                "unified_no_buffer":unified_score,
                 "full":p_scores["full_utility"][-1][1],
                 "no_ltm":with_retrieval(
                     full,score_one,ltm=False,buffer=True),
@@ -254,9 +281,8 @@ def main(args):
         "n_stream":len(stream),"n_probe":len(probe),
         "queried_normal":queries_normal,"queried_defect":queries_defect,
         "n_queries":len(tape),"arms":metrics,
-        "counterfactual_probe_final":{
-            k:v for k,v in enumerate(intervention_rows) if False
-        } if False else [z for z in intervention_rows if z["step"]==len(stream)],
+        "counterfactual_probe_final":[
+            z for z in intervention_rows if z["step"]==len(stream)],
         "protocol":{
             "four_shot_strict":True,
             "supports":supports,
