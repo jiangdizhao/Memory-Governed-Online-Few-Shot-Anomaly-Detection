@@ -94,7 +94,7 @@ class BridgeArm:
         b.ltm_min_repeat=cfg.min_events
         b.mature_promote_every=cfg.promote_every
         b.mature_score_threshold=.45
-        b.mature_min_usefulness=.10
+        b.mature_min_usefulness=.15  # published S2 / v22 CLI default, not constructor default
         b.mature_rescue_min_fp=.15
         b.mature_event_merge_eps=.03
         b.ltm_candidate_merge_eps=.06
