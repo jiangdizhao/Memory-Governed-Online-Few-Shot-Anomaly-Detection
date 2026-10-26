@@ -1,0 +1,99 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[BRIDGE] switch seed=1 STM=512 t=250/3724
+[BRIDGE] switch seed=1 STM=512 t=500/3724
+[BRIDGE] switch seed=1 STM=512 t=750/3724
+[BRIDGE] switch seed=1 STM=512 t=1000/3724
+[BRIDGE] switch seed=1 STM=512 t=1250/3724
+[BRIDGE] switch seed=1 STM=512 t=1500/3724
+[BRIDGE] switch seed=1 STM=512 t=1750/3724
+[BRIDGE] switch seed=1 STM=512 t=2000/3724
+[BRIDGE] switch seed=1 STM=512 t=2250/3724
+[BRIDGE] switch seed=1 STM=512 t=2500/3724
+[BRIDGE] switch seed=1 STM=512 t=2750/3724
+[BRIDGE] switch seed=1 STM=512 t=3000/3724
+[BRIDGE] switch seed=1 STM=512 t=3250/3724
+[BRIDGE] switch seed=1 STM=512 t=3500/3724
+{
+  "condition": "switch/s1/STM512",
+  "probe_AULC": {
+    "flat_stm": 0.68893,
+    "flat_utility": 0.68813,
+    "flat_equal_total": 0.68767,
+    "track_utility": 0.68813,
+    "shadow_utility": 0.68708,
+    "ltm_utility": 0.68957,
+    "full_utility": 0.6914,
+    "full_no_utility": 0.69233
+  },
+  "ltm": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 0,
+    "shadow_utility": 6,
+    "ltm_utility": 6,
+    "full_utility": 6,
+    "full_no_utility": 6
+  },
+  "buffer": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 401,
+    "shadow_utility": 401,
+    "ltm_utility": 401,
+    "full_utility": 401,
+    "full_no_utility": 401
+  },
+  "final_retrieval_cf": [
+    {
+      "step": 3724,
+      "variant": "full",
+      "auroc": 0.7415178571428571,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3724,
+      "variant": "no_ltm",
+      "auroc": 0.7415178571428571,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3724,
+      "variant": "no_buffer",
+      "auroc": 0.7325892857142857,
+      "score_changed": 5,
+      "mean_score_delta_vs_full": 0.001084445354839166,
+      "max_abs_score_delta": 0.06126391887664795
+    },
+    {
+      "step": 3724,
+      "variant": "stm_only",
+      "auroc": 0.7241071428571428,
+      "score_changed": 7,
+      "mean_score_delta_vs_full": 0.0016690852741400402,
+      "max_abs_score_delta": 0.06684684753417969
+    },
+    {
+      "step": 3724,
+      "variant": "unified_no_buffer",
+      "auroc": 0.7553571428571428,
+      "score_changed": 96,
+      "mean_score_delta_vs_full": -0.007766374076406161,
+      "max_abs_score_delta": 0.039085060358047485
+    }
+  ],
+  "out_dir": "outputs\\tmra\\I_switch_s1"
+}
+
+Exit code: 0

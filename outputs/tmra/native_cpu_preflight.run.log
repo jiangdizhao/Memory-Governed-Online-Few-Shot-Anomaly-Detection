@@ -1,0 +1,5 @@
+A1-H native PatchVMB maturation -> promotion -> retrieval CPU preflight PASS
+A1-H v22 maturation/recurrence/promotion CPU mechanism preflight PASS
+[TMRA] Actual v22 CPU mechanism + 3.5 MB ceiling PASS
+
+Exit code: 0

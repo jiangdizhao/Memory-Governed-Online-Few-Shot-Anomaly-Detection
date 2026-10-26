@@ -1,0 +1,50 @@
+{
+  "schema": "tmra.aggregate.v1",
+  "complete": true,
+  "validated": 3,
+  "expected": 3,
+  "conditions": [
+    {
+      "experiment": "I",
+      "class_name": "switch",
+      "seed": 0,
+      "order": null,
+      "result_path": "outputs\\tmra\\I_switch_s0",
+      "result": {
+        "image_rows": 480,
+        "patch_rows": 236,
+        "score_changed_image_rows": 14,
+        "nonzero_ltm_shapley": 11,
+        "nonzero_buffer_shapley": 14
+      }
+    },
+    {
+      "experiment": "I",
+      "class_name": "switch",
+      "seed": 1,
+      "order": null,
+      "result_path": "outputs\\tmra\\I_switch_s1",
+      "result": {
+        "image_rows": 480,
+        "patch_rows": 272,
+        "score_changed_image_rows": 16,
+        "nonzero_ltm_shapley": 5,
+        "nonzero_buffer_shapley": 16
+      }
+    },
+    {
+      "experiment": "I",
+      "class_name": "audiojack",
+      "seed": 0,
+      "order": null,
+      "result_path": "outputs\\tmra\\I_audiojack_s0",
+      "result": {
+        "image_rows": 480,
+        "patch_rows": 0,
+        "score_changed_image_rows": 0,
+        "nonzero_ltm_shapley": 0,
+        "nonzero_buffer_shapley": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+{
+  "condition": "switch/s0/STM512",
+  "probe_AULC": {
+    "flat_stm": 0.73616,
+    "flat_utility": 0.73616,
+    "flat_equal_total": 0.73616,
+    "track_utility": 0.73616,
+    "shadow_utility": 0.73616,
+    "ltm_utility": 0.73616,
+    "full_utility": 0.73616,
+    "full_no_utility": 0.73616
+  },
+  "ltm": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 0,
+    "shadow_utility": 0,
+    "ltm_utility": 0,
+    "full_utility": 0,
+    "full_no_utility": 0
+  },
+  "buffer": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 0,
+    "shadow_utility": 0,
+    "ltm_utility": 0,
+    "full_utility": 0,
+    "full_no_utility": 0
+  },
+  "final_retrieval_cf": [
+    {
+      "step": 64,
+      "variant": "full",
+      "auroc": 0.7361607142857144,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 64,
+      "variant": "no_ltm",
+      "auroc": 0.7361607142857144,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 64,
+      "variant": "no_buffer",
+      "auroc": 0.7361607142857144,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 64,
+      "variant": "stm_only",
+      "auroc": 0.7361607142857144,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 64,
+      "variant": "unified_no_buffer",
+      "auroc": 0.7361607142857144,
+      "score_changed": 94,
+      "mean_score_delta_vs_full": -3.2006452480951947e-07,
+      "max_abs_score_delta": 2.3066997528076172e-05
+    }
+  ],
+  "out_dir": "outputs\\tmra\\I_switch_s0_smoke"
+}
+
+Exit code: 0
