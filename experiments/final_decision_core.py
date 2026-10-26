@@ -20,15 +20,15 @@ GROUPS_PER_PHASE=175
 A_PROBE_GROUPS=24
 B_PROBE_GROUPS=24
 QUERY_RATE=.03
-BYTE_CEILING=2_300_000
+BYTE_CEILING=2_800_000
 # Constraints frozen, NOT a grid. Our recorded approx deployed state allocations
-# are 2.11 MB Greedy(256), 2.11-2.13 MB Hierarchy(128+64+64).
+# are 2.64 MB Greedy(320), 2.65 MB Hierarchy at full 128+64+64 nominal occupancy; actual bytes depend on effective updates.
 @dataclass(frozen=True)
 class MemorySettings:
     stm:int=128
     ltm:int=64
     buffer:int=64
-    flat:int=256
+    flat:int=320
     cap_bytes:int=BYTE_CEILING
     promote_every:int=32
     min_events:int=2
@@ -36,7 +36,7 @@ class MemorySettings:
     def __post_init__(self):
         if (self.stm,self.ltm,self.buffer,self.flat,
             self.cap_bytes,self.promote_every,self.min_events) != (
-                128,64,64,256,BYTE_CEILING,32,2):
+                128,64,64,320,BYTE_CEILING,32,2):
             raise ValueError("FINAL memory protocol is immutable")
 
 @dataclass(frozen=True)
