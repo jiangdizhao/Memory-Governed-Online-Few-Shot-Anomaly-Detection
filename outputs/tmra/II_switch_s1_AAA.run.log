@@ -1,0 +1,52 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[TMRA-II] switch s1 AAA 300/2700
+[TMRA-II] switch s1 AAA 600/2700
+[TMRA-II] switch s1 AAA 900/2700
+[TMRA-II] switch s1 AAA 1200/2700
+[TMRA-II] switch s1 AAA 1500/2700
+[TMRA-II] switch s1 AAA 1800/2700
+[TMRA-II] switch s1 AAA 2100/2700
+[TMRA-II] switch s1 AAA 2400/2700
+[TMRA-II] switch s1 AAA 2700/2700
+{
+  "condition": {
+    "class_name": "switch",
+    "seed": 1,
+    "order": "AAA",
+    "phase_length": 900,
+    "probe_count": 96
+  },
+  "results": {
+    "static": {
+      "forgetting": 0.0,
+      "recovery_labels": 0,
+      "ltm": null
+    },
+    "greedy_coreset": {
+      "forgetting": -0.02696,
+      "recovery_labels": 0,
+      "ltm": 0
+    },
+    "flat_utility": {
+      "forgetting": -0.02826,
+      "recovery_labels": 0,
+      "ltm": 0
+    },
+    "hierarchy": {
+      "forgetting": 0.01087,
+      "recovery_labels": null,
+      "ltm": 3
+    }
+  },
+  "normal_queries": 37,
+  "defect_queries": 44,
+  "output": "outputs\\tmra\\II_switch_s1_AAA"
+}
+
+Exit code: 0

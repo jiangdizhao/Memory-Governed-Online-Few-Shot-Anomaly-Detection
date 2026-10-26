@@ -1,0 +1,832 @@
+{
+  "schema": "tmra.aggregate.v1",
+  "complete": true,
+  "validated": 8,
+  "expected": 8,
+  "conditions": [
+    {
+      "experiment": "II",
+      "class_name": "switch",
+      "seed": 0,
+      "order": "ABA",
+      "result_path": "outputs\\tmra\\II_switch_s0_ABA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.7867485739359369,
+          "A_probe_end_II_auc": 0.7867485739359369,
+          "A_probe_return_pre_feedback_auc": 0.7867485739359369,
+          "A_probe_end_III_auc": 0.7867485739359369,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7767485739359369,
+          "A_normal_scores": {
+            "end_1": 0.4874997543838789,
+            "end_2": 0.4874997543838789,
+            "end_3": 0.4874997543838789
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.9087318999561211,
+          "A_probe_end_II_auc": 0.9210179903466432,
+          "A_probe_return_pre_feedback_auc": 0.9210179903466432,
+          "A_probe_end_III_auc": 0.920140412461606,
+          "retention_forgetting_auc": -0.012286090390522086,
+          "return_normal_mean_score_shift": -0.0038867755880895305,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8987318999561211,
+          "A_normal_scores": {
+            "end_1": 0.44530562241122407,
+            "end_2": 0.44141884682313454,
+            "end_3": 0.43892078692058345
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 48,
+            "candidate_patches": 1152,
+            "promotions": 0,
+            "update_seconds": 0.3966215995606035
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.9100482667836771,
+          "A_probe_end_II_auc": 0.9131197893813076,
+          "A_probe_return_pre_feedback_auc": 0.9131197893813076,
+          "A_probe_end_III_auc": 0.9267222465993858,
+          "retention_forgetting_auc": -0.0030715225976304383,
+          "return_normal_mean_score_shift": -0.004413582244009395,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.9000482667836771,
+          "A_normal_scores": {
+            "end_1": 0.44647209149486616,
+            "end_2": 0.44205850925085677,
+            "end_3": 0.4393964449189744
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 48,
+            "candidate_patches": 1152,
+            "promotions": 0,
+            "update_seconds": 1.085429499624297
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.8837209302325582,
+          "A_probe_end_II_auc": 0.87011847301448,
+          "A_probe_return_pre_feedback_auc": 0.87011847301448,
+          "A_probe_end_III_auc": 0.9109258446687143,
+          "retention_forgetting_auc": 0.013602457218078179,
+          "return_normal_mean_score_shift": 0.002495533452843701,
+          "reacquisition_normal_labels": 6,
+          "reacquisition_target_auc": 0.8737209302325581,
+          "A_normal_scores": {
+            "end_1": 0.46253431012045665,
+            "end_2": 0.46502984357330035,
+            "end_3": 0.4595637866910898
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 1,
+            "buffer": 64,
+            "allocated_state_bytes": 2115632,
+            "byte_ceiling": 3500000,
+            "feedback_events": 48,
+            "candidate_patches": 1152,
+            "promotions": 1,
+            "update_seconds": 1.753902200376615
+          }
+        }
+      }
+    },
+    {
+      "experiment": "II",
+      "class_name": "switch",
+      "seed": 0,
+      "order": "AAA",
+      "result_path": "outputs\\tmra\\II_switch_s0_AAA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.7867485739359369,
+          "A_probe_end_II_auc": 0.7867485739359369,
+          "A_probe_return_pre_feedback_auc": 0.7867485739359369,
+          "A_probe_end_III_auc": 0.7867485739359369,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7767485739359369,
+          "A_normal_scores": {
+            "end_1": 0.4874997543838789,
+            "end_2": 0.4874997543838789,
+            "end_3": 0.4874997543838789
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.9087318999561211,
+          "A_probe_end_II_auc": 0.9131197893813077,
+          "A_probe_return_pre_feedback_auc": 0.9131197893813077,
+          "A_probe_end_III_auc": 0.926283457656867,
+          "retention_forgetting_auc": -0.004387889425186531,
+          "return_normal_mean_score_shift": -0.0043560035948483344,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8987318999561211,
+          "A_normal_scores": {
+            "end_1": 0.44530562241122407,
+            "end_2": 0.44094961881637573,
+            "end_3": 0.43884374060720766
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 48,
+            "candidate_patches": 1152,
+            "promotions": 0,
+            "update_seconds": 0.3894635990727693
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.9100482667836771,
+          "A_probe_end_II_auc": 0.9139973672663448,
+          "A_probe_return_pre_feedback_auc": 0.9139973672663448,
+          "A_probe_end_III_auc": 0.9267222465993858,
+          "retention_forgetting_auc": -0.003949100482667722,
+          "return_normal_mean_score_shift": -0.0037567339978128444,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.9000482667836771,
+          "A_normal_scores": {
+            "end_1": 0.44647209149486616,
+            "end_2": 0.4427153574970533,
+            "end_3": 0.4393390709499143
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 48,
+            "candidate_patches": 1152,
+            "promotions": 0,
+            "update_seconds": 1.0804410998243839
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.8837209302325582,
+          "A_probe_end_II_auc": 0.8780166739798158,
+          "A_probe_return_pre_feedback_auc": 0.8780166739798158,
+          "A_probe_end_III_auc": 0.8898639754278193,
+          "retention_forgetting_auc": 0.005704256252742401,
+          "return_normal_mean_score_shift": 0.0005245225609473159,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8737209302325581,
+          "A_normal_scores": {
+            "end_1": 0.46253431012045665,
+            "end_2": 0.46305883268140396,
+            "end_3": 0.4613173559026898
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 1,
+            "buffer": 64,
+            "allocated_state_bytes": 2115632,
+            "byte_ceiling": 3500000,
+            "feedback_events": 48,
+            "candidate_patches": 1152,
+            "promotions": 1,
+            "update_seconds": 1.738322100834921
+          }
+        }
+      }
+    },
+    {
+      "experiment": "II",
+      "class_name": "switch",
+      "seed": 1,
+      "order": "ABA",
+      "result_path": "outputs\\tmra\\II_switch_s1_ABA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.716086956521739,
+          "A_probe_end_II_auc": 0.716086956521739,
+          "A_probe_return_pre_feedback_auc": 0.716086956521739,
+          "A_probe_end_III_auc": 0.716086956521739,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.706086956521739,
+          "A_normal_scores": {
+            "end_1": 0.4969391751548518,
+            "end_2": 0.4969391751548518,
+            "end_3": 0.4969391751548518
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.8691304347826087,
+          "A_probe_end_II_auc": 0.8943478260869565,
+          "A_probe_return_pre_feedback_auc": 0.8943478260869565,
+          "A_probe_end_III_auc": 0.8426086956521739,
+          "retention_forgetting_auc": -0.025217391304347858,
+          "return_normal_mean_score_shift": -0.0052223834006682734,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8591304347826086,
+          "A_normal_scores": {
+            "end_1": 0.45288591799528705,
+            "end_2": 0.4476635345946188,
+            "end_3": 0.4431552958229314
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 37,
+            "candidate_patches": 888,
+            "promotions": 0,
+            "update_seconds": 0.2655381003860384
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.8630434782608696,
+          "A_probe_end_II_auc": 0.8947826086956523,
+          "A_probe_return_pre_feedback_auc": 0.8947826086956523,
+          "A_probe_end_III_auc": 0.8439130434782608,
+          "retention_forgetting_auc": -0.031739130434782714,
+          "return_normal_mean_score_shift": -0.008747367755226443,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8530434782608696,
+          "A_normal_scores": {
+            "end_1": 0.45589556706988293,
+            "end_2": 0.4471481993146565,
+            "end_3": 0.4449905630039132
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 37,
+            "candidate_patches": 888,
+            "promotions": 0,
+            "update_seconds": 0.8391744003165513
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.8591304347826088,
+          "A_probe_end_II_auc": 0.8108695652173913,
+          "A_probe_return_pre_feedback_auc": 0.8108695652173913,
+          "A_probe_end_III_auc": 0.8313043478260869,
+          "retention_forgetting_auc": 0.04826086956521747,
+          "return_normal_mean_score_shift": 0.005646466560985719,
+          "reacquisition_normal_labels": null,
+          "reacquisition_target_auc": 0.8491304347826087,
+          "A_normal_scores": {
+            "end_1": 0.4612173638913942,
+            "end_2": 0.46686383045237995,
+            "end_3": 0.467089809153391
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 3,
+            "buffer": 64,
+            "allocated_state_bytes": 2132112,
+            "byte_ceiling": 3500000,
+            "feedback_events": 37,
+            "candidate_patches": 888,
+            "promotions": 1,
+            "update_seconds": 1.3421494006179273
+          }
+        }
+      }
+    },
+    {
+      "experiment": "II",
+      "class_name": "switch",
+      "seed": 1,
+      "order": "AAA",
+      "result_path": "outputs\\tmra\\II_switch_s1_AAA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.716086956521739,
+          "A_probe_end_II_auc": 0.716086956521739,
+          "A_probe_return_pre_feedback_auc": 0.716086956521739,
+          "A_probe_end_III_auc": 0.716086956521739,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.706086956521739,
+          "A_normal_scores": {
+            "end_1": 0.4969391751548518,
+            "end_2": 0.4969391751548518,
+            "end_3": 0.4969391751548518
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.8691304347826087,
+          "A_probe_end_II_auc": 0.8960869565217392,
+          "A_probe_return_pre_feedback_auc": 0.8960869565217392,
+          "A_probe_end_III_auc": 0.8360869565217391,
+          "retention_forgetting_auc": -0.026956521739130546,
+          "return_normal_mean_score_shift": -0.006269659685051998,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8591304347826086,
+          "A_normal_scores": {
+            "end_1": 0.45288591799528705,
+            "end_2": 0.44661625831023505,
+            "end_3": 0.44338195285071497
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 37,
+            "candidate_patches": 888,
+            "promotions": 0,
+            "update_seconds": 0.2877990994602442
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.8630434782608696,
+          "A_probe_end_II_auc": 0.8913043478260869,
+          "A_probe_return_pre_feedback_auc": 0.8913043478260869,
+          "A_probe_end_III_auc": 0.8334782608695651,
+          "retention_forgetting_auc": -0.02826086956521734,
+          "return_normal_mean_score_shift": -0.00862782804862311,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8530434782608696,
+          "A_normal_scores": {
+            "end_1": 0.45589556706988293,
+            "end_2": 0.4472677390212598,
+            "end_3": 0.44455703445102857
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 37,
+            "candidate_patches": 888,
+            "promotions": 0,
+            "update_seconds": 0.8616155995987356
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.8591304347826088,
+          "A_probe_end_II_auc": 0.8482608695652174,
+          "A_probe_return_pre_feedback_auc": 0.8482608695652174,
+          "A_probe_end_III_auc": 0.8295652173913043,
+          "retention_forgetting_auc": 0.010869565217391353,
+          "return_normal_mean_score_shift": 0.00047581804835278296,
+          "reacquisition_normal_labels": null,
+          "reacquisition_target_auc": 0.8491304347826087,
+          "A_normal_scores": {
+            "end_1": 0.4612173638913942,
+            "end_2": 0.461693181939747,
+            "end_3": 0.4664154609908228
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 3,
+            "buffer": 64,
+            "allocated_state_bytes": 2132112,
+            "byte_ceiling": 3500000,
+            "feedback_events": 37,
+            "candidate_patches": 888,
+            "promotions": 1,
+            "update_seconds": 1.302663199370727
+          }
+        }
+      }
+    },
+    {
+      "experiment": "II",
+      "class_name": "audiojack",
+      "seed": 0,
+      "order": "ABA",
+      "result_path": "outputs\\tmra\\II_audiojack_s0_ABA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.7362997658079626,
+          "A_probe_end_II_auc": 0.7362997658079626,
+          "A_probe_return_pre_feedback_auc": 0.7362997658079626,
+          "A_probe_end_III_auc": 0.7362997658079626,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7262997658079626,
+          "A_normal_scores": {
+            "end_1": 0.5282793470093461,
+            "end_2": 0.5282793470093461,
+            "end_3": 0.5282793470093461
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.8285714285714286,
+          "A_probe_end_II_auc": 0.8590163934426229,
+          "A_probe_return_pre_feedback_auc": 0.8590163934426229,
+          "A_probe_end_III_auc": 0.8866510538641688,
+          "retention_forgetting_auc": -0.030444964871194302,
+          "return_normal_mean_score_shift": -0.011331404818863133,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8185714285714286,
+          "A_normal_scores": {
+            "end_1": 0.49130126149927983,
+            "end_2": 0.4799698566804167,
+            "end_3": 0.47655821774826673
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 54,
+            "candidate_patches": 1296,
+            "promotions": 0,
+            "update_seconds": 0.4749858998693526
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.8238875878220141,
+          "A_probe_end_II_auc": 0.8557377049180328,
+          "A_probe_return_pre_feedback_auc": 0.8557377049180328,
+          "A_probe_end_III_auc": 0.8524590163934427,
+          "retention_forgetting_auc": -0.031850117096018704,
+          "return_normal_mean_score_shift": -0.00948782045333113,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8138875878220141,
+          "A_normal_scores": {
+            "end_1": 0.4917346058321781,
+            "end_2": 0.48224678537884696,
+            "end_3": 0.47966123604383626
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 54,
+            "candidate_patches": 1296,
+            "promotions": 0,
+            "update_seconds": 1.5120240997057408
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.7423887587822013,
+          "A_probe_end_II_auc": 0.8131147540983606,
+          "A_probe_return_pre_feedback_auc": 0.8131147540983606,
+          "A_probe_end_III_auc": 0.8491803278688524,
+          "retention_forgetting_auc": -0.0707259953161593,
+          "return_normal_mean_score_shift": -0.007379257288135488,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7323887587822013,
+          "A_normal_scores": {
+            "end_1": 0.5095536830972452,
+            "end_2": 0.5021744258091098,
+            "end_3": 0.5033877873029865
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 2,
+            "buffer": 64,
+            "allocated_state_bytes": 2123872,
+            "byte_ceiling": 3500000,
+            "feedback_events": 54,
+            "candidate_patches": 1296,
+            "promotions": 2,
+            "update_seconds": 2.233268999727443
+          }
+        }
+      }
+    },
+    {
+      "experiment": "II",
+      "class_name": "audiojack",
+      "seed": 0,
+      "order": "AAA",
+      "result_path": "outputs\\tmra\\II_audiojack_s0_AAA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.7362997658079626,
+          "A_probe_end_II_auc": 0.7362997658079626,
+          "A_probe_return_pre_feedback_auc": 0.7362997658079626,
+          "A_probe_end_III_auc": 0.7362997658079626,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7262997658079626,
+          "A_normal_scores": {
+            "end_1": 0.5282793470093461,
+            "end_2": 0.5282793470093461,
+            "end_3": 0.5282793470093461
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.8285714285714286,
+          "A_probe_end_II_auc": 0.8660421545667447,
+          "A_probe_return_pre_feedback_auc": 0.8660421545667447,
+          "A_probe_end_III_auc": 0.8725995316159251,
+          "retention_forgetting_auc": -0.03747072599531609,
+          "return_normal_mean_score_shift": -0.012155600747124073,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8185714285714286,
+          "A_normal_scores": {
+            "end_1": 0.49130126149927983,
+            "end_2": 0.47914566075215576,
+            "end_3": 0.47630730222483153
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 54,
+            "candidate_patches": 1296,
+            "promotions": 0,
+            "update_seconds": 0.4494235008023679
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.8238875878220141,
+          "A_probe_end_II_auc": 0.8562060889929743,
+          "A_probe_return_pre_feedback_auc": 0.8562060889929743,
+          "A_probe_end_III_auc": 0.8482435597189696,
+          "retention_forgetting_auc": -0.032318501170960245,
+          "return_normal_mean_score_shift": -0.010025007802931973,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.8138875878220141,
+          "A_normal_scores": {
+            "end_1": 0.4917346058321781,
+            "end_2": 0.4817095980292461,
+            "end_3": 0.480129499904445
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 54,
+            "candidate_patches": 1296,
+            "promotions": 0,
+            "update_seconds": 1.5308529995381832
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.7423887587822013,
+          "A_probe_end_II_auc": 0.8327868852459016,
+          "A_probe_return_pre_feedback_auc": 0.8327868852459016,
+          "A_probe_end_III_auc": 0.8562060889929742,
+          "retention_forgetting_auc": -0.09039812646370027,
+          "return_normal_mean_score_shift": -0.011138550082191057,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7323887587822013,
+          "A_normal_scores": {
+            "end_1": 0.5095536830972452,
+            "end_2": 0.4984151330150542,
+            "end_3": 0.5025524990480454
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 2,
+            "buffer": 64,
+            "allocated_state_bytes": 2123872,
+            "byte_ceiling": 3500000,
+            "feedback_events": 54,
+            "candidate_patches": 1296,
+            "promotions": 2,
+            "update_seconds": 2.321026300545782
+          }
+        }
+      }
+    },
+    {
+      "experiment": "II",
+      "class_name": "audiojack",
+      "seed": 1,
+      "order": "ABA",
+      "result_path": "outputs\\tmra\\II_audiojack_s1_ABA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.6363636363636364,
+          "A_probe_end_II_auc": 0.6363636363636364,
+          "A_probe_return_pre_feedback_auc": 0.6363636363636364,
+          "A_probe_end_III_auc": 0.6363636363636364,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.6263636363636363,
+          "A_normal_scores": {
+            "end_1": 0.5357485914772208,
+            "end_2": 0.5357485914772208,
+            "end_3": 0.5357485914772208
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.7676767676767676,
+          "A_probe_end_II_auc": 0.7823232323232323,
+          "A_probe_return_pre_feedback_auc": 0.7823232323232323,
+          "A_probe_end_III_auc": 0.806060606060606,
+          "retention_forgetting_auc": -0.014646464646464685,
+          "return_normal_mean_score_shift": -0.004414174141305849,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7576767676767676,
+          "A_normal_scores": {
+            "end_1": 0.48932209249698755,
+            "end_2": 0.4849079183556817,
+            "end_3": 0.48216682853120746
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 62,
+            "candidate_patches": 1488,
+            "promotions": 0,
+            "update_seconds": 0.5565511006861925
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.7651515151515151,
+          "A_probe_end_II_auc": 0.7823232323232323,
+          "A_probe_return_pre_feedback_auc": 0.7823232323232323,
+          "A_probe_end_III_auc": 0.7782828282828282,
+          "retention_forgetting_auc": -0.01717171717171717,
+          "return_normal_mean_score_shift": -0.0014863086469246167,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7551515151515151,
+          "A_normal_scores": {
+            "end_1": 0.48962554967764654,
+            "end_2": 0.4881392410307219,
+            "end_3": 0.4898081801154397
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 62,
+            "candidate_patches": 1488,
+            "promotions": 0,
+            "update_seconds": 1.8283871999010444
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.751010101010101,
+          "A_probe_end_II_auc": 0.7242424242424242,
+          "A_probe_return_pre_feedback_auc": 0.7242424242424242,
+          "A_probe_end_III_auc": 0.7323232323232324,
+          "retention_forgetting_auc": 0.026767676767676774,
+          "return_normal_mean_score_shift": 0.0030749083468408767,
+          "reacquisition_normal_labels": 5,
+          "reacquisition_target_auc": 0.741010101010101,
+          "A_normal_scores": {
+            "end_1": 0.5106145987908045,
+            "end_2": 0.5136895071376454,
+            "end_3": 0.508620300527775
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 0,
+            "buffer": 64,
+            "allocated_state_bytes": 2107392,
+            "byte_ceiling": 3500000,
+            "feedback_events": 62,
+            "candidate_patches": 1488,
+            "promotions": 0,
+            "update_seconds": 2.4929752005264163
+          }
+        }
+      }
+    },
+    {
+      "experiment": "II",
+      "class_name": "audiojack",
+      "seed": 1,
+      "order": "AAA",
+      "result_path": "outputs\\tmra\\II_audiojack_s1_AAA",
+      "result": {
+        "static": {
+          "A_probe_end_I_auc": 0.6363636363636364,
+          "A_probe_end_II_auc": 0.6363636363636364,
+          "A_probe_return_pre_feedback_auc": 0.6363636363636364,
+          "A_probe_end_III_auc": 0.6363636363636364,
+          "retention_forgetting_auc": 0.0,
+          "return_normal_mean_score_shift": 0.0,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.6263636363636363,
+          "A_normal_scores": {
+            "end_1": 0.5357485914772208,
+            "end_2": 0.5357485914772208,
+            "end_3": 0.5357485914772208
+          },
+          "memory": null
+        },
+        "greedy_coreset": {
+          "A_probe_end_I_auc": 0.7676767676767676,
+          "A_probe_end_II_auc": 0.7772727272727272,
+          "A_probe_return_pre_feedback_auc": 0.7772727272727272,
+          "A_probe_end_III_auc": 0.8131313131313131,
+          "retention_forgetting_auc": -0.009595959595959602,
+          "return_normal_mean_score_shift": -0.004813504038435057,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7576767676767676,
+          "A_normal_scores": {
+            "end_1": 0.48932209249698755,
+            "end_2": 0.4845085884585525,
+            "end_3": 0.4835271889513189
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 0,
+            "allocated_state_bytes": 3162176,
+            "byte_ceiling": 3500000,
+            "feedback_events": 62,
+            "candidate_patches": 1488,
+            "promotions": 0,
+            "update_seconds": 0.5520995014812797
+          }
+        },
+        "flat_utility": {
+          "A_probe_end_I_auc": 0.7651515151515151,
+          "A_probe_end_II_auc": 0.78989898989899,
+          "A_probe_return_pre_feedback_auc": 0.78989898989899,
+          "A_probe_end_III_auc": 0.7843434343434343,
+          "retention_forgetting_auc": -0.02474747474747485,
+          "return_normal_mean_score_shift": -0.004489735671968198,
+          "reacquisition_normal_labels": 0,
+          "reacquisition_target_auc": 0.7551515151515151,
+          "A_normal_scores": {
+            "end_1": 0.48962554967764654,
+            "end_2": 0.48513581400567835,
+            "end_3": 0.48800652812827716
+          },
+          "memory": {
+            "stm": 384,
+            "ltm": 0,
+            "buffer": 1,
+            "allocated_state_bytes": 3180608,
+            "byte_ceiling": 3500000,
+            "feedback_events": 62,
+            "candidate_patches": 1488,
+            "promotions": 0,
+            "update_seconds": 1.7797598002944142
+          }
+        },
+        "hierarchy": {
+          "A_probe_end_I_auc": 0.751010101010101,
+          "A_probe_end_II_auc": 0.7393939393939394,
+          "A_probe_return_pre_feedback_auc": 0.7393939393939394,
+          "A_probe_end_III_auc": 0.7292929292929292,
+          "retention_forgetting_auc": 0.011616161616161635,
+          "return_normal_mean_score_shift": -0.0004098148960055559,
+          "reacquisition_normal_labels": null,
+          "reacquisition_target_auc": 0.741010101010101,
+          "A_normal_scores": {
+            "end_1": 0.5106145987908045,
+            "end_2": 0.510204783894799,
+            "end_3": 0.5118740666093249
+          },
+          "memory": {
+            "stm": 128,
+            "ltm": 0,
+            "buffer": 64,
+            "allocated_state_bytes": 2107392,
+            "byte_ceiling": 3500000,
+            "feedback_events": 62,
+            "candidate_patches": 1488,
+            "promotions": 0,
+            "update_seconds": 2.499318599468097
+          }
+        }
+      }
+    }
+  ]
+}
