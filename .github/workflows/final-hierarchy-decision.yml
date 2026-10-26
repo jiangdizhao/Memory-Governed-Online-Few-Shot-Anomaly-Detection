@@ -1,0 +1,26 @@
+name: Final hierarchy decision offline contracts
+on:
+  push:
+    branches: [final-hierarchy-decision]
+  pull_request:
+    paths:
+      - 'experiments/final_*.py'
+      - 'experiments/run_final_hierarchy_decision.py'
+      - 'tests/test_final_hierarchy_decision.py'
+jobs:
+  offline-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install standalone test dependencies
+        run: python -m pip install numpy scikit-learn
+      - name: Compile runner and native bridge integrations
+        run: |
+          python -m py_compile experiments/final_decision_core.py experiments/final_hierarchy_trial.py experiments/final_instance_preflight.py experiments/run_final_hierarchy_decision.py tests/test_final_hierarchy_decision.py
+      - name: Verify immutable 8-case runner
+        run: python experiments/run_final_hierarchy_decision.py --self-test
+      - name: Test strict instance split and binary decision
+        run: python -m unittest discover -s tests -p 'test_final_hierarchy_decision.py' -v
