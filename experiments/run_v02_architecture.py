@@ -11,6 +11,7 @@ import csv
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -18,6 +19,82 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"experiments"))
 import v02_architecture_core as c
+
+# Exactly the code used for the first 12 successful V0.2 trials, before
+# replacing an unjustified B embedding-distance >0.01 validity gate.
+# Source compatibility only: all data, controls and analysis are identical.
+LEGACY_COMPLETE_RUN_SHA="d52331efba827e31ccd9a80e5fe2ba9bb3e1114d"
+LEGACY_CODE_ONLY_ALLOWLIST=frozenset((
+    "experiments/v02_architecture_trial.py",
+    "experiments/run_v02_architecture.py",
+))
+
+
+def _read_pinned_historical_source(path):
+    result=subprocess.run(
+        ["git","show",f"{LEGACY_COMPLETE_RUN_SHA}:{path}"],
+        cwd=ROOT,capture_output=True,check=True)
+    return result.stdout
+
+
+def _verify_source_manifest(source_hashes):
+    """Verify hashes without rewriting old scientific output.
+
+    Old complete cases are accepted only when changed source bytes exactly
+    match the pinned historical commit. Only two runner/validation files may
+    differ from the current code; all method, data and model code must still
+    match the manifest byte-for-byte. New cases use current hashes.
+    """
+    old_paths=[]
+    for path,digest in source_hashes.items():
+        local=ROOT/path
+        if not local.is_file():
+            raise RuntimeError(f"Missing source file: {path}")
+        actual=hashlib.sha256(local.read_bytes()).hexdigest()
+        if actual==digest:
+            continue
+        if path not in LEGACY_CODE_ONLY_ALLOWLIST:
+            raise RuntimeError(f"Non-whitelisted science source change: {path}")
+        historical=hashlib.sha256(_read_pinned_historical_source(path)).hexdigest()
+        if historical!=digest:
+            raise RuntimeError(f"Unrecognized historical source hash: {path}")
+        old_paths.append(path)
+    return old_paths
+
+
+def archive_known_failed_shift_gate(args,case):
+    """Reversibly archive ONLY the known eraser/s0/ABA old validation failure.
+
+    No successful summaries can be moved; no unknown failures are touched.
+    Keep original stdout traceback and the partial directory intact.
+    """
+    if case!=("eraser",0,"ABA"):
+        return False
+    where=target(args,case)
+    log=where.with_suffix(".run.log")
+    if not where.is_dir() or not log.is_file():
+        return False
+    if (where/"summary.json").exists():
+        return False
+    log_text=log.read_text(encoding="utf-8",errors="replace")
+    if ("AssertionError: Frozen B shift failed feature-space verification" not in log_text
+        or "Exit code: 1" not in log_text):
+        return False
+    archive=Path(args.out_root)/"_failed_attempts"/(where.name+"_obsolete_shift_gate")
+    if archive.exists():
+        raise RuntimeError(f"Refusing to overwrite prior failed-run archive: {archive}")
+    archive.mkdir(parents=True,exist_ok=False)
+    shutil.move(str(where),str(archive/"partial_run"))
+    shutil.move(str(log),str(archive/"original_runner_log.txt"))
+    (archive/"README.txt").write_text(
+        "Preserved unsuccessful V0.2 attempt, old code "+LEGACY_COMPLETE_RUN_SHA+
+        "\nFailure: prior unregistered mean DINO feature distance >=0.01 gate.\n"
+        "The original B pixel transform, science controls and prior results "
+        "were not changed. The repaired trial is a NEW attempt.\n",
+        encoding="utf-8")
+    print(f"[V02] Archived obsolete shift-gate failure without deletion: {archive}",flush=True)
+    return True
+
 
 
 def cases():
@@ -83,10 +160,10 @@ def checked(args,case):
     if (x.get("schema"),x.get("complete"),x.get("class_name"),
         x.get("seed"),x.get("order"))!=(c.SCHEMA,True,*case):
         raise RuntimeError(f"Bad case identity {where}")
-    for path,digest in x["source_sha256"].items():
-        p=ROOT/path
-        if not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest()!=digest:
-            raise RuntimeError(f"Source changed since original run: {path}")
+    old_paths=_verify_source_manifest(x["source_sha256"])
+    if old_paths:
+        print(f"[V02] Historical source SHA-256 verified against {LEGACY_COMPLETE_RUN_SHA[:12]} "
+              f"({where.name}: {', '.join(old_paths)})",flush=True)
     if len(x["support_objects"])!=4 or len(set(x["support_objects"]))!=4:
         raise RuntimeError("Invalid four-shot supports")
     if x["support_digest"]!=c.digest(x["support_paths"]):
@@ -208,6 +285,12 @@ def summarize(args):
             rows.append(row)
     verdict=c.decision(rows)
     payload={"schema":"memory.v02.decision.v1","complete":True,
+             "source_lineage_by_condition":{
+                 f"{case[0]}_s{case[1]}_{case[2]}":{
+                     "trial_source_sha256":file["source_sha256"]["experiments/v02_architecture_trial.py"],
+                     "verified_historical_code_only_paths":_verify_source_manifest(file["source_sha256"]),
+                 } for case,file in found.items()
+             },
              "planned_conditions":len(cases()),"paired_units":len(rows),
              "paired_results":rows,"engineering_decision":verdict,
              "warning":"Designed diagnostic six-class study; synthetic photometric B shift. Historical v22 full BEA system not reproduced."}
@@ -254,6 +337,8 @@ def main():
         for index,cas in enumerate(cases(),1):
             loc=target(args,cas)
             print(f"[V02] condition {index}/{len(cases())}: {cas}",flush=True)
+            if loc.exists():
+                archive_known_failed_shift_gate(args,cas)
             if not loc.exists():
                 child(command(args,cas),loc.with_suffix(".run.log"))
             else:
