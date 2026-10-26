@@ -286,6 +286,10 @@ def main(args):
         ("source_patch_evidence.csv",attribution_patches),
     ]:csv_write(filename,rows)
 
+    if not attribution_patches:
+        (out/"source_patch_evidence.csv").write_text(
+            "step,path,label_eval_only,layer,patch_idx,source_winner,d_native_full,d_no_extra,d_extra_reduction\n",
+            encoding="utf-8")
     source_files=[
         "experiments/bridge_memory.py",
         "experiments/tmra_attribution.py",
