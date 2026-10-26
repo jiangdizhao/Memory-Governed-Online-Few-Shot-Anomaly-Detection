@@ -1,0 +1,99 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=250/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=500/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=750/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=1000/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=1250/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=1500/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=1750/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=2000/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=2250/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=2500/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=2750/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=3000/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=3250/3709
+[BRIDGE] rolled_strip_base seed=0 STM=512 t=3500/3709
+{
+  "condition": "rolled_strip_base/s0/STM512",
+  "probe_AULC": {
+    "flat_stm": 0.96881,
+    "flat_utility": 0.96908,
+    "flat_equal_total": 0.96908,
+    "track_utility": 0.96908,
+    "shadow_utility": 0.96908,
+    "ltm_utility": 0.96908,
+    "full_utility": 0.96908,
+    "full_no_utility": 0.96881
+  },
+  "ltm": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 0,
+    "shadow_utility": 5,
+    "ltm_utility": 5,
+    "full_utility": 5,
+    "full_no_utility": 5
+  },
+  "buffer": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 299,
+    "shadow_utility": 299,
+    "ltm_utility": 299,
+    "full_utility": 299,
+    "full_no_utility": 299
+  },
+  "final_retrieval_cf": [
+    {
+      "step": 3709,
+      "variant": "full",
+      "auroc": 1.0,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3709,
+      "variant": "no_ltm",
+      "auroc": 1.0,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3709,
+      "variant": "no_buffer",
+      "auroc": 1.0,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3709,
+      "variant": "stm_only",
+      "auroc": 1.0,
+      "score_changed": 1,
+      "mean_score_delta_vs_full": 2.2901842991511028e-05,
+      "max_abs_score_delta": 0.0021985769271850586
+    },
+    {
+      "step": 3709,
+      "variant": "unified_no_buffer",
+      "auroc": 0.9989495798319328,
+      "score_changed": 96,
+      "mean_score_delta_vs_full": -0.008695824382205805,
+      "max_abs_score_delta": 0.04490390419960022
+    }
+  ],
+  "out_dir": "outputs\\bridge_historical_matched\\rolled_strip_base_s0_STM512_native_full"
+}
+
+Exit code: 0

@@ -1,0 +1,17 @@
+step,method,stm,ltm,buffer,occupied_total,capacity_total,allocated_feature_bytes,allocated_metadata_bytes,candidate_events,candidate_patches,consolidation_attempts,consolidation_successes,promoted_prototypes,max_eligible_candidates,update_seconds,ltm_retrieval,buffer_retrieval,utility_retention
+0,flat_stm,0,0,0,0,512,16384,64,0,0,0,0,0,0,0.0,False,False,False
+0,flat_utility,0,0,0,0,512,16384,64,0,0,0,0,0,0,0.0,False,False,True
+0,flat_equal_total,0,0,0,0,5120,16384,64,0,0,0,0,0,0,0.0,False,False,True
+0,track_utility,0,0,0,0,5120,67108864,262144,0,0,0,0,0,0,0.0,False,False,True
+0,shadow_utility,0,0,0,0,5120,67108864,262144,0,0,0,0,0,0,0.0,False,False,True
+0,ltm_utility,0,0,0,0,5120,67108864,262144,0,0,0,0,0,0,0.0,True,False,True
+0,full_utility,0,0,0,0,5120,67108864,262144,0,0,0,0,0,0,0.0,True,True,True
+0,full_no_utility,0,0,0,0,5120,67108864,262144,0,0,0,0,0,0,0.0,True,True,False
+64,flat_stm,20,0,0,20,512,180224,1024,1,24,0,0,0,0,0.021599499974399805,False,False,False
+64,flat_utility,20,0,0,20,512,180224,1024,1,24,0,0,0,0,0.01891430001705885,False,False,True
+64,flat_equal_total,20,0,0,20,5120,180224,1024,1,24,0,0,0,0,0.019980199984274805,False,False,True
+64,track_utility,20,0,8,28,5120,67272704,263104,1,24,0,0,0,0,0.024850300047546625,False,False,True
+64,shadow_utility,20,0,8,28,5120,67272704,263104,1,24,0,0,0,0,0.02730169997084886,False,False,True
+64,ltm_utility,20,0,8,28,5120,67272704,263104,1,24,0,0,0,0,0.026813100092113018,True,False,True
+64,full_utility,20,0,8,28,5120,67272704,263104,1,24,0,0,0,0,0.02400019997730851,True,True,True
+64,full_no_utility,20,0,8,28,5120,67272704,263104,1,24,0,0,0,0,0.02534259995445609,True,True,False

@@ -1,0 +1,99 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[BRIDGE] audiojack seed=1 STM=512 t=250/3719
+[BRIDGE] audiojack seed=1 STM=512 t=500/3719
+[BRIDGE] audiojack seed=1 STM=512 t=750/3719
+[BRIDGE] audiojack seed=1 STM=512 t=1000/3719
+[BRIDGE] audiojack seed=1 STM=512 t=1250/3719
+[BRIDGE] audiojack seed=1 STM=512 t=1500/3719
+[BRIDGE] audiojack seed=1 STM=512 t=1750/3719
+[BRIDGE] audiojack seed=1 STM=512 t=2000/3719
+[BRIDGE] audiojack seed=1 STM=512 t=2250/3719
+[BRIDGE] audiojack seed=1 STM=512 t=2500/3719
+[BRIDGE] audiojack seed=1 STM=512 t=2750/3719
+[BRIDGE] audiojack seed=1 STM=512 t=3000/3719
+[BRIDGE] audiojack seed=1 STM=512 t=3250/3719
+[BRIDGE] audiojack seed=1 STM=512 t=3500/3719
+{
+  "condition": "audiojack/s1/STM512",
+  "probe_AULC": {
+    "flat_stm": 0.75909,
+    "flat_utility": 0.76766,
+    "flat_equal_total": 0.767,
+    "track_utility": 0.76766,
+    "shadow_utility": 0.76766,
+    "ltm_utility": 0.76766,
+    "full_utility": 0.76766,
+    "full_no_utility": 0.75909
+  },
+  "ltm": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 0,
+    "shadow_utility": 0,
+    "ltm_utility": 0,
+    "full_utility": 0,
+    "full_no_utility": 0
+  },
+  "buffer": {
+    "flat_stm": 0,
+    "flat_utility": 0,
+    "flat_equal_total": 0,
+    "track_utility": 640,
+    "shadow_utility": 640,
+    "ltm_utility": 640,
+    "full_utility": 640,
+    "full_no_utility": 640
+  },
+  "final_retrieval_cf": [
+    {
+      "step": 3719,
+      "variant": "full",
+      "auroc": 0.7930521091811414,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3719,
+      "variant": "no_ltm",
+      "auroc": 0.7930521091811414,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3719,
+      "variant": "no_buffer",
+      "auroc": 0.7930521091811414,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3719,
+      "variant": "stm_only",
+      "auroc": 0.7930521091811414,
+      "score_changed": 0,
+      "mean_score_delta_vs_full": 0.0,
+      "max_abs_score_delta": 0.0
+    },
+    {
+      "step": 3719,
+      "variant": "unified_no_buffer",
+      "auroc": 0.8153846153846154,
+      "score_changed": 96,
+      "mean_score_delta_vs_full": -0.008549611394604048,
+      "max_abs_score_delta": 0.029784023761749268
+    }
+  ],
+  "out_dir": "outputs\\bridge_historical_matched\\audiojack_s1_STM512_native_full"
+}
+
+Exit code: 0

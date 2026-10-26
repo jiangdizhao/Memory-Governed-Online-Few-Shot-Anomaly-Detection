@@ -1,0 +1,6 @@
+A1-H native PatchVMB maturation -> promotion -> retrieval CPU preflight PASS
+A1-H v22 maturation/recurrence/promotion CPU mechanism preflight PASS
+[BRIDGE] Historical STM/LTM/maturation code paths PASS
+[BRIDGE] Bridge arm state equivalence PASS
+
+Exit code: 0
