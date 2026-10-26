@@ -1,6 +1,7 @@
 """CPU-only V0.2 protocol invariants; no Real-IAD or GPU required."""
 import sys
 import tempfile
+import hashlib
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -101,6 +102,23 @@ class V02ProtocolTests(unittest.TestCase):
                           (archive/"original_runner_log.txt").read_text())
             self.assertFalse(runner.archive_known_failed_shift_gate(
                 args,("eraser",0,"ABA")))
+
+    def test_historical_source_lineage_allowlist(self):
+        # This runs against the exact Git commit whose twelve complete
+        # outputs were produced, never by trusting claimed SHA metadata.
+        for path in sorted(runner.LEGACY_CODE_ONLY_ALLOWLIST):
+            actual=hashlib.sha256(runner._read_pinned_historical_source(path)).hexdigest()
+            checked=runner._verify_source_manifest({path:actual})
+            self.assertEqual(checked,[path])
+        original=hashlib.sha256(
+            runner._read_pinned_historical_source(
+                "experiments/v02_architecture_core.py")).hexdigest()
+        self.assertEqual(
+            runner._verify_source_manifest({
+                "experiments/v02_architecture_core.py":original}),[])
+        with self.assertRaises(RuntimeError):
+            runner._verify_source_manifest({
+                "experiments/v02_architecture_core.py":"deadbeef"})
 
     def test_decision_gate(self):
         def rows(ret,quality=0,source=.006,ltm=1):
