@@ -138,6 +138,7 @@ def main(args):
     qnormal_per_phase=[0,0,0]
     updates={}
     shift_values=[]
+    online_retrieval_seconds={name:0.0 for name in NAMES}
 
     def probe(t,mode,stage,store=True,flags=None):
         result={}
@@ -213,7 +214,12 @@ def main(args):
             static_score,static_map=a1.score_bank(impl,fixed,img,feats,cfg)
             candidates={k:v[:24] for k,v in
                         impl.layer_to_topk_from_amap(static_map).items()}
-            vals={name:score(arm.bank,img,feats) for name,arm in arms.items()}
+            vals={}
+            for name,arm in arms.items():
+                before=time.perf_counter()
+                vals[name]=score(arm.bank,img,feats)
+                if feats[0].is_cuda:torch.cuda.synchronize()
+                online_retrieval_seconds[name]+=time.perf_counter()-before
             chosen=global_t in query
             label=int(not s.is_good)
             phase_records.append({
@@ -311,6 +317,7 @@ def main(args):
         "experiments/v02_architecture_core.py",
         "experiments/v02_architecture_trial.py",
         "experiments/v02_memory.py",
+        "experiments/run_v02_architecture.py",
         "experiments/final_decision_core.py",
         "experiments/tmra_compact_memory.py",
         "experiments/tmra_recurrence_core.py",
@@ -325,6 +332,8 @@ def main(args):
         "schema":final.SCHEMA,"complete":True,
         "class_name":args.class_name,"seed":args.seed,"order":args.order,
         "support_paths":support,"support_objects":[final.object_id(p) for p in support],
+        "initial_probe_before_online":initial_A,
+        "online_retrieval_seconds":online_retrieval_seconds,
         "history_paths":history_paths,
         "history_objects":[final.object_id(p) for p in history_paths],
         "history_digest":final.digest(history_paths),
@@ -379,6 +388,8 @@ def main(args):
             p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest()
             for p in input_files},
         "elapsed_seconds":time.perf_counter()-started,
+        "peak_cuda_allocated_bytes":(torch.cuda.max_memory_allocated(args.device)
+            if str(args.device).startswith("cuda") else None),
     }
     (out/"summary.json").write_text(
         json.dumps(report,indent=2,allow_nan=False,ensure_ascii=False),
