@@ -126,13 +126,14 @@ def check(a,c,seed,k,order,smoke=False):
             raise RuntimeError(f"Missing evidence file: {file}")
     final_cf=j["counterfactual_probe_final"]
     if {row["variant"] for row in final_cf}!=set(
-        ("full","no_ltm","no_buffer","stm_only")):
+        ("full","no_ltm","no_buffer","stm_only","unified_no_buffer")):
         raise RuntimeError("Missing same-state retrieval counterfactuals")
-    if not (abs(j["arms"]["shadow_utility"]["probe_aulc"]-
-                j["arms"]["ltm_utility"]["probe_aulc"])<=1 or
-            j["arms"]["ltm_utility"]["memory"]["ltm"]==
-                j["arms"]["shadow_utility"]["memory"]["ltm"]):
+    if (j["arms"]["ltm_utility"]["memory"]["ltm"]!=
+        j["arms"]["shadow_utility"]["memory"]["ltm"]):
         raise RuntimeError("Shadow/LTM state divergence")
+    if (j["arms"]["flat_utility"]["memory"]["stm"]!=
+        j["arms"]["track_utility"]["memory"]["stm"]):
+        raise RuntimeError("Flat/track STM count divergence")
     return {"class_name":c,"support_seed":seed,"stm_capacity":k,
             "stream_order":order,"n_stream":j["n_stream"],
             "normal_queries":j["queried_normal"],
