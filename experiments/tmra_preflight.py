@@ -23,7 +23,8 @@ def main():
                        knn_k_normal=5,
                        corr_cfg=impl.CorrectionConfig(enabled=False),
                        use_defect_bank=False)
-    bank.bank_dtype=torch.float32
+    # Match the actual DINO deployment memory storage dtype (fp16).
+    bank.bank_dtype=torch.float16
     bank.build_fixed_normal_from_support(
         "p0",[[support]],mode=0,view="id",
         normal_seed_patches=4,seed=0)
