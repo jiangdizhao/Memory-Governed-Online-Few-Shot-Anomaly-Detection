@@ -1,0 +1,61 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[A1H] switch s0 native K=256 200/3724
+[A1H] switch s0 native K=256 400/3724
+[A1H] switch s0 native K=256 600/3724
+[A1H] switch s0 native K=256 800/3724
+[A1H] switch s0 native K=256 1000/3724
+[A1H] switch s0 native K=256 1200/3724
+[A1H] switch s0 native K=256 1400/3724
+[A1H] switch s0 native K=256 1600/3724
+[A1H] switch s0 native K=256 1800/3724
+[A1H] switch s0 native K=256 2000/3724
+[A1H] switch s0 native K=256 2200/3724
+[A1H] switch s0 native K=256 2400/3724
+[A1H] switch s0 native K=256 2600/3724
+[A1H] switch s0 native K=256 2800/3724
+[A1H] switch s0 native K=256 3000/3724
+[A1H] switch s0 native K=256 3200/3724
+[A1H] switch s0 native K=256 3400/3724
+[A1H] switch s0 native K=256 3600/3724
+{
+  "condition": "switch/s0/native/K256",
+  "AUROC": {
+    "static": 0.7621,
+    "reservoir": 0.86163,
+    "online_greedy_coreset": 0.86247,
+    "v22_normal_stm": 0.86343,
+    "H1_track": 0.86208,
+    "H2_shadow_promotion": 0.86208,
+    "H3_ltm_retrieval": 0.86208,
+    "H4_utility": 0.86775
+  },
+  "probe_AULC": {
+    "static": 0.73616,
+    "reservoir": 0.82354,
+    "online_greedy_coreset": 0.82754,
+    "v22_normal_stm": 0.8273,
+    "H1_track": 0.8152,
+    "H2_shadow_promotion": 0.8152,
+    "H3_ltm_retrieval": 0.8152,
+    "H4_utility": 0.82239
+  },
+  "ltm": {
+    "static": 0,
+    "reservoir": 0,
+    "online_greedy_coreset": 0,
+    "v22_normal_stm": 0,
+    "H1_track": 0,
+    "H2_shadow_promotion": 2,
+    "H3_ltm_retrieval": 2,
+    "H4_utility": 2
+  },
+  "output": "outputs\\a1h_hierarchical_memory\\switch_s0_K256_native_full"
+}
+
+Exit code: 0

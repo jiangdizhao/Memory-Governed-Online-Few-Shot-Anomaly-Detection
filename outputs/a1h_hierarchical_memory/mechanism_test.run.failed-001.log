@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection\experiments\a1h_mechanism_test.py", line 84, in <module>
+    main()
+  File "E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection\experiments\a1h_mechanism_test.py", line 79, in main
+    print("A1-H native PatchVMB maturation\u2192promotion\u2192retrieval CPU preflight PASS")
+  File "D:\anaconda3\envs\torch\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 31: character maps to <undefined>
+
+Exit code: 1

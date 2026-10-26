@@ -1,0 +1,61 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+[A1H] rolled_strip_base s1 native K=256 200/3709
+[A1H] rolled_strip_base s1 native K=256 400/3709
+[A1H] rolled_strip_base s1 native K=256 600/3709
+[A1H] rolled_strip_base s1 native K=256 800/3709
+[A1H] rolled_strip_base s1 native K=256 1000/3709
+[A1H] rolled_strip_base s1 native K=256 1200/3709
+[A1H] rolled_strip_base s1 native K=256 1400/3709
+[A1H] rolled_strip_base s1 native K=256 1600/3709
+[A1H] rolled_strip_base s1 native K=256 1800/3709
+[A1H] rolled_strip_base s1 native K=256 2000/3709
+[A1H] rolled_strip_base s1 native K=256 2200/3709
+[A1H] rolled_strip_base s1 native K=256 2400/3709
+[A1H] rolled_strip_base s1 native K=256 2600/3709
+[A1H] rolled_strip_base s1 native K=256 2800/3709
+[A1H] rolled_strip_base s1 native K=256 3000/3709
+[A1H] rolled_strip_base s1 native K=256 3200/3709
+[A1H] rolled_strip_base s1 native K=256 3400/3709
+[A1H] rolled_strip_base s1 native K=256 3600/3709
+{
+  "condition": "rolled_strip_base/s1/native/K256",
+  "AUROC": {
+    "static": 0.90641,
+    "reservoir": 0.95884,
+    "online_greedy_coreset": 0.9584,
+    "v22_normal_stm": 0.95808,
+    "H1_track": 0.9613,
+    "H2_shadow_promotion": 0.9613,
+    "H3_ltm_retrieval": 0.9613,
+    "H4_utility": 0.95958
+  },
+  "probe_AULC": {
+    "static": 0.81618,
+    "reservoir": 0.93928,
+    "online_greedy_coreset": 0.9386,
+    "v22_normal_stm": 0.93773,
+    "H1_track": 0.93857,
+    "H2_shadow_promotion": 0.93857,
+    "H3_ltm_retrieval": 0.93857,
+    "H4_utility": 0.93661
+  },
+  "ltm": {
+    "static": 0,
+    "reservoir": 0,
+    "online_greedy_coreset": 0,
+    "v22_normal_stm": 0,
+    "H1_track": 0,
+    "H2_shadow_promotion": 0,
+    "H3_ltm_retrieval": 0,
+    "H4_utility": 0
+  },
+  "output": "outputs\\a1h_hierarchical_memory\\rolled_strip_base_s1_K256_native_full"
+}
+
+Exit code: 0

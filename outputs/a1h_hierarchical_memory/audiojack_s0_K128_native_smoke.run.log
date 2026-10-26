@@ -1,0 +1,43 @@
+Using cache found in C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+C:\Users\rico/.cache\torch\hub\facebookresearch_dinov2_main\dinov2\layers\block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+{
+  "condition": "audiojack/s0/native/K128",
+  "AUROC": {
+    "static": 0.76076,
+    "reservoir": 0.82583,
+    "online_greedy_coreset": 0.82583,
+    "v22_normal_stm": 0.82783,
+    "H1_track": 0.82783,
+    "H2_shadow_promotion": 0.82783,
+    "H3_ltm_retrieval": 0.82783,
+    "H4_utility": 0.82783
+  },
+  "probe_AULC": {
+    "static": 0.62184,
+    "reservoir": 0.6268,
+    "online_greedy_coreset": 0.6268,
+    "v22_normal_stm": 0.6268,
+    "H1_track": 0.6268,
+    "H2_shadow_promotion": 0.6268,
+    "H3_ltm_retrieval": 0.6268,
+    "H4_utility": 0.6268
+  },
+  "ltm": {
+    "static": 0,
+    "reservoir": 0,
+    "online_greedy_coreset": 0,
+    "v22_normal_stm": 0,
+    "H1_track": 0,
+    "H2_shadow_promotion": 0,
+    "H3_ltm_retrieval": 0,
+    "H4_utility": 0
+  },
+  "output": "outputs\\a1h_hierarchical_memory\\audiojack_s0_K128_native_smoke"
+}
+
+Exit code: 0
