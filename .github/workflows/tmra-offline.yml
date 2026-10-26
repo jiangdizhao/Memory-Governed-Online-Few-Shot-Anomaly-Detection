@@ -1,0 +1,26 @@
+name: TMRA offline contracts
+on:
+  push:
+    branches: [tmra-targeted-audits]
+  pull_request:
+    paths:
+      - 'experiments/tmra_*.py'
+      - 'experiments/run_tmra.py'
+      - 'tests/test_tmra_contract.py'
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline dependencies
+        run: python -m pip install numpy scikit-learn
+      - name: Compile
+        run: |
+          python -m py_compile experiments/tmra_audit_core.py experiments/tmra_attribution.py experiments/tmra_compact_memory.py experiments/tmra_recurrence_core.py experiments/tmra_recurrence.py experiments/tmra_preflight.py experiments/run_tmra.py tests/test_tmra_contract.py
+      - name: Runner preflight
+        run: python experiments/run_tmra.py --self-test
+      - name: Contract tests
+        run: python -m unittest discover -s tests -p 'test_tmra_contract.py' -v
