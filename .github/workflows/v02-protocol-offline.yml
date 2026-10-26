@@ -1,0 +1,26 @@
+name: V02 Offline Protocol
+on:
+  push:
+    branches:
+      - v02-paired-cold-mature-architecture
+  pull_request:
+    paths:
+      - 'experiments/v02_*.py'
+      - 'experiments/run_v02_architecture.py'
+      - 'tests/test_v02_architecture.py'
+      - '.github/workflows/v02-protocol-offline.yml'
+jobs:
+  protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile implementation
+        run: |
+          python -m py_compile experiments/v02_architecture_core.py experiments/v02_memory.py experiments/v02_architecture_trial.py experiments/run_v02_architecture.py
+      - name: CPU-only protocol tests
+        run: |
+          python -m unittest discover -s tests -p "test_v02_architecture.py" -v
+          python experiments/run_v02_architecture.py --self-test
