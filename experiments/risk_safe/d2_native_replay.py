@@ -57,11 +57,12 @@ METHODS = (*BASELINES, "cdarg")
 CHECKPOINTS = (0, 875, 1750, 2625)
 DEFAULT_OUT = "outputs/risk_safe_sprint_20261027/d2_audiojack_s0_q37_b16_pilot"
 RESULT = "summary.json"
+BASELINES_CSV = "baseline_comparison_dev.csv"
 PROBE = "probe_snapshots.csv"
 DECISIONS = "candidate_decisions.csv"
 EVIDENCE = "query_ledger.csv"
 SOURCE = "source_manifest.json"
-FILES = (RESULT, PROBE, DECISIONS, EVIDENCE, SOURCE)
+FILES = (RESULT, BASELINES_CSV, PROBE, DECISIONS, EVIDENCE, SOURCE)
 SOURCES = (
     "experiments/risk_safe/d2_native_replay.py",
     "experiments/risk_safe/d2_baselines.py",
@@ -102,6 +103,8 @@ def parser():
     p.add_argument("--d1b-manifest-dir", default=d1d.DEFAULT_D1B)
     p.add_argument("--out-dir", default=DEFAULT_OUT)
     p.add_argument("--verify-only", action="store_true")
+    p.add_argument("--preflight-only", action="store_true",
+                   help="metadata/tape/probe audit without loading DINOv2/GPU")
     return p
 
 
@@ -223,7 +226,7 @@ def verify_only(args):
             raise NativeParityError(f"D2 output tampering: {name}")
     prospective = manifest(
         args, result, {k: (dest / k).read_text(encoding="utf-8")
-                       for k in (PROBE, DECISIONS, EVIDENCE)})
+                       for k in (BASELINES_CSV, PROBE, DECISIONS, EVIDENCE)})
     prospective = pf.preserve_committed_source_provenance(
         dest / SOURCE, prospective)
     pf.verify_json_output(dest / SOURCE, prospective)
@@ -540,6 +543,14 @@ def run(args):
         "confirmatory_safety_claim": False,
     }
     outputs = {
+        BASELINES_CSV: csv_content((
+            "method", "candidate_events", "admitted_events",
+            "added", "replaced", "skipped", "admission_seconds",
+            "initial_fnr", "final_fnr", "initial_fpr", "final_fpr",
+            "final_fpr_gain", "fnr_degradation_auc_fixed_checkpoints",
+            "final_defect_score_erosion", "actual_final_prototypes",
+            "N_checkpoints"),
+            [{"method": k, **v} for k, v in results.items()]),
         PROBE: csv_content((
             "stream_t", "arm", "N", "N_normal", "N_defect", "tp",
             "tn", "fp", "fn", "fpr", "fnr", "auroc", "auprc",
@@ -562,10 +573,42 @@ def run(args):
     return payload, outputs
 
 
+def metadata_preflight(args):
+    train, test = pf.load_class_records(
+        Path(args.dataset_root), Path(args.json_dir), args.class_name)
+    plan = pf.build_partitions(train, test, pf.SplitConfig())
+    tape, stream_count = d1d.frozen_tape(plan, args)
+    selected, sample_ids = probe_records(plan, args.probe_groups_per_type)
+    stream_samples = set(k for phase in plan.phase_samples for k in phase)
+    if set(sample_ids) & stream_samples:
+        raise NativeParityError("Probe group overlaps online stream")
+    if len(tape.events) != args.budget or len(set(tape.sample_keys)) != args.budget:
+        raise NativeParityError("Tape counts or unique official sample keys invalid")
+    if not (1 <= args.max_query_events <= args.budget):
+        raise NativeParityError("Invalid max-query-events")
+    if not (1 <= args.probe_groups_per_type <= 24):
+        raise NativeParityError("Invalid probe group count")
+    return {
+        "stage": "D2", "kind": "metadata_preflight_only",
+        "class": args.class_name, "support_seed": args.support_seed,
+        "query_seed": args.query_seed, "budget": args.budget,
+        "replayed_query_count": args.max_query_events,
+        "full_budget": args.max_query_events == args.budget,
+        "stream_images": stream_count, "heldout_probe_images": len(selected),
+        "heldout_probe_image_defects": sum(not r.is_good for r in selected),
+        "frozen_query_tape_sha256": tape.digest,
+        "normal_labels_in_online_stream_not_exposed": True,
+        "gpu_used": False,
+    }
+
+
 def main(argv: Sequence[str] | None = None):
     args = parser().parse_args(argv)
     if args.json_dir is None:
         args.json_dir = str(Path(args.dataset_root) / pf.DEFAULT_JSON_SUBDIR)
+    if args.preflight_only:
+        print(json.dumps(metadata_preflight(args), indent=2))
+        return 0
     if args.verify_only:
         return verify_only(args)
     out = Path(args.out_dir)
