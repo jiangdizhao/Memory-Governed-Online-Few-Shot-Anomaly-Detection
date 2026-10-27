@@ -96,6 +96,7 @@ class FixedNormalQuantileTests(unittest.TestCase):
             official = root / "audiojack.json"
             official.write_text("official-index", encoding="utf-8")
             reg = registry(p, pf.sha256_file(official))
+            pf.write_json_idempotent(root / REGISTRY, reg)
             validated = validate_registry(reg, plan=p, class_name="audiojack",
                 support_seed=0, class_json_path=official,
                 registry_path=root / REGISTRY, strict_manifest=False)
