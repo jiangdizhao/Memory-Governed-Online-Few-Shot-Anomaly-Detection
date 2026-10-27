@@ -212,7 +212,7 @@ def preflight(args):
 
 
 @torch.no_grad()
-def run(args):
+def run(args, *, controls_callback=None):
     enforce_protocol(args)
     start = time.perf_counter()
     if args.device == "cuda" and not torch.cuda.is_available():
@@ -540,6 +540,12 @@ def run(args):
             "candidate_selection", "candidate_keep", "frozen_tape_sha256"),
             ledger),
     }
+    if controls_callback is not None:
+        controls = controls_callback(
+            impl=impl, backbone=backbone, cfg=cfg, plan=plan,
+            arms=arms, provenance=provenance, probes=probes,
+            calibrated=calibrated, d3_summary=output, d3_csvs=csvs)
+        return output, csvs, controls
     return output, csvs
 
 
