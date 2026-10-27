@@ -244,7 +244,27 @@ def execute(args):
     write_parity = verify_native_update_parity(
         impl, parity_arm, first_features, first_map,
         score=s_fixed, theta=theta, sigma=sigma, step=first.position)
-    del parity_arm, first_img, first_features
+
+    # Independently force a genuine full-capacity replacement/skip path.
+    # This is an operator diagnostic only: the parity bank is discarded and
+    # the capacity modification is NEVER used as a deployed configuration.
+    saturated_arm = memory.MemoryArm(
+        "greedy_coreset", copy.deepcopy(fixed), settings,
+        seed=args.support_seed + 37)
+    from .native_bridge import dynamic_codebooks
+    for layer, cb in enumerate(dynamic_codebooks(saturated_arm.bank)):
+        if len(first_features[layer]) < 2:
+            raise NativeParityError("Need two features to saturate parity-only bank")
+        seed_protos = impl.l2_normalize(
+            first_features[layer][:2].to(cb.device))
+        cb.K = 2
+        cb.protos = seed_protos.to(dtype=cb.dtype).detach().clone()
+    saturated_parity = verify_native_update_parity(
+        impl, saturated_arm, first_features, first_map,
+        score=s_fixed, theta=theta, sigma=sigma, step=first.position)
+    if saturated_parity["greedy"]["appended"] != 0:
+        raise NativeParityError("Forced saturation unexpectedly appended")
+    del saturated_arm, parity_arm, first_img, first_features
 
     # Online audit-only arm; admission proposals NEVER reach production state.
     arm = memory.MemoryArm(
@@ -307,9 +327,11 @@ def execute(args):
     return {
         "schema": SCHEMA, "stage": "D1-D",
         "configuration": config(args),
-        "passed": bool(read_parity["passed"] and write_parity["passed"]),
+        "passed": bool(read_parity["passed"] and write_parity["passed"]
+                       and saturated_parity["passed"]),
         "native_score_parity": read_parity,
         "native_update_parity": write_parity,
+        "native_forced_capacity_parity": saturated_parity,
         "support_profile": support_fingerprint,
         "loso_scores": loso, "theta0": theta, "sigma0": sigma,
         "frozen_tape_sha256": tape.digest,
