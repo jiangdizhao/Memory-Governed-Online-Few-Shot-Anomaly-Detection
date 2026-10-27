@@ -229,6 +229,35 @@ def manifest(args, result, calib, outputs):
     }
 
 
+def recorded_source_matches_git_blob(blob: bytes, recorded_sha256: str) -> tuple[bool,str]:
+    """Match EXACT historical source bytes, allowing ONLY Git LF/Windows CRLF.
+
+    pf.source_hashes() recorded SHA-256 over read_bytes() of the original
+    Windows worktree. Git stores line-ending-normalized blobs when autocrlf or
+    text attributes apply. A clean checkout can therefore have a *different*
+    SHA-256 from 'git show COMMIT:path' while containing identical source text.
+
+    Do NOT normalize Python tokens, whitespace, comments, trailing blank
+    lines, Unicode, or any byte besides Git's LF -> CRLF checkout transform.
+    Manifest digests remain unchanged. Binary / mixed-newline source cannot
+    exploit normalization because we require a text blob with pure LF.
+    """
+    if not isinstance(recorded_sha256, str) or len(recorded_sha256) != 64:
+        return False, "invalid_digest"
+    try:
+        int(recorded_sha256, 16)
+    except ValueError:
+        return False, "invalid_digest"
+    if hashlib.sha256(blob).hexdigest() == recorded_sha256:
+        return True, "git_blob_exact"
+    if b"\x00" in blob or b"\r" in blob or b"\n" not in blob:
+        return False, "not_clean_lf_text"
+    windows_checkout = blob.replace(b"\n", b"\r\n")
+    if hashlib.sha256(windows_checkout).hexdigest() == recorded_sha256:
+        return True, "git_lf_to_windows_crlf"
+    return False, "source_differs"
+
+
 def verify_recorded_run_manifest(expected: dict, current: dict) -> dict:
     """Verify evidence against its ACTUAL generating git revision.
 
@@ -259,9 +288,15 @@ def verify_recorded_run_manifest(expected: dict, current: dict) -> dict:
         fetched=subprocess.run(
             ["git","show",f"{old_head}:{path}"],cwd=str(ROOT),
             capture_output=True,check=False)
-        if fetched.returncode or hashlib.sha256(fetched.stdout).hexdigest()!=digest:
+        if fetched.returncode:
             raise NativeParityError(
-                f"Historical source does not match generating git commit: {path}")
+                f"Historical Git source could not be read: {path}")
+        ok, source_type=recorded_source_matches_git_blob(fetched.stdout,digest)
+        if not ok:
+            raise NativeParityError(
+                f"Historical source does not match generating git commit "
+                f"(checked exact blob AND Windows CRLF checkout): {path}; "
+                f"reason={source_type}")
     adjusted=dict(current)
     adjusted["git"]=recorded_git
     adjusted["source_sha256"]=hashes
