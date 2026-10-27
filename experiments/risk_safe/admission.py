@@ -143,8 +143,11 @@ class CDARG:
                 for anchor in normal:
                     original = self._score(anchor, bank)
                     after = self._score(anchor, shadow)
-                    normal_delta.append(max(original - theta, 0.0) -
-                                        max(after - theta, 0.0))
+                    # Source PDF: U_N averages the POSITIVE PART of
+                    # the improvement between normal false-positive hinges.
+                    normal_delta.append(max(
+                        0.0, max(original - theta, 0.0) -
+                        max(after - theta, 0.0)))
                 normal_utility = sum(normal_delta) / len(normal_delta)
 
             if defect:
