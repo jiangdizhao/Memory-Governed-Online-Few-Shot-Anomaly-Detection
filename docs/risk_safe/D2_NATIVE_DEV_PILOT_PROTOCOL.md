@@ -44,6 +44,7 @@ Fixed stream checkpoint positions and baseline score at time zero are identical 
 
 A NEW immutable run directory contains:
 - summary.json: model/config/LOSO, per-arm FNR-degradation over fixed checkpoints, FPR gain, AUROC/AUPRC, prototype counts, admission counts and high-level risk-prediction statistics.
+- baseline_comparison_dev.csv: one paired method row per arm with exact query-condition and fixed-checkpoint summary metrics.
 - probe_snapshots.csv: per-arm per-checkpoint probe image metrics, raw score erosion and bank SHA.
 - candidate_decisions.csv: all queried normal events per arm, native event-level candidate count, actual commit/reject, normal utility, historical defect risk, retrospective independent Probe damage (CDARG only), prototype deltas and latency.
 - query_ledger.csv: acquired Q-A image-level labels (trusted experiment log), revealed after pre-query scores.
@@ -58,6 +59,10 @@ Run in E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection after clean git stat
 Compile:
 
     & "D:\anaconda3\envs\torch\python.exe" -m py_compile experiments/risk_safe/d2_baselines.py experiments/risk_safe/d2_metrics.py experiments/risk_safe/d2_native_replay.py tests/test_risk_safe_d2.py
+
+Cheap DATASET/TAPE preflight only (no DINOv2 or GPU); execute this before the real replay:
+
+    & "D:\anaconda3\envs\torch\python.exe" -m experiments.risk_safe.d2_native_replay --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 16 --max-query-events 8 --probe-groups-per-type 2 --d1b-manifest-dir "outputs/risk_safe_sprint_20261027/d1b_protocol_v1" --preflight-only
 
 CPU tests (including all D1 stages):
 
