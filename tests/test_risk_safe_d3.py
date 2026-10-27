@@ -171,6 +171,22 @@ class ContextMaskTests(unittest.TestCase):
         still,_=original._dN_min_fixed_dyn("p0",0,"id",0,qpatches())
         self.assertTrue(torch.equal(before,still))
 
+    def test_d3_records_native_k_static_fallback_rate(self):
+        bank = Bank()
+        scorer = ScopedRetrieval(
+            FakeImpl,bank,provenance(),"camera_spatial_0125")
+        scorer.set_query(1,(200,200))
+        _ = scorer.bank._dN_min_fixed_dyn("p0",0,"id",0,qpatches())
+        stats = scorer.last_query_stats
+        self.assertIsNotNone(stats)
+        self.assertEqual(stats["n_query_patches"],4)
+        self.assertEqual(stats["effective_native_dynamic_k"],2)
+        # Only one of the two original prototypes is context-eligible;
+        # no patch can use a non-comparable singleton dynamic mean.
+        self.assertEqual(stats["n_native_topk_eligible_patches"],0)
+        self.assertEqual(stats["n_static_fallback_patches"],4)
+        self.assertEqual(stats["n_dynamic_winner_patches"],0)
+
     def test_global_scope_bitwise_original_nearest(self):
         bank = Bank()
         original,_=bank._dN_min_fixed_dyn("p0",0,"id",0,qpatches())
