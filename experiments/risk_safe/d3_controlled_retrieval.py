@@ -262,6 +262,12 @@ def controls_callback(*, args, ref_summary, ref_rows, impl, backbone, cfg,
         raise NativeParityError("D3-C source calibration must have 64 train normals")
     # train-history views, neither heldout Probe A/B nor online Q-A.
     source_records=source_records[:SOURCE_CALIB_N]
+    forbidden=set()
+    for name in ("support","stream","probe_A","probe_B"):
+        forbidden.update(plan.sample_sets()[name])
+    if any(r.sample_key in forbidden for r in source_records):
+        raise NativeParityError(
+            "Random hit calibration overlaps support/stream/Probe A/B")
     all_probe_ids={r.sample_key for r,_,_ in probes}
     if any(r.sample_key in all_probe_ids for r in source_records):
         raise NativeParityError("Source-control calibration overlaps Probe")
@@ -279,6 +285,8 @@ def controls_callback(*, args, ref_summary, ref_rows, impl, backbone, cfg,
     }
     result_rows=[]
     comparison=[]
+    frozen_image_scores = {
+        (z["method"],z["policy"],z["image"]):z for z in ref_rows}
     for method in ("greedy","causal_novelty"):
         mem=arms[method].bank
         prov=provenance[method]
@@ -336,10 +344,8 @@ def controls_callback(*, args, ref_summary, ref_rows, impl, backbone, cfg,
                         image,features,cfg,camera_id=int(rec.camera_id),
                         image_id=rec.rel_path)
                     base=d3_summary["arms"][method]["global"]
-                    # Find original paired Static/Global for exact image by original D3
-                    ix={(z["method"],z["policy"],z["image"]):z
-                        for z in ref_rows}
-                    original=ix[(method,"global",rec.rel_path)]
+                    # Evaluation only: static/global are read from frozen D3.
+                    original=frozen_image_scores[(method,"global",rec.rel_path)]
                     static=float(original["static_score"])
                     global_score=float(original["score"])
                     if score<global_score-1e-6 or score>static+1e-6:
