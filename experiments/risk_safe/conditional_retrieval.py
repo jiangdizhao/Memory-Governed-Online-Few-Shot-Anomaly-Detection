@@ -81,29 +81,49 @@ def eligible_mask(
 def conditional_dynamic_distance(
         impl: Any, codebook: Any, q: torch.Tensor,
         mask: torch.Tensor, *, k: int) -> torch.Tensor:
-    """Returns [N] or +inf if an individual patch has NO eligible dynamic refs."""
+    """Native mean-top-k over a FIXED effective k, else +inf (Static fallback).
+
+    For a native codebook of M prototypes, k_eff=min(k,M), globally fixed
+    for all query patches. When fewer than k_eff eligible dynamic prototypes
+    remain under a context policy, no comparable native top-k estimate exists;
+    disable dynamic retrieval for that patch instead of silently averaging
+    1..(k_eff-1) references. Otherwise, removing prototypes CANNOT lower the
+    top-k mean distance relative to unrestricted retrieval. This monotonicity
+    is a contract of the controlled conditional-retrieval experiment.
+
+    In particular, mean-top5 over a single near match is NOT comparable to
+    global mean-top5. Never relax the downstream native-global bound to mask
+    that numerical/semantic error.
+    """
     if mask.shape != (len(q), codebook.size()):
         raise NativeParityError("Eligibility shape does not match native codebook")
-    if codebook.size() == 0:
+    if mask.dtype != torch.bool:
+        raise NativeParityError("Eligibility mask must be bool")
+    k_eff = min(int(k), int(codebook.size()))
+    if int(k) < 1:
+        raise NativeParityError("Invalid k for native conditional retrieval")
+    if k_eff == 0:
         return torch.full((len(q),), float("inf"), device=q.device)
     if bool(mask.all()):
         return codebook.nearest(q, relax=True, k=k)[0]
-    # Reproduce native fp32 cosine path but use mask with per-query valid k.
+
+    valid = mask.to(q.device).sum(dim=1) >= k_eff
+    if not bool(valid.any()):
+        return torch.full((len(q),), float("inf"), device=q.device)
+
+    # Mirror original FixedCapacityCodebook.nearest for numerically
+    # comparable restricted top-k groups. Do not change top-k cardinality.
     q32 = impl.l2_normalize(q).float()
     p32 = impl.l2_normalize(codebook.protos.float())
     similarity = q32 @ p32.T
-    allowed = mask.to(q.device)
-    top = min(int(k), codebook.size())
-    if top <= 0:
-        raise NativeParityError("Invalid native nearest k")
-    values = similarity.masked_fill(~allowed, float("-inf")).topk(
-        k=top, dim=1).values
-    counts = allowed.sum(dim=1).clamp(max=top)
-    safe = torch.where(torch.isfinite(values), 1.0 - values,
-                       torch.zeros_like(values))
-    out = safe.sum(dim=1) / counts.clamp(min=1).to(safe.dtype)
-    return torch.where(counts > 0, out,
-                       torch.full_like(out, float("inf")))
+    allowed = mask.to(device=q.device)
+    top_sim = similarity.masked_fill(~allowed, float("-inf")).topk(
+        k=k_eff, dim=1).values
+    scoped_distance = (1.0 - top_sim[valid]).mean(dim=1)
+    result = torch.full((len(q),), float("inf"), device=q.device,
+                        dtype=scoped_distance.dtype)
+    result[valid] = scoped_distance
+    return result
 
 
 class ScopedRetrieval:
