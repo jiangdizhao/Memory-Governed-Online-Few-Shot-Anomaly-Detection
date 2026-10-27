@@ -1,3 +1,16 @@
+# Current research planning: Risk-Safe Memory Admission (2026-10-27)
+
+**Status: documentation-only; no Risk-Safe experiment code or GPU runs have been started.**
+The active planning branch is `risk-safe-admission-sprint-20261027`, based on the archived V0.2 reference branch.
+
+- [Risk-Safe seven-day execution plan v1.1](docs/RISK_SAFE_ADMISSION_7DAY_PLAN_2026-10-27.md): query budget as a variable rather than fixed 3%, corrected Real-IAD image/object counting, shared random tape (Q-A), shared informative reference policy (Q-B), native AIF-inspired closed loop (Q-C), day-by-day gates and evidence requirements.
+- [Historical Risk-Safe handoff (2026-10-27)](docs/Risk-Safe_Handoff_2026-10-27.docx): original discussion/handoff retained unchanged.
+- [V0.2 historical reference protocol](docs/V02_PAIRED_COLD_MATURE_ARCHITECTURE_PROTOCOL.md) and [archived final decision](outputs/v02_paired_cold_mature/v02_final_decision.json): authoritative prior evidence; unchanged.
+
+Do not execute the new sprint until the user has synced this branch locally and explicitly authorizes D1. Historical v22, rejected manuscript, and completed outputs must remain unchanged.
+
+---
+
 # E02-R6 — Sidecar Stability & Extreme-Stream Audit
 
 **Current experiment branch: e02-r6-sidecar-stability-audit.**
