@@ -39,6 +39,8 @@ from .anchor_store import VerifiedImage
 from .d2_baselines import BASELINES, BaselineState, propose_baseline
 from .d2_metrics import (image_metrics, probe_deltas, risk_prediction_pairs,
                          online_gate_elapsed)
+from .d2_fixed_threshold import (canonical_quantile_name, validate_registry,
+                                 REGISTRY as FIXED_REGISTRY, ThresholdAuditError)
 from .native_bridge import (
     NativeScoreAdapter, NativeParityError, dynamic_codebooks,
     extract_v22_candidates, install_on_live, native_score,
@@ -69,6 +71,10 @@ SOURCES = (
     "experiments/risk_safe/d2_native_replay.py",
     "experiments/risk_safe/d2_baselines.py",
     "experiments/risk_safe/d2_metrics.py",
+    "experiments/risk_safe/d2_fixed_threshold.py",
+    "experiments/risk_safe/d2_threshold_calibration.py",
+    "docs/risk_safe/D2_A_FIXED_THRESHOLD_PROTOCOL.md",
+    "tests/test_risk_safe_d2a.py",
     "experiments/risk_safe/native_bridge.py",
     "experiments/risk_safe/admission.py",
     "experiments/risk_safe/anchor_store.py",
@@ -100,6 +106,10 @@ def parser():
     p.add_argument("--budget", choices=d1b.MAIN_BUDGETS, type=int, default=16)
     p.add_argument("--max-query-events", type=int, default=8)
     p.add_argument("--probe-groups-per-type", type=int, default=2)
+    p.add_argument("--threshold-registry", default=None,
+                   help="Frozen D2-A training-normal threshold_registry.json")
+    p.add_argument("--fixed-quantile", type=float, choices=(0.90, 0.95),
+                   default=None, help="Registered q90 or q95; requires registry")
     p.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
     p.add_argument("--math-sdpa", action="store_true")
     p.add_argument("--d1b-manifest-dir", default=d1d.DEFAULT_D1B)
@@ -116,6 +126,9 @@ def configuration(args) -> dict:
         "query_seed": args.query_seed, "budget": args.budget,
         "max_query_events": args.max_query_events,
         "probe_groups_per_type": args.probe_groups_per_type,
+        "threshold_registry": (str(Path(args.threshold_registry)).replace("\\", "/")
+                               if args.threshold_registry else None),
+        "fixed_quantile": args.fixed_quantile,
         "device": args.device, "math_sdpa": args.math_sdpa,
         "dataset_root": str(args.dataset_root).replace("\\", "/"),
         "json_dir": str(args.json_dir).replace("\\", "/"),
@@ -124,7 +137,8 @@ def configuration(args) -> dict:
         "probe": "A only; predetermined first N normal and N defect session groups; all 5 images each",
         "probe_checkpoints": list(CHECKPOINTS),
         "methods": list(METHODS),
-        "threshold": "LOSO theta0 fixed, no Sidecar",
+        "threshold": ("training_normal_only_registered_fixed_quantile_no_sidecar"
+                      if args.threshold_registry else "LOSO theta0 fixed, no Sidecar"),
         "correction": "disabled",
         "query": "frozen Q-A exogenous sample/camera tape",
         "candidate": "shared native v22 static scorer and 8/16/24 patch rank",
@@ -132,7 +146,8 @@ def configuration(args) -> dict:
         "cdarg_policy": {
             "epsilon_defect": 0.1, "lambda_defect": 1.0,
             "tau_utility": 0.0, "margin_sigma_fraction": 0.25,
-            "sigma_normal": "support-only LOSO std",
+            "sigma_normal": ("reserved 64 training-normal score std"
+                             if args.threshold_registry else "support-only LOSO std"),
             "sigma_floor": 0.01, "zero_defect_anchor": "reject",
             "calibration_status": "PILOT_FIXED_UNTUNED_NOT_DEPLOYMENT_SAFE",
         },
@@ -193,6 +208,39 @@ def score_probe(impl, bank, probe, cfg, theta, ref=None):
     return {"scores": scores, "metrics": results}
 
 
+def load_fixed_threshold(args, plan):
+    """Frozen registry verified against current class partition and input JSON.
+
+    No outcome/probe metric is ever consulted. Failure is fatal before DINOv2
+    is initialised. Both quantile choices require separate admission replays.
+    """
+    if bool(args.threshold_registry) != (args.fixed_quantile is not None):
+        raise ThresholdAuditError(
+            "--threshold-registry and --fixed-quantile must be supplied together")
+    if not args.threshold_registry:
+        return None
+    path = Path(args.threshold_registry)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    validated = validate_registry(
+        data, plan=plan, class_name=args.class_name,
+        support_seed=args.support_seed,
+        class_json_path=Path(args.json_dir) / (args.class_name + ".json"),
+        registry_path=path, strict_manifest=True)
+    quantile = canonical_quantile_name(float(args.fixed_quantile))
+    result = {
+        "theta": float(validated["theta_by_quantile"][quantile]["theta"]),
+        "sigma_normal": float(validated["sigma_dev_normal"]),
+        "quantile": quantile,
+        "sha256": validated["calibration_sha256"],
+        "n_dev_normal": validated["n_training_normal_views"],
+        "reference_loso_theta": float(data["loso_reference_theta0"]),
+        "reference_loso_sigma": float(data["loso_reference_sigma"]),
+    }
+    if result["sigma_normal"] <= 0:
+        raise ThresholdAuditError("Calibration normal scale must be positive")
+    return result
+
+
 def manifest(args, result, csv_outputs):
     return {
         "schema": "risk_safe.d2.source_manifest.v1",
@@ -203,6 +251,8 @@ def manifest(args, result, csv_outputs):
                 Path(args.json_dir) / (args.class_name + ".json")),
             "d1b_query_manifest": pf.sha256_file(
                 Path(args.d1b_manifest_dir) / d1b.OUTPUT_QUERIES),
+            "registered_fixed_threshold": (pf.sha256_file(Path(args.threshold_registry))
+                if args.threshold_registry else None),
         },
         "config": configuration(args),
         "output_sha256": {RESULT: pf.sha256_text(pf.json_text(result)),
@@ -257,6 +307,7 @@ def run(args):
     train, test = pf.load_class_records(
         Path(args.dataset_root), Path(args.json_dir), args.class_name)
     plan = pf.build_partitions(train, test, pf.SplitConfig())
+    fixed_threshold = load_fixed_threshold(args, plan)
     chosen = set(plan.support_samples_by_seed[args.support_seed])
     supports = sorted(r.path for r in plan.support if r.sample_key in chosen)
     if len(supports) != 4:
@@ -288,7 +339,11 @@ def run(args):
         loso.append(p0.score_image(impl, backbone, fold, held, cfg))
         del fold
     theta_info = p0.threshold_from_scores(loso, 2.5)
-    theta, sigma = theta_info["theta"], theta_info["sigma"]
+    theta_loso, sigma_loso = theta_info["theta"], theta_info["sigma"]
+    theta, sigma = theta_loso, sigma_loso
+    if fixed_threshold is not None:
+        theta = fixed_threshold["theta"]
+        sigma = fixed_threshold["sigma_normal"]
     del refs
     settings = v02.make_memory_settings(fixed)
 
@@ -541,7 +596,9 @@ def run(args):
         "probe_A_sample_keys_offline_only": selected_probe_ids,
         "probe_image_count": len(probes),
         "probe_image_defect_count": len(defect_probes),
-        "theta0": theta, "sigma_loso": sigma,
+        "theta0": theta, "sigma_normal_used": sigma,
+        "theta_loso_reference": theta_loso, "sigma_loso": sigma_loso,
+        "fixed_training_normal_calibration": fixed_threshold,
         "source_d1b_tape_sha256": tape.digest,
         "initial_static_support": fixed_profile,
         "per_arm": results,
@@ -597,6 +654,7 @@ def metadata_preflight(args):
     train, test = pf.load_class_records(
         Path(args.dataset_root), Path(args.json_dir), args.class_name)
     plan = pf.build_partitions(train, test, pf.SplitConfig())
+    calibrated = load_fixed_threshold(args, plan)
     tape, stream_count = d1d.frozen_tape(plan, args)
     selected, sample_ids = probe_records(plan, args.probe_groups_per_type)
     stream_samples = set(k for phase in plan.phase_samples for k in phase)
@@ -616,6 +674,7 @@ def metadata_preflight(args):
         "full_budget": args.max_query_events == args.budget,
         "stream_images": stream_count, "heldout_probe_images": len(selected),
         "heldout_probe_image_defects": sum(not r.is_good for r in selected),
+        "registered_fixed_threshold": calibrated,
         "frozen_query_tape_sha256": tape.digest,
         "normal_labels_in_online_stream_not_exposed": True,
         "gpu_used": False,
