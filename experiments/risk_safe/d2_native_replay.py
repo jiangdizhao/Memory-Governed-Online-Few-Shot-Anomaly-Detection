@@ -23,6 +23,7 @@ import json
 import math
 import statistics
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any, Dict, Sequence
@@ -612,19 +613,33 @@ def main(argv: Sequence[str] | None = None):
     if args.verify_only:
         return verify_only(args)
     out = Path(args.out_dir)
-    if any((out / p).exists() for p in FILES):
-        raise FileExistsError("D2 evidence exists; use --verify-only or NEW out-dir")
+    if out.exists():
+        raise FileExistsError(
+            f"D2 output directory exists; use --verify-only or NEW out-dir: {out}")
     with torch.no_grad():
         result, csv_files = run(args)
     if not result["completed"]:
         raise NativeParityError("D2 pilot incomplete")
-    pf.write_json_idempotent(out / RESULT, result)
-    for name, value in csv_files.items():
-        path = out / name
-        if path.exists():
-            raise FileExistsError(path)
-        path.write_text(value, encoding="utf-8", newline="")
-    pf.write_json_idempotent(out / SOURCE, manifest(args, result, csv_files))
+
+    # Transactional output publication: all five evidence files and manifest
+    # must exist and match their hashes BEFORE the final directory appears.
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+            dir=out.parent, prefix=".d2_build_") as temporary:
+        stage = Path(temporary) / out.name
+        stage.mkdir()
+        pf.write_json_idempotent(stage / RESULT, result)
+        for name, value in csv_files.items():
+            (stage / name).write_text(value, encoding="utf-8", newline="")
+        provenance = manifest(args, result, csv_files)
+        pf.write_json_idempotent(stage / SOURCE, provenance)
+        for name, expected in provenance["output_sha256"].items():
+            if pf.sha256_file(stage / name) != expected:
+                raise NativeParityError(
+                    f"D2 staged evidence SHA-256 mismatch: {name}")
+        if out.exists():
+            raise FileExistsError(f"D2 destination appeared concurrently: {out}")
+        stage.rename(out)
     print(json.dumps({"stage": "D2",
                       "completed": True,
                       "max_queries": args.max_query_events,
