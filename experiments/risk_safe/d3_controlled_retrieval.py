@@ -258,7 +258,8 @@ def recorded_source_matches_git_blob(blob: bytes, recorded_sha256: str) -> tuple
     return False, "source_differs"
 
 
-def verify_recorded_run_manifest(expected: dict, current: dict) -> dict:
+def verify_recorded_run_manifest(expected: dict, current: dict, *,
+                                 source_files=None) -> dict:
     """Verify evidence against its ACTUAL generating git revision.
 
     A later verifier-only source fix changes the current source hashes.
@@ -280,8 +281,9 @@ def verify_recorded_run_manifest(expected: dict, current: dict) -> dict:
     if not pf._is_ancestor_commit(old_head,current.get("git",{}).get("head","")):
         raise NativeParityError("Generating commit is not an ancestor of HEAD")
     hashes=expected.get("source_sha256")
-    if not isinstance(hashes,dict) or set(hashes)!=set(SOURCES):
-        raise NativeParityError("Incomplete frozen D3-C source provenance")
+    expected_sources=SOURCES if source_files is None else tuple(source_files)
+    if not isinstance(hashes,dict) or set(hashes)!=set(expected_sources):
+        raise NativeParityError("Incomplete frozen experiment source provenance")
     for path,digest in hashes.items():
         if not isinstance(digest,str) or len(digest)!=64:
             raise NativeParityError("Malformed source SHA-256")
