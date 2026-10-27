@@ -43,7 +43,7 @@ import p0_protocol_audit as p0
 import v02_memory as memory
 import v02_architecture_core as architecture
 
-SCHEMA = "risk_safe.d3.conditional_retrieval_mechanism_pilot.v1"
+SCHEMA = "risk_safe.d3.conditional_retrieval_mechanism_pilot.v2"
 RESULT = "summary.json"
 PROBES = "retrieval_probe_scores.csv"
 COLLISIONS = "collision_patch_attribution.csv"
@@ -52,7 +52,7 @@ TAPE = "causal_query_ledger.csv"
 MANIFEST = "source_manifest.json"
 FILES = (RESULT, PROBES, COLLISIONS, WRITES, TAPE, MANIFEST)
 DEFAULT_OUT = ("outputs/risk_safe_sprint_20261027/"
-               "d3_audiojack_s0_q37_b16_q90_probe4_conditional")
+               "d3_audiojack_s0_q37_b16_q90_probe4_fixedk")
 SOURCES = (
     "experiments/risk_safe/conditional_retrieval.py",
     "experiments/risk_safe/conditional_retrieval_pilot.py",
@@ -93,7 +93,8 @@ def config(args):
     return {**parent, "protocol": SCHEMA,
             "reference_d2a_summary": str(Path(args.reference_d2a_summary)).replace("\\", "/"),
             "retrieval_policies": list(POLICIES),
-            "conditional_k": "min(5,n_eligible) for each patch, native mean top-k",
+            "conditional_k": ("fixed_native_k=min(5,global_dynamic_bank_size); "
+                              "if fewer eligible, Static-only fallback"),
             "static_bank": "always global and immutable",
             "patch_grid": "native aspect-aware _grid_hw_from_npatches",
             "source_prototype_update": "native greedy append only, fail on replacement",
@@ -156,7 +157,7 @@ def enforce_protocol(args):
 
 def manifest(args, result, csv_outputs):
     return {
-        "schema": "risk_safe.d3.conditional_retrieval_source.v1",
+        "schema": "risk_safe.d3.conditional_retrieval_source.v2",
         "git": pf.git_state(),
         "source_sha256": pf.source_hashes(SOURCES),
         "input_sha256": {
@@ -383,6 +384,13 @@ def run(args):
                     raise NativeParityError(
                         "Scoped memory score exceeded frozen static score")
                 scores[f"{method}:{policy}"] = value
+                stats = scorer.last_query_stats
+                eligible_fraction = (
+                    stats["n_native_topk_eligible_patches"] / stats["n_query_patches"]
+                    if stats is not None else None)
+                dynamic_win_fraction = (
+                    stats["n_dynamic_winner_patches"] / stats["n_query_patches"]
+                    if stats is not None else None)
                 probe_rows.append({
                     "image": rec.rel_path, "sample_key": rec.sample_key,
                     "camera_id": rec.camera_id,
@@ -393,6 +401,14 @@ def run(args):
                     "image_score_erosion_vs_static": max(0., static_score - value),
                     "n_stored_prototypes": len(provenance[method]),
                     "theta_q90_or_q95": calibrated["theta"],
+                    "native_topk_eligible_patch_fraction": eligible_fraction,
+                    "dynamic_winner_patch_fraction": dynamic_win_fraction,
+                    "eligible_prototype_pair_fraction": (
+                        stats["eligible_prototype_pair_fraction"]
+                        if stats is not None else None),
+                    "native_topk_effective_k": (
+                        stats["effective_native_dynamic_k"]
+                        if stats is not None else None),
                 })
             collisions = patch_collision_rows(
                 impl, image, features, cfg,
@@ -444,6 +460,14 @@ def run(args):
                 "fnr_change_vs_static": m["fnr"] - static_metrics["fnr"],
                 "mean_positive_defect_image_erosion": sum(damage)/len(damage),
                 "n_written": len(provenance[method]),
+                "mean_native_topk_eligible_patch_fraction": (
+                    sum(float(r["native_topk_eligible_patch_fraction"])
+                        for r in subset) / len(subset)
+                    if policy != "global" else None),
+                "mean_dynamic_winner_patch_fraction": (
+                    sum(float(r["dynamic_winner_patch_fraction"])
+                        for r in subset) / len(subset)
+                    if policy != "global" else None),
                 # Collision attribution is calculated for native GLOBAL
                 # versus Static, NOT independently for each scoped policy.
                 "global_defect_collision_patches_reference_only":
@@ -492,7 +516,10 @@ def run(args):
             "image", "sample_key", "camera_id", "label_offline_only",
             "method", "policy", "score", "static_score", "native_global_score",
             "image_score_erosion_vs_static", "n_stored_prototypes",
-            "theta_q90_or_q95"), probe_rows),
+            "theta_q90_or_q95", "native_topk_eligible_patch_fraction",
+            "dynamic_winner_patch_fraction",
+            "eligible_prototype_pair_fraction",
+            "native_topk_effective_k"), probe_rows),
         COLLISIONS: d2.csv_content((
             "source", "image", "query_index", "label_offline_only",
             "query_camera", "patch_index", "u", "v",
