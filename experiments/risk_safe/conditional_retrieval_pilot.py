@@ -541,6 +541,10 @@ def run(args, *, controls_callback=None):
             ledger),
     }
     if controls_callback is not None:
+        # Original 12-scoring-arm frozen-prototype clones are no longer used;
+        # release them before creating controlled diagnostic scorers. Avoid
+        # accumulating many copies of a large native 4-shot static bank on GPU.
+        del scorers, static_scorer
         controls = controls_callback(
             impl=impl, backbone=backbone, cfg=cfg, plan=plan,
             arms=arms, provenance=provenance, probes=probes,
