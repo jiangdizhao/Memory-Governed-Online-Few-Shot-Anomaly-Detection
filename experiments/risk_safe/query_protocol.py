@@ -117,6 +117,7 @@ class StreamImage:
     camera_id: int
     timestamp: str
     phase: int
+    stream_order: str = "acquisition_time_blocked"
 
     def __post_init__(self) -> None:
         if int(self.position) < 1:
@@ -139,6 +140,7 @@ class StreamImage:
             "camera_id": int(self.camera_id),
             "timestamp": str(self.timestamp),
             "phase": int(self.phase),
+            "stream_order": str(self.stream_order),
         }
 
 
@@ -216,10 +218,14 @@ def validate_stream(stream: Sequence[StreamImage]) -> None:
     rel = [i.rel_path for i in stream]
     if len(set(rel)) != len(rel):
         raise QueryProtocolError("Duplicate class-relative path in stream")
+    modes = {i.stream_order for i in stream}
+    if len(modes) != 1:
+        raise QueryProtocolError("A stream cannot mix different order protocols")
+    mode = next(iter(modes))
     for previous, current in zip(stream, stream[1:]):
         if int(current.phase) < int(previous.phase):
             raise QueryProtocolError("Phase indices must be non-decreasing")
-        if int(current.phase) != int(previous.phase):
+        if int(current.phase) != int(previous.phase) or mode != "acquisition_time_blocked":
             continue
         if (current.timestamp, current.camera_id, current.path) <= (
                 previous.timestamp, previous.camera_id, previous.path):
