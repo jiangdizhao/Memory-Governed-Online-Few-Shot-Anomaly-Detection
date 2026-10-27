@@ -116,6 +116,11 @@ class ScopedRetrieval:
                  provenance: Sequence[Mapping], policy: str):
         if policy not in POLICIES:
             raise NativeParityError("Invalid policy")
+        if (getattr(native_bank, "enable_ltm_retrieval", False) or
+                getattr(native_bank, "enable_maturation_buffer_retrieval", False)):
+            raise NativeParityError(
+                "D3 scoped retrieval requires inactive LTM and maturity buffer; "
+                "otherwise the original v22 source mix would be silently lost")
         self.impl = impl
         self.bank = native_bank
         self.provenance = tuple(provenance)
