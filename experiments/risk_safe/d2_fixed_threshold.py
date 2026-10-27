@@ -61,9 +61,6 @@ def validate_separation(plan, selected_support_keys: Sequence[str]) -> list:
     if len(set(ids)) != N_HISTORY or any(not r.is_good for r in plan.history):
         raise ThresholdAuditError("History calibration must have 64 unique verified normals")
     other = set(selected_support_keys)
-    for group in plan.sample_sets().values():
-        # 'mature_history' is the only allowed shared partition here.
-        pass
     partitions = plan.sample_sets()
     for name in ("support", "stream", "probe_A", "probe_B"):
         other.update(partitions[name])
