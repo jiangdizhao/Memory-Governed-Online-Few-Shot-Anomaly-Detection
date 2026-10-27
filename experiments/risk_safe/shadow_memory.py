@@ -93,8 +93,17 @@ class GreedyBank:
         return sum(t.numel() * t.element_size() for t in self.layers)
 
     @torch.no_grad()
-    def proposed(self, candidate_layers: Sequence[torch.Tensor]
+    def proposed(self, candidate_layers: Sequence[torch.Tensor],
+                 *, already_normalized: bool = False
                  ) -> tuple["GreedyBank", GreedyAudit]:
+        """Stage the exact native Greedy append/swap, preserving dtype.
+
+        Default candidates are raw patches. The native v22 bridge instead
+        supplies rows indexed *after normalizing the FULL original feature
+        matrix with impl.l2_normalize*, matching MemoryArm.update exactly.
+        Those rows MUST NOT be normalized a second time: half precision,
+        shape-dependent reduction and (norm + eps) are not bitwise invariant.
+        """
         if len(candidate_layers) != len(self.layers):
             raise ShadowError("Candidate layer count mismatch")
         shadow = self.clone()
@@ -108,9 +117,13 @@ class GreedyBank:
             if not torch.isfinite(proposed).all().item():
                 raise ShadowError("Nonfinite candidate")
             cb = _Codebook(source, cap)
-            # Exactly mirrors v02_memory.MemoryArm.update Greedy branch:
-            # normalize proposal, append until K, else native greedy_slot.
-            q = F.normalize(proposed.float(), dim=1)
+            # Native v22 uses x/(x.norm(dim=-1, keepdim=True)+1e-12)
+            # in the INPUT dtype; F.normalize(proposed.float()) is NOT
+            # bitwise equivalent (the observed error was 7.629e-6).
+            # When the bridge gives already-normalized full-matrix rows,
+            # neither promote dtype nor renormalize.
+            q = (proposed if already_normalized else
+                 proposed / (proposed.norm(dim=-1, keepdim=True) + 1e-12))
             for row in q:
                 examined += 1
                 val = row.reshape(1, -1).to(cb.protos.device, dtype=cb.protos.dtype)
