@@ -175,25 +175,20 @@ def build_paired_tapes(stream: Sequence[qp.StreamImage], budgets: Sequence[int],
 def audit_order(stream: Sequence[qp.StreamImage],
                 label_by_path: Mapping[str, bool]) -> Dict[str, Any]:
     """Offline-only class-sequence diagnostic; never fed to a controller."""
-    phases = {}
+    phases: Dict[str, Dict[str, Any]] = {}
+    grouped: Dict[str, Dict[str, list]] = {}
     for item in stream:
-        slot = phases.setdefault(str(item.phase),
-                                 {"sample_order": [], "normal": 0, "defect": 0})
-        if item.sample_key not in slot["sample_order"]:
-            slot["sample_order"].append(item.sample_key)
-    for phase, slot in phases.items():
-        labels = []
-        for sample in slot["sample_order"]:
-            views = [i for i in stream if i.phase == int(phase)
-                     and i.sample_key == sample]
-            defective = any(not label_by_path[v.path] for v in views)
-            labels.append(int(defective))
-        slot["normal"] = labels.count(0)
-        slot["defect"] = labels.count(1)
-        slot["transitions"] = sum(x != y for x, y in zip(labels, labels[1:]))
-        slot["initial_normal_prefix"] = (
-            labels.index(1) if 1 in labels else len(labels))
-        del slot["sample_order"]
+        phase = str(item.phase)
+        grouped.setdefault(phase, {}).setdefault(item.sample_key, []).append(item)
+    for phase, samples in grouped.items():
+        labels = [int(any(not label_by_path[v.path] for v in views))
+                  for views in samples.values()]
+        phases[phase] = {
+            "normal": labels.count(0),
+            "defect": labels.count(1),
+            "transitions": sum(x != y for x, y in zip(labels, labels[1:])),
+            "initial_normal_prefix": labels.index(1) if 1 in labels else len(labels),
+        }
     return {"phases": phases,
             "total_sample_transitions": sum(v["transitions"] for v in phases.values()),
             "diagnostic_only": True,
@@ -357,7 +352,13 @@ def assemble(dataset_root: Path, json_dir: Path
                             composition["N_normal_labels"],
                         "N_defect_labels_offline_only":
                             composition["N_defect_labels"],
-                        "events": [e.as_manifest() for e in tape.events],
+                        "events_sha256": qp.sha256_of(
+                            [e.as_manifest() for e in tape.events]),
+                        "query_positions": list(tape.positions),
+                        "selected_images_sha256": qp.sha256_of(
+                            list(tape.rel_paths)),
+                        "selected_samples_sha256": qp.sha256_of(
+                            list(tape.sample_keys)),
                     }
         details[cls] = {
             "N_stream_samples": len(universe),
