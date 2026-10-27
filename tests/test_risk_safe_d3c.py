@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import math
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest import mock
 from pathlib import Path
 
 import torch
@@ -17,6 +21,7 @@ from experiments.risk_safe import d3_controlled_retrieval as ctrl
 from experiments.risk_safe import conditional_retrieval_pilot as original
 from experiments.risk_safe.native_bridge import NativeParityError
 from experiments.risk_safe.d2_metrics import image_metrics
+from experiments.risk_safe import preflight as pf
 
 
 class NativeGrid:
@@ -144,6 +149,75 @@ class FrozenReferenceTests(unittest.TestCase):
                 {"schema":"bad"},{"retrieval_probe_scores.csv":""},
                 {"schema":"risk_safe.d3.conditional_retrieval_mechanism_pilot.v2"},
                 [])
+
+    def test_historical_source_manifest_verification_without_mutation(self):
+        previous="a"*40
+        current="b"*40
+        recorded={
+            "git":{"head":previous,"git_available":True,
+                   "tracked_modifications":[]},
+            "source_sha256":{
+                path:hashlib.sha256(path.encode("utf-8")).hexdigest()
+                for path in ctrl.SOURCES},
+            "input_sha256":{"index":"unchanged"},
+            "output_sha256":{"summary.json":"same"},
+            "config":{"q":0.90},
+            "environment":{"device":"cuda"}}
+        prospective=copy.deepcopy(recorded)
+        prospective["git"]={"head":current,"git_available":True,
+                            "tracked_modifications":[]}
+        prospective["source_sha256"]={p:"f"*64 for p in ctrl.SOURCES}
+
+        def historical_git_show(argv,**kwargs):
+            self.assertEqual(argv[:2],["git","show"])
+            commit,path=argv[2].split(":",1)
+            self.assertEqual(commit,previous)
+            return SimpleNamespace(returncode=0,stdout=path.encode("utf-8"))
+
+        with mock.patch.object(ctrl.pf,"_is_ancestor_commit",return_value=True), \
+             mock.patch.object(ctrl.subprocess,"run",
+                               side_effect=historical_git_show):
+            verified=ctrl.verify_recorded_run_manifest(recorded,prospective)
+            self.assertEqual(verified,recorded)
+            tampered=copy.deepcopy(prospective)
+            tampered["input_sha256"]["index"]="tampered"
+            with self.assertRaises(NativeParityError):
+                ctrl.verify_recorded_run_manifest(recorded,tampered)
+        self.assertEqual(recorded["git"]["head"],previous)
+
+    def test_verify_only_reads_actual_source_reference_not_wrong_key(self):
+        args=ctrl.parser().parse_args([
+            "--reference-d2a-summary","old/summary.json",
+            "--threshold-registry","train/threshold_registry.json",
+            "--fixed-quantile","0.90"])
+        with tempfile.TemporaryDirectory() as td:
+            args.out_dir=td
+            root=Path(td)
+            result={
+                "schema":ctrl.SCHEMA,"config":ctrl.config(args),"completed":True,
+                "source_reference":{"passed":True,"matched_native_scores":480,
+                                    "max_abs_score_difference":0.0},
+                "N_control_scores":800,"comparison":[{} for _ in range(20)],
+                "no_eval_probe_fit":True,"N_holdout_probe_images":40}
+            pf.write_json_idempotent(root/ctrl.SUMMARY,result)
+            pf.write_json_idempotent(root/ctrl.SOURCE_CALIB,{"status":"normal_only"})
+            for fname in (ctrl.SCORES,ctrl.PAIRED):
+                (root/fname).write_text("placeholder",encoding="utf-8")
+            manifest={"output_sha256":{
+                fname:pf.sha256_file(root/fname)
+                for fname in (ctrl.SUMMARY,ctrl.SOURCE_CALIB,
+                              ctrl.SCORES,ctrl.PAIRED)}}
+            pf.write_json_idempotent(root/ctrl.MANIFEST,manifest)
+            with mock.patch.object(ctrl,"validate_reference_d3",
+                 return_value=({},[])), \
+                 mock.patch.object(ctrl,"manifest",return_value=manifest), \
+                 mock.patch.object(ctrl,"verify_recorded_run_manifest",
+                                   return_value=manifest):
+                self.assertEqual(ctrl.verify(args),0)
+            self.assertEqual(json.loads((root/ctrl.SUMMARY).read_text()),
+                             result)
+            self.assertEqual(json.loads((root/ctrl.MANIFEST).read_text()),
+                             manifest)
 
     def test_metrics_report_distinct_adaptation_and_erosion(self):
         scores=[
