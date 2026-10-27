@@ -1,0 +1,7 @@
+method,candidate_events,admitted_events,added,replaced,skipped,admission_seconds,offline_probe_diagnostic_seconds,initial_fnr,final_fnr,initial_fpr,final_fpr,final_fpr_gain,fnr_degradation_auc_fixed_checkpoints,final_defect_score_erosion,actual_final_prototypes,N_checkpoints
+static,11,0,0,0,0,0.004999700700864196,0.0,0.6,0.6,0.12,0.12,0.0,0.0,0.0,0,4
+append,11,11,104,0,0,0.013971500331535935,0.0,0.6,0.6,0.12,0.0,0.12,0.0,0.01281725565592448,104,4
+greedy,11,11,104,0,0,0.019396800082176924,0.0,0.6,0.6,0.12,0.0,0.12,0.0,0.01281725565592448,104,4
+reservoir,11,11,104,0,0,0.016548299696296453,0.0,0.6,0.6,0.12,0.0,0.12,0.0,0.01281725565592448,104,4
+causal_novelty,11,4,48,0,0,0.030124099692329764,0.0,0.6,0.6,0.12,0.0,0.12,0.0,0.005566646655400594,48,4
+cdarg,11,3,24,0,0,1.0663211995270103,2.381012200145051,0.6,0.6,0.12,0.12,0.0,0.0,0.0007582306861877441,24,4

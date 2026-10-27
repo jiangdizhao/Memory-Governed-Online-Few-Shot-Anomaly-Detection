@@ -1,0 +1,61 @@
+{
+  "schema": "risk_safe.d2a.fixed_threshold_source.v1",
+  "git": {
+    "branch": "risk-safe-admission-sprint-20261027",
+    "head": "5c4bfbc3fea4b672d049159175fc63a181dd421a",
+    "head_short": "5c4bfbc3fea4",
+    "tracked_modifications": [],
+    "git_available": true
+  },
+  "source_sha256": {
+    "experiments/risk_safe/d2_fixed_threshold.py": "1276dc7d79e3b8045a23496b9990fbba9355bdfd9f30b4ad9cdcaf817b3d9eb2",
+    "experiments/risk_safe/d2_threshold_calibration.py": "874bf3e1dc40785a240ad7267141b68b0fe58362620a9c8cf5b795fbcb375d93",
+    "experiments/risk_safe/d2_native_replay.py": "4e990d821e42133caae6e13ad90b03bb863e7d75183d16fea1bfe1399c1d6b45",
+    "experiments/risk_safe/preflight.py": "2070ba770ac36af06f688b0450c711d67b7bca526e3939178d559216535c25ba",
+    "experiments/p0_protocol_audit.py": "b83918ec5aceb3ef63cca942fc9fb0e241559d9672d20bed422b15fcd48135e7",
+    "experiments/a0_a1_strict4_matched.py": "e916659681607bf75e097dd62379dcc363ccc3adf6f991d4108592997e1b53bf",
+    "experiments/v02_memory.py": "3c4e247e3a41dc9acc8147a35aa892cf3f3571aca85beb4169809bd70ad48ae0",
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a",
+    "tests/test_risk_safe_d2a.py": "e6e3a9a77b2e8ce839b66470c421d0259a67b660c471994bc4b4c5290869b635",
+    "docs/risk_safe/D2_A_FIXED_THRESHOLD_PROTOCOL.md": "a1fc72b501719d03b62fe3213c640657cf0c202226ef448b5e5d2413c2b9fc8e"
+  },
+  "input_sha256": {
+    "realiad_class_json": "03333ade4def8710688fd8f23d568a1aaad55629115c36cf23662b0aa57fd267"
+  },
+  "output_sha256": {
+    "threshold_registry.json": "b5fcb8b05a867cd0021e4541c95f9450ca0347f5212298e5a1cc9de87307492e"
+  },
+  "configuration": {
+    "class": "audiojack",
+    "support_seed": 0,
+    "device": "cuda",
+    "math_sdpa": true,
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "calibration_method": "reserved_mature_history_training_normal",
+    "n_calibration_images": 64,
+    "n_calibration_official_samples": 64,
+    "views_per_sample": 1,
+    "threshold_quantiles": [
+      0.9,
+      0.95
+    ],
+    "quantile_interpolation": "higher",
+    "v22_native_scorer": true,
+    "static_memory": "strict4 frozen original VisionAD",
+    "sidecar": "off",
+    "signed_correction": "off",
+    "probe_label_access": false,
+    "dynamic_memory_update": false
+  },
+  "environment": {
+    "python_version": "3.11.14",
+    "python_implementation": "CPython",
+    "platform": "Windows",
+    "torch_version": "2.0.1+cu117",
+    "device": "cuda",
+    "cuda_initialised": true,
+    "features_extracted": true
+  }
+}
