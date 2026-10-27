@@ -82,12 +82,16 @@ def parser():
     p.set_defaults(max_query_events=16, probe_groups_per_type=4,
                    out_dir=DEFAULT_OUT)
     p.add_argument("--max-collision-rows", default=1000, type=int)
+    p.add_argument("--reference-d2a-summary", required=True,
+                   help="Original frozen D2-A q90/q95 summary.json; must match"
+                        " native global end-state metrics and prototype counts")
     return p
 
 
 def config(args):
     parent = d2.configuration(args)
     return {**parent, "protocol": SCHEMA,
+            "reference_d2a_summary": str(Path(args.reference_d2a_summary)).replace("\\", "/"),
             "retrieval_policies": list(POLICIES),
             "conditional_k": "min(5,n_eligible) for each patch, native mean top-k",
             "static_bank": "always global and immutable",
@@ -102,6 +106,38 @@ def config(args):
             "spatial_radius": {"small": .125, "large": .25}}
 
 
+def verify_d2a_reference(reference: dict, *, calibrated: dict,
+                          tape_digest: str,
+                          result_arms: dict, expected_images: int) -> dict:
+    """Fail closed if D3 global replay diverges from immutable D2-A results."""
+    if (reference.get("schema") != "risk_safe.d2.paired_native_dev_pilot.v1"
+            or not reference.get("completed") or
+            not reference.get("full_budget_completed") or
+            reference.get("source_d1b_tape_sha256") != tape_digest or
+            reference.get("actual_query_count") != 16 or
+            reference.get("probe_image_count") != expected_images or
+            reference.get("config", {}).get("fixed_quantile") != float(calibrated["quantile"]) or
+            reference.get("fixed_training_normal_calibration", {}).get("sha256")
+            != calibrated["sha256"]):
+        raise NativeParityError("Frozen D2-A reference mismatch")
+    for method in ("greedy", "causal_novelty"):
+        current = result_arms[method]["global"]
+        old = reference["per_arm"][method]
+        if old["actual_final_prototypes"] != current["n_written"]:
+            raise NativeParityError(f"Prototype count differs from D2-A: {method}")
+        for k_new, k_old in (
+                ("fpr", "final_fpr"), ("fnr", "final_fnr")):
+            if abs(float(current[k_new])-float(old[k_old]))>1e-12:
+                raise NativeParityError(f"D2-A classification parity failed {method}:{k_new}")
+    return {
+        "passed": True,
+        "methods": ["greedy", "causal_novelty"],
+        "matched": ["N_prototypes", "FPR", "FNR", "frozen_QA_tape",
+                    "calibration_registry", "N_probe_images"],
+        "reference_is_evaluation_only": True,
+    }
+
+
 def enforce_protocol(args):
     if not args.threshold_registry or args.fixed_quantile not in (.90, .95):
         raise NativeParityError(
@@ -114,6 +150,8 @@ def enforce_protocol(args):
         raise NativeParityError("D3 mechanism pilot is frozen to audiojack s0 q37")
     if args.max_collision_rows < 1:
         raise NativeParityError("Collision cap must be positive")
+    if not args.reference_d2a_summary:
+        raise NativeParityError("Frozen D2-A reference is mandatory")
 
 
 def manifest(args, result, csv_outputs):
@@ -128,6 +166,8 @@ def manifest(args, result, csv_outputs):
                 Path(args.d1b_manifest_dir) / d2.d1b.OUTPUT_QUERIES),
             "training_normal_threshold_registry": pf.sha256_file(
                 Path(args.threshold_registry)),
+            "reference_d2a_summary": pf.sha256_file(
+                Path(args.reference_d2a_summary)),
         },
         "config": config(args),
         "output_sha256": {
@@ -409,6 +449,10 @@ def run(args):
                     (sum(r["cross_camera_top1_diagnostic"] for r in collision) /
                      len(collision) if collision else None),
             }
+    reference = json.loads(Path(args.reference_d2a_summary).read_text(encoding="utf-8"))
+    reference_parity = verify_d2a_reference(
+        reference, calibrated=calibrated, tape_digest=tape.digest,
+        result_arms=summary_methods, expected_images=len(probes))
     collision_rows.sort(key=lambda r: float(r["score_erosion"]), reverse=True)
     n_collisions_all = len(collision_rows)
     collision_rows = collision_rows[:args.max_collision_rows]
@@ -425,6 +469,7 @@ def run(args):
         "probe_defect_images": expected_n_defects,
         "actual_native_global_parity_checks": parity_count,
         "global_native_parity_pass": True,
+        "reference_d2a_replay_parity": reference_parity,
         "memory_prototypes": {m: len(p) for m,p in provenance.items()},
         "source_fixed_bank_sha256": frozen_static["sha256"],
         "static_metrics": static_metrics,
