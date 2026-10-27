@@ -42,6 +42,27 @@ outputs/risk_safe_sprint_20261027/d3c_audiojack_s0_q37_b16_q90_probe4_randomcont
 Files: summary.json; random_control_probe_scores.csv; random_control_comparison.csv; source_only_hit_calibration.json; source_manifest.json.
 Cohort, repeated random seeds, threshold, original D3 CSV/hash, original D2-A summary and D1-B tape are recorded. All files are published ATOMICALLY after SHA-256 verification. No partial/failed run is published. Source manifest contains actual device argument and model execution status, instead of relying on generic metadata-preflight environment fields.
 
+## Read-only verifier correction (post-first D3-C run)
+
+The first D3-C `--verify-only` contained a field-name bug: the run correctly wrote
+`summary.json.source_reference.passed`, but the verifier checked the nonexistent
+`summary.json.reference_d3_native_replay.passed`. That produces
+`NativeParityError: D3-C reference native replay not verified` even when the
+480-source-score parity validation succeeded during the GPU run.
+
+**Recovery: do NOT rerun GPU, delete outputs or modify historical JSON.**
+Pull the new code, rerun CPU unit tests and the ORIGINAL `--verify-only`
+command. The verifier now validates `source_reference` (480 matched original
+D3 scores and <=1e-6 max difference), 800 control score count, 20 summary
+rows and the independent data flags. It checks the generated output hashes,
+input hashes and config, then verifies each **historical recorded source
+SHA-256 against the original generating Git commit's tracked blob** through
+`git show`. Git ancestry is required; changed/dirty historical tracked
+source is rejected. Current source hash changes from this verifier-only fix
+are NOT silently substituted into the original manifest. This is a
+historical-evidence verification, not a new simulation run. Do not rewrite
+the original source manifest.
+
 ## Windows PowerShell single-line commands
 
 From E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection with clean working directory:
