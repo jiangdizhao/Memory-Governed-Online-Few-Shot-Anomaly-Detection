@@ -37,7 +37,8 @@ from . import query_protocol as qp
 from .admission import CDARG, CDARGConfig
 from .anchor_store import VerifiedImage
 from .d2_baselines import BASELINES, BaselineState, propose_baseline
-from .d2_metrics import image_metrics, probe_deltas, risk_prediction_pairs
+from .d2_metrics import (image_metrics, probe_deltas, risk_prediction_pairs,
+                         online_gate_elapsed)
 from .native_bridge import (
     NativeScoreAdapter, NativeParityError, dynamic_codebooks,
     extract_v22_candidates, install_on_live, native_score,
@@ -462,8 +463,8 @@ def run(args):
                     counts[name]["added"] += added if decision == "admit" else 0
                     counts[name]["replaced"] += replaced if decision == "admit" else 0
                     counts[name]["skipped"] += skipped
-                    latency = max(0., time.perf_counter() - began -
-                                  offline_probe_seconds)
+                    latency = online_gate_elapsed(
+                        time.perf_counter() - began, offline_probe_seconds)
                     counts[name]["admission_seconds"] += latency
                     counts[name]["offline_probe_diagnostic_seconds"] += (
                         offline_probe_seconds)
