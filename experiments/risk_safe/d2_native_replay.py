@@ -327,7 +327,8 @@ def run(args):
     start = time.perf_counter()
     counts = {name: {"candidate_events": 0, "admitted_events": 0,
                      "added": 0, "replaced": 0, "skipped": 0,
-                     "admission_seconds": 0.}
+                     "admission_seconds": 0.,
+                     "offline_probe_diagnostic_seconds": 0.}
               for name in METHODS}
 
     def evaluate_checkpoint(checkpoint):
@@ -392,6 +393,7 @@ def run(args):
                     began = time.perf_counter()
                     before = snapshot(arm.bank, version=versions[name])
                     old_sha = before.sha256()
+                    offline_probe_seconds = 0.0
                     rows = normalized_native_candidate_rows(
                         impl, arm.bank, features, candidates_idx, keep=keep)
                     details = {"novelty": None, "novelty_cutoff": None,
@@ -416,6 +418,10 @@ def run(args):
                         })
                         # Independent probe damage measured AFTER the gate
                         # decision, never supplied to the gate.
+                        # Entirely OFFLINE, deliberately excluded from online
+                        # gate latency. This diagnostic observes heldout probe
+                        # features ONLY after proposal.decision is fixed.
+                        offline_probe_start = time.perf_counter()
                         rescoring = NativeScoreAdapter(impl, arm.bank, cfg)
                         harms = []
                         for _, probe_img, probe_features in defect_probes:
@@ -423,6 +429,8 @@ def run(args):
                             new_s = rescoring((probe_img, probe_features), update)
                             harms.append(max(0., old_s - new_s))
                         details["probe_damage"] = sum(harms) / len(harms)
+                        offline_probe_seconds = (
+                            time.perf_counter() - offline_probe_start)
                     else:
                         outcome = propose_baseline(
                             baseline_states[name], before, rows,
@@ -454,8 +462,11 @@ def run(args):
                     counts[name]["added"] += added if decision == "admit" else 0
                     counts[name]["replaced"] += replaced if decision == "admit" else 0
                     counts[name]["skipped"] += skipped
-                    latency = time.perf_counter() - began
+                    latency = max(0., time.perf_counter() - began -
+                                  offline_probe_seconds)
                     counts[name]["admission_seconds"] += latency
+                    counts[name]["offline_probe_diagnostic_seconds"] += (
+                        offline_probe_seconds)
                     candidate_rows.append({
                         "stream_t": item.position, "method": name,
                         "verified_label": label, "candidate_keep": keep,
@@ -473,6 +484,7 @@ def run(args):
                         "replaced": replaced if decision == "admit" else 0,
                         "skipped": skipped,
                         "latency_seconds": latency,
+                        "offline_probe_diagnostic_seconds": offline_probe_seconds,
                         "pre_sha256": old_sha,
                         "post_sha256": snapshot(
                             arm.bank, version=versions[name]).sha256(),
@@ -539,6 +551,10 @@ def run(args):
         "elapsed_seconds": time.perf_counter() - start,
         "gpu_memory_peak_bytes": (torch.cuda.max_memory_allocated()
                                   if args.device == "cuda" else None),
+        "latency_accounting": (
+            "Admission time excludes independent offline defect-probe "
+            "counterfactual rescoring; its separate timing is diagnostic only; "
+            "GPU timings are exploratory host wall times"),
         "cdarg_anchor_variant": "whole-image native score; patch-anchor variant not yet implemented",
         "hyperparameters_selected_without_probe_optimisation": True,
         "confirmatory_safety_claim": False,
@@ -547,6 +563,7 @@ def run(args):
         BASELINES_CSV: csv_content((
             "method", "candidate_events", "admitted_events",
             "added", "replaced", "skipped", "admission_seconds",
+            "offline_probe_diagnostic_seconds",
             "initial_fnr", "final_fnr", "initial_fpr", "final_fpr",
             "final_fpr_gain", "fnr_degradation_auc_fixed_checkpoints",
             "final_defect_score_erosion", "actual_final_prototypes",
@@ -565,7 +582,8 @@ def run(args):
             "prequery_score", "normal_utility", "defect_risk",
             "defect_margin_crossing", "novelty", "novelty_cutoff",
             "independent_probe_erosion", "added", "replaced", "skipped",
-            "latency_seconds", "pre_sha256", "post_sha256"), candidate_rows),
+            "latency_seconds", "offline_probe_diagnostic_seconds",
+            "pre_sha256", "post_sha256"), candidate_rows),
         EVIDENCE: csv_content((
             "stream_t", "camera_id", "image", "label_after_query",
             "static_pre_score", "n_prior_normal", "n_prior_defect",
