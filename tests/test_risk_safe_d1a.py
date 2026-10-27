@@ -794,6 +794,33 @@ class SourceManifestTests(unittest.TestCase):
         for relative, digest in hashes.items():
             self.assertEqual(digest, pf.sha256_file(pf.ROOT / relative), relative)
 
+    def test_git_commit_after_run_preserves_only_original_provenance(self):
+        """A later fast-forward commit cannot invalidate identical run bytes."""
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / pf.OUTPUT_SOURCE
+            old = {"schema": pf.SCHEMA_SOURCE,
+                   "git": {"head": "ancestor", "branch": "risk-safe"},
+                   "sources_sha256": {"code.py": "a" * 64},
+                   "dataset": {"semantic_index_sha256": "b" * 64},
+                   "configuration_sha256": "c" * 64}
+            self.assertEqual(pf.write_json_idempotent(path, old), "created")
+            new = dict(old)
+            new["git"] = {"head": "descendant", "branch": "risk-safe"}
+            with mock.patch.object(pf, "_is_ancestor_commit", return_value=True):
+                pinned = pf.preserve_committed_source_provenance(path, new)
+                self.assertEqual(pinned["git"], old["git"])
+                self.assertEqual(pf.verify_json_output(path, pinned), "verified")
+                changed = dict(new)
+                changed["sources_sha256"] = {"code.py": "d" * 64}
+                mismatch = pf.preserve_committed_source_provenance(path, changed)
+                with self.assertRaises(pf.OutputMismatch):
+                    pf.verify_json_output(path, mismatch)
+            with mock.patch.object(pf, "_is_ancestor_commit", return_value=False):
+                not_ancestor = pf.preserve_committed_source_provenance(path, new)
+                with self.assertRaises(pf.OutputMismatch):
+                    pf.verify_json_output(path, not_ancestor)
+
     def test_missing_source_fails_closed(self):
         with self.assertRaises(pf.DatasetProtocolError):
             pf.source_hashes(("experiments/risk_safe/does_not_exist.py",))
