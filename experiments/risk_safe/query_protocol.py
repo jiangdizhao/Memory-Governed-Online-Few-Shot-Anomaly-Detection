@@ -142,6 +142,29 @@ class StreamImage:
         }
 
 
+@dataclass(frozen=True)
+class PublicObservation:
+    """Minimal image observation visible to a query policy before feedback.
+
+    Real-IAD official sample keys and paths contain OK/NG tokens. Passing a
+    StreamImage directly to predict() would therefore reveal a label without a
+    query. The trusted data adapter may resolve observation_handle to image
+    pixels/features; the controller itself must NOT see raw paths, labels, or
+    sample keys. This deliberately does not provide physical-specimen identity.
+    """
+
+    position: int
+    observation_handle: str
+    camera_id: int
+    phase: int
+
+    @classmethod
+    def from_stream(cls, image: StreamImage) -> "PublicObservation":
+        return cls(position=int(image.position),
+                   observation_handle=f"observation:{image.position}",
+                   camera_id=int(image.camera_id), phase=int(image.phase))
+
+
 def build_stream(records_by_phase: Sequence[Sequence[Any]]) -> Tuple[StreamImage, ...]:
     """Concatenate phases, ordering each block chronologically by capture metadata.
 
@@ -551,14 +574,17 @@ def replay_shared_tape(stream: Sequence[StreamImage], tape: QueryTape,
 
     Per time step ``t``:
 
-    1. the image arrives and every method produces its pre-query prediction;
+    1. the image arrives; each method predicts using a sanitized observation;
     2. the pre-registered tape (not the method) decides whether ``q_t = 1``;
     3. only then is the *selected image* label revealed;
     4. the revealed label is delivered to every method in the same order;
     5. that label becomes historical evidence for ``t+1`` only.
 
-    Methods are duck-typed objects exposing ``predict(step, image) -> float``
-    and ``observe_feedback(step, image, label) -> None``.  No Admission
+    Methods expose ``predict(step, PublicObservation) -> float`` (never a
+    label-bearing Real-IAD path) and ``observe_feedback(step, StreamImage,
+    label) -> None`` ONLY after the query has legally disclosed that label.
+    Raw image lookup belongs to a trusted data/feature adapter, not the query
+    controller.  No Admission
     algorithm is implemented here and none is required for D1-A.
     """
     validate_stream(stream)
@@ -579,8 +605,9 @@ def replay_shared_tape(stream: Sequence[StreamImage], tape: QueryTape,
 
     for image in stream:
         step = int(image.position)
+        public_observation = PublicObservation.from_stream(image)
         for name in names:
-            value = float(methods[name].predict(step, image))
+            value = float(methods[name].predict(step, public_observation))
             if value != value or value in (float("inf"), float("-inf")):
                 raise QueryProtocolError(
                     f"Method {name} produced a non-finite prediction at {step}")
@@ -618,7 +645,7 @@ class PassiveAdmission:
         self.feedback: List[Tuple[int, str, str, int]] = []
         self.labels_visible_at_prediction: List[Tuple[int, int]] = []
 
-    def predict(self, step: int, image: StreamImage) -> float:
+    def predict(self, step: int, image: PublicObservation) -> float:
         self.labels_visible_at_prediction.append((int(step), len(self.feedback)))
         self.predictions.append((int(step), 0.0))
         return 0.0
@@ -642,7 +669,7 @@ class RunningMeanAdmission:
         self.feedback: List[Tuple[int, str, str, int]] = []
         self.labels_visible_at_prediction: List[Tuple[int, int]] = []
 
-    def predict(self, step: int, image: StreamImage) -> float:
+    def predict(self, step: int, image: PublicObservation) -> float:
         self.labels_visible_at_prediction.append((int(step), len(self.feedback)))
         value = (self.prior if not self.feedback
                  else sum(row[3] for row in self.feedback) / len(self.feedback))
@@ -676,7 +703,7 @@ def q_b_interface_contract() -> Dict[str, Any]:
         "policy_id": "Q-B",
         "status": "interface_only_not_implemented_in_d1a",
         "allowed_inputs": [
-            "current image identity, camera id and capture timestamp",
+            "sanitized PublicObservation: opaque handle, camera id, step and phase",
             "frozen reference scorer output for the current image",
             "the reference controller's own previously disclosed labels and spent budget",
             "shared initial theta0 and pre-registered rule constants",
@@ -686,6 +713,7 @@ def q_b_interface_contract() -> Dict[str, Any]:
             "Signed Correction or dynamic Sidecar state of any method",
             "future labels, evaluation-probe labels, defect masks",
             "label-conditional stratification of the query tape",
+            "raw Real-IAD path / official sample key containing OK or NG tokens",
         ],
         "output_contract": ("one frozen query tape replayed unchanged to every "
                             "Admission method"),
