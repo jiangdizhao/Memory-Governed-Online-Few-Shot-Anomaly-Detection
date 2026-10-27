@@ -316,5 +316,36 @@ class CDARGCausalRiskTests(unittest.TestCase):
             CDARGConfig(.1, 1, 0, .1, 1, 0)
 
 
+class D1CSyntheticSmokeTests(unittest.TestCase):
+    def test_four_scenarios_are_deterministic_and_causally_auditable(self):
+        from experiments.risk_safe.d1c_cpu_smoke import build_payloads, OUTPUTS
+        first = build_payloads()[OUTPUTS[0]]
+        second = build_payloads()[OUTPUTS[0]]
+        self.assertEqual(first, second)
+        self.assertTrue(first["pass"])
+        self.assertFalse(first["native_v22_image_scorer_parity_tested"])
+        self.assertEqual(first["N_cases"], 4)
+        self.assertEqual(
+            {x["scenario"] for x in first["scenarios"]},
+            {"harmful_defect_crossing", "benign_normal_adaptation",
+             "no_defect_anchor", "full_capacity_harmful_replacement"})
+        self.assertTrue(all(x["heldout_evaluation_only"]["offline_only_not_visible_to_gate"]
+                            for x in first["scenarios"]))
+
+    def test_synthetic_output_idempotence_guards(self):
+        from pathlib import Path
+        import tempfile
+        from experiments.risk_safe import preflight as pf
+        from experiments.risk_safe.d1c_cpu_smoke import build_payloads, OUTPUTS
+        payload = build_payloads()[OUTPUTS[0]]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / OUTPUTS[0]
+            self.assertEqual(pf.write_json_idempotent(path, payload), "created")
+            self.assertEqual(pf.write_json_idempotent(path, payload), "reused")
+            self.assertEqual(pf.verify_json_output(path, payload), "verified")
+            with self.assertRaises(pf.OutputMismatch):
+                pf.verify_json_output(path, {"mutated": True})
+
+
 if __name__ == "__main__":
     unittest.main()
