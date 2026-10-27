@@ -1,0 +1,100 @@
+{
+  "schema": "risk_safe.d2.source_manifest.v1",
+  "git": {
+    "branch": "risk-safe-admission-sprint-20261027",
+    "head": "6a22e4e8670c578012b90bf71193e42f41dadb3d",
+    "head_short": "6a22e4e8670c",
+    "tracked_modifications": [],
+    "git_available": true
+  },
+  "sources_sha256": {
+    "experiments/risk_safe/d2_native_replay.py": "934d7bafbf16745e2d143ac6ea344391fda96ca66825f4dc5753538dc56e51bc",
+    "experiments/risk_safe/d2_baselines.py": "1f42a7e0ba0a8aa6d410f4bf8c1a96cccef37117cefc107012ff1f5a009324b4",
+    "experiments/risk_safe/d2_metrics.py": "3659b015f7099f465326c4db32295c6862bf1d91dddc27072b20674a4ba89b08",
+    "experiments/risk_safe/native_bridge.py": "9575214ea8d14ebe32a537fa15afa332446b41d66c1c8c85f890d2251eaef8f7",
+    "experiments/risk_safe/admission.py": "44b21dcbe0491cbc1c0a0ee2d4929884bb3e9ce3880e246cfcec874c2b29f5aa",
+    "experiments/risk_safe/anchor_store.py": "6159bc45216df9f5edffbe85d7571f575c04f26862d966fe0427bbea48602c88",
+    "experiments/risk_safe/shadow_memory.py": "96094c2687a3ca0da40458f20fef217dea6c078da033205be91036f6c58c893e",
+    "experiments/risk_safe/d1d_native_smoke.py": "dccc883fbc27507575ab8b765bdc8e20197a495f28d36eff05cd5bc985405697",
+    "experiments/risk_safe/d1b_protocol.py": "6d0f5b372de85c6c51aef16b2d4f5ddf0259d9eb27fe917cbb3d21c003b464e0",
+    "experiments/risk_safe/query_protocol.py": "83cfdff6867e9b8c2afe0ab4047f177e5b2814b4deafd63a6035a9dd06e16b2f",
+    "experiments/risk_safe/preflight.py": "2070ba770ac36af06f688b0450c711d67b7bca526e3939178d559216535c25ba",
+    "experiments/v02_memory.py": "3c4e247e3a41dc9acc8147a35aa892cf3f3571aca85beb4169809bd70ad48ae0",
+    "experiments/v02_architecture_core.py": "09cd7cbf8ef0101cd8dfc8c23fc4d0d6efb91c8d9ddf466ea6991bc463887a74",
+    "experiments/p0_protocol_audit.py": "b83918ec5aceb3ef63cca942fc9fb0e241559d9672d20bed422b15fcd48135e7",
+    "experiments/a0_a1_strict4_matched.py": "e916659681607bf75e097dd62379dcc363ccc3adf6f991d4108592997e1b53bf",
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a",
+    "tests/test_risk_safe_d2.py": "cd1bae0669482a3ebb51415bfc9c89db850eb0a1a364728edc0af4d28d42846c",
+    "docs/risk_safe/D2_NATIVE_DEV_PILOT_PROTOCOL.md": "dcc451685d7967edb09f5ae03c4936557c3767a97e222cbf7916994d02a82b3a"
+  },
+  "input_sha256": {
+    "realiad_class_json": "03333ade4def8710688fd8f23d568a1aaad55629115c36cf23662b0aa57fd267",
+    "d1b_query_manifest": "fd441f57fdcc015a3c16a7bbabd411d27ca4548b3f4737d9cc76ca8844e495c8"
+  },
+  "config": {
+    "class": "audiojack",
+    "support_seed": 0,
+    "query_seed": 37,
+    "budget": 16,
+    "max_query_events": 8,
+    "probe_groups_per_type": 2,
+    "device": "cuda",
+    "math_sdpa": true,
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "d1b_manifest_dir": "outputs/risk_safe_sprint_20261027/d1b_protocol_v1",
+    "stream_mode": "random",
+    "probe": "A only; predetermined first N normal and N defect session groups; all 5 images each",
+    "probe_checkpoints": [
+      0,
+      875,
+      1750,
+      2625
+    ],
+    "methods": [
+      "static",
+      "append",
+      "greedy",
+      "reservoir",
+      "causal_novelty",
+      "cdarg"
+    ],
+    "threshold": "LOSO theta0 fixed, no Sidecar",
+    "correction": "disabled",
+    "query": "frozen Q-A exogenous sample/camera tape",
+    "candidate": "shared native v22 static scorer and 8/16/24 patch rank",
+    "cdarg_anchor_scoring": "native whole-image verified-view anchors, not pixel mask",
+    "cdarg_policy": {
+      "epsilon_defect": 0.1,
+      "lambda_defect": 1.0,
+      "tau_utility": 0.0,
+      "margin_sigma_fraction": 0.25,
+      "sigma_normal": "support-only LOSO std",
+      "sigma_floor": 0.01,
+      "zero_defect_anchor": "reject",
+      "calibration_status": "PILOT_FIXED_UNTUNED_NOT_DEPLOYMENT_SAFE"
+    },
+    "normal_adaptation": "v22 native scorer before label; same candidates per arm",
+    "causal_novelty": "median over only previously queried verified-normal candidate novelties, first-eligible normal admitted",
+    "reservoir": "independent seeded dynamic patch reservoir; static support immutable",
+    "append_at_capacity": "reject entire event, never expand capacity",
+    "evaluation_only_probe_prohibited_from_online_policies": true
+  },
+  "output_sha256": {
+    "summary.json": "d55dcc4bf8339fdee2506ecdab9bfff26aeeff0b5975a18158e331cb4443f56e",
+    "baseline_comparison_dev.csv": "ecb38a8f70e60f74b3e1ff9c27241306feeaa65dcd22ea2cb399c7536ace565c",
+    "probe_snapshots.csv": "a5811754391019f7b83bf57e4badf6dcfec6784979fe097689ec89c85ffa253e",
+    "candidate_decisions.csv": "d745ccefdf2edecf2085e2af0856260813dd75ae4da806484cda5f18a538ea97",
+    "query_ledger.csv": "72b8671d41060d8a3194f7e9897e8368dc91a23f93aa78bd3b51d76fe909218c"
+  },
+  "environment": {
+    "python_version": "3.11.14",
+    "python_implementation": "CPython",
+    "platform": "Windows",
+    "torch_version": "2.0.1+cu117",
+    "device": "cuda",
+    "cuda_initialised": true,
+    "features_extracted": true
+  }
+}
