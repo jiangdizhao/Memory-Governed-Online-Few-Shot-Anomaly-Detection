@@ -444,10 +444,14 @@ def run(args):
                 "fnr_change_vs_static": m["fnr"] - static_metrics["fnr"],
                 "mean_positive_defect_image_erosion": sum(damage)/len(damage),
                 "n_written": len(provenance[method]),
-                "defect_collision_patches": len(collision),
-                "cross_camera_top1_collision_fraction_diagnostic":
-                    (sum(r["cross_camera_top1_diagnostic"] for r in collision) /
-                     len(collision) if collision else None),
+                # Collision attribution is calculated for native GLOBAL
+                # versus Static, NOT independently for each scoped policy.
+                "global_defect_collision_patches_reference_only":
+                    len(collision) if policy == "global" else None,
+                "global_top1_cross_camera_fraction_reference_only":
+                    ((sum(r["cross_camera_top1_diagnostic"] for r in collision) /
+                      len(collision)) if collision else None)
+                    if policy == "global" else None,
             }
     reference = json.loads(Path(args.reference_d2a_summary).read_text(encoding="utf-8"))
     reference_parity = verify_d2a_reference(
