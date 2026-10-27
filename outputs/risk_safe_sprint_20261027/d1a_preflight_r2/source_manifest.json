@@ -1,0 +1,87 @@
+{
+  "schema": "risk_safe.d1a.source_manifest.v1",
+  "stage": "D1-A",
+  "git": {
+    "branch": "risk-safe-admission-sprint-20261027",
+    "head": "b12e1870dc82714f1991a4587c8c1c7fa303e397",
+    "head_short": "b12e1870dc82",
+    "tracked_modifications": [],
+    "git_available": true
+  },
+  "environment": {
+    "python_version": "3.11.14",
+    "python_implementation": "CPython",
+    "platform": "Windows",
+    "torch_version": "2.0.1+cu117",
+    "device": "cpu-only metadata preflight",
+    "cuda_initialised": false,
+    "features_extracted": false
+  },
+  "sources_sha256": {
+    "experiments/risk_safe/__init__.py": "55b5d16ac58bfa3157b576f8c645acb33f6ec9f911a867691c0ede3c2175be47",
+    "experiments/risk_safe/preflight.py": "2070ba770ac36af06f688b0450c711d67b7bca526e3939178d559216535c25ba",
+    "experiments/risk_safe/query_protocol.py": "45c2a81a63439a85b4995fa55dda01cfc033c158cef65cbb488a6b568ce4831f",
+    "experiments/final_decision_core.py": "26c06f0fbf2ae860ed357415d1d56c3583dedd92937c572982ef32b819a97ed2",
+    "experiments/v02_architecture_core.py": "09cd7cbf8ef0101cd8dfc8c23fc4d0d6efb91c8d9ddf466ea6991bc463887a74",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a",
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "tests/test_risk_safe_d1a.py": "9424a76f4420a6a4f662676e4c67a12845aad0bcc373dd0ee87c635300e8f61e"
+  },
+  "dataset": {
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "json_files_sha256": {
+      "audiojack.json": "03333ade4def8710688fd8f23d568a1aaad55629115c36cf23662b0aa57fd267",
+      "bottle_cap.json": "b601a92125019839deada7dd1b541144a5e48e9cb82bb60b87b668eb803503b9",
+      "eraser.json": "cbe57d5c32d2c5fc264cca8f5cf118e541a4673c985c300ba998e676e587da7c",
+      "plastic_plug.json": "1bdb7a5685c0db4bbb9f3d95e3cf6ca3f35b9ea1d5dfebfc27d0f1af1fb0a0b8",
+      "switch.json": "b863b819fe7734a9c83acc26b25d419c8d8897a9ae93d5b8fd9d0e424ecf42d8",
+      "rolled_strip_base.json": "c5eaa563cfe5faa01b31434c808b640851d1a988b0054e7819bb0065e250ae23"
+    },
+    "semantic_index_sha256": "46e9e0d94010dae2a53494c06a8d63cfbed9809f9bf6442b7725338a5acd3adb",
+    "N_index_records": 30225
+  },
+  "configuration_sha256": "d08d7d03d238374f9af95df0af0c3495a7440d0f9952a638375a6541fe6ba79f",
+  "outputs_sha256": {
+    "dataset_preflight.json": "eb755d45f706c48ce8a144767875c9c94268ac5dfcb3e3cf568b0be689a14656",
+    "query_budget_preflight.json": "a535071e5cab3eacf82795a3f8f4fc1d23301a6dc64e433826faf721949f4df7",
+    "query_tape_manifest.json": "6f1bf7186babf9eb28d0caf28d025e288cfc3ac66138eb32238d786e32a96c8d"
+  },
+  "output_schemas": {
+    "dataset_preflight.json": "risk_safe.d1a.dataset_preflight.v1",
+    "query_budget_preflight.json": "risk_safe.d1a.query_budget_preflight.v1",
+    "query_tape_manifest.json": "risk_safe.d1a.query_tape_manifest.v1",
+    "source_manifest.json": "risk_safe.d1a.source_manifest.v1"
+  },
+  "registered_defaults": {
+    "classes": [
+      "audiojack",
+      "bottle_cap",
+      "eraser",
+      "plastic_plug",
+      "switch",
+      "rolled_strip_base"
+    ],
+    "query_seed": 37,
+    "budget_candidates": [
+      8,
+      16,
+      32,
+      64,
+      79,
+      96,
+      128
+    ],
+    "reference_budget_v02": 79,
+    "sidecar_source": "test_phase3_AIF_simplified_v22.py"
+  },
+  "rerun_semantics": [
+    "re-running with identical code, data and configuration validates and reuses the existing outputs",
+    "any difference fails explicitly instead of overwriting evidence",
+    "each manifest digest covers the exact serialised bytes"
+  ],
+  "authorisation_scope": [
+    "D1-A only: metadata preflight; no GPU work, no feature extraction",
+    "no git commit, push, merge or pull request",
+    "D1-B and later milestones are explicitly out of scope"
+  ]
+}
