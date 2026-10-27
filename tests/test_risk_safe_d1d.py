@@ -5,9 +5,10 @@ import copy
 import unittest
 from types import SimpleNamespace
 import torch
-import v02_memory as native_v02_memory
 
 from experiments.risk_safe import native_bridge as b
+# native_bridge/shadow_memory configure the immutable experiments import path.
+import v02_memory as native_v02_memory
 from experiments.risk_safe import d1d_native_smoke as run
 from experiments.risk_safe import d1b_protocol as d1b
 from experiments.risk_safe.anchor_store import VerifiedImage
