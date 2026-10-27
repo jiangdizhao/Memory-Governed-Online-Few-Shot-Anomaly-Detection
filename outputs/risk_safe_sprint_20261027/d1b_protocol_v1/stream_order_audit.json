@@ -1,0 +1,1218 @@
+{
+  "schema": "risk_safe.d1b.order_audit.v1",
+  "classes": {
+    "audiojack": {
+      "N_stream_samples": 525,
+      "order_audit": {
+        "random": {
+          "stream_sha256": "0e12ffdd42cd3829d90dd225a68aede7168daed13b3e7ea32cf2da8b2a5fc5cd",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 43,
+              "defect": 132,
+              "transitions": 61,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 59,
+              "defect": 116,
+              "transitions": 73,
+              "initial_normal_prefix": 3
+            },
+            "3": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 82,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 216,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "normal_first": {
+          "stream_sha256": "75e444fcef30345f11ef90be299eaa47f4cb4f3fe06dd92c89c4d0bd07422601",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 43,
+              "defect": 132,
+              "transitions": 1,
+              "initial_normal_prefix": 43
+            },
+            "2": {
+              "normal": 59,
+              "defect": 116,
+              "transitions": 1,
+              "initial_normal_prefix": 59
+            },
+            "3": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 1,
+              "initial_normal_prefix": 54
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "defect_first": {
+          "stream_sha256": "5ba61d2400c00e09b2abce72a587990506f3c5bb334b09b002a7beb538d7f508",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 43,
+              "defect": 132,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 59,
+              "defect": 116,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "bursty": {
+          "stream_sha256": "1ff79d68ed2e2c2a13d39e2e32fb574eec05b9b742e489acb0b01174d23419c0",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 43,
+              "defect": 132,
+              "transitions": 5,
+              "initial_normal_prefix": 16
+            },
+            "2": {
+              "normal": 59,
+              "defect": 116,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "3": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            }
+          },
+          "total_sample_transitions": 19,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "acquisition_time_blocked": {
+          "stream_sha256": "ff9a10e6c00968aee48c51b1c7221ae9ce91f5f107d60aa90b374909e433d31b",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 43,
+              "defect": 132,
+              "transitions": 3,
+              "initial_normal_prefix": 1
+            },
+            "2": {
+              "normal": 59,
+              "defect": 116,
+              "transitions": 3,
+              "initial_normal_prefix": 23
+            },
+            "3": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 7,
+              "initial_normal_prefix": 12
+            }
+          },
+          "total_sample_transitions": 13,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        }
+      },
+      "official_sample_disjoint": {
+        "grouping_unit": "official_sample_key",
+        "rule": "an official Real-IAD sample key (<category>_<NNNN>_<CONDITION>) may appear in exactly one of support / mature_history / stream / probe_A / probe_B",
+        "partition_sample_counts": {
+          "support": 12,
+          "mature_history": 64,
+          "stream": 525,
+          "probe_A": 48,
+          "probe_B": 48
+        },
+        "pairwise_shared_samples": {
+          "mature_history|probe_A": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "stream|support": {
+            "N_shared": 0,
+            "examples": []
+          }
+        },
+        "all_partitions_disjoint": true
+      },
+      "all_modes_same_sample_universe": true,
+      "all_modes_same_phase_cohorts": true,
+      "stress_order_labels_offline_only": true
+    },
+    "bottle_cap": {
+      "N_stream_samples": 525,
+      "order_audit": {
+        "random": {
+          "stream_sha256": "e2a19c587cb0240b8d35467cdd8cd10b3f9f3faf2934603e6fcadd16af6e7004",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 71,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 69,
+              "defect": 106,
+              "transitions": 94,
+              "initial_normal_prefix": 1
+            },
+            "3": {
+              "normal": 48,
+              "defect": 127,
+              "transitions": 81,
+              "initial_normal_prefix": 1
+            }
+          },
+          "total_sample_transitions": 246,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "normal_first": {
+          "stream_sha256": "677da89dae5d553d4ba3e1fff8cef9c4900f7b3d7e3f91f3eabacf69d10f0865",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 1,
+              "initial_normal_prefix": 49
+            },
+            "2": {
+              "normal": 69,
+              "defect": 106,
+              "transitions": 1,
+              "initial_normal_prefix": 69
+            },
+            "3": {
+              "normal": 48,
+              "defect": 127,
+              "transitions": 1,
+              "initial_normal_prefix": 48
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "defect_first": {
+          "stream_sha256": "c431cb7298fde179928149053664b0c77eceb50125bb87721aff93f71bb41174",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 69,
+              "defect": 106,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 48,
+              "defect": 127,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "bursty": {
+          "stream_sha256": "a26b2a61e4a8c9aa97d88876ccca9c43af828e54c7cce64adad865dff87f35c1",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "2": {
+              "normal": 69,
+              "defect": 106,
+              "transitions": 9,
+              "initial_normal_prefix": 16
+            },
+            "3": {
+              "normal": 48,
+              "defect": 127,
+              "transitions": 5,
+              "initial_normal_prefix": 16
+            }
+          },
+          "total_sample_transitions": 21,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "acquisition_time_blocked": {
+          "stream_sha256": "9f34a7565957d93eaad7508c79374a80441126824a65dc1f0b5f0871641b4bab",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 3,
+              "initial_normal_prefix": 8
+            },
+            "2": {
+              "normal": 69,
+              "defect": 106,
+              "transitions": 5,
+              "initial_normal_prefix": 2
+            },
+            "3": {
+              "normal": 48,
+              "defect": 127,
+              "transitions": 4,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 12,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        }
+      },
+      "official_sample_disjoint": {
+        "grouping_unit": "official_sample_key",
+        "rule": "an official Real-IAD sample key (<category>_<NNNN>_<CONDITION>) may appear in exactly one of support / mature_history / stream / probe_A / probe_B",
+        "partition_sample_counts": {
+          "support": 12,
+          "mature_history": 64,
+          "stream": 525,
+          "probe_A": 48,
+          "probe_B": 48
+        },
+        "pairwise_shared_samples": {
+          "mature_history|probe_A": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "stream|support": {
+            "N_shared": 0,
+            "examples": []
+          }
+        },
+        "all_partitions_disjoint": true
+      },
+      "all_modes_same_sample_universe": true,
+      "all_modes_same_phase_cohorts": true,
+      "stress_order_labels_offline_only": true
+    },
+    "eraser": {
+      "N_stream_samples": 525,
+      "order_audit": {
+        "random": {
+          "stream_sha256": "ffd774c8f6f803c35f0fd54031a2becc592d30c3a35489967b6608e2f210ffe3",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 75,
+              "initial_normal_prefix": 2
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 89,
+              "initial_normal_prefix": 1
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 77,
+              "initial_normal_prefix": 2
+            }
+          },
+          "total_sample_transitions": 241,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "normal_first": {
+          "stream_sha256": "e562b4e7a6f2c1191f19abddab39edaa555c91bf8c2d01b483048d37ecd70ecf",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 1,
+              "initial_normal_prefix": 51
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 1,
+              "initial_normal_prefix": 55
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 1,
+              "initial_normal_prefix": 58
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "defect_first": {
+          "stream_sha256": "178cc5b788aef659b1320daf3543e114858fb292307dfafc86c7342fc510ed47",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "bursty": {
+          "stream_sha256": "25117afc41a291e7eae37d4b7c5c6f1e819144c443684672dba034a3fdbcd9bd",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            }
+          },
+          "total_sample_transitions": 21,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "acquisition_time_blocked": {
+          "stream_sha256": "e0096da613eacb658050eeacdb88b8ab17304d2e70a492c291a20418493f6e13",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 5,
+              "initial_normal_prefix": 17
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 3,
+              "initial_normal_prefix": 1
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 9,
+              "initial_normal_prefix": 8
+            }
+          },
+          "total_sample_transitions": 17,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        }
+      },
+      "official_sample_disjoint": {
+        "grouping_unit": "official_sample_key",
+        "rule": "an official Real-IAD sample key (<category>_<NNNN>_<CONDITION>) may appear in exactly one of support / mature_history / stream / probe_A / probe_B",
+        "partition_sample_counts": {
+          "support": 12,
+          "mature_history": 64,
+          "stream": 525,
+          "probe_A": 48,
+          "probe_B": 48
+        },
+        "pairwise_shared_samples": {
+          "mature_history|probe_A": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "stream|support": {
+            "N_shared": 0,
+            "examples": []
+          }
+        },
+        "all_partitions_disjoint": true
+      },
+      "all_modes_same_sample_universe": true,
+      "all_modes_same_phase_cohorts": true,
+      "stress_order_labels_offline_only": true
+    },
+    "plastic_plug": {
+      "N_stream_samples": 525,
+      "order_audit": {
+        "random": {
+          "stream_sha256": "a76306bb8c54cb4fd28c9d94ef8d411df5f22ec6f15818895a2d6b1d409f86cc",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 56,
+              "defect": 119,
+              "transitions": 78,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 77,
+              "initial_normal_prefix": 1
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 80,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 235,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "normal_first": {
+          "stream_sha256": "199c295340e34f83c278a4178f5479c227cce79809dc0a4057a61b979e87e98a",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 56,
+              "defect": 119,
+              "transitions": 1,
+              "initial_normal_prefix": 56
+            },
+            "2": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 1,
+              "initial_normal_prefix": 49
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 57
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "defect_first": {
+          "stream_sha256": "4c0d9b203be1116bf796acf32d6e09b1d4dd329b3b8dcbc56ab7f7cc171073f2",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 56,
+              "defect": 119,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "bursty": {
+          "stream_sha256": "0ed00ff91869e8fbf9d567da34b71e7fbab23bce0c36610cbc64d6a6754617a8",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 56,
+              "defect": 119,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "2": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            }
+          },
+          "total_sample_transitions": 21,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "acquisition_time_blocked": {
+          "stream_sha256": "9f9696df41d7b88b4273f1819e6905caa164c53d6da052a110c6325275811240",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 56,
+              "defect": 119,
+              "transitions": 9,
+              "initial_normal_prefix": 7
+            },
+            "2": {
+              "normal": 49,
+              "defect": 126,
+              "transitions": 7,
+              "initial_normal_prefix": 2
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 9,
+              "initial_normal_prefix": 1
+            }
+          },
+          "total_sample_transitions": 25,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        }
+      },
+      "official_sample_disjoint": {
+        "grouping_unit": "official_sample_key",
+        "rule": "an official Real-IAD sample key (<category>_<NNNN>_<CONDITION>) may appear in exactly one of support / mature_history / stream / probe_A / probe_B",
+        "partition_sample_counts": {
+          "support": 12,
+          "mature_history": 64,
+          "stream": 525,
+          "probe_A": 48,
+          "probe_B": 48
+        },
+        "pairwise_shared_samples": {
+          "mature_history|probe_A": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "stream|support": {
+            "N_shared": 0,
+            "examples": []
+          }
+        },
+        "all_partitions_disjoint": true
+      },
+      "all_modes_same_sample_universe": true,
+      "all_modes_same_phase_cohorts": true,
+      "stress_order_labels_offline_only": true
+    },
+    "switch": {
+      "N_stream_samples": 525,
+      "order_audit": {
+        "random": {
+          "stream_sha256": "f0ef0619dd0b80b83b6a9e80de5892018a160029beaf890142b2090ce1ee9de7",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 76,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 70,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 75,
+              "initial_normal_prefix": 1
+            }
+          },
+          "total_sample_transitions": 221,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "normal_first": {
+          "stream_sha256": "cea604dff0e961e5af491f799dd96ad8c8b50a887ce9a5e77b74a4a53d2db2c5",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 1,
+              "initial_normal_prefix": 51
+            },
+            "2": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 57
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 1,
+              "initial_normal_prefix": 58
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "defect_first": {
+          "stream_sha256": "6d6df4f88608abc6a09f46a73187c2d873cd88f456242b1f9f69264a208bfcdf",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "bursty": {
+          "stream_sha256": "9a1a772dcf7760687f595e9a8d8f65af047dcc2122f345987e52c54c7a8a1ca1",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "2": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            }
+          },
+          "total_sample_transitions": 21,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "acquisition_time_blocked": {
+          "stream_sha256": "9165718085a702b7b26e454c9524c90d4da679b55d7b1623e8127cffb0e8920d",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 51,
+              "defect": 124,
+              "transitions": 5,
+              "initial_normal_prefix": 4
+            },
+            "2": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 57
+            },
+            "3": {
+              "normal": 58,
+              "defect": 117,
+              "transitions": 5,
+              "initial_normal_prefix": 17
+            }
+          },
+          "total_sample_transitions": 11,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        }
+      },
+      "official_sample_disjoint": {
+        "grouping_unit": "official_sample_key",
+        "rule": "an official Real-IAD sample key (<category>_<NNNN>_<CONDITION>) may appear in exactly one of support / mature_history / stream / probe_A / probe_B",
+        "partition_sample_counts": {
+          "support": 12,
+          "mature_history": 64,
+          "stream": 525,
+          "probe_A": 48,
+          "probe_B": 48
+        },
+        "pairwise_shared_samples": {
+          "mature_history|probe_A": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "stream|support": {
+            "N_shared": 0,
+            "examples": []
+          }
+        },
+        "all_partitions_disjoint": true
+      },
+      "all_modes_same_sample_universe": true,
+      "all_modes_same_phase_cohorts": true,
+      "stress_order_labels_offline_only": true
+    },
+    "rolled_strip_base": {
+      "N_stream_samples": 525,
+      "order_audit": {
+        "random": {
+          "stream_sha256": "8e42e3f202bb2cb96c34b5468d2fc81d93b645e08a2dff6c4e8e94aace27f891",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 73,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 68,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 76,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 217,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "normal_first": {
+          "stream_sha256": "31e1cb0ff9bf59c81ce62728abd18c503d6fe98d8d8e04a03b4c52e44603a11e",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 1,
+              "initial_normal_prefix": 54
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 1,
+              "initial_normal_prefix": 55
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 57
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "defect_first": {
+          "stream_sha256": "a2fcd1e239756148002dfaf2a644fdccc6ff84722f1194eb522be2f71fc700da",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 0
+            }
+          },
+          "total_sample_transitions": 3,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "bursty": {
+          "stream_sha256": "a4e759e512c2148db191a5e5b67e52e3bc88ec7e8efe71164760f19c2ba14af0",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 7,
+              "initial_normal_prefix": 16
+            }
+          },
+          "total_sample_transitions": 21,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        },
+        "acquisition_time_blocked": {
+          "stream_sha256": "984e80e481c37a283b35546589689bfc044a6f44fadaeca261e023a0373267ab",
+          "N_images": 2625,
+          "N_samples": 525,
+          "phases": {
+            "1": {
+              "normal": 54,
+              "defect": 121,
+              "transitions": 3,
+              "initial_normal_prefix": 15
+            },
+            "2": {
+              "normal": 55,
+              "defect": 120,
+              "transitions": 3,
+              "initial_normal_prefix": 1
+            },
+            "3": {
+              "normal": 57,
+              "defect": 118,
+              "transitions": 1,
+              "initial_normal_prefix": 57
+            }
+          },
+          "total_sample_transitions": 7,
+          "diagnostic_only": true,
+          "label_information_exposed_to_controller": false
+        }
+      },
+      "official_sample_disjoint": {
+        "grouping_unit": "official_sample_key",
+        "rule": "an official Real-IAD sample key (<category>_<NNNN>_<CONDITION>) may appear in exactly one of support / mature_history / stream / probe_A / probe_B",
+        "partition_sample_counts": {
+          "support": 12,
+          "mature_history": 64,
+          "stream": 525,
+          "probe_A": 48,
+          "probe_B": 48
+        },
+        "pairwise_shared_samples": {
+          "mature_history|probe_A": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "mature_history|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|probe_B": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_A|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|stream": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "probe_B|support": {
+            "N_shared": 0,
+            "examples": []
+          },
+          "stream|support": {
+            "N_shared": 0,
+            "examples": []
+          }
+        },
+        "all_partitions_disjoint": true
+      },
+      "all_modes_same_sample_universe": true,
+      "all_modes_same_phase_cohorts": true,
+      "stress_order_labels_offline_only": true
+    }
+  },
+  "labels_only_used_for_synthetic_stress_and_offline_audit": true
+}

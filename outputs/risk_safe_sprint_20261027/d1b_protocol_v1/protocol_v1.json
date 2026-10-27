@@ -1,0 +1,174 @@
+{
+  "schema": "risk_safe.d1b.protocol.v1",
+  "stage": "D1-B",
+  "status": "frozen_before_new_admission_performance_results",
+  "authority": "docs/RISK_SAFE_ADMISSION_7DAY_PLAN_2026-10-27.md",
+  "identity_version": "realid-offical-sample-key-v2",
+  "primary_sample_unit": "official_sample_key",
+  "label_cost_unit": "one queried camera-image label per official sample",
+  "classes_development": [
+    "audiojack",
+    "bottle_cap",
+    "eraser",
+    "plastic_plug",
+    "switch",
+    "rolled_strip_base"
+  ],
+  "classes_confirmatory": "remaining Real-IAD categories and MVTec-AD, no tuning",
+  "static_support_shots": 4,
+  "support_seeds": [
+    0,
+    1,
+    2
+  ],
+  "mature_history": {
+    "enabled_in_primary": false,
+    "auxiliary_verified_normal_samples": 64
+  },
+  "probe": {
+    "A": {
+      "normal_sample_groups": 24,
+      "defect_sample_groups": 24
+    },
+    "B": {
+      "normal_sample_groups": 24,
+      "defect_sample_groups": 24
+    },
+    "evaluation_labels_forbidden_to_all_online_controllers": true
+  },
+  "stream": {
+    "phases": 3,
+    "samples_per_phase": 175,
+    "images_per_sample": 5,
+    "total_samples": 525,
+    "total_images": 2625,
+    "phase_cohorts_fixed_across_all_orders": true,
+    "primary_order": "random",
+    "stress_orders": [
+      "normal_first",
+      "defect_first",
+      "bursty"
+    ],
+    "diagnostic_order": "acquisition_time_blocked",
+    "order_seed": 1701,
+    "bursty_run_samples": 16,
+    "random_definition": "sample shuffle per phase, cameras C1..C5 consecutive; no labels read",
+    "stress_definition": "offline any-defect-visible sample grouping within each phase; synthetic, non-deployable",
+    "acquisition_definition": "phase-blocked capture-timestamp order from D1-A; not globally chronological"
+  },
+  "budgets": {
+    "primary": [
+      16,
+      32,
+      64,
+      79
+    ],
+    "sensitivity": [
+      96,
+      128
+    ],
+    "diagnostic_only": [
+      8
+    ],
+    "units": {
+      "image": "N_queries/2625",
+      "sample": "N_unique_query_samples/525"
+    },
+    "budget_cap_not_guaranteed_spend_for_Q_B_Q_C": true,
+    "budget_79_is_historical_reference_not_optimum": true
+  },
+  "q_a": {
+    "seeds": [
+      37,
+      101,
+      211
+    ],
+    "mode": "shared label-blind random tape",
+    "sample_priority_common_across_orders": true,
+    "same_camera_image_common_across_orders": true,
+    "same_query_events_across_admission_arms": true,
+    "query_positions_may_vary_with_order": true,
+    "nested_budgets": true,
+    "preselected_future_ids_are_offline_benchmark_only": true
+  },
+  "q_b": {
+    "stage": "interface_and_rule_frozen_not_implemented",
+    "reference": "frozen static support scorer, same initial LOSO theta0",
+    "first_query_opportunity": "C1 arrival of each official sample; one query maximum",
+    "normalization": "delta=max(1e-6, MAD of support-only LOSO normal scores)",
+    "score_priority": "u=1/(1+abs(s_fixed-theta0)/delta)",
+    "query_probability": "min(1,(B_remaining/N_remaining)*(0.5+1.5*u))",
+    "random_draw": "separate deterministic hashed U(0,1) per sample and query seed",
+    "spent_budget_handling": "cap B; no future-label backfill; report unspent B",
+    "prohibited": [
+      "dynamic compared admission bank",
+      "sidecar state",
+      "correction state",
+      "future/hidden labels",
+      "raw label-bearing filename/sample key to controller"
+    ],
+    "warning": "causal prospective rule, unlike offline preselected Q-A tape"
+  },
+  "q_c": {
+    "stage": "native_v22_policy_interface_frozen_not_implemented",
+    "comparison": "cap-matched AIF-inspired vs random query controller",
+    "independent_trajectories": true,
+    "same_cap_not_same_realised_label_count": true,
+    "activation_and_cost_ledger_required": true,
+    "prohibited": [
+      "future labels",
+      "evaluation probes",
+      "other arm state"
+    ]
+  },
+  "threshold": {
+    "T0": "fixed theta0 derived from support-only LOSO",
+    "T1": "existing v22 GuardedThetaSidecarConfig unchanged",
+    "T2": "future confidence-sequence sidecar, outside current freeze"
+  },
+  "ablation": {
+    "A_off": "verified-normal Greedy admission",
+    "A_on": "CDARG, subject to independent implementation",
+    "C_off": "disable signed correction; retain defect-anchor ledger",
+    "T_off": "fixed LOSO theta0",
+    "Q_off": "random query at same budget cap, not zero feedback"
+  },
+  "prequential_order": [
+    "trusted adapter loads opaque observation; raw scorer predicts",
+    "controller decides query using only pre-feedback state",
+    "if queried reveal only that image-view label",
+    "verified-normal proposal evaluated against strictly prior anchors",
+    "after admission, append current label to ledgers and update optional components",
+    "evaluate holdout probes without exposing their labels to online controller"
+  ],
+  "priority_execution": {
+    "D1B": "six classes/3 query seeds/5 orders/4 primary budgets: metadata only",
+    "D1C_smoke": {
+      "classes": [
+        "audiojack",
+        "bottle_cap"
+      ],
+      "support_seeds": [
+        0
+      ],
+      "query_seeds": [
+        37,
+        101
+      ],
+      "orders": [
+        "random"
+      ],
+      "budgets": [
+        16,
+        32,
+        64,
+        79
+      ]
+    },
+    "D2_primary": "run paired Q-A admission arms under random mode first",
+    "D4": "shared Q-B informative tape smoke; no retroactive tuning",
+    "D5": "stress orders and auxiliary high-budget conditions",
+    "D6": "Q-C native AIF factorial after module isolation"
+  },
+  "scope": "metadata protocol registration only; no GPU, no CDARG, no Q-B/Q-C execution"
+}

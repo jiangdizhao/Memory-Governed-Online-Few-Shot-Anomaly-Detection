@@ -1,0 +1,52 @@
+{
+  "schema": "risk_safe.d1b.source_manifest.v1",
+  "git": {
+    "branch": "risk-safe-admission-sprint-20261027",
+    "head": "46677c8408090458cbfd9def5d029397678de906",
+    "head_short": "46677c840809",
+    "tracked_modifications": [],
+    "git_available": true
+  },
+  "sources_sha256": {
+    "experiments/risk_safe/__init__.py": "55b5d16ac58bfa3157b576f8c645acb33f6ec9f911a867691c0ede3c2175be47",
+    "experiments/risk_safe/preflight.py": "2070ba770ac36af06f688b0450c711d67b7bca526e3939178d559216535c25ba",
+    "experiments/risk_safe/query_protocol.py": "83cfdff6867e9b8c2afe0ab4047f177e5b2814b4deafd63a6035a9dd06e16b2f",
+    "experiments/risk_safe/d1b_protocol.py": "6d0f5b372de85c6c51aef16b2d4f5ddf0259d9eb27fe917cbb3d21c003b464e0",
+    "experiments/final_decision_core.py": "26c06f0fbf2ae860ed357415d1d56c3583dedd92937c572982ef32b819a97ed2",
+    "experiments/v02_architecture_core.py": "09cd7cbf8ef0101cd8dfc8c23fc4d0d6efb91c8d9ddf466ea6991bc463887a74",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a",
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "tests/test_risk_safe_d1a.py": "9424a76f4420a6a4f662676e4c67a12845aad0bcc373dd0ee87c635300e8f61e",
+    "tests/test_risk_safe_d1b.py": "5b3afcdcbc3847f18396ef623a43005bd9cda1aee5c31ebb779d97148f6d6a5d",
+    "docs/risk_safe/D1_B_FROZEN_PROTOCOL.md": "38e78a544135b36e2c1f6978bbaff04faf62365848f894a6334232e700f5c802"
+  },
+  "dataset": {
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "json_files_sha256": {
+      "audiojack.json": "03333ade4def8710688fd8f23d568a1aaad55629115c36cf23662b0aa57fd267",
+      "bottle_cap.json": "b601a92125019839deada7dd1b541144a5e48e9cb82bb60b87b668eb803503b9",
+      "eraser.json": "cbe57d5c32d2c5fc264cca8f5cf118e541a4673c985c300ba998e676e587da7c",
+      "plastic_plug.json": "1bdb7a5685c0db4bbb9f3d95e3cf6ca3f35b9ea1d5dfebfc27d0f1af1fb0a0b8",
+      "switch.json": "b863b819fe7734a9c83acc26b25d419c8d8897a9ae93d5b8fd9d0e424ecf42d8",
+      "rolled_strip_base.json": "c5eaa563cfe5faa01b31434c808b640851d1a988b0054e7819bb0065e250ae23"
+    },
+    "semantic_index_sha256": "46e9e0d94010dae2a53494c06a8d63cfbed9809f9bf6442b7725338a5acd3adb",
+    "N_index_records": 30225
+  },
+  "output_sha256": {
+    "protocol_v1.json": "711d433329c853411d37d2b5d361046591db2a90fb73efd4c5f78202372f6029",
+    "query_policy_manifest.json": "fd441f57fdcc015a3c16a7bbabd411d27ca4548b3f4737d9cc76ca8844e495c8",
+    "stream_order_audit.json": "fa73e9c42d15793f9796ee23f4e8964680b726bc8165246f9be114f7152af713"
+  },
+  "config_sha256": "94bbf09605ebdf7315a20d63cac96d9d4b75bd393dceec9755d73ee784a3f098",
+  "python_environment": {
+    "python_version": "3.11.14",
+    "python_implementation": "CPython",
+    "platform": "Windows",
+    "torch_version": "2.0.1+cu117",
+    "device": "cpu-only metadata preflight",
+    "cuda_initialised": false,
+    "features_extracted": false
+  },
+  "R2_preflight_remains_immutable": true
+}
