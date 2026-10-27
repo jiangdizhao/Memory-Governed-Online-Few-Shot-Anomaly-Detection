@@ -50,6 +50,18 @@ The first D3-C `--verify-only` contained a field-name bug: the run correctly wro
 `NativeParityError: D3-C reference native replay not verified` even when the
 480-source-score parity validation succeeded during the GPU run.
 
+**Follow-up (historical Git vs Windows line endings):** A clean Windows
+Git working tree can contain CRLF bytes while its stored git blob uses LF.
+The historical source manifest recorded raw working-tree SHA256, so direct
+hashing of `git show` bytes can incorrectly report
+`Historical source does not match generating git commit`. The verifier
+now accepts only the exact recorded raw Git blob OR its exact LF-to-CRLF
+Windows checkout transformation. It does **not** ignore arbitrary whitespace,
+source content changes, or any mismatched input/output digest. A failed run
+is not silently approved. Regression tests cover both newline modes and
+actual Python source edits. This remains a read-only check and preserves
+the original source_manifest.json byte-for-byte.
+
 **Recovery: do NOT rerun GPU, delete outputs or modify historical JSON.**
 Pull the new code, rerun CPU unit tests and the ORIGINAL `--verify-only`
 command. The verifier now validates `source_reference` (480 matched original
