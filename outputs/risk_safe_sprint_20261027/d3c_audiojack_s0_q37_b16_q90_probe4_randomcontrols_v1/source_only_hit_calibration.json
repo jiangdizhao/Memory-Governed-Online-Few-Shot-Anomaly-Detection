@@ -1,0 +1,139 @@
+{
+  "schema": "risk_safe.d3c.source_only_hit_calibration.v1",
+  "source_partition": "D1-A_reserved_mature_history_train_normals",
+  "train_normal_views": [
+    "OK/S0007/audiojack_0007_OK_C4_20231021130744.jpg",
+    "OK/S0018/audiojack_0018_OK_C2_20231021131016.jpg",
+    "OK/S0029/audiojack_0029_OK_C5_20231021131221.jpg",
+    "OK/S0041/audiojack_0041_OK_C4_20231021131449.jpg",
+    "OK/S0056/audiojack_0056_OK_C1_20231021131921.jpg",
+    "OK/S0075/audiojack_0075_OK_C2_20231021132432.jpg",
+    "OK/S0076/audiojack_0076_OK_C1_20231021132443.jpg",
+    "OK/S0077/audiojack_0077_OK_C4_20231021132453.jpg"
+  ],
+  "no_probe_scores_or_labels_for_p_fit": true,
+  "grid": [
+    0.05,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "results": {
+    "greedy": {
+      "0": {
+        "selected_p": 0.6,
+        "source_spatial_dynamic_hit_fraction": 0.01674107142857143,
+        "source_random_dynamic_hit_fraction": 0.015465561224489796,
+        "source_absolute_hit_gap": 0.0012755102040816358,
+        "grid_measurements": {
+          "0.05": 0.0,
+          "0.1": 0.0006377551020408163,
+          "0.2": 0.003826530612244898,
+          "0.3": 0.008450255102040817,
+          "0.4": 0.011160714285714286,
+          "0.6": 0.015465561224489796,
+          "0.8": 0.019770408163265307,
+          "1.0": 0.023118622448979595
+        },
+        "selection": "min_absolute_source_hit_gap_ties_smallest_p",
+        "probe_used_in_selection": false
+      },
+      "1": {
+        "selected_p": 0.6,
+        "source_spatial_dynamic_hit_fraction": 0.01674107142857143,
+        "source_random_dynamic_hit_fraction": 0.014668367346938776,
+        "source_absolute_hit_gap": 0.0020727040816326554,
+        "grid_measurements": {
+          "0.05": 0.00015943877551020407,
+          "0.1": 0.0007971938775510203,
+          "0.2": 0.003985969387755102,
+          "0.3": 0.0078125,
+          "0.4": 0.010363520408163266,
+          "0.6": 0.014668367346938776,
+          "0.8": 0.01992984693877551,
+          "1.0": 0.023118622448979595
+        },
+        "selection": "min_absolute_source_hit_gap_ties_smallest_p",
+        "probe_used_in_selection": false
+      },
+      "2": {
+        "selected_p": 0.6,
+        "source_spatial_dynamic_hit_fraction": 0.01674107142857143,
+        "source_random_dynamic_hit_fraction": 0.015306122448979591,
+        "source_absolute_hit_gap": 0.00143494897959184,
+        "grid_measurements": {
+          "0.05": 0.0,
+          "0.1": 0.0007971938775510203,
+          "0.2": 0.004145408163265306,
+          "0.3": 0.007971938775510204,
+          "0.4": 0.010682397959183673,
+          "0.6": 0.015306122448979591,
+          "0.8": 0.019292091836734693,
+          "1.0": 0.023118622448979595
+        },
+        "selection": "min_absolute_source_hit_gap_ties_smallest_p",
+        "probe_used_in_selection": false
+      }
+    },
+    "causal_novelty": {
+      "0": {
+        "selected_p": 0.8,
+        "source_spatial_dynamic_hit_fraction": 0.008769132653061224,
+        "source_random_dynamic_hit_fraction": 0.00860969387755102,
+        "source_absolute_hit_gap": 0.00015943877551020426,
+        "grid_measurements": {
+          "0.05": 0.00015943877551020407,
+          "0.1": 0.00031887755102040814,
+          "0.2": 0.002232142857142857,
+          "0.3": 0.004464285714285714,
+          "0.4": 0.005580357142857143,
+          "0.6": 0.007174744897959183,
+          "0.8": 0.00860969387755102,
+          "1.0": 0.010682397959183673
+        },
+        "selection": "min_absolute_source_hit_gap_ties_smallest_p",
+        "probe_used_in_selection": false
+      },
+      "1": {
+        "selected_p": 0.6,
+        "source_spatial_dynamic_hit_fraction": 0.008769132653061224,
+        "source_random_dynamic_hit_fraction": 0.008609693877551021,
+        "source_absolute_hit_gap": 0.00015943877551020252,
+        "grid_measurements": {
+          "0.05": 0.0,
+          "0.1": 0.00031887755102040814,
+          "0.2": 0.002072704081632653,
+          "0.3": 0.0036670918367346936,
+          "0.4": 0.0047831632653061226,
+          "0.6": 0.008609693877551021,
+          "0.8": 0.010044642857142856,
+          "1.0": 0.010682397959183673
+        },
+        "selection": "min_absolute_source_hit_gap_ties_smallest_p",
+        "probe_used_in_selection": false
+      },
+      "2": {
+        "selected_p": 0.8,
+        "source_spatial_dynamic_hit_fraction": 0.008769132653061224,
+        "source_random_dynamic_hit_fraction": 0.009088010204081634,
+        "source_absolute_hit_gap": 0.00031887755102041025,
+        "grid_measurements": {
+          "0.05": 0.00015943877551020407,
+          "0.1": 0.00047831632653061223,
+          "0.2": 0.0015943877551020409,
+          "0.3": 0.003348214285714286,
+          "0.4": 0.005739795918367347,
+          "0.6": 0.007174744897959183,
+          "0.8": 0.009088010204081634,
+          "1.0": 0.010682397959183673
+        },
+        "selection": "min_absolute_source_hit_gap_ties_smallest_p",
+        "probe_used_in_selection": false
+      }
+    }
+  }
+}
