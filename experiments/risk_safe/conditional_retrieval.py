@@ -231,8 +231,10 @@ class ScopedRetrieval:
 
     @torch.no_grad()
     def patch_map(self, image: Any, features: Sequence[torch.Tensor],
-                  cfg: Any, *, camera_id: int) -> torch.Tensor:
-        self.set_query(camera_id, (image.height, image.width))
+                  cfg: Any, *, camera_id: int,
+                  image_id: str | None = None) -> torch.Tensor:
+        self.set_query(camera_id, (image.height, image.width),
+                       image_id=image_id)
         maps, _ = self.bank.score_single_view(
             "p0", list(features), mode=0, view="id",
             topk_patches=cfg.topk_patches, mode_scoring="boost",
