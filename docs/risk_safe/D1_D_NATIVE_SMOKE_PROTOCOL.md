@@ -27,6 +27,14 @@ Unqueried frames are not encoded. This is legitimate for testing the state of a 
 
 Source files: experiments/risk_safe/native_bridge.py, experiments/risk_safe/d1d_native_smoke.py, tests/test_risk_safe_d1d.py.
 
+## R1 parity correction (2026-10-28): original native normalisation order
+
+The first GPU smoke failed at the authentic MemoryArm-vs-Shadow parity check with identical tensor shapes `(8,4096)`, but maximum absolute element difference `7.62939453125e-06`. This is **not proof of model failure** and is not a reason to loosen `torch.equal`. Root-cause code inspection found that the original V0.2 path first calls `impl.l2_normalize(features[layer].to(cb.device))` on the **full original feature matrix** (retaining original dtype, with the v22 `norm+eps` denominator), then gathers selected patch indices. The previous Shadow instead gathered patches first and used `torch.nn.functional.normalize(proposed.float(), dim=1)`. Those are mathematically similar but not bitwise equivalent, especially on half-precision tensors.
+
+The correction adds `normalized_native_candidate_rows()` and `already_normalized=True` for the strictly trusted GPU bridge. Full-image native normalisation is performed **before indexing**, followed by the exact dtype conversion and native Greedy `greedy_slot` without a second normalisation. D1-C's ordinary raw candidate API retains its non-native CPU mechanism role, and the historical V0.2 files remain unchanged. CPU regression tests now exercise the **actual original V0.2 MemoryArm.update** on 4096-dimensional float16 test features for both append and saturated-capacity paths.
+
+Run the first corrected GPU smoke in a NEW evidence directory, for example `outputs/risk_safe_sprint_20261027/d1d_audiojack_s0_q37_b16_normfix`, and pass the **same new path** to `--verify-only` and `git add`. Do not retroactively modify or overwrite older experimental evidence; a crash before the final output writer typically leaves no JSON output.
+
 ## Local commands — Windows PowerShell, exactly one command per line
 
 1. Check workspace before pulling:
