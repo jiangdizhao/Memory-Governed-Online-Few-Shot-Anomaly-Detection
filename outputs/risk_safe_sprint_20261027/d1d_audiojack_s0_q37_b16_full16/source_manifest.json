@@ -1,0 +1,61 @@
+{
+  "schema": "risk_safe.d1d.native_source.v1",
+  "git": {
+    "branch": "risk-safe-admission-sprint-20261027",
+    "head": "a5e086e378f456ef4f9dff6d3aaeb26bf6393ac4",
+    "head_short": "a5e086e378f4",
+    "tracked_modifications": [],
+    "git_available": true
+  },
+  "source_sha256": {
+    "experiments/risk_safe/d1d_native_smoke.py": "dccc883fbc27507575ab8b765bdc8e20197a495f28d36eff05cd5bc985405697",
+    "experiments/risk_safe/native_bridge.py": "9575214ea8d14ebe32a537fa15afa332446b41d66c1c8c85f890d2251eaef8f7",
+    "experiments/risk_safe/admission.py": "e2071bb59f43488b29a6d1894b9578d92b348eecc30499342c50508541241985",
+    "experiments/risk_safe/anchor_store.py": "6159bc45216df9f5edffbe85d7571f575c04f26862d966fe0427bbea48602c88",
+    "experiments/risk_safe/shadow_memory.py": "96094c2687a3ca0da40458f20fef217dea6c078da033205be91036f6c58c893e",
+    "experiments/risk_safe/preflight.py": "2070ba770ac36af06f688b0450c711d67b7bca526e3939178d559216535c25ba",
+    "experiments/risk_safe/d1b_protocol.py": "6d0f5b372de85c6c51aef16b2d4f5ddf0259d9eb27fe917cbb3d21c003b464e0",
+    "experiments/risk_safe/query_protocol.py": "83cfdff6867e9b8c2afe0ab4047f177e5b2814b4deafd63a6035a9dd06e16b2f",
+    "experiments/v02_memory.py": "3c4e247e3a41dc9acc8147a35aa892cf3f3571aca85beb4169809bd70ad48ae0",
+    "experiments/v02_architecture_core.py": "09cd7cbf8ef0101cd8dfc8c23fc4d0d6efb91c8d9ddf466ea6991bc463887a74",
+    "experiments/p0_protocol_audit.py": "b83918ec5aceb3ef63cca942fc9fb0e241559d9672d20bed422b15fcd48135e7",
+    "experiments/a0_a1_strict4_matched.py": "e916659681607bf75e097dd62379dcc363ccc3adf6f991d4108592997e1b53bf",
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a",
+    "tests/test_risk_safe_d1d.py": "154c9c5bb06201a02388bc6126a9c1bd81f819f17bd74c39095f1474ff6cbb40",
+    "docs/risk_safe/D1_D_NATIVE_SMOKE_PROTOCOL.md": "b35b8716ed39cf8d62766e0aabc70ac0314ce399d7b17c1d97de2ea75aa9534f"
+  },
+  "input_sha256": {
+    "realiad_class_json": "03333ade4def8710688fd8f23d568a1aaad55629115c36cf23662b0aa57fd267",
+    "d1b_query_manifest": "fd441f57fdcc015a3c16a7bbabd411d27ca4548b3f4737d9cc76ca8844e495c8"
+  },
+  "configuration": {
+    "class_name": "audiojack",
+    "support_seed": 0,
+    "query_seed": 37,
+    "budget": 16,
+    "max_query_events": 16,
+    "device": "cuda",
+    "math_sdpa": true,
+    "atol": 1e-05,
+    "rtol": 0.0001,
+    "dataset_root": "G:/dataset/realiad",
+    "json_dir": "G:/dataset/realiad/jsons/realiad_jsons",
+    "d1b_manifest_dir": "outputs/risk_safe_sprint_20261027/d1b_protocol_v1",
+    "gate": "UNFROZEN synthetic demo coefficients; audit only, NEVER commit",
+    "stream": "Q-A frozen random queried-event condensed replay",
+    "theta": "strict4 LOSO frozen",
+    "sidecar": "off",
+    "signed_correction": "off"
+  },
+  "result_sha256": "d1a75ca2785a7ddd1758212c43cbd3741625e278bb261f42b242c0cba8e279b6",
+  "environment": {
+    "python_version": "3.11.14",
+    "python_implementation": "CPython",
+    "platform": "Windows",
+    "torch_version": "2.0.1+cu117",
+    "device": "cuda",
+    "cuda_initialised": true,
+    "features_extracted": true
+  }
+}
