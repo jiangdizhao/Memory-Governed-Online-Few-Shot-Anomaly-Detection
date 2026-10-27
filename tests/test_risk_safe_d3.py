@@ -157,7 +157,8 @@ class ContextMaskTests(unittest.TestCase):
 
 class EvidenceContractTests(unittest.TestCase):
     def test_d3_argument_registry_is_mandatory(self):
-        args=pilot.parser().parse_args(["--json-dir","G:/dataset/realiad/jsons/realiad_jsons"])
+        args=pilot.parser().parse_args(["--json-dir","G:/dataset/realiad/jsons/realiad_jsons",
+            "--reference-d2a-summary","fixed/summary.json"])
         with self.assertRaises(NativeParityError):
             pilot.enforce_protocol(args)
         args.threshold_registry="some/threshold_registry.json"
@@ -167,7 +168,8 @@ class EvidenceContractTests(unittest.TestCase):
     def test_replay_preserves_frozen_b16(self):
         args=pilot.parser().parse_args(["--json-dir","x",
           "--threshold-registry","calib/threshold_registry.json",
-          "--fixed-quantile","0.90"])
+          "--fixed-quantile","0.90",
+          "--reference-d2a-summary","fixed/summary.json"])
         cfg=pilot.config(args)
         self.assertEqual(cfg["max_query_events"],16)
         self.assertEqual(cfg["probe_groups_per_type"],4)
@@ -175,6 +177,33 @@ class EvidenceContractTests(unittest.TestCase):
         self.assertFalse(cfg["probe_B_used"] if "probe_B_used" in cfg else
                          cfg["retrieval_uses_test_labels"])
         self.assertEqual(cfg["risk_gate"].split(":")[0],"NOT IMPLEMENTED")
+
+    def test_reference_parity_rejects_wrong_prototype_and_metrics(self):
+        reference = {
+            "schema":"risk_safe.d2.paired_native_dev_pilot.v1",
+            "completed": True, "full_budget_completed":True,
+            "source_d1b_tape_sha256":"tape",
+            "actual_query_count":16,"probe_image_count":40,
+            "config":{"fixed_quantile":0.9},
+            "fixed_training_normal_calibration":{"sha256":"registry"},
+            "per_arm":{
+                "greedy":{"actual_final_prototypes":104,"final_fnr":.5,"final_fpr":.1},
+                "causal_novelty":{"actual_final_prototypes":48,"final_fnr":.5,"final_fpr":.1},
+            }}
+        results = {
+            "greedy":{"global":{"n_written":104,"fnr":.5,"fpr":.1}},
+            "causal_novelty":{"global":{"n_written":48,"fnr":.5,"fpr":.1}},
+        }
+        self.assertTrue(pilot.verify_d2a_reference(
+            reference, calibrated={"quantile":"0.90","sha256":"registry"},
+            tape_digest="tape",result_arms=results,
+            expected_images=40)["passed"])
+        results["greedy"]["global"]["n_written"]=103
+        with self.assertRaises(NativeParityError):
+            pilot.verify_d2a_reference(
+                reference, calibrated={"quantile":"0.90","sha256":"registry"},
+                tape_digest="tape",result_arms=results,
+                expected_images=40)
 
     def test_collision_summary_explicit_topn_censoring(self):
         rows=[{"source":"greedy","label_offline_only":"1","score_erosion":".1",
