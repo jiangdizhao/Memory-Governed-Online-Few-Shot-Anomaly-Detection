@@ -137,6 +137,38 @@ class SourceOnlyHitCalibrationTests(unittest.TestCase):
             ctrl.enforce(args)
 
 
+class HistoricalSourceLineEndingTests(unittest.TestCase):
+    def test_git_lf_exact_and_windows_crlf_are_both_verified(self):
+        blob=b"def pilot():\n    return 1\n"
+        linux_hash=hashlib.sha256(blob).hexdigest()
+        windows_hash=hashlib.sha256(blob.replace(b"\n",b"\r\n")).hexdigest()
+        self.assertEqual(
+            ctrl.recorded_source_matches_git_blob(blob,linux_hash),
+            (True,"git_blob_exact"))
+        self.assertEqual(
+            ctrl.recorded_source_matches_git_blob(blob,windows_hash),
+            (True,"git_lf_to_windows_crlf"))
+
+    def test_actual_source_edits_not_accepted_as_line_endings(self):
+        blob=b"def pilot():\n    return 1\n"
+        altered=b"def pilot():\n    return 2\n"
+        altered_sha=hashlib.sha256(altered.replace(b"\n",b"\r\n")).hexdigest()
+        self.assertEqual(
+            ctrl.recorded_source_matches_git_blob(blob,altered_sha),
+            (False,"source_differs"))
+
+    def test_no_broad_whitespace_or_partial_line_ending_normalization(self):
+        blob=b"def pilot():\n    return 1\n"
+        changed=hashlib.sha256(b"def pilot():\r    return 1\r").hexdigest()
+        self.assertFalse(ctrl.recorded_source_matches_git_blob(blob,changed)[0])
+        mixed=b"def pilot():\r\n    return 1\n"
+        mixed_digest=hashlib.sha256(
+            mixed.replace(b"\n",b"\r\n")).hexdigest()
+        self.assertEqual(
+            ctrl.recorded_source_matches_git_blob(mixed,mixed_digest),
+            (False,"not_clean_lf_text"))
+
+
 class FrozenReferenceTests(unittest.TestCase):
     def test_reference_has_to_be_original_native_d3(self):
         with tempfile.TemporaryDirectory() as td:
@@ -149,6 +181,31 @@ class FrozenReferenceTests(unittest.TestCase):
                 {"schema":"bad"},{"retrieval_probe_scores.csv":""},
                 {"schema":"risk_safe.d3.conditional_retrieval_mechanism_pilot.v2"},
                 [])
+
+    def test_historical_source_manifest_accepts_only_windows_checkout_crlf(self):
+        previous="a"*40
+        source_hashes={
+            path:hashlib.sha256(
+                (path+"\n").encode("utf-8").replace(b"\n",b"\r\n")).hexdigest()
+            for path in ctrl.SOURCES}
+        old_manifest={
+            "git":{"head":previous,"git_available":True,
+                   "tracked_modifications":[]},
+            "source_sha256":source_hashes,
+            "input_sha256":{"index":"unchanged"},
+            "output_sha256":{"summary.json":"same"},
+            "config":{"q":0.90},
+            "environment":{"device":"cuda"}}
+        generated=copy.deepcopy(old_manifest)
+        generated["git"]["head"]="b"*40
+        generated["source_sha256"]={p:"f"*64 for p in ctrl.SOURCES}
+        def fake_git(argv,**kwargs):
+            path=argv[2].split(":",1)[1]
+            return SimpleNamespace(returncode=0,stdout=(path+"\n").encode("utf-8"))
+        with mock.patch.object(ctrl.pf,"_is_ancestor_commit",return_value=True), \
+             mock.patch.object(ctrl.subprocess,"run",side_effect=fake_git):
+            self.assertEqual(ctrl.verify_recorded_run_manifest(
+                old_manifest,generated),old_manifest)
 
     def test_historical_source_manifest_verification_without_mutation(self):
         previous="a"*40
