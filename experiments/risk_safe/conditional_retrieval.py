@@ -147,6 +147,7 @@ class ScopedRetrieval:
         self.policy = policy
         self.camera: int | None = None
         self.image_hw: tuple[int, int] | None = None
+        self.last_query_stats: dict | None = None
         self._original = native_bank._dN_min_fixed_dyn
         if len(native_bank.normal_dyn["p0"][0]["id"]) != 1:
             raise NativeParityError("Pilot requires one concat layer")
@@ -161,6 +162,7 @@ class ScopedRetrieval:
             raise NativeParityError("Missing image dimensions")
         self.camera = int(camera_id)
         self.image_hw = (int(image_hw[0]), int(image_hw[1]))
+        self.last_query_stats = None
 
     def attach(self):
         def override(native_self, cls_name, mode, view, layer, q):
@@ -182,6 +184,19 @@ class ScopedRetrieval:
                                  query_coords=uv)
             dyn = conditional_dynamic_distance(
                 self.impl, cbs, q, mask, k=native_self.knn_k_normal)
+            k_eff = min(int(native_self.knn_k_normal), cbs.size())
+            n_eligible = mask.sum(dim=1)
+            enough = n_eligible >= k_eff
+            dyn_wins = (dyn < fixed) & enough
+            self.last_query_stats = {
+                "n_query_patches": int(len(q)),
+                "n_native_topk_eligible_patches": int(enough.sum().item()),
+                "n_static_fallback_patches": int((~enough).sum().item()),
+                "n_dynamic_winner_patches": int(dyn_wins.sum().item()),
+                "eligible_prototype_pair_fraction": float(
+                    mask.float().mean().item()),
+                "effective_native_dynamic_k": k_eff,
+            }
             return torch.minimum(fixed, dyn), torch.full(
                 (len(q),), -1, device=q.device, dtype=torch.long)
         self.bank._dN_min_fixed_dyn = MethodType(override, self.bank)
