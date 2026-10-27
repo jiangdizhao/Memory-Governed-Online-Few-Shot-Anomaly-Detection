@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import unittest
+from types import SimpleNamespace
 import torch
 
 from experiments.risk_safe import native_bridge as b
@@ -73,6 +74,7 @@ class NativeBridgeContracts(unittest.TestCase):
     def setUp(self):
         self.bank = FakeVMB()
         self.impl = FakeImpl()
+        self.image = SimpleNamespace(width=32, height=32)
         self.features = (torch.tensor([[0., 1.], [-1., 0.]]),)
 
     def test_native_snapshot_and_independent_clone(self):
@@ -87,13 +89,13 @@ class NativeBridgeContracts(unittest.TestCase):
     def test_native_score_uses_unmodified_native_api(self):
         before = b.snapshot(self.bank).sha256()
         value, _ = b.native_score(
-            self.impl, self.bank, None, self.features, FakeCfg())
-        self.assertAlmostEqual(value, 1.0, places=6)
+            self.impl, self.bank, self.image, self.features, FakeCfg())
+        self.assertAlmostEqual(value, 2.0, places=6)
         self.assertEqual(b.snapshot(self.bank).sha256(), before)
 
     def test_untouched_native_parity(self):
         audit = b.verify_untouched_parity(
-            self.impl, self.bank, None, self.features, FakeCfg())
+            self.impl, self.bank, self.image, self.features, FakeCfg())
         self.assertTrue(audit["passed"])
         self.assertEqual(audit["abs_difference"], 0)
 
@@ -101,8 +103,9 @@ class NativeBridgeContracts(unittest.TestCase):
         current = b.snapshot(self.bank)
         shadow, _ = current.proposed((feature(0, 1),))
         adapter = b.NativeScoreAdapter(self.impl, self.bank, FakeCfg())
-        original = adapter((None, self.features), current)
-        after = adapter((None, self.features), shadow)
+        small = (feature(0, 1),)
+        original = adapter((self.image, small), current)
+        after = adapter((self.image, small), shadow)
         self.assertGreater(original, after)
         self.assertEqual(b.snapshot(self.bank).sha256(), current.sha256())
 
@@ -177,8 +180,8 @@ class NativeQueryLedgerContracts(unittest.TestCase):
         self.assertEqual(d1b.MAIN_BUDGETS, (16, 32, 64, 79))
 
     def test_frozen_gates_forbid_unregistered_scientific_setting(self):
-        args = run.parser().parse_args(["--budget", "8"])
-        self.assertNotIn(args.budget, d1b.MAIN_BUDGETS)
+        with self.assertRaises(SystemExit):
+            run.parser().parse_args(["--budget", "8"])
 
     def test_no_human_label_present_in_native_candidate_interface(self):
         import inspect
