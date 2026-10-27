@@ -92,6 +92,34 @@ def extract_v22_candidates(
 
 
 @torch.no_grad()
+def normalized_native_candidate_rows(
+        impl: Any, native_bank: Any,
+        full_features: Sequence[torch.Tensor],
+        selected_indices: Mapping[int, Sequence[int]], *,
+        keep: int) -> Tuple[torch.Tensor, ...]:
+    """Reproduce EXACT v02_memory.MemoryArm.update normalisation semantics.
+
+    In V0.2, the normalisation is performed ON THE FULL IMAGE FEATURE MATRIX:
+        q = impl.l2_normalize(features[layer].to(cb.device))
+        val = q[chosen_idx].reshape(1,-1).to(cb.device,dtype=cb.dtype)
+    Normalising only selected rows, upcasting to float32, or renormalising
+    already-normalised rows can change float16 prototype bits. This helper
+    deliberately calls the original v22 l2_normalize, without reimplementation.
+    """
+    codebooks = dynamic_codebooks(native_bank)
+    if len(full_features) != len(codebooks):
+        raise NativeParityError("Native feature/codebook layer mismatch")
+    patches = []
+    for layer, (features, cb) in enumerate(zip(full_features, codebooks)):
+        indices = list(selected_indices.get(layer, []))[:keep]
+        if not indices or min(indices) < 0 or max(indices) >= len(features):
+            raise NativeParityError(f"Invalid candidate indices for layer {layer}")
+        q = impl.l2_normalize(features.to(cb.device))
+        patches.append(q[indices].detach().clone())
+    return tuple(patches)
+
+
+@torch.no_grad()
 def native_score(impl: Any, bank: Any, image: Any,
                  features: Sequence[torch.Tensor], cfg: Any
                  ) -> Tuple[float, Any]:
@@ -171,7 +199,9 @@ def verify_native_update_parity(
         impl, static_amap, features, keep=keep)
     before = snapshot(native_memory_arm.bank)
     before_digest = before.sha256()
-    shadow, audit = before.proposed(selected)
+    normalized = normalized_native_candidate_rows(
+        impl, native_memory_arm.bank, features, selected_indices, keep=keep)
+    shadow, audit = before.proposed(normalized, already_normalized=True)
     native_memory_arm.update(
         impl, features, selected_indices, step,
         score=float(score), theta=float(theta), sigma=float(sigma))
@@ -189,7 +219,8 @@ def verify_native_update_parity(
             raise NativeParityError(
                 f"Layer {i}: genuine V0.2 Greedy != shadow. "
                 f"actual={tuple(actual.shape)}, shadow={tuple(predicted.shape)}, "
-                f"absmax={absmax}")
+                f"dtype={actual.dtype}, input_dtype={features[i].dtype}, "
+                f"absmax={absmax}; exact native full-matrix normalization required")
     if after.sha256() != shadow.sha256():
         raise NativeParityError("Greedy memory content digest mismatch")
     return {"keep_selected": keep, "native_selection_reason": reason,
