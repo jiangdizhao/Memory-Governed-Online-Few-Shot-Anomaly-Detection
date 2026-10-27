@@ -55,15 +55,15 @@ Run the first corrected GPU smoke in a NEW evidence directory, for example `outp
 
 5. Very small GPU score/update parity + query evidence audit:
 
-    & "D:\anaconda3\envs\torch\python.exe" -m experiments.risk_safe.d1d_native_smoke --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 16 --max-query-events 4 --device cuda --math-sdpa --d1b-manifest-dir "outputs/risk_safe_sprint_20261027/d1b_protocol_v1" --out-dir "outputs/risk_safe_sprint_20261027/d1d_audiojack_s0_q37_b16"
+    & "D:\anaconda3\envs\torch\python.exe" -m experiments.risk_safe.d1d_native_smoke --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 16 --max-query-events 4 --device cuda --math-sdpa --d1b-manifest-dir "outputs/risk_safe_sprint_20261027/d1b_protocol_v1" --out-dir "outputs/risk_safe_sprint_20261027/d1d_audiojack_s0_q37_b16_normfix"
 
 6. Read-only validation of resulting JSON, source and input hashes. This does not rerun DINO or test GPU bitwise determinism:
 
-    & "D:\anaconda3\envs\torch\python.exe" -m experiments.risk_safe.d1d_native_smoke --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 16 --max-query-events 4 --device cuda --math-sdpa --d1b-manifest-dir "outputs/risk_safe_sprint_20261027/d1b_protocol_v1" --out-dir "outputs/risk_safe_sprint_20261027/d1d_audiojack_s0_q37_b16" --verify-only
+    & "D:\anaconda3\envs\torch\python.exe" -m experiments.risk_safe.d1d_native_smoke --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 16 --max-query-events 4 --device cuda --math-sdpa --d1b-manifest-dir "outputs/risk_safe_sprint_20261027/d1b_protocol_v1" --out-dir "outputs/risk_safe_sprint_20261027/d1d_audiojack_s0_q37_b16_normfix" --verify-only
 
 7. After ALL commands pass, stage only the new outputs:
 
-    git add -- outputs/risk_safe_sprint_20261027/d1d_audiojack_s0_q37_b16
+    git add -- outputs/risk_safe_sprint_20261027/d1d_audiojack_s0_q37_b16_normfix
 
 8. Inspect staged evidence:
 
