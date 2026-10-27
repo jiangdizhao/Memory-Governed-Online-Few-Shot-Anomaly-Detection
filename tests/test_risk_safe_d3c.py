@@ -135,7 +135,7 @@ class SourceOnlyHitCalibrationTests(unittest.TestCase):
 class FrozenReferenceTests(unittest.TestCase):
     def test_reference_has_to_be_original_native_d3(self):
         with tempfile.TemporaryDirectory() as td:
-            with self.assertRaises(FileNotFoundError):
+            with self.assertRaises(NativeParityError):
                 ctrl.validate_reference_d3(Path(td))
 
     def test_replay_mismatch_fail_closed(self):
