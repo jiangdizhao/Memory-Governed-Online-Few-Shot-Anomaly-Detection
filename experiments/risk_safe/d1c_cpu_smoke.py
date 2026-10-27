@@ -151,11 +151,11 @@ def build_payloads() -> dict:
 def source_manifest(payloads: dict) -> dict:
     return {
         "schema": "risk_safe.d1c.source_manifest.v1",
-        "producing_git": pf.git_state(),
+        "git": pf.git_state(),
         "source_sha256": pf.source_hashes(SOURCE_FILES),
         "output_sha256": {n: pf.sha256_text(pf.json_text(v))
                           for n, v in payloads.items()},
-        "environment": pf.environment_block(),
+        "environment": {**pf.environment_block(), "device": "CPU synthetic tensors", "features_extracted": False},
         "status": "D1-C CPU-only synthetic smoke, not GPU/probe results",
     }
 
