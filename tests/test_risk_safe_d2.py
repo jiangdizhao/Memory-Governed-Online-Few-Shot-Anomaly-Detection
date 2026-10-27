@@ -12,7 +12,7 @@ from experiments.risk_safe import d2_native_replay as runner
 from experiments.risk_safe.d2_baselines import (
     BASELINES, BaselineState, candidate_novelty, propose_baseline)
 from experiments.risk_safe.d2_metrics import (
-    image_metrics, probe_deltas, risk_prediction_pairs)
+    image_metrics, probe_deltas, risk_prediction_pairs, online_gate_elapsed)
 from experiments.risk_safe.shadow_memory import GreedyBank
 from experiments.risk_safe.native_bridge import NativeParityError
 from experiments.risk_safe import preflight as pf
@@ -147,6 +147,19 @@ class ProbeAndRiskMetricTests(unittest.TestCase):
         ])
         self.assertEqual(x["status"], "descriptive_only_not_significance_test")
         self.assertGreater(x["spearman"], .9)
+
+
+class D2LatencyAccountingTests(unittest.TestCase):
+    def test_online_cost_excludes_offline_independent_probe(self):
+        self.assertAlmostEqual(online_gate_elapsed(.82, .78), .04)
+        self.assertAlmostEqual(online_gate_elapsed(.01, 0), .01)
+
+    def test_invalid_latency_components_fail_closed(self):
+        for total, probe in ((.3, .4), (-.1, 0), (1., -1.),
+                             (float("nan"), 0)):
+            with self.subTest(total=total, probe=probe):
+                with self.assertRaises(ValueError):
+                    online_gate_elapsed(total, probe)
 
 
 class ProtocolGuardTests(unittest.TestCase):
