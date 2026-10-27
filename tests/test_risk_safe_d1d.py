@@ -5,6 +5,7 @@ import copy
 import unittest
 from types import SimpleNamespace
 import torch
+import v02_memory as native_v02_memory
 
 from experiments.risk_safe import native_bridge as b
 from experiments.risk_safe import d1d_native_smoke as run
@@ -22,6 +23,8 @@ class Codebook:
         self.protos = features.detach().clone()
         self.K = cap
         self.feat_dim = int(features.shape[1])
+        self.device = self.protos.device
+        self.dtype = self.protos.dtype
 
     def size(self):
         return int(self.protos.shape[0])
@@ -61,6 +64,11 @@ class FakeImpl:
     @staticmethod
     def select_informative_normal_write(**kwargs):
         return True, 8, "easy_but_keep_small", {}
+
+    @staticmethod
+    def l2_normalize(x, eps=1e-12):
+        # Match the exact original v22 operation, retaining input dtype.
+        return x / (x.norm(dim=-1, keepdim=True) + eps)
 
 
 class FakeCfg:
@@ -145,6 +153,84 @@ class NativeBridgeContracts(unittest.TestCase):
             b.extract_v22_candidates(
                 self.impl, {"per_layer_summary": {"layer0": {
                     "topk_patch_idx": []}}}, self.features, keep=8)
+
+
+class NativePrecisionParityRegression(unittest.TestCase):
+    """Regression for the user's observed native-shadow diff=7.62939453125e-06."""
+
+    class RealGreedyMethod:
+        # Run the actual *unchanged* V0.2 update method against a bank with
+        # the same codebook attributes, not a hand-written approximate oracle.
+        name = "greedy_coreset"
+        update = native_v02_memory.MemoryArm.update
+
+        def __init__(self, bank):
+            self.bank = bank
+            self.events = self.patches = 0
+            self.accepted = self.skipped = 0
+            self.update_seconds = 0.
+
+        def _check_budget(self):
+            return 0
+
+    def test_half_precision_full_matrix_native_vs_shadow_append(self):
+        torch.manual_seed(91032)
+        native_bank = FakeVMB(cap=16)
+        cb = b.dynamic_codebooks(native_bank)[0]
+        cb.protos = cb.protos.half()
+        cb.dtype = cb.protos.dtype
+        inputs = (torch.randn(32, 4096, dtype=torch.float16),)
+        # Match the actual 4096-dimensional concatenated VisionAD features.
+        cb.feat_dim = 4096
+        cb.protos = inputs[0][:1].clone()
+        amap = {"per_layer_summary": {"layer0": {
+            "topk_patch_idx": list(range(8, 16))}}}
+        arm = self.RealGreedyMethod(native_bank)
+        report = b.verify_native_update_parity(
+            FakeImpl(), arm, inputs, amap,
+            score=.1, theta=.5, sigma=.1, step=7)
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["greedy"]["appended"], 8)
+        self.assertEqual(report["greedy"]["replaced"], 0)
+
+    def test_half_precision_full_matrix_native_vs_shadow_saturated(self):
+        torch.manual_seed(91033)
+        native_bank = FakeVMB(cap=2)
+        cb = b.dynamic_codebooks(native_bank)[0]
+        inputs = (torch.randn(32, 4096, dtype=torch.float16),)
+        cb.feat_dim = 4096
+        cb.protos = FakeImpl.l2_normalize(inputs[0][:2]).detach().clone()
+        cb.dtype = cb.protos.dtype
+        amap = {"per_layer_summary": {"layer0": {
+            "topk_patch_idx": list(range(8, 16))}}}
+        arm = self.RealGreedyMethod(native_bank)
+        report = b.verify_native_update_parity(
+            FakeImpl(), arm, inputs, amap,
+            score=.9, theta=.5, sigma=.1, step=7)
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["greedy"]["appended"], 0)
+        self.assertEqual(
+            report["greedy"]["replaced"] + report["greedy"]["skipped"], 8)
+
+    def test_normalized_native_candidates_selected_after_full_matrix(self):
+        torch.manual_seed(91034)
+        bank = FakeVMB(cap=16)
+        cb = b.dynamic_codebooks(bank)[0]
+        full = (torch.randn(32, 4096, dtype=torch.float16),)
+        cb.feat_dim = 4096
+        cb.protos = full[0][:1].clone()
+        cb.dtype = cb.protos.dtype
+        ids = {0: [11, 13, 9, 3]}
+        rows = b.normalized_native_candidate_rows(
+            FakeImpl(), bank, full, ids, keep=3)
+        exact = FakeImpl.l2_normalize(full[0])[ids[0][:3]]
+        self.assertTrue(torch.equal(rows[0], exact))
+        expected_bank = b.snapshot(bank)
+        shadow, audit = expected_bank.proposed(
+            rows, already_normalized=True)
+        self.assertTrue(torch.equal(
+            shadow.layers[0][1:], exact.to(dtype=cb.dtype)))
+        self.assertEqual(audit.appended, 3)
 
 
 class NativeQueryLedgerContracts(unittest.TestCase):
