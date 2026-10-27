@@ -75,3 +75,17 @@ def risk_prediction_pairs(rows: Sequence[Mapping[str, object]]) -> dict:
             "N_available_pairs": len(usable),
             "spearman": float(corr),
             "p_value_exploratory_not_iid": float(p)}
+
+def online_gate_elapsed(total_seconds: float, offline_probe_seconds: float) -> float:
+    """Exclude retrospective heldout-probe rescoring from online gate cost.
+
+    Timings are exploratory host-wall times, NOT synchronized CUDA kernel
+    benchmarks. The offline scorer is diagnostic-only and MUST NOT affect
+    admission latency comparisons to ordinary Greedy/novelty baselines.
+    """
+    total, offline = float(total_seconds), float(offline_probe_seconds)
+    if not (math.isfinite(total) and math.isfinite(offline)):
+        raise ValueError("Nonfinite timing")
+    if total < 0 or offline < 0 or offline > total + 1e-8:
+        raise ValueError("Invalid online/offline timing components")
+    return max(0., total - offline)
