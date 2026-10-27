@@ -163,16 +163,19 @@ class ProtocolGuardTests(unittest.TestCase):
         self.assertTrue(config["evaluation_only_probe_prohibited_from_online_policies"])
 
     def test_probe_sampler_keeps_both_labels_image_level(self):
-        @dataclass
-        class Rec:
-            sample_key: str
-            camera_id: int
-            is_good: bool
-        selected = [
-            Rec("normal-01", i, True) for i in range(1, 6)
-        ] + [
-            Rec("defect-01", i, i != 3) for i in range(1, 6)
-        ]
+        def record(key, camera, is_good):
+            return pf.ImageRecord(
+                path=f"test/{key}/C{camera}.png",
+                rel_path=f"{key}/C{camera}.png",
+                class_name="audiojack", split="test",
+                sample_key=key, directory_serial_key="S001",
+                capture_session=key, camera_id=camera,
+                timestamp=f"20240101010{camera}00",
+                is_good=is_good)
+        selected = [record("normal-01", i, True)
+                    for i in range(1, 6)] + [
+                    record("defect-01", i, i != 3)
+                    for i in range(1, 6)]
         from types import SimpleNamespace
         plan = SimpleNamespace(probe_a=tuple(selected))
         records, keys = runner.probe_records(plan, 1)
