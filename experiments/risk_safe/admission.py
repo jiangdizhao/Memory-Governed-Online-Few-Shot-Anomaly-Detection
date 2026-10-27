@@ -131,43 +131,53 @@ class CDARG:
 
         if greedy.appended + greedy.replaced == 0:
             reason = "no_memory_delta"
-        elif not defect:
-            # Do not misrepresent missing defect supervision as measured zero risk.
-            reason = "defect_risk_unavailable"
-        elif not normal:
-            reason = "normal_utility_unavailable"
         else:
-            normal_delta = []
-            for anchor in normal:
-                original, after = self._score(anchor, bank), self._score(anchor, shadow)
-                normal_delta.append(max(original - theta, 0.0) -
-                                    max(after - theta, 0.0))
-            normal_utility = sum(normal_delta) / len(normal_delta)
+            # Compute any *available* risk and benefit before applying the
+            # conservative fallback. Missing defects do not erase evidence of
+            # foregone normal utility; missing normals do not erase measured
+            # defect erosion.
+            if normal:
+                normal_delta = []
+                for anchor in normal:
+                    original = self._score(anchor, bank)
+                    after = self._score(anchor, shadow)
+                    normal_delta.append(max(original - theta, 0.0) -
+                                        max(after - theta, 0.0))
+                normal_utility = sum(normal_delta) / len(normal_delta)
 
-            weighted_risks = []
-            raw_risks = []
-            crossing = False
-            scale = max(self.config.sigma_normal, self.config.sigma_floor)
-            for anchor in defect:
-                original, after = self._score(anchor, bank), self._score(anchor, shadow)
-                erosion = max(original - after, 0.0)
-                raw_risks.append(erosion)
-                weighted_risks.append(anchor.weight * erosion / scale)
-                if (original >= theta + self.config.defect_margin and
-                        after < theta + self.config.defect_margin):
-                    crossing = True
-            defect_risk = sum(weighted_risks) / len(weighted_risks)
-            max_defect_erosion = max(raw_risks)
-            objective = normal_utility - self.config.lambda_defect * defect_risk
-            if crossing:
-                reason = "protected_defect_margin_crossing"
-            elif defect_risk > self.config.epsilon_defect:
-                reason = "defect_risk_budget_exceeded"
-            elif objective < self.config.tau_utility:
-                reason = "utility_risk_tradeoff_failed"
+            if defect:
+                weighted_risks = []
+                raw_risks = []
+                crossing = False
+                scale = max(self.config.sigma_normal, self.config.sigma_floor)
+                for anchor in defect:
+                    original = self._score(anchor, bank)
+                    after = self._score(anchor, shadow)
+                    erosion = max(original - after, 0.0)
+                    raw_risks.append(erosion)
+                    weighted_risks.append(anchor.weight * erosion / scale)
+                    if (original >= theta + self.config.defect_margin and
+                            after < theta + self.config.defect_margin):
+                        crossing = True
+                defect_risk = sum(weighted_risks) / len(weighted_risks)
+                max_defect_erosion = max(raw_risks)
+
+            if not defect:
+                # Defect risk remains None (unknown), never zero.
+                reason = "defect_risk_unavailable"
+            elif not normal:
+                reason = "normal_utility_unavailable"
             else:
-                accept = True
-                reason = "counterfactual_guard_pass"
+                objective = normal_utility - self.config.lambda_defect * defect_risk
+                if crossing:
+                    reason = "protected_defect_margin_crossing"
+                elif defect_risk > self.config.epsilon_defect:
+                    reason = "defect_risk_budget_exceeded"
+                elif objective < self.config.tau_utility:
+                    reason = "utility_risk_tradeoff_failed"
+                else:
+                    accept = True
+                    reason = "counterfactual_guard_pass"
 
         if bank.sha256() != prior_digest:
             raise ShadowError("Live bank was mutated during counterfactual scoring")
