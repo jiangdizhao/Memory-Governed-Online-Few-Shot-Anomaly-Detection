@@ -133,7 +133,8 @@ class ScopedRetrieval:
     frozen code, global class, the support bank, or prototype values.
     """
     def __init__(self, impl: Any, native_bank: Any,
-                 provenance: Sequence[Mapping], policy: str):
+                 provenance: Sequence[Mapping], policy: str, *,
+                 mask_provider=None):
         if policy not in POLICIES:
             raise NativeParityError("Invalid policy")
         if (getattr(native_bank, "enable_ltm_retrieval", False) or
@@ -145,6 +146,10 @@ class ScopedRetrieval:
         self.bank = native_bank
         self.provenance = tuple(provenance)
         self.policy = policy
+        if policy == "global" and mask_provider is not None:
+            raise NativeParityError("Cannot override exact native global retrieval")
+        self.mask_provider = mask_provider
+        self.query_id: str | None = None
         self.camera: int | None = None
         self.image_hw: tuple[int, int] | None = None
         self.last_query_stats: dict | None = None
@@ -155,12 +160,14 @@ class ScopedRetrieval:
         assert_provenance(self.provenance, cb.size())
         self.attach()
 
-    def set_query(self, camera_id: int, image_hw: tuple[int, int]):
+    def set_query(self, camera_id: int, image_hw: tuple[int, int], *,
+                  image_id: str | None = None):
         if int(camera_id) not in range(1, 6):
             raise NativeParityError("Camera must refer to physical C1-C5")
         if not image_hw[0] or not image_hw[1]:
             raise NativeParityError("Missing image dimensions")
         self.camera = int(camera_id)
+        self.query_id = image_id
         self.image_hw = (int(image_hw[0]), int(image_hw[1]))
         self.last_query_stats = None
 
@@ -179,9 +186,21 @@ class ScopedRetrieval:
                 return fixed, torch.full((len(q),), -1, device=q.device,
                                          dtype=torch.long)
             uv = coordinates(self.impl, len(q), self.image_hw).to(q.device)
-            mask = eligible_mask(self.provenance, self.policy,
-                                 query_camera=self.camera,
-                                 query_coords=uv)
+            if self.mask_provider is None:
+                mask = eligible_mask(self.provenance, self.policy,
+                                     query_camera=self.camera,
+                                     query_coords=uv)
+            else:
+                if self.query_id is None:
+                    raise NativeParityError(
+                        "Random-control masking requires stable image identity")
+                mask = self.mask_provider(
+                    self.provenance, self.policy,
+                    query_camera=self.camera, query_coords=uv,
+                    image_id=self.query_id)
+                if mask.dtype != torch.bool or mask.shape != (
+                        len(uv), cbs.size()):
+                    raise NativeParityError("Random control eligibility mask invalid")
             dyn = conditional_dynamic_distance(
                 self.impl, cbs, q, mask, k=native_self.knn_k_normal)
             k_eff = min(int(native_self.knn_k_normal), cbs.size())
@@ -203,9 +222,11 @@ class ScopedRetrieval:
 
     @torch.no_grad()
     def score(self, image: Any, features: Sequence[torch.Tensor],
-              cfg: Any, *, camera_id: int) -> tuple[float, dict]:
+              cfg: Any, *, camera_id: int,
+              image_id: str | None = None) -> tuple[float, dict]:
         from .native_bridge import native_score
-        self.set_query(camera_id, (image.height, image.width))
+        self.set_query(camera_id, (image.height, image.width),
+                       image_id=image_id)
         return native_score(self.impl, self.bank, image, features, cfg)
 
     @torch.no_grad()
