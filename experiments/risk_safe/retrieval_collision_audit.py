@@ -52,7 +52,7 @@ def main(argv=None):
     args = p.parse_args(argv)
     root = Path(args.result_dir)
     main = json.loads((root/"summary.json").read_text(encoding="utf-8"))
-    if main.get("schema") != "risk_safe.d3.conditional_retrieval_mechanism_pilot.v1" \
+    if main.get("schema") != "risk_safe.d3.conditional_retrieval_mechanism_pilot.v2" \
             or not main.get("completed") or not main.get("global_native_parity_pass"):
         raise ValueError("Not a complete, native-parity-verified D3 mechanism result")
     with (root/"collision_patch_attribution.csv").open(
