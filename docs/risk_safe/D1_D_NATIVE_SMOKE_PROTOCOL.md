@@ -6,7 +6,7 @@
 
 Goal: before running CDARG FNR experiments, verify that a full native v22 Shadow Bank produces the **same image score** as the live bank before mutation, and that a proposed shadow normal-patch update matches **the real V0.2 MemoryArm.update Greedy implementation** for a candidate selected with the native 8/16/24 patch selector.
 
-Native scorer is the unchanged a0_a1_strict4_matched.score_bank, which calls PatchVMB.score_sample_multiview with the recorded topk/boost/fusion/aggregation settings. Synthetic CosinePatchScorer is NOT used. Native Greedy replacement uses unchanged v02_memory.greedy_slot. A genuine MemoryArm.update is executed on an isolated parity-only arm, never on the online arm.
+Native scorer is the unchanged a0_a1_strict4_matched.score_bank, which calls PatchVMB.score_sample_multiview with the recorded topk/boost/fusion/aggregation settings. Synthetic CosinePatchScorer is NOT used. Native Greedy replacement uses unchanged v02_memory.greedy_slot. A genuine MemoryArm.update is executed on two isolated parity-only arms, never on the online arm: first the empty-bank append path, then a separately initialised forced-capacity K=2 per-layer case that must exercise the full-bank Greedy decision path without appending.
 
 Second, select the pre-registered **Q-A / Random order / 4-shot / seed 37 / budget 16** tape, and process only its first four queried images. Query membership, camera identity, event positions and tape digest must match the existing immutable D1-B query_policy_manifest.json. For each selected queried image, the script computes its static/dynamic score before opening its true camera-image label and then logs the causal anchor state. Verified-normal images receive a proposed native top-8/16/24 write and a CDARG audit-only evaluation. Verified-defect images are retained as entire scored camera images with historical label times. This first full-native anchor diagnostic uses whole-image scores and **not calibrated defect-patch localisation**.
 
@@ -80,7 +80,7 @@ Report the latest commit SHA. Review will be done directly against GitHub. Do no
 **Mandatory pass:**
 1. Python compilation and CPU tests pass.
 2. No native scorer clone-parity error; the live score and untouched native-deepcopy score differ no more than abs tolerance 1e-5 plus rel tolerance 1e-4. The recorded numeric difference must be inspected.
-3. Full true MemoryArm.update of the parity-only arm equals GreedyBank.proposed on every layer, with torch.equal and exact bank SHA-256. A mismatch is a research-engineering blocker, not something to hide by loosening thresholds.
+3. Full true MemoryArm.update of BOTH the initially empty parity-only arm and the deliberately K=2 saturated parity-only arm equals GreedyBank.proposed on every layer, with torch.equal and exact bank SHA-256. The saturated arm must append zero candidates. A mismatch is a research-engineering blocker, not something to hide by loosening thresholds.
 4. Frozen query event hash/stream hash/positions match D1-B; no support/probe overlaps.
 5. Online audit arm remains entirely unchanged (no CDARG commit); fixed reference bank SHA remains identical.
 6. Output JSON plus provenance file validate, and the source snapshot includes the original v22 and V0.2 files.
