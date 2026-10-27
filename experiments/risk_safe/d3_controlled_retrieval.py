@@ -20,9 +20,11 @@ from __future__ import annotations
 import argparse
 import copy
 import csv
+import hashlib
 import io
 import json
 import math
+import subprocess
 import sys
 import tempfile
 import time
@@ -227,6 +229,48 @@ def manifest(args, result, calib, outputs):
     }
 
 
+def verify_recorded_run_manifest(expected: dict, current: dict) -> dict:
+    """Verify evidence against its ACTUAL generating git revision.
+
+    A later verifier-only source fix changes the current source hashes.
+    Instead of replacing/forging the immutable manifest, independently read
+    every recorded source file from the ORIGINAL git commit, verify its
+    SHA-256, require clean recorded tracked state, and then compare ALL other
+    manifest fields (input/output hashes, configuration, environment).
+    The generating revision must be an ancestor of the current checkout.
+    """
+    recorded_git=expected.get("git")
+    if not isinstance(recorded_git,dict) or not recorded_git.get("git_available"):
+        raise NativeParityError("Generating Git revision unavailable")
+    old_head=recorded_git.get("head")
+    if not isinstance(old_head,str) or len(old_head)!=40 or any(
+            ch not in "0123456789abcdef" for ch in old_head.lower()):
+        raise NativeParityError("Invalid recorded full commit SHA")
+    if recorded_git.get("tracked_modifications") != []:
+        raise NativeParityError("Recorded run had modified tracked source")
+    if not pf._is_ancestor_commit(old_head,current.get("git",{}).get("head","")):
+        raise NativeParityError("Generating commit is not an ancestor of HEAD")
+    hashes=expected.get("source_sha256")
+    if not isinstance(hashes,dict) or set(hashes)!=set(SOURCES):
+        raise NativeParityError("Incomplete frozen D3-C source provenance")
+    for path,digest in hashes.items():
+        if not isinstance(digest,str) or len(digest)!=64:
+            raise NativeParityError("Malformed source SHA-256")
+        fetched=subprocess.run(
+            ["git","show",f"{old_head}:{path}"],cwd=str(ROOT),
+            capture_output=True,check=False)
+        if fetched.returncode or hashlib.sha256(fetched.stdout).hexdigest()!=digest:
+            raise NativeParityError(
+                f"Historical source does not match generating git commit: {path}")
+    adjusted=dict(current)
+    adjusted["git"]=recorded_git
+    adjusted["source_sha256"]=hashes
+    if adjusted!=expected:
+        raise NativeParityError(
+            "D3-C frozen manifest differs in inputs, outputs, config or environment")
+    return adjusted
+
+
 def verify(args):
     root=Path(args.out_dir)
     result=json.loads((root/SUMMARY).read_text(encoding="utf-8"))
@@ -238,12 +282,20 @@ def verify(args):
         if pf.sha256_file(root/fname)!=digest:
             raise NativeParityError(f"D3-C corrupted output: {fname}")
     baseline,_=validate_reference_d3(Path(args.reference_d3_dir))
-    if result.get("reference_d3_native_replay",{}).get("passed") is not True:
-        raise NativeParityError("D3-C reference native replay not verified")
+    reference=result.get("source_reference")
+    if (not isinstance(reference,dict)
+            or reference.get("passed") is not True
+            or reference.get("matched_native_scores")!=480
+            or float(reference.get("max_abs_score_difference",float("inf")))>1e-6):
+        raise NativeParityError("D3-C original 480-score native replay was not verified")
+    if (result.get("N_control_scores")!=800
+            or len(result.get("comparison",[]))!=20
+            or result.get("no_eval_probe_fit") is not True
+            or result.get("N_holdout_probe_images")!=40):
+        raise NativeParityError("D3-C control experimental evidence incomplete")
     csvs={name:(root/name).read_text(encoding="utf-8")
           for name in (SCORES,PAIRED)}
-    new=manifest(args,result,calib,csvs)
-    new=pf.preserve_committed_source_provenance(root/MANIFEST,new)
+    new=verify_recorded_run_manifest(expected,manifest(args,result,calib,csvs))
     pf.verify_json_output(root/MANIFEST,new)
     print(json.dumps({"D3_C":"read_only_sha_verified",
                       "native_source_replay":True,
