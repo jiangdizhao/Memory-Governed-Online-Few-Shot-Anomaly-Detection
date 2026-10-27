@@ -23,7 +23,8 @@ from . import query_protocol as qp
 from .admission import CDARG, CDARGConfig
 from .anchor_store import VerifiedImage
 from .native_bridge import (NativeScoreAdapter, NativeParityError,
-    extract_v22_candidates, native_score, snapshot, verify_untouched_parity,
+    extract_v22_candidates, normalized_native_candidate_rows,
+    native_score, snapshot, verify_untouched_parity,
     verify_native_update_parity)
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -307,12 +308,15 @@ def execute(args):
                 pred_defect=bool(fixed_score >= theta), novelty=0.0)
             if not allow:
                 raise NativeParityError("Unexpected native candidate selection failure")
-            patches, _ = extract_v22_candidates(
+            _, indices = extract_v22_candidates(
                 impl, amap, features, keep=keep)
+            native_rows = normalized_native_candidate_rows(
+                impl, arm.bank, features, indices, keep=keep)
             proposal = gate.evaluate(
                 current_verified_normal=verified, step=item.position,
                 bank=snapshot(arm.bank), ledger=ledger,
-                candidate_patches=patches, theta=theta)
+                candidate_patches=native_rows, theta=theta,
+                candidate_already_normalized=True)
             record["native_patch_keep"] = keep
             record["gate_counterfactual_audit_only"] = proposal.audit()
         else:
