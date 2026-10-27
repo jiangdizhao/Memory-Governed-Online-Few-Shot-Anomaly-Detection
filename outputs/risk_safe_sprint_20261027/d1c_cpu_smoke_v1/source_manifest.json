@@ -1,0 +1,33 @@
+{
+  "schema": "risk_safe.d1c.source_manifest.v1",
+  "git": {
+    "branch": "risk-safe-admission-sprint-20261027",
+    "head": "8c8bf8df5df364bdba303eda73e4d8911bf1559f",
+    "head_short": "8c8bf8df5df3",
+    "tracked_modifications": [],
+    "git_available": true
+  },
+  "source_sha256": {
+    "experiments/risk_safe/shadow_memory.py": "66963bc2b4eb9001b4d31786fa0ae406754f51b8d4474675e5ef280ca461e776",
+    "experiments/risk_safe/anchor_store.py": "6159bc45216df9f5edffbe85d7571f575c04f26862d966fe0427bbea48602c88",
+    "experiments/risk_safe/admission.py": "c3c619faa437ddb443ee4ebddede1a1ae3f82608dfa67f660283d306106c0725",
+    "experiments/risk_safe/d1c_cpu_smoke.py": "722df3a6bd610fa178b860dda538f8110ddd47a31dfeb513c2d86c0cdfd29627",
+    "tests/test_risk_safe_d1c.py": "aa2fd191c3315996ab5dfd0c4ae23c60a7410e7472ec5fe448fc7670d11c3c53",
+    "experiments/v02_memory.py": "3c4e247e3a41dc9acc8147a35aa892cf3f3571aca85beb4169809bd70ad48ae0",
+    "docs/risk_safe/D1_C_CDARG_DESIGN_GUARDRAILS_2026-10-28.md": "c5c8c6f4288d7d5462b9342aa9baedb5ad3d4ad504a3793943f25f6e658c76fe",
+    "docs/risk_safe/D1_C_CPU_IMPLEMENTATION.md": "1fcdfcb824a5290472bab4d951d441a9cc697d30da88ffe1dfa4838f4dc022ef"
+  },
+  "output_sha256": {
+    "synthetic_mechanism_results.json": "88feecf9cad67169eef249a05a5f3218d83b793c302cb6dcb1c23d6c41a0c296"
+  },
+  "environment": {
+    "python_version": "3.11.14",
+    "python_implementation": "CPython",
+    "platform": "Windows",
+    "torch_version": "2.0.1+cu117",
+    "device": "CPU synthetic tensors",
+    "cuda_initialised": false,
+    "features_extracted": false
+  },
+  "status": "D1-C CPU-only synthetic smoke, not GPU/probe results"
+}

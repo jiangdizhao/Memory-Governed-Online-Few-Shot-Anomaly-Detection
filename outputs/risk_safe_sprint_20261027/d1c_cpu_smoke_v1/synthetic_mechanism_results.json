@@ -1,0 +1,174 @@
+{
+  "schema": "risk_safe.d1c.synthetic_cpu_mechanism.v1",
+  "stage": "D1-C",
+  "kind": "CPU_CAUSAL_MECHANISM_SANITY_NOT_PERFORMANCE",
+  "configuration": {
+    "epsilon_defect": 0.02,
+    "lambda_defect": 1.0,
+    "tau_utility": 0.0,
+    "defect_margin": 0.05,
+    "sigma_normal": 1.0,
+    "sigma_floor": 0.01,
+    "calibration_status": "DEMONSTRATION_ONLY_NOT_CALIBRATED",
+    "scorer": "exact nearest cosine patch (synthetic; not v22 image score)",
+    "shadow_update": "exact v02_memory.greedy_slot for full capacity",
+    "sidecar": "off",
+    "signed_correction": "off",
+    "threshold": "fixed per case",
+    "dataset": "synthetic only; no Real-IAD decoded"
+  },
+  "scenarios": [
+    {
+      "scenario": "harmful_defect_crossing",
+      "gate": {
+        "event_id": "synthetic-query-3",
+        "step": 3,
+        "decision": "reject",
+        "reason": "protected_defect_margin_crossing",
+        "normal_utility": 1.5,
+        "defect_risk": 1.9200000166893005,
+        "max_defect_erosion": 1.9200000166893005,
+        "defect_margin_crossing": true,
+        "utility_minus_penalty": -0.42000001668930054,
+        "normal_anchor_count": 1,
+        "defect_anchor_count": 1,
+        "bank_before_sha256": "e04ddfb5b85a222d81bc89786f5af89f09e02ced84c8eb6fb885bcfd0df63883",
+        "shadow_bank_sha256": "6d7dc0c6d1b379bd94ea90de07e2a393859aa22b0c8384ceb90eb6e4eaea095d",
+        "theta_snapshot": 0.5,
+        "greedy": {
+          "added": 1,
+          "replaced": 0,
+          "skipped": 0,
+          "candidate_patches": 1
+        },
+        "committed": false
+      },
+      "heldout_evaluation_only": {
+        "mean_positive_score_erosion": 1.8413816094398499,
+        "max_positive_score_erosion": 1.8413816094398499,
+        "N_heldout_defect_images": 1,
+        "offline_only_not_visible_to_gate": true
+      },
+      "bank_after_sha256": "e04ddfb5b85a222d81bc89786f5af89f09e02ced84c8eb6fb885bcfd0df63883",
+      "bank_after_version": 0,
+      "bank_after_prototypes": 1,
+      "normal_anchor_count": 1,
+      "defect_anchor_count": 1
+    },
+    {
+      "scenario": "benign_normal_adaptation",
+      "gate": {
+        "event_id": "synthetic-query-3",
+        "step": 3,
+        "decision": "admit",
+        "reason": "counterfactual_guard_pass",
+        "normal_utility": 0.9,
+        "defect_risk": 0.0,
+        "max_defect_erosion": 0.0,
+        "defect_margin_crossing": false,
+        "utility_minus_penalty": 0.9,
+        "normal_anchor_count": 1,
+        "defect_anchor_count": 1,
+        "bank_before_sha256": "e04ddfb5b85a222d81bc89786f5af89f09e02ced84c8eb6fb885bcfd0df63883",
+        "shadow_bank_sha256": "29ef3183b52433c7b5510d02cfd602e9c26c90a966abfb395527925328a8b3dd",
+        "theta_snapshot": 0.1,
+        "greedy": {
+          "added": 1,
+          "replaced": 0,
+          "skipped": 0,
+          "candidate_patches": 1
+        },
+        "committed": true
+      },
+      "heldout_evaluation_only": {
+        "mean_positive_score_erosion": 0.0,
+        "max_positive_score_erosion": 0.0,
+        "N_heldout_defect_images": 1,
+        "offline_only_not_visible_to_gate": true
+      },
+      "bank_after_sha256": "29ef3183b52433c7b5510d02cfd602e9c26c90a966abfb395527925328a8b3dd",
+      "bank_after_version": 1,
+      "bank_after_prototypes": 2,
+      "normal_anchor_count": 1,
+      "defect_anchor_count": 1
+    },
+    {
+      "scenario": "no_defect_anchor",
+      "gate": {
+        "event_id": "synthetic-query-3",
+        "step": 3,
+        "decision": "reject",
+        "reason": "defect_risk_unavailable",
+        "normal_utility": 1.5,
+        "defect_risk": null,
+        "max_defect_erosion": null,
+        "defect_margin_crossing": null,
+        "utility_minus_penalty": null,
+        "normal_anchor_count": 1,
+        "defect_anchor_count": 0,
+        "bank_before_sha256": "e04ddfb5b85a222d81bc89786f5af89f09e02ced84c8eb6fb885bcfd0df63883",
+        "shadow_bank_sha256": "6d7dc0c6d1b379bd94ea90de07e2a393859aa22b0c8384ceb90eb6e4eaea095d",
+        "theta_snapshot": 0.5,
+        "greedy": {
+          "added": 1,
+          "replaced": 0,
+          "skipped": 0,
+          "candidate_patches": 1
+        },
+        "committed": false
+      },
+      "heldout_evaluation_only": {
+        "mean_positive_score_erosion": 1.8413816094398499,
+        "max_positive_score_erosion": 1.8413816094398499,
+        "N_heldout_defect_images": 1,
+        "offline_only_not_visible_to_gate": true
+      },
+      "bank_after_sha256": "e04ddfb5b85a222d81bc89786f5af89f09e02ced84c8eb6fb885bcfd0df63883",
+      "bank_after_version": 0,
+      "bank_after_prototypes": 1,
+      "normal_anchor_count": 1,
+      "defect_anchor_count": 0
+    },
+    {
+      "scenario": "full_capacity_harmful_replacement",
+      "gate": {
+        "event_id": "synthetic-query-3",
+        "step": 3,
+        "decision": "reject",
+        "reason": "protected_defect_margin_crossing",
+        "normal_utility": 1.4949371814727783,
+        "defect_risk": 1.887000024318695,
+        "max_defect_erosion": 1.887000024318695,
+        "defect_margin_crossing": true,
+        "utility_minus_penalty": -0.39206284284591675,
+        "normal_anchor_count": 1,
+        "defect_anchor_count": 1,
+        "bank_before_sha256": "9f997d2544687e0f7232ac261208b43db564ca961130aed28c23c0e7458f2ff6",
+        "shadow_bank_sha256": "1d4453a39b215a9c69a390e5fbec1db4995fd47e83f8208f61acc340eec724fb",
+        "theta_snapshot": 0.5,
+        "greedy": {
+          "added": 0,
+          "replaced": 1,
+          "skipped": 0,
+          "candidate_patches": 1
+        },
+        "committed": false
+      },
+      "heldout_evaluation_only": {
+        "mean_positive_score_erosion": 1.797496497631073,
+        "max_positive_score_erosion": 1.797496497631073,
+        "N_heldout_defect_images": 1,
+        "offline_only_not_visible_to_gate": true
+      },
+      "bank_after_sha256": "9f997d2544687e0f7232ac261208b43db564ca961130aed28c23c0e7458f2ff6",
+      "bank_after_version": 0,
+      "bank_after_prototypes": 2,
+      "normal_anchor_count": 1,
+      "defect_anchor_count": 1
+    }
+  ],
+  "pass": true,
+  "N_cases": 4,
+  "CUDA_initialised": false,
+  "native_v22_image_scorer_parity_tested": false
+}
