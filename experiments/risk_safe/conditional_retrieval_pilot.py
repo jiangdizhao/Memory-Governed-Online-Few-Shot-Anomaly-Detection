@@ -199,12 +199,6 @@ def run(args):
             e.sample_key for e in tape.events}:
         raise NativeParityError("Q-A/probe leakage")
     metadata = {r.path: r for phase in plan.phases for r in phase}
-    cfg = p0.Config(
-        device=args.device, augmentation_seed=0, bank_seed=0,
-        fixed_capacity=25000, fixed_per_image=5000,
-        augmentations=4, include_identity=False, multiplier=2.5,
-        feature_fuse="concat", topk_patches=32, image_aggregation="max",
-        img_topk=64, image_quantile=.95, knn=5) if False else None
     # Keep exactly the D2-A configuration names / values, no approximations.
     cfg = p0.Config(
         device=args.device, augmentation_seed=0, bank_seed=0,
