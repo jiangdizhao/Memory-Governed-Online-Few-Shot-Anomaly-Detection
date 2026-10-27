@@ -109,7 +109,8 @@ class CDARG:
     def evaluate(self, *, current_verified_normal: VerifiedImage,
                  step: int, bank: GreedyBank, ledger: AnchorLedger,
                  candidate_patches: Sequence[torch.Tensor],
-                 theta: float) -> AdmissionProposal:
+                 theta: float,
+                 candidate_already_normalized: bool = False) -> AdmissionProposal:
         if not current_verified_normal.queried or current_verified_normal.label != "normal":
             raise AdmissionProtocolError("Normal admission requires queried image-level normal feedback")
         if step != current_verified_normal.label_revealed_step:
@@ -119,7 +120,8 @@ class CDARG:
 
         normal, defect = ledger.prior(step)  # excludes current/late evidence
         prior_digest = bank.sha256()
-        shadow, greedy = bank.proposed(candidate_patches)
+        shadow, greedy = bank.proposed(
+            candidate_patches, already_normalized=candidate_already_normalized)
         shadow_digest = shadow.sha256()
         normal_utility: Optional[float] = None
         defect_risk: Optional[float] = None
