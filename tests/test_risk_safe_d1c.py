@@ -236,6 +236,7 @@ class CDARGCausalRiskTests(unittest.TestCase):
             candidate_patches=[row(0, 1)], theta=0.1)
         self.assertEqual(proposal.reason, "defect_risk_unavailable")
         self.assertIsNone(proposal.defect_risk)
+        self.assertGreater(proposal.normal_utility, 0)  # foregone adaptation is measurable
         self.assertIsNone(proposal.defect_margin_crossing)
         self.assertFalse(CDARG.commit_if_accepted(proposal, self.bank))
         self.assertEqual(self.bank.sha256(), before)
