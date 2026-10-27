@@ -582,6 +582,31 @@ def run(args):
         })
         results[name] = summary
     pred_rows = [r for r in candidate_rows if r["method"] == "cdarg"]
+    initial_static_probe = probe_base["static"]
+    identifiability = {
+        "theta_fixed_used": float(theta),
+        "theta_loso_reference": float(theta_loso),
+        "initial_static_probe_fnr": float(initial_static_probe["fnr"]),
+        "initial_static_probe_fpr": float(initial_static_probe["fpr"]),
+        "initial_static_probe_auroc": float(initial_static_probe["auroc"]),
+        "initial_probe_fnr_at_ceiling": bool(initial_static_probe["fnr"] >= 1.0),
+        "initial_probe_fpr_at_floor": bool(initial_static_probe["fpr"] <= 0.0),
+        "N_cdarg_candidates": len(pred_rows),
+        "N_cdarg_normal_benefit_positive": sum(
+            r["normal_utility"] is not None and float(r["normal_utility"]) > 0.0
+            for r in pred_rows),
+        "N_cdarg_risk_available": sum(
+            r["defect_risk"] is not None for r in pred_rows),
+        "N_cdarg_defect_margin_crossings": sum(
+            r["defect_margin_crossing"] is True for r in pred_rows),
+        "interpretation": (
+            "Continuous defect-score erosion is interpretable regardless "
+            "of binary FNR saturation; FNR=1 at baseline has no positive "
+            "degradation headroom. Threshold was chosen from independent "
+            "training-normal data, never probe outcomes."
+            if fixed_threshold is not None else
+            "Historical LOSO reference-only baseline; threshold may be saturated."),
+    }
     payload = {
         "schema": SCHEMA, "completed": True, "stage": "D2",
         "kind": "REAL_V22_MEMORY_ADMISSION_DEVELOPMENT_PILOT",
@@ -599,6 +624,7 @@ def run(args):
         "theta0": theta, "sigma_normal_used": sigma,
         "theta_loso_reference": theta_loso, "sigma_loso": sigma_loso,
         "fixed_training_normal_calibration": fixed_threshold,
+        "threshold_identifiability_audit": identifiability,
         "source_d1b_tape_sha256": tape.digest,
         "initial_static_support": fixed_profile,
         "per_arm": results,
