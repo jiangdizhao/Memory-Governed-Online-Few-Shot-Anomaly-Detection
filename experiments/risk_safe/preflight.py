@@ -2081,8 +2081,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     payloads, configuration, fingerprint = build_payloads(
         dataset_root, json_dir, split_config, budgets)
-    payloads[OUTPUT_SOURCE] = build_source_manifest(
-        configuration, fingerprint, payloads)
+    payloads[OUTPUT_SOURCE] = preserve_committed_source_provenance(
+        out_dir / OUTPUT_SOURCE,
+        build_source_manifest(configuration, fingerprint, payloads))
 
     statuses = {}
     for name in OUTPUT_FILES:
@@ -2190,6 +2191,49 @@ def write_json_idempotent(path: Path, payload: Any) -> str:
         handle.write(text)
     os.replace(temporary, path)
     return "created"
+
+
+def _is_ancestor_commit(older: str, current: str) -> bool:
+    """True only if Git proves a fast-forward ancestry relation."""
+    if not older or not current:
+        return False
+    try:
+        result = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", older, current],
+            cwd=str(ROOT), capture_output=True, check=False)
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
+def preserve_committed_source_provenance(
+        path: Path, new_manifest: Mapping[str, Any]) -> Dict[str, Any]:
+    """Retain the original run's Git snapshot after a later commit.
+
+    Source bytes, dataset hashes, configuration and output hashes must STILL
+    match exactly. Only the historical Git metadata can be pinned, and only
+    when Git proves that the original run commit is an ancestor of HEAD.
+    This permits committing the run's untracked code/output files without
+    invalidating an otherwise byte-identical preflight. It never silently
+    overwrites evidence after code, data or protocol changes.
+    """
+    prospective = dict(new_manifest)
+    if not path.is_file():
+        return prospective
+    try:
+        historical = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return prospective  # normal idempotent reader will fail closed
+    if not isinstance(historical, dict):
+        return prospective
+    old_git = historical.get("git")
+    new_git = prospective.get("git")
+    if not isinstance(old_git, dict) or not isinstance(new_git, dict):
+        return prospective
+    if _is_ancestor_commit(str(old_git.get("head") or ""),
+                           str(new_git.get("head") or "")):
+        prospective["git"] = old_git
+    return prospective
 
 
 def verify_json_output(path: Path, payload: Any) -> str:
