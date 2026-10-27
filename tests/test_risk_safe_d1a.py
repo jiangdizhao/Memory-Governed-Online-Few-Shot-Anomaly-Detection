@@ -563,6 +563,36 @@ class ReplayTests(unittest.TestCase):
         self.assertNotEqual(baseline.disclosures[0].label,
                             changed.disclosures[0].label)
 
+    def test_prediction_interface_hides_label_encoded_file_names(self):
+        """A controller cannot infer OK/NG from the dataset path pre-query."""
+        class InspectingAdmission(qp.PassiveAdmission):
+            def predict(self, step, image):
+                self_seen = tuple(f.name for f in fields(image))
+                self.assert_no_label_tokens = self_seen
+                forbidden = ("path", "rel_path", "sample_key", "label",
+                             "is_good", "anomaly_class", "timestamp")
+                if any(hasattr(image, name) for name in forbidden):
+                    raise AssertionError("Pre-query observation exposed identity/label")
+                if "OK" in image.observation_handle or "NG" in image.observation_handle:
+                    raise AssertionError("Opaque handle encodes label")
+                return super().predict(step, image)
+
+        method = InspectingAdmission()
+        qp.replay_shared_tape(self.stream, self.tape, self.labels,
+                              {"inspector": method})
+        self.assertEqual(len(method.predictions), len(self.stream))
+        self.assertEqual(set(method.assert_no_label_tokens),
+                         {"position", "observation_handle", "camera_id", "phase"})
+
+    def test_public_observation_is_opaque_for_unqueried_images(self):
+        for image in self.stream[:10]:
+            public = qp.PublicObservation.from_stream(image)
+            self.assertFalse(hasattr(public, "path"))
+            self.assertFalse(hasattr(public, "sample_key"))
+            self.assertFalse(hasattr(public, "rel_path"))
+            self.assertEqual(public.observation_handle,
+                             f"observation:{image.position}")
+
     def test_replay_fails_without_a_label(self):
         labels = dict(self.labels)
         labels.pop(self.tape.events[0].path)
