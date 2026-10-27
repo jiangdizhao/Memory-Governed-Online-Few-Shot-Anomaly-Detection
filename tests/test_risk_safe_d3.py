@@ -102,9 +102,47 @@ class ContextMaskTests(unittest.TestCase):
         native = cb.nearest(q, relax=True,k=5)[0]
         self.assertTrue(torch.equal(actual, native))
         self.assertAlmostEqual(actual.item(), .5)
+        # The prior implementation averaged only the selected good match,
+        # producing an artificially low distance (0 instead of native 0.5).
+        # This silently broke the global <= conditional invariant on GPU.
         only_first = torch.tensor([[True,False]])
         one = conditional_dynamic_distance(FakeImpl, cb, q, only_first,k=5)
-        self.assertAlmostEqual(one.item(), 0., places=6)
+        self.assertTrue(torch.isinf(one).all())
+
+    def test_mixed_eligibility_fallback_and_native_topk_monotonicity(self):
+        # One near match among six: previously averaging that one caused
+        # 'Scoped memory improved more than global memory' at real GPU score.
+        # With fixed native k=5, four eligible => Static fallback (+inf).
+        cb = CB([[1.,0.], [0.,1.], [0.,1.], [0.,1.], [0.,1.], [0.,1.]])
+        q = torch.tensor([[1.,0.], [1.,0.], [1.,0.]])
+        mask = torch.tensor([
+            [True, False, False, False, False, False],
+            [True, True, True, True, True, False],
+            [True, True, True, True, True, True],
+        ], dtype=torch.bool)
+        dist = conditional_dynamic_distance(FakeImpl, cb, q, mask, k=5)
+        global_dist = cb.nearest(q, relax=True, k=5)[0]
+        self.assertTrue(torch.isinf(dist[0]))
+        self.assertGreaterEqual(dist[1].item()+1e-7,global_dist[1].item())
+        self.assertTrue(torch.equal(dist[2:3],global_dist[2:3]))
+
+    def test_two_native_prototypes_but_only_one_allowed_fails_closed(self):
+        # k_eff=min(5,M=2)=2, NOT min(5, eligible=1).
+        cb = CB([[1.,0.], [0.,1.]])
+        q = torch.tensor([[1.,0.]])
+        mask = torch.tensor([[True,False]], dtype=torch.bool)
+        scoped = conditional_dynamic_distance(FakeImpl, cb, q, mask, k=5)
+        self.assertTrue(torch.isinf(scoped).all())
+
+    def test_bad_k_and_bad_mask_dtype_rejected(self):
+        cb = CB([[1.,0.]])
+        q = torch.tensor([[1.,0.]])
+        with self.assertRaises(NativeParityError):
+            conditional_dynamic_distance(FakeImpl,cb,q,
+                                         torch.tensor([[True]]),k=0)
+        with self.assertRaises(NativeParityError):
+            conditional_dynamic_distance(FakeImpl,cb,q,
+                                         torch.tensor([[1]]),k=5)
 
     def test_no_eligible_dynamic_returns_infinity(self):
         d=conditional_dynamic_distance(FakeImpl,CB([[0,1]]),
