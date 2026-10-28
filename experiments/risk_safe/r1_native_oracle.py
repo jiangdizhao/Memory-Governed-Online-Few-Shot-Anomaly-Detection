@@ -71,6 +71,8 @@ def parser():
     p.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
     p.add_argument("--math-sdpa", action="store_true")
     p.add_argument("--d1b-manifest-dir", default=d1d.DEFAULT_D1B)
+    p.add_argument("--r0-reference-summary",
+                   help="Optional fixed B128 R0 result for strict matched-Greedy confusion/threshold parity")
     p.add_argument("--out-dir")
     p.add_argument("--verify-only", action="store_true")
     return p
@@ -376,6 +378,39 @@ def run(args):
         full_metrics[name] = evaluate_scores(full_labels, static_full,
                                              full_scores, theta,
                                              lambda_defect=args.lambda_defect)
+    r0_parity = None
+    if args.r0_reference_summary is not None:
+        r0_path = Path(args.r0_reference_summary)
+        r0 = json.loads(r0_path.read_text(encoding="utf-8"))
+        r0_cfg = r0["config"]
+        expected_cfg = (args.class_name, args.support_seed, args.query_seed,
+                        args.budget, args.theta_mode)
+        received_cfg = (r0_cfg["class_name"],r0_cfg["support_seed"],
+                        r0_cfg["query_seed"],r0_cfg["budget"],r0_cfg["theta_mode"])
+        if expected_cfg != received_cfg or args.capacity not in r0_cfg["capacities"]:
+            raise R1ProtocolError("R0 reference protocol mismatch")
+        if r0.get("tape_sha256") != tape.digest:
+            raise R1ProtocolError("R0 query tape differs from R1")
+        if r0.get("fixed_bank_sha256") != fixed_profile["sha256"]:
+            raise R1ProtocolError("R0 static normal bank differs from R1")
+        if abs(float(r0["theta0"])-theta) > 1e-8:
+            raise R1ProtocolError("R0 threshold differs from R1")
+        reference = r0["probe_metrics"]
+        checks = {}
+        for name,r0name in (("static","static"),("greedy_all",str(args.capacity))):
+            observed = full_metrics[name]
+            expected = reference[r0name]
+            for key in ("tp","tn","fp","fn","N"):
+                actual = (observed["n_images"] if key == "N" else observed[key])
+                if actual != expected[key]:
+                    raise R1ProtocolError(
+                        f"R0/R1 native scoring parity FAILED: {name}/{key}: "
+                        f"R1={actual}, R0={expected[key]}")
+            checks[name] = {k:observed["n_images"] if k=="N" else observed[k]
+                            for k in ("N","tp","tn","fp","fn")}
+        r0_parity = dict(passed=True, reference=str(r0_path),
+                         reference_sha256=hashlib.sha256(r0_path.read_bytes()).hexdigest(),
+                         compared=checks, scope="threshold + static memory + Q-A + full Probe-A confusion")
     frontier = frontier_by_admission_count(search["leaf_rows"])
     summary = dict(schema=SCHEMA,
         status=("COMPLETE" if not args.max_normal_events else "PREFIX_SMOKE_INCOMPLETE"),
@@ -400,7 +435,8 @@ def run(args):
             max_normal_events=args.max_normal_events,
             search_groups_per_type=args.search_groups_per_type,
             lambda_defect=args.lambda_defect, theta_mode=args.theta_mode,
-            probe_cache_device=args.probe_cache_device, device=args.device),
+            probe_cache_device=args.probe_cache_device, device=args.device,
+            r0_reference_summary=args.r0_reference_summary),
         search_status=search["status"], globally_exhaustive=search["globally_exhaustive"],
         evaluated_terminal_states=search["evaluated_leaves"],
         theoretical_decision_sequences=str(search["total_possible_leaves"]),
@@ -413,6 +449,7 @@ def run(args):
         oracle_n_effective_updates=oracle.effective_updates,
         oracle_memory_sha256=oracle.bank.sha256(),
         greedy_memory_sha256=greedy_all.bank.sha256(),
+        r0_reference_parity=r0_parity,
         score_search_subset=searched,
         score_disjoint_probe_a_audit=audit_metrics,
         score_all_probe_a_development=full_metrics,
