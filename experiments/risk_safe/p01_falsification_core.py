@@ -48,13 +48,12 @@ def select_matched(records: Sequence[dict], target: int, *, seed: int) -> dict:
 
 
 def normal_q90(scores: Sequence[float]) -> float:
-    """Same linear 0.9 quantile convention as original D2 threshold fitter."""
+    """Same HIGHER order statistic as the original D2 threshold fitter."""
     z = sorted(float(x) for x in scores)
     if len(z) != 64 or any(not math.isfinite(x) for x in z):
         raise FalsificationProtocolError("Require exactly 64 normal training scores")
-    pos = .90 * (len(z) - 1)
-    i = int(math.floor(pos))
-    return z[i] + (pos-i) * (z[min(i+1,len(z)-1)]-z[i])
+    rank = math.ceil(.90 * (len(z) - 1))
+    return z[rank]
 
 
 def metrics(y: Sequence[int], scores: Sequence[float], theta: float) -> dict:
