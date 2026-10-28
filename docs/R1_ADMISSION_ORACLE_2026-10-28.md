@@ -109,6 +109,7 @@ After `git push` succeeds, tell the assistant only **“R1 结果已经推送 Gi
 
 - `r1_summary.json`: exact/beam status, search/audit/full Probe-A metrics for Static, Greedy-all, Oracle-found, score calls, selections and causal/fairness caveats
 - `r1_queries.csv`: all Q-A events, verified labels and static proposal sizes; labels are shown retrospectively only
+- `r1_event_shadow.csv`: chronological Greedy-all prefix pre/post native counterfactual on Oracle SEARCH subset, per queried-normal proposal; uses NO disjoint audit labels. Negative deltas and no-op proposals are kept rather than clipped
 - `r1_search_states.csv`: all exact terminal states or surviving beam states, admission bitstrings and metrics
 - `r1_frontier_by_count.csv`: best balanced-accuracy point for each observed admission count; only exhaustive for exact mode
 - `r1_search_probe_scores.csv` / `r1_audit_probe_scores.csv`: image-level paired scores, group IDs and labels for diagnosis, audit disjointness
