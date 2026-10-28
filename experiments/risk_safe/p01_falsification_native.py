@@ -405,7 +405,7 @@ def run(args):
             oracle_summary=args.oracle_summary,
             r0_reference_summary=args.r0_reference_summary),
         frozen_theta_q90=frozen_theta,
-        calibration_formula="empirical 90th percentile, linear interpolation of 64 TRAIN normals; bank-specific end-of-stream normal-only calibration",
+        calibration_formula="empirical 90th percentile HIGHER rank=ceil(0.9*(64-1))=57 (zero-based) of 64 TRAIN normals; bank-specific end-of-stream normal-only calibration",
         n_query_events=n_use,n_verified_normal=n_normal,
         n_queried_defect=n_use-n_normal,n_probe_images=len(eval_recs),
         n_probe_normal=sum(y==0 for y in labels),
