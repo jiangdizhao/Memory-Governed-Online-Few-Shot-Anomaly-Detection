@@ -28,6 +28,7 @@ from .native_bridge import (NativeParityError, install_on_clone,
     dynamic_codebooks, extract_v22_candidates, install_on_live, native_score,
     normalized_native_candidate_rows, snapshot, verify_untouched_parity)
 from .d2_metrics import image_metrics, probe_deltas
+from .d2_fixed_threshold import fit_fixed_normal_thresholds
 from .r0_opportunity import integers, native_output_name, probe_subset
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -59,6 +60,8 @@ def build_parser():
     p.add_argument("--anchors-per-label", type=int, default=4,
                    help="Most recent prior verified images per label for shadow audits")
     p.add_argument("--probe-eval", choices=("none", "final"), default="final")
+    p.add_argument("--theta-mode", choices=("loso", "train64-q90"), default="loso",
+                   help="q90 uses additional 64 independent verified normal training samples")
     p.add_argument("--probe-sample-groups-per-type", type=int, default=24)
     p.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     p.add_argument("--math-sdpa", action="store_true")
@@ -173,6 +176,19 @@ def run(args):
     theta_info = p0.threshold_from_scores(loso, 2.5)
     theta = float(theta_info["theta"])
     sigma = float(theta_info["sigma"])
+    calibration = {"mode": "loso", "extra_normal_images": 0}
+    if args.theta_mode == "train64-q90":
+        normal_scores = [float(p0.score_image(impl, backbone, fixed, rec.path, cfg))
+                         for rec in plan.history]
+        if len(normal_scores) != 64:
+            raise RuntimeError("Expected exactly 64 reserved calibration normal images")
+        fitted = fit_fixed_normal_thresholds(normal_scores)
+        theta = float(fitted["0.90"]["theta"])
+        sigma = float(__import__("statistics").stdev(normal_scores))
+        calibration = {"mode": "train64-q90", "extra_normal_images": 64,
+                       "calibration_sample_keys": [rec.sample_key for rec in plan.history],
+                       "q90": theta, "sigma": sigma,
+                       "no_probe_or_stream_used": True}
     del refs
     settings = v02.make_memory_settings(fixed)
     arms, versions = {}, {}
@@ -319,14 +335,17 @@ def run(args):
         not_full_prequential=True,
         causal_scope="shared external Q-A; only queried observations encoded; Sidecar/Correction/LTM off",
         score_source="native VisionAD v22 top5; frozen static four-shot; per-capacity native Greedy",
-        threshold_scope="strict 4-shot LOSO diagnostic (n=4); NOT validated operating point",
-        calibration_extra_normal_count=0,
+        threshold_scope=("strict 4-shot LOSO diagnostic (n=4)" if args.theta_mode == "loso"
+                         else "extra 64 reserved normal calibration images q90; NOT 4-shot-total"),
+        calibration_extra_normal_count=calibration["extra_normal_images"],
+        calibration=calibration,
         no_probe_b_access=True, probe_a_offline_only=True,
         config=dict(class_name=args.class_name, support_seed=args.support_seed,
                     query_seed=args.query_seed, budget=args.budget,
                     capacities=list(caps), max_query_events=args.max_query_events,
                     audit_every=args.audit_every, anchors_per_label=args.anchors_per_label,
-                    probe_eval=args.probe_eval, probe_sample_groups_per_type=args.probe_sample_groups_per_type),
+                    probe_eval=args.probe_eval, probe_sample_groups_per_type=args.probe_sample_groups_per_type,
+                    theta_mode=args.theta_mode),
         n_stream_images=n_stream, n_queried=len(requested),
         n_normal_labels=total_normal, n_defect_labels=total_defect,
         tape_sha256=tape.digest, fixed_bank_sha256=fixed_profile["sha256"],
