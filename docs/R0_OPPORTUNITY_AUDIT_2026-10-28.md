@@ -48,6 +48,12 @@ python -m py_compile experiments/risk_safe/r0_opportunity.py experiments/risk_sa
 python -m unittest discover -s tests -p "test_risk_safe_r0.py" -v
 ```
 
+## Archived query manifest vs R0 extension (B=96/128)
+
+The committed D1-B `query_policy_manifest.json` contains **main budgets B=16,32,64,79 only**, while the frozen protocol also permits sensitivity budgets B=96,128 and diagnostic B=8. The prior D1-D helper `frozen_tape()` incorrectly indexes the archived table with `str(128)` and fails with `KeyError: '128'`. R0 now uses `r0_opportunity.frozen_r0_tape()`: recompute label-blind D1-B stream / sample priority / camera map, check **all four archived main budgets** against archived full hash/position/image/sample records, enforce nested consistency, then derive the approved extra budget without touching the old manifest. Record `tape_verification` in R0 summary and `tape_derivation` in R0 provenance. Unknown budgets, missing primary budgets and altered archived digests raise `R0TapeIntegrityError`.
+
+GitHub Actions R0 offline tests additionally cover B128 extension, legacy B16 exact parity, historical manifest corruption, and missing archived main budget. **This is not a GPU validation**, and no original D1-D output or archived D1-B file was changed.
+
 ## Stage A: metadata-only across all six classes and all registered query seeds/budgets
 
 ```powershell
