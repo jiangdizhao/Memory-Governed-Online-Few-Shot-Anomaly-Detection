@@ -329,7 +329,7 @@ def controls_callback(*,args,ref_summary,ref_rows,impl,backbone,cfg,plan,
                 })
         # All source use is post-label at final checkpoint; feedback rights
         # themselves NEVER consult these Probe labels for selection.
-    if len(all_scores)!=2*7*40 or len(comparisons)!=14:
+    if len(all_scores)!=2*9*40 or len(comparisons)!=18:
         raise NativeParityError("D4 ablation matrix incomplete")
     # Same image, same native potential global winners, same exact selected
     # win count for every D4 policy / random repeat.
@@ -416,7 +416,7 @@ def verify(args):
     if result.get("schema")!=SCHEMA or result.get("config")!=config(args) or (
             not result.get("completed")):
         raise NativeParityError("D4 output schema/config/completion mismatch")
-    if (result.get("N_scores")!=560 or result.get("N_comparisons")!=14 or
+    if (result.get("N_scores")!=720 or result.get("N_comparisons")!=18 or
             not result.get("same_per_image_native_win_budget_all_policies") or
             not result.get("original_d3_replay_parity",{}).get("passed")):
         raise NativeParityError("D4 incomplete evidence or failed native parity")
@@ -431,7 +431,7 @@ def verify(args):
     pf.verify_json_output(root/SOURCE,new)
     print(json.dumps({"D4":"verified_read_only",
                       "source_D3_native_scores":480,
-                      "D4_scored_image_rows":560,
+                      "D4_scored_image_rows":720,
                       "same_native_wins":True,
                       "gpu_rerun":False},indent=2))
     return 0
@@ -477,7 +477,7 @@ def main(argv=None):
             raise FileExistsError("D4 output appeared before atomic publish")
         stage.rename(dest)
     print(json.dumps({"D4":"completed_development",
-                      "scores":560,"comparisons":14,
+                      "scores":720,"comparisons":18,
                       "output":str(dest),"confirmation":False},indent=2))
     return 0
 
