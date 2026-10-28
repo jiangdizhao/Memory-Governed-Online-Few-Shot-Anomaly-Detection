@@ -12,7 +12,7 @@ from experiments.risk_safe.d4_retrieval_rights import (
     spatial_priority,action_priority,native_winners)
 from experiments.risk_safe.native_bridge import NativeParityError
 from experiments.risk_safe import d4_equal_win_feedback_pilot as pilot
-from tests.test_risk_safe_d3 import Bank, FakeImpl
+from test_risk_safe_d3 import Bank, FakeImpl
 
 
 def examples():
