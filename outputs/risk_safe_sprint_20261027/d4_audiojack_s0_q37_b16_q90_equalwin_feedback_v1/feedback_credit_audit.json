@@ -1,0 +1,391 @@
+{
+  "schema": "risk_safe.d4.feedback_evidence_audit.v1",
+  "q_a_revealed_before_rights": true,
+  "mask_ground_truth_used": false,
+  "normal_LOSO_used": true,
+  "risk_weak_anomaly_topk": 32,
+  "source": [
+    {
+      "method": "greedy",
+      "n_historical_labelled_images": 16,
+      "n_normal_images": 11,
+      "n_defect_images": 5,
+      "normal_nonself_witness_count": 197,
+      "defect_weak_local_witness_count": 92,
+      "normal_credit_sum": 16.91986083984375,
+      "defect_risk_proxy_sum": 12.963920593261719,
+      "normal_source_images": [
+        "NG/HS/S0092/audiojack__0092_NG_HS_C5_20231023093111.jpg",
+        "NG/QS/S0080/audiojack__0080_NG_QS_C2_20231023095321.jpg",
+        "NG/QS/S0086/audiojack__0086_NG_QS_C1_20231023095413.jpg",
+        "NG/QS/S0088/audiojack__0088_NG_QS_C5_20231023095438.jpg",
+        "NG/ZW/S0054/audiojack__0054_NG_ZW_C3_20231023102745.jpg",
+        "NG/ZW/S0070/audiojack__0070_NG_ZW_C5_20231023103003.jpg",
+        "NG/ZW/S0086/audiojack__0086_NG_ZW_C4_20231023103543.jpg",
+        "NG/ZW/S0087/audiojack__0087_NG_ZW_C5_20231023103549.jpg",
+        "NG/ZW/S0125/audiojack__0125_NG_ZW_C5_20231023104637.jpg",
+        "OK/S0303/audiojack_0303_OK_C3_20231021144244.jpg",
+        "OK/S0461/audiojack_0461_OK_C4_20231021153509.jpg"
+      ],
+      "defect_source_images": [
+        "NG/BX/S0075/audiojack__0075_NG_BX_C5_20231023113020.jpg",
+        "NG/BX/S0084/audiojack__0084_NG_BX_C3_20231023113159.jpg",
+        "NG/BX/S0112/audiojack__0112_NG_BX_C5_20231023130610.jpg",
+        "NG/BX/S0114/audiojack__0114_NG_BX_C1_20231023130625.jpg",
+        "NG/HS/S0071/audiojack__0071_NG_HS_C5_20231023092721.jpg"
+      ],
+      "risk_identifiable": true,
+      "per_queried_event": [
+        {
+          "t": 25,
+          "sample_key": "audiojack__0092_NG_HS",
+          "image": "NG/HS/S0092/audiojack__0092_NG_HS_C5_20231023093111.jpg",
+          "label": "normal",
+          "evidence_patches": 24,
+          "has_positive_influence": true,
+          "static_score": 0.4886035919189453,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 271,
+          "sample_key": "audiojack__0086_NG_QS",
+          "image": "NG/QS/S0086/audiojack__0086_NG_QS_C1_20231023095413.jpg",
+          "label": "normal",
+          "evidence_patches": 2,
+          "has_positive_influence": true,
+          "static_score": 0.6133508682250977,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 458,
+          "sample_key": "audiojack_0303_OK",
+          "image": "OK/S0303/audiojack_0303_OK_C3_20231021144244.jpg",
+          "label": "normal",
+          "evidence_patches": 12,
+          "has_positive_influence": true,
+          "static_score": 0.534634530544281,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 629,
+          "sample_key": "audiojack__0086_NG_ZW",
+          "image": "NG/ZW/S0086/audiojack__0086_NG_ZW_C4_20231023103543.jpg",
+          "label": "normal",
+          "evidence_patches": 11,
+          "has_positive_influence": true,
+          "static_score": 0.5390318036079407,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 655,
+          "sample_key": "audiojack__0112_NG_BX",
+          "image": "NG/BX/S0112/audiojack__0112_NG_BX_C5_20231023130610.jpg",
+          "label": "defect",
+          "evidence_patches": 16,
+          "has_positive_influence": true,
+          "static_score": 0.5133337378501892,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 690,
+          "sample_key": "audiojack__0075_NG_BX",
+          "image": "NG/BX/S0075/audiojack__0075_NG_BX_C5_20231023113020.jpg",
+          "label": "defect",
+          "evidence_patches": 24,
+          "has_positive_influence": true,
+          "static_score": 0.540712833404541,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 1085,
+          "sample_key": "audiojack__0088_NG_QS",
+          "image": "NG/QS/S0088/audiojack__0088_NG_QS_C5_20231023095438.jpg",
+          "label": "normal",
+          "evidence_patches": 32,
+          "has_positive_influence": true,
+          "static_score": 0.5116761326789856,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1159,
+          "sample_key": "audiojack_0461_OK",
+          "image": "OK/S0461/audiojack_0461_OK_C4_20231021153509.jpg",
+          "label": "normal",
+          "evidence_patches": 11,
+          "has_positive_influence": true,
+          "static_score": 0.5303615927696228,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1335,
+          "sample_key": "audiojack__0125_NG_ZW",
+          "image": "NG/ZW/S0125/audiojack__0125_NG_ZW_C5_20231023104637.jpg",
+          "label": "normal",
+          "evidence_patches": 27,
+          "has_positive_influence": true,
+          "static_score": 0.5117754340171814,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1430,
+          "sample_key": "audiojack__0071_NG_HS",
+          "image": "NG/HS/S0071/audiojack__0071_NG_HS_C5_20231023092721.jpg",
+          "label": "defect",
+          "evidence_patches": 18,
+          "has_positive_influence": true,
+          "static_score": 0.507340133190155,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 1733,
+          "sample_key": "audiojack__0054_NG_ZW",
+          "image": "NG/ZW/S0054/audiojack__0054_NG_ZW_C3_20231023102745.jpg",
+          "label": "normal",
+          "evidence_patches": 15,
+          "has_positive_influence": true,
+          "static_score": 0.525947630405426,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1785,
+          "sample_key": "audiojack__0070_NG_ZW",
+          "image": "NG/ZW/S0070/audiojack__0070_NG_ZW_C5_20231023103003.jpg",
+          "label": "normal",
+          "evidence_patches": 21,
+          "has_positive_influence": true,
+          "static_score": 0.508611798286438,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1895,
+          "sample_key": "audiojack__0087_NG_ZW",
+          "image": "NG/ZW/S0087/audiojack__0087_NG_ZW_C5_20231023103549.jpg",
+          "label": "normal",
+          "evidence_patches": 30,
+          "has_positive_influence": true,
+          "static_score": 0.5276741981506348,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 2508,
+          "sample_key": "audiojack__0084_NG_BX",
+          "image": "NG/BX/S0084/audiojack__0084_NG_BX_C3_20231023113159.jpg",
+          "label": "defect",
+          "evidence_patches": 8,
+          "has_positive_influence": true,
+          "static_score": 0.5476199984550476,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 2532,
+          "sample_key": "audiojack__0080_NG_QS",
+          "image": "NG/QS/S0080/audiojack__0080_NG_QS_C2_20231023095321.jpg",
+          "label": "normal",
+          "evidence_patches": 12,
+          "has_positive_influence": true,
+          "static_score": 0.5439441204071045,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 2541,
+          "sample_key": "audiojack__0114_NG_BX",
+          "image": "NG/BX/S0114/audiojack__0114_NG_BX_C1_20231023130625.jpg",
+          "label": "defect",
+          "evidence_patches": 26,
+          "has_positive_influence": true,
+          "static_score": 0.5944393277168274,
+          "self_origin_excluded": false
+        }
+      ]
+    },
+    {
+      "method": "causal_novelty",
+      "n_historical_labelled_images": 16,
+      "n_normal_images": 11,
+      "n_defect_images": 5,
+      "normal_nonself_witness_count": 58,
+      "defect_weak_local_witness_count": 69,
+      "normal_credit_sum": 3.9942216873168945,
+      "defect_risk_proxy_sum": 6.8371429443359375,
+      "normal_source_images": [
+        "NG/QS/S0080/audiojack__0080_NG_QS_C2_20231023095321.jpg",
+        "NG/QS/S0088/audiojack__0088_NG_QS_C5_20231023095438.jpg",
+        "NG/ZW/S0054/audiojack__0054_NG_ZW_C3_20231023102745.jpg",
+        "NG/ZW/S0070/audiojack__0070_NG_ZW_C5_20231023103003.jpg",
+        "NG/ZW/S0087/audiojack__0087_NG_ZW_C5_20231023103549.jpg",
+        "NG/ZW/S0125/audiojack__0125_NG_ZW_C5_20231023104637.jpg",
+        "OK/S0303/audiojack_0303_OK_C3_20231021144244.jpg"
+      ],
+      "defect_source_images": [
+        "NG/BX/S0075/audiojack__0075_NG_BX_C5_20231023113020.jpg",
+        "NG/BX/S0084/audiojack__0084_NG_BX_C3_20231023113159.jpg",
+        "NG/BX/S0112/audiojack__0112_NG_BX_C5_20231023130610.jpg",
+        "NG/BX/S0114/audiojack__0114_NG_BX_C1_20231023130625.jpg",
+        "NG/HS/S0071/audiojack__0071_NG_HS_C5_20231023092721.jpg"
+      ],
+      "risk_identifiable": true,
+      "per_queried_event": [
+        {
+          "t": 25,
+          "sample_key": "audiojack__0092_NG_HS",
+          "image": "NG/HS/S0092/audiojack__0092_NG_HS_C5_20231023093111.jpg",
+          "label": "normal",
+          "evidence_patches": 0,
+          "has_positive_influence": false,
+          "static_score": 0.4886035919189453,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 271,
+          "sample_key": "audiojack__0086_NG_QS",
+          "image": "NG/QS/S0086/audiojack__0086_NG_QS_C1_20231023095413.jpg",
+          "label": "normal",
+          "evidence_patches": 0,
+          "has_positive_influence": false,
+          "static_score": 0.6133508682250977,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 458,
+          "sample_key": "audiojack_0303_OK",
+          "image": "OK/S0303/audiojack_0303_OK_C3_20231021144244.jpg",
+          "label": "normal",
+          "evidence_patches": 3,
+          "has_positive_influence": true,
+          "static_score": 0.534634530544281,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 629,
+          "sample_key": "audiojack__0086_NG_ZW",
+          "image": "NG/ZW/S0086/audiojack__0086_NG_ZW_C4_20231023103543.jpg",
+          "label": "normal",
+          "evidence_patches": 0,
+          "has_positive_influence": false,
+          "static_score": 0.5390318036079407,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 655,
+          "sample_key": "audiojack__0112_NG_BX",
+          "image": "NG/BX/S0112/audiojack__0112_NG_BX_C5_20231023130610.jpg",
+          "label": "defect",
+          "evidence_patches": 10,
+          "has_positive_influence": true,
+          "static_score": 0.5133337378501892,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 690,
+          "sample_key": "audiojack__0075_NG_BX",
+          "image": "NG/BX/S0075/audiojack__0075_NG_BX_C5_20231023113020.jpg",
+          "label": "defect",
+          "evidence_patches": 17,
+          "has_positive_influence": true,
+          "static_score": 0.540712833404541,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 1085,
+          "sample_key": "audiojack__0088_NG_QS",
+          "image": "NG/QS/S0088/audiojack__0088_NG_QS_C5_20231023095438.jpg",
+          "label": "normal",
+          "evidence_patches": 15,
+          "has_positive_influence": true,
+          "static_score": 0.5116761326789856,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1159,
+          "sample_key": "audiojack_0461_OK",
+          "image": "OK/S0461/audiojack_0461_OK_C4_20231021153509.jpg",
+          "label": "normal",
+          "evidence_patches": 0,
+          "has_positive_influence": false,
+          "static_score": 0.5303615927696228,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1335,
+          "sample_key": "audiojack__0125_NG_ZW",
+          "image": "NG/ZW/S0125/audiojack__0125_NG_ZW_C5_20231023104637.jpg",
+          "label": "normal",
+          "evidence_patches": 13,
+          "has_positive_influence": true,
+          "static_score": 0.5117754340171814,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1430,
+          "sample_key": "audiojack__0071_NG_HS",
+          "image": "NG/HS/S0071/audiojack__0071_NG_HS_C5_20231023092721.jpg",
+          "label": "defect",
+          "evidence_patches": 12,
+          "has_positive_influence": true,
+          "static_score": 0.507340133190155,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 1733,
+          "sample_key": "audiojack__0054_NG_ZW",
+          "image": "NG/ZW/S0054/audiojack__0054_NG_ZW_C3_20231023102745.jpg",
+          "label": "normal",
+          "evidence_patches": 1,
+          "has_positive_influence": true,
+          "static_score": 0.525947630405426,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1785,
+          "sample_key": "audiojack__0070_NG_ZW",
+          "image": "NG/ZW/S0070/audiojack__0070_NG_ZW_C5_20231023103003.jpg",
+          "label": "normal",
+          "evidence_patches": 11,
+          "has_positive_influence": true,
+          "static_score": 0.508611798286438,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 1895,
+          "sample_key": "audiojack__0087_NG_ZW",
+          "image": "NG/ZW/S0087/audiojack__0087_NG_ZW_C5_20231023103549.jpg",
+          "label": "normal",
+          "evidence_patches": 12,
+          "has_positive_influence": true,
+          "static_score": 0.5276741981506348,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 2508,
+          "sample_key": "audiojack__0084_NG_BX",
+          "image": "NG/BX/S0084/audiojack__0084_NG_BX_C3_20231023113159.jpg",
+          "label": "defect",
+          "evidence_patches": 4,
+          "has_positive_influence": true,
+          "static_score": 0.5476199984550476,
+          "self_origin_excluded": false
+        },
+        {
+          "t": 2532,
+          "sample_key": "audiojack__0080_NG_QS",
+          "image": "NG/QS/S0080/audiojack__0080_NG_QS_C2_20231023095321.jpg",
+          "label": "normal",
+          "evidence_patches": 3,
+          "has_positive_influence": true,
+          "static_score": 0.5439441204071045,
+          "self_origin_excluded": true
+        },
+        {
+          "t": 2541,
+          "sample_key": "audiojack__0114_NG_BX",
+          "image": "NG/BX/S0114/audiojack__0114_NG_BX_C1_20231023130625.jpg",
+          "label": "defect",
+          "evidence_patches": 26,
+          "has_positive_influence": true,
+          "static_score": 0.5944393277168274,
+          "self_origin_excluded": false
+        }
+      ]
+    }
+  ]
+}
