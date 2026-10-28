@@ -14,7 +14,7 @@
 - Do NOT create another Conda/venv environment; do NOT install/upgrade/downgrade PyTorch, CUDA, flash-attention, torchvision, scipy or other packages without user approval. Stage 0 must normally run CPU-only tests; GPU smoke only when specifically enabled and read-only/non-scientific.
 
 Reliable PowerShell preflight from repo root:
-\`\`\`powershell
+```powershell
 $ErrorActionPreference = "Stop"
 $PY = "D:\anaconda3\envs\torch\python.exe"
 if (-not (Test-Path -LiteralPath $PY)) { throw "torch conda interpreter missing: $PY" }
@@ -22,22 +22,22 @@ if (-not (Test-Path -LiteralPath $PY)) { throw "torch conda interpreter missing:
 if ($LASTEXITCODE -ne 0) { throw "Incorrect Python environment" }
 git status --short
 git branch --show-current
-\`\`\`
-Alternative for interactive shells: \`conda activate torch\`; always independently verify \`sys.executable\`. A Codex sub-process may not inherit interactive conda activation; **prefer the absolute interpreter path**.
+```
+Alternative for interactive shells: `conda activate torch`; always independently verify `sys.executable`. A Codex sub-process may not inherit interactive conda activation; **prefer the absolute interpreter path**.
 
 ## B. One-command target interface
 
-\`\`\`powershell
+```powershell
 & $PY -m experiments.calibration.runner --stage 0 --all
 & $PY -m experiments.calibration.runner --stage 0 --verify-only
-\`\`\`
+```
 
-\`--all\` performs deterministic preflight, imports, tests, pure synthetic mechanisms, optional **explicitly flagged** native parity checks and report generation. It MUST NOT run Stage 1 or Stage 2. \`--verify-only\` must verify manifests/checksums without recomputing empirical research results. Support \`--resume\`, \`--output-dir\`, and JSON machine-readable audit; set stage defaults only in versioned immutable Config.
+`--all` performs deterministic preflight, imports, tests, pure synthetic mechanisms, optional **explicitly flagged** native parity checks and report generation. It MUST NOT run Stage 1 or Stage 2. `--verify-only` must verify manifests/checksums without recomputing empirical research results. Support `--resume`, `--output-dir`, and JSON machine-readable audit; set stage defaults only in versioned immutable Config.
 
-Prefer a locally implemented \`scripts/run_stage0.ps1\` thin wrapper using exact $PY; shell should exit nonzero on critical gates and not continue after a failed dependent step.
+Prefer a locally implemented `scripts/run_stage0.ps1` thin wrapper using exact $PY; shell should exit nonzero on critical gates and not continue after a failed dependent step.
 
 ### Mandatory reproducibility artifacts (under new isolated outputs)
-\`\`\`
+```
 outputs/calibration/stage0/<run_key>/
     protocol_manifest.json          # dataset identity, query version, method registry, hashes
     dependency_environment.json     # Python/torch/CUDA mode and exact executable
@@ -48,15 +48,15 @@ outputs/calibration/stage0/<run_key>/
     source_hashes.json
     checksums.json
     stage0_summary.md
-\`\`\`
-Output paths must never overwrite preexisting complete runs. Interrupted runs are \`INCOMPLETE\`; verify sha digests and resume with source+config matching. A synthetic audit is not Real-IAD evidence.
+```
+Output paths must never overwrite preexisting complete runs. Interrupted runs are `INCOMPLETE`; verify sha digests and resume with source+config matching. A synthetic audit is not Real-IAD evidence.
 
 ## C. Six internal milestones — one autonomous execution, not six human approvals
 
 1. **M0 protocol**: immutable config, unit of query, access permissions, C64/Strict4 distinction, Q-A-TS vs archived Q-A, fixed method registry; all config validated before algorithm calls.
-2. **M1 native adapter**: import existing scorer, normalize features faithfully, exact K=256 Greedy source/update; parity tests and no source-file modification. If CPU native parity impossible without local data, mark \`SKIP_DEPENDENCY\`, never \`PASS\`.
+2. **M1 native adapter**: import existing scorer, normalize features faithfully, exact K=256 Greedy source/update; parity tests and no source-file modification. If CPU native parity impossible without local data, mark `SKIP_DEPENDENCY`, never `PASS`.
 3. **M2 composable causal engine**: single score trajectory / memory version; label firewall; Q-A-TS/Q-B precommitted tape; evaluator isolated. Future BEA/correction plugin slots but no speculative implementations.
-4. **M3 method families**: B0, B1, B2, B3, B4, B5a, B5b, B6, B7. Each must have math, source, availability, hyperparameters, fidelity card and reference tests. A smoke-only stub is \`NOT_IMPLEMENTED\`.
+4. **M3 method families**: B0, B1, B2, B3, B4, B5a, B5b, B6, B7. Each must have math, source, availability, hyperparameters, fidelity card and reference tests. A smoke-only stub is `NOT_IMPLEMENTED`.
 5. **M4 mechanism tests**: synthetic traces proving state transitions, missing-side, risk conflict, LSO source exclusions, update order, deterministic restart. Failure MUST be conspicuous.
 6. **M5 final gates/report**: test matrix, acceptance proof, setup docs; no real Real-IAD ranking, no automatic Stage 1 execution.
 
@@ -75,7 +75,7 @@ Output paths must never overwrite preexisting complete runs. Interrupted runs ar
 | G8 execution | checkpoint/resume and fail-closed non-overwrite, deterministic source hashes and logging | FAIL |
 | G9 scientific parity | identical native score sequence and AUROC across threshold controllers; BA differences only from theta trajectories | FAIL |
 
-Do not allow \`SKIP\` to satisfy a required \`PASS\`. Native parity with actual DINO features may require later local non-scientific smoke: until executed, overall stage readiness is \`PROVISIONAL\`, not \`STAGE0_PASS\`. If original Sun-CS source fidelity cannot be fully verified, register \`BLOCKED_FIDELITY\`, not a fabricated method.
+Do not allow `SKIP` to satisfy a required `PASS`. Native parity with actual DINO features may require later local non-scientific smoke: until executed, overall stage readiness is `PROVISIONAL`, not `STAGE0_PASS`. If original Sun-CS source fidelity cannot be fully verified, register `BLOCKED_FIDELITY`, not a fabricated method.
 
 ## E. Synthetic reference scenarios
 
@@ -96,7 +96,7 @@ At least these deterministic tests:
 ## F. Machine-reviewable completion contract
 
 Final message / report must include:
-\`\`\`json
+```json
 {
   "stage": 0,
   "branch": "calibration-stage0-contract-20261029",
@@ -111,14 +111,14 @@ Final message / report must include:
   "results_path": "outputs/calibration/stage0/...",
   "blockers": []
 }
-\`\`\`
+```
 Use actual values, never copy the example as fake results.
 
 ## G. Branch/commit/push boundaries
 
-Codex may push only commits on \`calibration-stage0-contract-20261029\`, no force push, no merging to default/old branches, no destructive reset/clean, no tags or release. It must check \`git status --porcelain\`, never stage unrelated dirty files. If pending independent changes exist, stop rather than discard. Commit source/tests/docs plus tiny synthetic text audit as authorized; do not stage datasets, trained weights, protected probe data, absolute local paths inside private artifact manifests unless essential for provenance, secrets or bulk GPU results.
+Codex may push only commits on `calibration-stage0-contract-20261029`, no force push, no merging to default/old branches, no destructive reset/clean, no tags or release. It must check `git status --porcelain`, never stage unrelated dirty files. If pending independent changes exist, stop rather than discard. Commit source/tests/docs plus tiny synthetic text audit as authorized; do not stage datasets, trained weights, protected probe data, absolute local paths inside private artifact manifests unless essential for provenance, secrets or bulk GPU results.
 
-If everything verified and required gates PASS, commit e.g. \`feat(calibration): implement stage0 isolated harness and fidelity tests\`, then \`git push -u origin calibration-stage0-contract-20261029\`. If BLOCKED, it MAY push honest WIP implementation with \`wip(calibration): stage0 blocked - <reason>\` and blockers manifest; the user needs only to report that it pushed for independent review. If \`git push\` needs authentication, stop and report; never modify credentials or grant itself new access.
+If everything verified and required gates PASS, commit e.g. `feat(calibration): implement stage0 isolated harness and fidelity tests`, then `git push -u origin calibration-stage0-contract-20261029`. If BLOCKED, it MAY push honest WIP implementation with `wip(calibration): stage0 blocked - <reason>` and blockers manifest; the user needs only to report that it pushed for independent review. If `git push` needs authentication, stop and report; never modify credentials or grant itself new access.
 
 ## H. Human-in-the-loop boundary
 
