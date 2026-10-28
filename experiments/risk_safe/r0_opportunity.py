@@ -119,7 +119,7 @@ def metadata_report(args):
                        "Official sample keys need not represent independent physical manufactured objects.",
                        "No oracle advantage, counterfactual defect risk, capacity replacement or probe accuracy is measured.",
                        "Metadata inspection never justifies adaptive selection of better-looking query tapes."])
-    out.mkdir(parents=True, exist_ok=False)
+    out.mkdir(parents=True, exist_ok=True)
     content = json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
     (out / "r0_metadata.json").write_text(content, encoding="utf-8")
     cols = [k for k in rows[0] if k != "tape_sha256"] + ["tape_sha256"]
