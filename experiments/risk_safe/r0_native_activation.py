@@ -212,6 +212,7 @@ def run(args):
     events = []
     counters = {cap: dict(n_normal_events=0, n_candidate_events=0,
         n_candidate_ineligible=0, n_shadow_audits=0,
+        n_defect_history_eligible_candidates=0, n_defect_history_ge4_candidates=0,
         n_normal_utility_available=0, n_normal_utility_positive=0,
         n_normal_score_gain_positive=0, n_defect_risk_available=0,
         n_defect_risk_positive=0, n_margin_crossings=0,
@@ -263,6 +264,8 @@ def run(args):
                 events.append(row)
                 continue
             c["n_candidate_events"] += 1
+            c["n_defect_history_eligible_candidates"] += int(total_defect >= 1)
+            c["n_defect_history_ge4_candidates"] += int(total_defect >= 4)
             before = snapshot(arm.bank, version=versions[cap])
             old_hash = before.sha256()
             rows = normalized_native_candidate_rows(
@@ -326,6 +329,16 @@ def run(args):
             cb.protos.numel() * cb.protos.element_size() for cb in dynamic_codebooks(arm.bank))
         c["capacity_reached"] = bool(c["n_full_before_proposal"] or
                                      c["final_prototypes"] >= cap * len(dynamic_codebooks(arm.bank)))
+        c["activation"] = {
+            "candidate_opportunity": "activated" if c["n_candidate_events"] >= 30 else "underpowered",
+            "historical_defect_opportunity": "activated" if c["n_defect_history_eligible_candidates"] >= 20 else "underpowered",
+            "counterfactual_risk_audited": "activated" if c["n_defect_risk_available"] >= 20 else "underpowered",
+            "nonzero_defect_erosion": "activated" if c["n_defect_risk_positive"] >= 5 else "underpowered",
+            "capacity_competition": "activated" if c["n_replacement_attempts"] >= 20 else "underpowered",
+            "actual_replacement": "activated" if c["n_replacements"] >= 10 else "underpowered",
+            "normal_utility_variation": "activated" if c["n_normal_utility_positive"] >= 5 else "underpowered",
+        }
+        c["activation_is_descriptive_not_statistical_power"] = True
     summary = dict(schema=SCHEMA, status="COMPLETE" if len(requested)==args.budget else "SMOKE_INCOMPLETE",
         not_full_prequential=True,
         causal_scope="shared external Q-A; only queried observations encoded; Sidecar/Correction/LTM off",
