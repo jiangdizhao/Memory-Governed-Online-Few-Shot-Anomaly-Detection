@@ -29,7 +29,8 @@ from .native_bridge import (NativeParityError, install_on_clone,
     normalized_native_candidate_rows, snapshot, verify_untouched_parity)
 from .d2_metrics import image_metrics, probe_deltas
 from .d2_fixed_threshold import fit_fixed_normal_thresholds
-from .r0_opportunity import integers, native_output_name, probe_subset
+from .r0_opportunity import (integers, native_output_name, probe_subset,
+                             frozen_r0_tape)
 
 ROOT = Path(__file__).resolve().parents[2]
 for _path in (ROOT, ROOT / "experiments"):
@@ -153,7 +154,9 @@ def run(args):
     supports = sorted(r.path for r in plan.support if r.sample_key in supports_ids)
     if len(supports) != 4 or len(supports_ids) != 4:
         raise NativeParityError("Strict 4 support identity failed")
-    tape, n_stream = d1d.frozen_tape(plan, args)
+    tape, n_stream, tape_verification = frozen_r0_tape(
+        plan, class_name=args.class_name, query_seed=args.query_seed,
+        budget=args.budget, d1b_manifest_dir=args.d1b_manifest_dir)
     requested = tuple(tape.events[:args.max_query_events or len(tape.events)])
     if n_stream != 2625:
         raise NativeParityError("Expected frozen D1-B 2625-image stream")
@@ -348,7 +351,8 @@ def run(args):
                     theta_mode=args.theta_mode),
         n_stream_images=n_stream, n_queried=len(requested),
         n_normal_labels=total_normal, n_defect_labels=total_defect,
-        tape_sha256=tape.digest, fixed_bank_sha256=fixed_profile["sha256"],
+        tape_sha256=tape.digest, tape_verification=tape_verification,
+        fixed_bank_sha256=fixed_profile["sha256"],
         theta0=theta, sigma_loso=sigma, loso_scores=loso,
         counters={str(k): v for k, v in counters.items()},
         probe_metrics=probe_metrics, elapsed_seconds=time.perf_counter()-began,
@@ -380,6 +384,7 @@ def run(args):
                "experiments/v02_memory.py",
                "test_phase3_AIF_simplified_v22.py")
     provenance = dict(git=pf.git_state(), source_hashes=pf.source_hashes(sources),
+                      tape_derivation=tape_verification,
                       realiad_class_json_sha256=pf.sha256_file(
                           Path(args.json_dir)/(args.class_name+".json")),
                       d1b_manifest_sha256=pf.sha256_file(
