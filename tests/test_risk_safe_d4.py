@@ -11,6 +11,7 @@ from experiments.risk_safe.d4_retrieval_rights import (
     stable_seed,credit,shuffled_risk,select_indices,
     spatial_priority,action_priority,native_winners)
 from experiments.risk_safe.native_bridge import NativeParityError
+from experiments.risk_safe.conditional_retrieval import ScopedRetrieval
 from experiments.risk_safe import d4_equal_win_feedback_pilot as pilot
 from test_risk_safe_d3 import Bank, FakeImpl
 
@@ -110,6 +111,32 @@ class EqualWinTests(unittest.TestCase):
         with self.assertRaises(NativeParityError):
             m([{}, {}, {}, {}, {}],"spatial_0125",query_camera=1,
               query_coords=torch.rand(3,2),image_id="other")
+
+    def test_exact_win_scoped_native_distance_and_static_fallback(self):
+        bank=Bank()
+        bank.normal_dyn["p0"][0]["id"][0].protos=torch.tensor(
+            [[0.,1.]]*5,dtype=torch.float16)
+        bank.knn_k_normal=5
+        bank.device=torch.device("cpu")
+        query=torch.tensor([[0.,1.],[0.,1.],[0.,1.],[0.,1.]])
+        # Global dynamic wins on every test patch; permission grants 2.
+        global_distance,_=bank._dN_min_fixed_dyn("p0",0,"id",0,query)
+        fixed=bank.normal_fixed["p0"][0]["id"][0].nearest(
+            query,relax=True,k=5)[0]
+        allow=ExactWinMask()
+        allow.set("imageA",torch.tensor([1,0,1,0],dtype=torch.bool))
+        provenance=[{"prototype_index":i,"camera_id":1,
+                     "u":.25,"v":.25} for i in range(5)]
+        scorer=ScopedRetrieval(FakeImpl,bank,provenance,"spatial_0125",
+                               mask_provider=allow)
+        scorer.set_query(1,(200,200),image_id="imageA")
+        scoped,_=bank._dN_min_fixed_dyn("p0",0,"id",0,query)
+        self.assertTrue(torch.allclose(scoped[[0,2]],global_distance[[0,2]],
+                                       atol=1e-7))
+        self.assertTrue(torch.allclose(scoped[[1,3]],fixed[[1,3]],
+                                       atol=1e-7))
+        self.assertEqual(scorer.last_query_stats["n_dynamic_winner_patches"],2)
+        self.assertEqual(scorer.last_query_stats["n_static_fallback_patches"],2)
 
     def test_invalid_budget_and_candidate_mask_fails_closed(self):
         candidate=torch.tensor([True,False])
