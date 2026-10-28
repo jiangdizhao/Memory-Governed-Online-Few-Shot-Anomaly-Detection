@@ -13,6 +13,7 @@ from experiments.risk_safe.r0_opportunity import (integers, offline_counts, prob
 class R0ContractTests(unittest.TestCase):
     def test_budget_integer_validation(self):
         self.assertEqual(integers("16,32,64,128"), (16, 32, 64, 128))
+        self.assertEqual(integers("0,1,2", allow_zero=True), (0, 1, 2))
         for value in ("", "16,16", "0,16", "-1,4", "16,x"):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
