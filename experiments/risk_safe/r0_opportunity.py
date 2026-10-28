@@ -55,6 +55,104 @@ def probe_subset(plan, n):
     return tuple(r for r in plan.probe_a if r.sample_key in selected)
 
 
+
+class R0TapeIntegrityError(RuntimeError):
+    """Archived Q-A tape or approved R0 extension cannot be proven identical."""
+
+
+def frozen_r0_tape(plan, *, class_name: str, query_seed: int,
+                   budget: int, d1b_manifest_dir):
+    """Build approved Q-A tape while proving parity with ALL archived budgets.
+
+    Historical D1-B manifests contain main B=16/32/64/79 only. D1-B
+    protocol separately authorizes sensitivity B=96/128 and diagnostic B=8.
+    Missing historical primary entries, corrupt digests, unknown seeds, and
+    changes to any archived image identity must FAIL CLOSED. R0 may derive
+    the approved extra budgets with the *unchanged* D1-B priority and camera
+    choice algorithms, without editing historical output files.
+    """
+    allowed = set(d1b.MAIN_BUDGETS + d1b.SENSITIVITY_BUDGETS +
+                  d1b.LOW_BUDGET_DIAGNOSTIC)
+    if budget not in allowed or query_seed not in d1b.QUERY_SEEDS:
+        raise R0TapeIntegrityError(
+            f"Unregistered query budget/seed: B={budget} seed={query_seed}")
+    if class_name not in d1b.DEV_CLASSES:
+        raise R0TapeIntegrityError("Class absent from frozen D1-B development cohort")
+
+    manifest_path = Path(d1b_manifest_dir) / d1b.OUTPUT_QUERIES
+    if not manifest_path.is_file():
+        raise R0TapeIntegrityError("Missing archived D1-B query manifest: " + str(manifest_path))
+    manifest_bytes = manifest_path.read_bytes()
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    try:
+        manifest = json.loads(manifest_bytes)
+        if manifest.get("schema") != "risk_safe.d1b.query_manifest.v1":
+            raise R0TapeIntegrityError("Unexpected archived D1-B schema")
+        registered_seeds = set(manifest["query_seeds"])
+        registered_budgets = set(manifest["budgets"])
+        archived = manifest["class_records"][class_name]["random"][str(query_seed)]
+    except (KeyError, TypeError, ValueError) as exc:
+        raise R0TapeIntegrityError("Malformed/missing archived Q-A class/seed records") from exc
+    if query_seed not in registered_seeds:
+        raise R0TapeIntegrityError("Requested seed absent from archived manifest")
+    archived_budgets = {int(k) for k in archived}
+    if archived_budgets != registered_budgets:
+        raise R0TapeIntegrityError("Inconsistent archived budget keys vs manifest header")
+    if not set(d1b.MAIN_BUDGETS).issubset(archived_budgets):
+        raise R0TapeIntegrityError("A frozen D1-B PRIMARY budget is missing; refusing extension")
+    if not archived_budgets.issubset(allowed):
+        raise R0TapeIntegrityError("Archived manifest contains unregistered budget")
+    if str(budget) not in archived and budget not in set(
+            d1b.SENSITIVITY_BUDGETS + d1b.LOW_BUDGET_DIAGNOSTIC):
+        raise R0TapeIntegrityError("Refusing to reconstruct missing primary budget")
+
+    stream = d1b.build_ordered_stream(plan.phases, "random", class_name)
+    universe = tuple(sorted({event.sample_key for event in stream}))
+    priority = d1b.shared_query_priority(universe, class_name, query_seed)
+    budgets_to_validate = tuple(sorted(archived_budgets | {budget}))
+    tapes = d1b.build_paired_tapes(
+        stream, budgets_to_validate, query_seed, class_name, priority)
+    for old_budget in sorted(archived_budgets):
+        old = archived[str(old_budget)]
+        tape = tapes[old_budget]
+        checks = {
+            "digest": tape.digest,
+            "stream_digest": tape.stream_digest,
+            "N_queries": len(tape.events),
+            "query_positions": list(tape.positions),
+            "events_sha256": qp.sha256_of([e.as_manifest() for e in tape.events]),
+            "selected_images_sha256": qp.sha256_of(list(tape.rel_paths)),
+            "selected_samples_sha256": qp.sha256_of(list(tape.sample_keys)),
+        }
+        for field, actual in checks.items():
+            if old.get(field) != actual:
+                raise R0TapeIntegrityError(
+                    f"Archived Q-A B={old_budget} mismatch in {field}; refusing to run")
+    tape = tapes[budget]
+    provenance = {
+        "source": "archived_d1b" if budget in archived_budgets
+                  else "derived_approved_r0_extension",
+        "budget": budget,
+        "query_seed": query_seed,
+        "historical_manifest_sha256": manifest_sha256,
+        "historical_validated_budgets": sorted(archived_budgets),
+        "new_budget_is_registered_d1b_sensitivity": budget in d1b.SENSITIVITY_BUDGETS,
+        "new_budget_is_registered_d1b_diagnostic": budget in d1b.LOW_BUDGET_DIAGNOSTIC,
+        "tape_sha256": tape.digest,
+        "stream_sha256": tape.stream_digest,
+        "events_sha256": qp.sha256_of([e.as_manifest() for e in tape.events]),
+        "query_positions": list(tape.positions),
+        "selected_images_sha256": qp.sha256_of(list(tape.rel_paths)),
+        "selected_samples_sha256": qp.sha256_of(list(tape.sample_keys)),
+        "n_queries": len(tape.events),
+        "n_unique_sample_keys": len(set(tape.sample_keys)),
+        "matched_all_archived_tapes": True,
+        "nested_with_all_archived_tapes": True,
+        "query_selection_reads_ground_truth": False,
+    }
+    return tape, len(stream), provenance
+
+
 def offline_counts(events, label_by_path, *, anchors_needed=(1, 4, 8, 16)):
     """Audit true labels AFTER tape creation. Never export these to a policy."""
     normals = defects = 0
