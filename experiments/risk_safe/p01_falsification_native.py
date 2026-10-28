@@ -136,10 +136,34 @@ def check_r0(path, *, args, tape_sha, fixed_sha, theta, metric_static,
         scope="same Q-A/static/threshold and full Probe-A Static/Greedy confusion")
 
 
-def build_native_for_states(fixed,states):
-    banks={}
-    for name,state in states.items():
-        banks[name]=install_on_clone(fixed,state.bank)
+def build_native_for_states(fixed, states):
+    """Install P0/P1 dynamic shadows using a correctly sized native template.
+
+    V22 frozen banks default to K_normal_dyn=1024. P0/P1 snapshots are built
+    with the requested capacity (e.g. 256); native_bridge.install_on_clone
+    correctly rejects a mismatch. Configure the dynamic K on an isolated
+    template, never on the source fixed bank, then use the unchanged bridge.
+    """
+    if not states:
+        raise FalsificationProtocolError("No P0/P1 memory states to score")
+    capacities = {tuple(int(x) for x in state.bank.capacities)
+                  for state in states.values()}
+    if len(capacities) != 1:
+        raise FalsificationProtocolError("Mixed capacities across P0/P1 states")
+    target_caps = next(iter(capacities))
+    template = copy.deepcopy(fixed)
+    dynamic = dynamic_codebooks(template)
+    if len(dynamic) != len(target_caps):
+        raise FalsificationProtocolError("Native/shadow layer count mismatch")
+    for cb, cap in zip(dynamic, target_caps):
+        if cap < 1 or len(cb.protos) != 0:
+            raise FalsificationProtocolError(
+                "Expected positive capacity and empty native dynamic template")
+        cb.K = cap
+    banks = {}
+    for name, state in states.items():
+        # The bridge validates feature dimensions, K, dtype and device.
+        banks[name] = install_on_clone(template, state.bank)
     return banks
 
 
