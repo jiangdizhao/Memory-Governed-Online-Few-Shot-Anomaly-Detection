@@ -2,7 +2,7 @@
 
 ## Purpose, before any further Bayesian controller development
 
-**Research question P0:** Is the poor **fixed-threshold** FNR of the native Greedy bank primarily an out-of-date threshold artifact? For each final memory, estimate an independent **q90** threshold from the same 64 training-normal image identities (no Probe-A/B calibration). Report the unchanged R0 frozen q90 threshold *and* the bank-specific updated q90, plus AUROC/AUPRC unaffected by threshold.
+**Research question P0:** Is the poor **fixed-threshold** FNR of the native Greedy bank primarily an out-of-date threshold artifact? For each final memory, estimate an independent **higher-order-statistic q90** threshold from the same 64 training-normal image identities (no Probe-A/B calibration). Report the unchanged R0 frozen q90 threshold *and* the bank-specific updated q90, plus AUROC/AUPRC unaffected by threshold.
 
 **Research question P1:** At matched **22 verified-normal event admissions**, does R1 Hindsight Oracle dominate simple event selection (first K, hash K, frozen-static patch novelty top K, frozen-static image score top K)? Also execute original **causal historical-median novelty** with its natural unmatched event count, and greedy-all/static. Compare normal/defect trade-offs, admission counts, prototype counts, and calibration after final state.
 
@@ -10,7 +10,7 @@
 
 - Original frozen four normal support samples **plus 64 extra training-normal calibration images**, explicitly **NOT 4-shot-total**.
 - Frozen D1-B Q-A camera/sample tape, single Real-IAD audiojack s0 q37 B128 run, capacity 256. Selected patch indices/sizes come from native static scorer. Native memory updates via original v22 Greedy, no replacement of source algorithms.
-- P0 recalibration uses **64 train-normal images only** at the final memory state. Probe A and B never enter threshold fitting. All metrics are Probe A **development** measures. Do not inspect Probe B.
+- P0 recalibration uses **64 train-normal images only**, using D2 *higher* order statistic (zero-based rank 57) at the final memory state. Probe A and B never enter threshold fitting. All metrics are Probe A **development** measures. Do not inspect Probe B.
 - Four K-matched controls use the COMPLETE sequence of already queried verified-normal metadata (future decisions). They are **hindsight controls**, not online-causal policies; they use no Probe labels. Their purpose is an exact event-count matched *counter-explanation* to R1.
 - `r1_hindsight_beam_k` is even less causal: its decisions were trained on Probe-A SEARCH labels in R1. It must be reported as a hindsight reference, never as an unbiased benchmark. Its full-Probe-A confusion must match frozen R1.
 - `causal_novelty_median` uses existing D2 baseline state, seen-only queried verified-normal features and an online prior median threshold; it does not enforce 22 admissions. Count and prototype usage are explicitly reported. It is not an independent recreation of the original HITL authors' system.
