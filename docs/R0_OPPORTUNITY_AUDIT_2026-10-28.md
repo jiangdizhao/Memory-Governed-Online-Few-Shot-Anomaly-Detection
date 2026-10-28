@@ -22,7 +22,7 @@ R0 **does not** prove a safe admission advantage and should not be used to choos
 - A verified-normal image may produce a candidate (subject to native selector); a verified-defect image **must never be inserted into normal memory**.
 - For event t, shadow risk audits use only previously queried normal/defect images; current label becomes an anchor **after** every independent memory-capacity arm processes the event.
 - The full Probe A is offline-only and used solely at final snapshot. Probe B metadata is used for exclusion in inherited frozen partitions, but Probe B images/features/labels are never used for R0 learning or probe scoring. R0 A is already development-adaptive; no confirmatory inference.
-- Initial threshold = four-support **LOSO** diagnostic (n=4), NOT independent calibrated operating FPR and NOT the D2-A extra-64-normal q90 threshold. Hence do not compare absolute FPR between R0 and D2-A as if initialization matched.
+- Initial threshold is an explicit experimental arm: `--theta-mode loso` (four-support **LOSO** diagnostic, n=4, default) or `--theta-mode train64-q90` (64 **additional** reserved verified-normal training views scored against the same frozen support, empirical q90 per D2-A). The second arm is **NOT four-shot-total**. Neither gives an operating-point risk guarantee; do not compare FPR across the two regimes as if initialization matched.
 - `official_sample_key` is the certified official Real-IAD camera-grouping unit; do not present it as guaranteed unique manufactured physical object identity.
 
 ## Activation vs performance
@@ -64,14 +64,14 @@ python -m experiments.risk_safe.r0_native_activation --dataset-root "G:/dataset/
 python -m experiments.risk_safe.r0_native_activation --class-name audiojack --support-seed 0 --query-seed 37 --budget 128 --max-query-events 4 --capacities "64,128" --audit-every 1 --anchors-per-label 4 --probe-eval none --verify-only
 ```
 
-The smoke is for source parity, correct label timing and no input/shape errors; do NOT use its negative/positive risk counts as scientific findings.
+The smoke is for source parity, correct label timing and no input/shape errors; do NOT use its negative/positive risk counts as scientific findings. Smoke uses the default LOSO regime, whereas full Stage C explicitly uses train64-q90, and they must not be compared as if threshold-matched.
 
 ## Stage C: first full R0 activation, then second development class
 
 ```powershell
-python -m experiments.risk_safe.r0_native_activation --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 128 --capacities "64,128,256,1024" --audit-every 1 --anchors-per-label 4 --probe-eval final --probe-sample-groups-per-type 24 --math-sdpa
-python -m experiments.risk_safe.r0_native_activation --class-name audiojack --support-seed 0 --query-seed 37 --budget 128 --capacities "64,128,256,1024" --audit-every 1 --anchors-per-label 4 --probe-eval final --probe-sample-groups-per-type 24 --verify-only
-python -m experiments.risk_safe.r0_native_activation --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name bottle_cap --support-seed 0 --query-seed 37 --budget 128 --capacities "64,128,256,1024" --audit-every 1 --anchors-per-label 4 --probe-eval final --probe-sample-groups-per-type 24 --math-sdpa
+python -m experiments.risk_safe.r0_native_activation --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 128 --theta-mode train64-q90 --capacities "64,128,256,1024" --audit-every 1 --anchors-per-label 4 --probe-eval final --probe-sample-groups-per-type 24 --math-sdpa
+python -m experiments.risk_safe.r0_native_activation --class-name audiojack --support-seed 0 --query-seed 37 --budget 128 --theta-mode train64-q90 --capacities "64,128,256,1024" --audit-every 1 --anchors-per-label 4 --probe-eval final --probe-sample-groups-per-type 24 --verify-only
+python -m experiments.risk_safe.r0_native_activation --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name bottle_cap --support-seed 0 --query-seed 37 --budget 128 --theta-mode train64-q90 --capacities "64,128,256,1024" --audit-every 1 --anchors-per-label 4 --probe-eval final --probe-sample-groups-per-type 24 --math-sdpa
 ```
 
 These runs may be computationally expensive: exact native-v22 shadow scoring performs fresh scoring of historical anchors for each eligible normal event and capacity. Diagnose GPU time/VRAM first. If throughput is prohibitive, run an explicitly labeled *additional* diagnostic at `--audit-every 4` in a **new output directory**, keeping all candidate/replacement counters exact and clearly labeling the shadow risk sample as sparse. Do not rewrite the full result or silently change its settings.
@@ -80,7 +80,7 @@ These runs may be computationally expensive: exact native-v22 shadow scoring per
 
 Each metadata run creates `r0_metadata.json`, `r0_metadata.csv`, `checksums.json`.
 
-Each native run creates `r0_summary.json`, `r0_candidate_events.csv`, optional `r0_probe_scores.csv`, `r0_provenance.json`, `checksums.json`. Output names identify class, support/query seeds, budget, capacities, audit cadence and smoke/full. **Existing native output directories are never overwritten.** Verification rechecks file checksums without invoking CUDA.
+Each native run is named with its `theta-mode` and creates `r0_summary.json`, `r0_candidate_events.csv`, optional `r0_probe_scores.csv`, `r0_provenance.json`, `checksums.json`. Output names identify class, support/query seeds, budget, capacities, audit cadence and smoke/full. **Existing native output directories are never overwritten.** Verification rechecks file checksums without invoking CUDA.
 
 If a CUDA run fails, STOP at the traceback. Do not delete existing output directories or bypass parity assertions. New experiments must be run in new declared directories. Historical D1-B, D2–D4, V0.2, v22 outputs and manuscripts are immutable.
 
