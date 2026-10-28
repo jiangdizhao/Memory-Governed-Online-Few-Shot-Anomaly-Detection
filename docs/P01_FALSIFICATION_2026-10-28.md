@@ -35,12 +35,12 @@ git switch p0p1-falsification-20261028
 git pull --ff-only origin p0p1-falsification-20261028
 git log -1 --oneline
 python -m py_compile experiments/risk_safe/p01_falsification_core.py experiments/risk_safe/p01_falsification_native.py tests/test_risk_safe_p01.py
-python -m unittest discover -s tests -p "test_risk_safe_p01.py" -v
+python -m unittest discover -s tests -p "test_risk_safe_p01*.py" -v
 ```
 
 Do not throw away uncommitted local work. Resolve uncommitted conflicts before switching.
 
-### 2 — Native CUDA smoke, B128 first 4 Q-A events, first 2 probe-A groups/type
+The optional PyTorch native bridge regression must run **locally**; lightweight GitHub CI may skip it when torch is absent. It reproduces the K=1024 versus K=256 mismatch and verifies the source bank stays unchanged.\n\n### 2 — Native CUDA smoke, B128 first 4 Q-A events, first 2 probe-A groups/type
 
 ```powershell
 python -m experiments.risk_safe.p01_falsification_native --dataset-root "G:/dataset/realiad" --json-dir "G:/dataset/realiad/jsons/realiad_jsons" --class-name audiojack --support-seed 0 --query-seed 37 --budget 128 --capacity 256 --target-admissions 2 --max-query-events 4 --max-probe-groups-per-type 2 --math-sdpa
