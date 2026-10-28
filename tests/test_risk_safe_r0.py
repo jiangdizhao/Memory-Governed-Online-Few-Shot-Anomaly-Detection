@@ -7,8 +7,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from experiments.risk_safe.r0_opportunity import integers, offline_counts
-from experiments.risk_safe.r0_native_activation import probe_subset, names
+from experiments.risk_safe.r0_opportunity import (integers, offline_counts, probe_subset, native_output_name)
 
 
 class R0ContractTests(unittest.TestCase):
@@ -62,8 +61,8 @@ class R0ContractTests(unittest.TestCase):
     def test_output_name_never_aliases_smoke_and_full(self):
         base = dict(out_dir=None, capacities="64,128", class_name="audiojack",
                     support_seed=0, query_seed=37, budget=128, audit_every=1)
-        smoke = names(SimpleNamespace(**base, max_query_events=4))
-        full = names(SimpleNamespace(**base, max_query_events=0))
+        smoke = native_output_name(SimpleNamespace(**base, max_query_events=4))
+        full = native_output_name(SimpleNamespace(**base, max_query_events=0))
         self.assertNotEqual(smoke, full)
         self.assertIn("smoke4", str(smoke))
         self.assertIn("full", str(full))
