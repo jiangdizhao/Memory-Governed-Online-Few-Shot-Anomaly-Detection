@@ -1,0 +1,9 @@
+{
+  "p01_admission_decisions.csv": "438724bbb0775dce919b992abcd97e35c3a907e59b13798a596a3b4861313452",
+  "p01_calibration_scores.csv": "1a7105b6346f5f351e354b1c62f1bed27a4a02e4621e8cda44559f1056571b44",
+  "p01_candidate_metadata.csv": "2187f557850af67d2785a6ac5b0b1395610dbc66b14e5a66679d627bfa2275fd",
+  "p01_probe_a_scores.csv": "95b6228dea4c1a74843f063ee0a096811e3276021724d4c612a2c43acfd43a87",
+  "p01_provenance.json": "7f51ce900513abcd80e48e4b7759a5cc0da3a461c59184d2b526ad46e850287c",
+  "p01_query_tape.csv": "2355b30a794c2b5093b8f34dc6aaac38f9cf7c76b7ec76db8381d8c48ca9dc85",
+  "p01_summary.json": "4de5b1ff5726ccd69460501f43966c6f12fd39d24477234306cfa9a313d689dd"
+}

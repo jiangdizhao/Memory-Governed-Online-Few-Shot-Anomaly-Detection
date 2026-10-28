@@ -1,0 +1,5 @@
+stream_position,sample_key,image_id,camera_id,label_revealed,static_score,normal_candidate_index,keep,static_patch_novelty,write_reason
+25,audiojack__0092_NG_HS,NG/HS/S0092/audiojack__0092_NG_HS_C5_20231023093111.jpg,5,normal,0.4886035919189453,0,8,0.46207258105278015,easy_but_keep_small
+97,audiojack_0311_OK,OK/S0311/audiojack_0311_OK_C2_20231021144550.jpg,2,normal,0.5124089121818542,1,8,0.4721255600452423,easy_but_keep_small
+114,audiojack__0119_NG_QS,NG/QS/S0119/audiojack__0119_NG_QS_C4_20231023100040.jpg,4,defect,0.5245677828788757,,,,
+190,audiojack__0087_NG_BX,NG/BX/S0087/audiojack__0087_NG_BX_C5_20231023113242.jpg,5,normal,0.5134328603744507,2,8,0.4770779609680176,easy_but_keep_small

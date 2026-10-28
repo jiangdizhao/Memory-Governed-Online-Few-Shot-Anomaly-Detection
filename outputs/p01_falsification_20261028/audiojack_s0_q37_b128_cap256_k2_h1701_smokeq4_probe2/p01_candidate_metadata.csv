@@ -1,0 +1,4 @@
+sample_key,static_score,static_patch_novelty,keep,stream_position,reason
+audiojack__0092_NG_HS,0.4886035919189453,0.46207258105278015,8,25,easy_but_keep_small
+audiojack_0311_OK,0.5124089121818542,0.4721255600452423,8,97,easy_but_keep_small
+audiojack__0087_NG_BX,0.5134328603744507,0.4770779609680176,8,190,easy_but_keep_small
