@@ -21,9 +21,9 @@ SCHEMA = "risk_safe.r0.opportunity_preflight.v1"
 DEFAULT_OUT = "outputs/r0_opportunity_20261028/metadata"
 
 
-def integers(value: str) -> tuple[int, ...]:
+def integers(value: str, *, allow_zero: bool = False) -> tuple[int, ...]:
     result = tuple(int(x.strip()) for x in value.split(",") if x.strip())
-    if not result or len(result) != len(set(result)) or any(x < 1 for x in result):
+    if not result or len(result) != len(set(result)) or any(x < 0 or (x == 0 and not allow_zero) for x in result):
         raise ValueError("Expected unique positive integers")
     return result
 
@@ -91,7 +91,7 @@ def metadata_report(args):
     if out.exists() and any(out.iterdir()):
         raise FileExistsError("R0 output directory exists and is nonempty; do not overwrite: " + str(out))
     budgets = integers(args.budgets)
-    seeds = integers(args.support_seeds)
+    seeds = integers(args.support_seeds, allow_zero=True)
     query_seeds = integers(args.query_seeds)
     classes = tuple(c.strip() for c in args.classes.split(",") if c.strip())
     if not classes or len(classes) != len(set(classes)):
