@@ -1,0 +1,22 @@
+name: R1 exact/beam oracle offline contracts
+on:
+  push:
+    branches:
+      - r1-admission-oracle-20261028
+  pull_request:
+    paths:
+      - 'experiments/risk_safe/r1_*.py'
+      - 'tests/test_risk_safe_r1.py'
+      - '.github/workflows/r1-oracle-offline.yml'
+jobs:
+  oracle-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile native and offline oracle modules
+        run: python -m py_compile experiments/risk_safe/r1_oracle_core.py experiments/risk_safe/r1_native_oracle.py tests/test_risk_safe_r1.py
+      - name: Test pure state-dependent exhaustive and beam search
+        run: python -m unittest discover -s tests -p 'test_risk_safe_r1.py' -v
