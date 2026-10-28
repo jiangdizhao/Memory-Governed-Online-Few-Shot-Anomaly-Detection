@@ -104,7 +104,9 @@ def load_oracle(path, *, tape_sha, n_normal, target, capacity, args):
         raise FalsificationProtocolError("R1 Oracle class/seed/budget/prefix mismatch")
     selected=select_oracle_bits(summary,tape_sha=tape_sha,
         n_normal=n_normal,target=target,capacity=capacity)
-    return selected,hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    return (selected,hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+            summary["score_all_probe_a_development"]["oracle_found"],
+            float(summary["threshold"]),summary["source_fixed_bank_sha256"])
 
 
 def check_r0(path, *, args, tape_sha, fixed_sha, theta, metric_static,
@@ -250,11 +252,14 @@ def run(args):
     metadata=[{k:v for k,v in x.items() if k not in ("raw","normalized")} for x in candidates]
     matched=select_matched(metadata,args.target_admissions,seed=args.hash_seed)
     oracle_sha=None
+    oracle_expected=None
     if args.oracle_summary:
-        oracle_idxs,oracle_sha=load_oracle(args.oracle_summary,
+        oracle_idxs,oracle_sha,oracle_expected,oracle_theta,oracle_fixed=load_oracle(args.oracle_summary,
             tape_sha=tape_provenance["tape_sha256"],
             n_normal=n_normal,target=args.target_admissions,
             capacity=args.capacity,args=args)
+        if abs(oracle_theta-frozen_theta)>1e-8 or oracle_fixed!=fixed_sha:
+            raise FalsificationProtocolError("R1 Oracle theta/fixed-bank mismatch")
         matched["r1_hindsight_beam_k"]=oracle_idxs
     # For the matched controls we intentionally choose EXACT K using all
     # already queried-normal event metadata: this is noncausal HINDSIGHT,
@@ -324,7 +329,6 @@ def run(args):
             raise FalsificationProtocolError("normal-q90 independent parity failed")
     if abs(calibrated_theta["static"]-frozen_theta)>1e-5:
         raise FalsificationProtocolError("Static final calibration unexpectedly changed")
-    eval_recs=tuple(pf.group_of(plan.probe_a,key)[i] for key in () for i in ())
     # Deterministic full Probe-A subset uses archived sample-group order.
     normal_keys=sorted(k for k in plan.probe_a_samples if all(
         x.is_good for x in plan.probe_a if x.sample_key==k))
@@ -352,7 +356,7 @@ def run(args):
         del img,features
     summaries={}
     for name,scores in predictions.items():
-        fixed=metrics(labels,scores,frozen_theta)
+        fixed_metric=metrics(labels,scores,frozen_theta)
         recal=metrics(labels,scores,calibrated_theta[name])
         summaries[name]=dict(
             n_admitted=states[name].admissions,
@@ -361,7 +365,7 @@ def run(args):
             n_dynamic_prototypes=sum(len(layer) for layer in states[name].bank.layers),
             final_bank_sha256=states[name].bank.sha256(),
             theta_calibrated_q90=calibrated_theta[name],
-            fixed_operating_point=fixed,normal_recalibrated_operating_point=recal,
+            fixed_operating_point=fixed_metric,normal_recalibrated_operating_point=recal,
             changes_vs_static_fixed_at_fixed=paired_changes(
                 labels,predictions["static"],scores,frozen_theta,frozen_theta),
             changes_vs_static_fixed_at_recalibrated=paired_changes(
@@ -373,19 +377,21 @@ def run(args):
             theta=frozen_theta,metric_static=summaries["static"]["fixed_operating_point"],
             metric_greedy=summaries["greedy_all"]["fixed_operating_point"],
             n_probe=len(eval_recs))
-    if full and (
-        summaries["r1_hindsight_beam_k"]["fixed_operating_point"]["fn"] != 45 or
-        summaries["r1_hindsight_beam_k"]["fixed_operating_point"]["fp"] != 3):
+    if full:
         # R1 original 240-Probe-A Oracle is a direct reference, not an
-        # exploratory success criterion.
-        raise FalsificationProtocolError("R1 Beam final confusion parity failure")
+        # exploratory success criterion or a target fitted from this run.
+        oracle_actual=summaries["r1_hindsight_beam_k"]["fixed_operating_point"]
+        for key in ("tp","tn","fp","fn"):
+            if oracle_actual[key]!=oracle_expected[key]:
+                raise FalsificationProtocolError(
+                    f"R1 Beam final confusion parity failure for {key}")
     out.mkdir(parents=True,exist_ok=False)
     summary=dict(schema=SCHEMA,
         status="COMPLETE" if full else "PREFIX_SMOKE_INCOMPLETE",
         research_phase="P0/P1 FALSIFICATION; NOT A SAFETY-GATE SUCCESS CLAIM",
         fixed_source_four_shot=True,extra_training_normal_calibration_images=64,
         no_probe_b_access=True,
-        no_probe_a_in_admission_or_threshold_selection=True,
+        no_probe_a_in_non_oracle_admission_or_threshold_selection=True,
         all_top_k_controls_are_retrospective_not_online=True,
         oracle_control_is_probe_a_search_label_selected=True,
         causal_novelty_count_unmatched=True,
