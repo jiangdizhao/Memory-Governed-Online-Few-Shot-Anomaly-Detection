@@ -15,18 +15,15 @@ import copy
 import csv
 import hashlib
 import json
-import math
-import sys
 import time
+import sys
 from pathlib import Path
 
 import torch
 
 from . import preflight as pf
 from . import d1d_native_smoke as d1d
-from . import d2_native_replay as d2
 from . import d1b_protocol as d1b
-from . import query_protocol as qp
 from .native_bridge import (NativeParityError, install_on_clone,
     dynamic_codebooks, extract_v22_candidates, install_on_live, native_score,
     normalized_native_candidate_rows, snapshot, verify_untouched_parity)
