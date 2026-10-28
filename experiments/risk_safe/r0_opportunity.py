@@ -35,9 +35,10 @@ def native_output_name(args):
         return Path(args.out_dir)
     caps = "-".join(str(x) for x in integers(args.capacities))
     suffix = f"smoke{args.max_query_events}" if args.max_query_events else "full"
+    theta_mode = getattr(args, "theta_mode", "loso")
     return Path("outputs/r0_opportunity_20261028/native") / (
         f"{args.class_name}_s{args.support_seed}_q{args.query_seed}_"
-        f"b{args.budget}_cap{caps}_audit{args.audit_every}_{suffix}")
+        f"b{args.budget}_cap{caps}_theta{theta_mode}_audit{args.audit_every}_{suffix}")
 
 
 def probe_subset(plan, n):
