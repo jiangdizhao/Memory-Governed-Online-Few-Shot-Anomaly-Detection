@@ -1,3 +1,4 @@
 # R1 generates canonical LF UTF-8 CSV and JSON, including checksums.
 # Disable Git's platform-specific newline conversion for these outputs.
 outputs/r1_oracle_20261028/** -text
+outputs/p01_falsification_20261028/** -text
