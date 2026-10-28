@@ -1,0 +1,48 @@
+{
+  "G0": {
+    "reason": "Pre-existing tracked historical archive deletions remain in worktree; not modified or staged.",
+    "status": "BLOCKED"
+  },
+  "G1": {
+    "reason": "Synthetic Q-A-TS/Q-B metadata tests passed.",
+    "status": "PASS"
+  },
+  "G1_real_data": {
+    "dataset_root_present": true,
+    "json_root_present": true,
+    "reason": "Dataset path presence checked only; no Real-IAD files or labels opened.",
+    "status": "SKIP"
+  },
+  "G2": {
+    "reason": "Native v22 score parity not executed; no dataset image/features used.",
+    "status": "BLOCKED"
+  },
+  "G3": {
+    "reason": "Synthetic Greedy reference tests pass; live native K=256 and fp16 update parity have not run.",
+    "status": "BLOCKED"
+  },
+  "G4": {
+    "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed.",
+    "status": "PASS"
+  },
+  "G5": {
+    "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed.",
+    "status": "PASS"
+  },
+  "G6": {
+    "reason": "B5a/B5b, B6, and B7 remain blocked; see method cards.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G7": {
+    "reason": "Reference math verified for B0-B4; blocked baselines prevent all-family acceptance.",
+    "status": "BLOCKED"
+  },
+  "G8": {
+    "reason": "Completed synthetic artifacts are checksum-verifiable, but full midstream engine/controller/anchor checkpoint restoration is not implemented.",
+    "status": "BLOCKED"
+  },
+  "G9": {
+    "reason": "Native score/AUROC parity across all controllers not run; synthetic trace is mechanism evidence only.",
+    "status": "BLOCKED"
+  }
+}

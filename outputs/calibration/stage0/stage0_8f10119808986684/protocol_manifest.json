@@ -1,0 +1,183 @@
+{
+  "branch": "calibration-stage0-contract-20261029",
+  "confirmation_outcomes_opened": false,
+  "execution": "synthetic_cpu_only",
+  "method_cards": {
+    "B0": {
+      "equation": "theta_t=theta0; predict=1[s_t>=theta_t]",
+      "information": [
+        "shared current unlabeled score"
+      ],
+      "initialization": "D2 higher q90 of 64 additional C64 normals under M0",
+      "name": "Frozen-Theta",
+      "status": "IMPLEMENTED"
+    },
+    "B1": {
+      "defaults": {
+        "W": 256,
+        "insufficient": "HOLD at theta0",
+        "n_min": 16,
+        "q": 0.9
+      },
+      "equation": "theta= higher_q90(last W queried verified-normal stale scores)",
+      "fidelity": "Proposed frozen implementation defaults; no unlabeled scores.",
+      "information": [
+        "shared current unlabeled score",
+        "queried labels"
+      ],
+      "name": "RollingQ90QueriedNormal",
+      "status": "IMPLEMENTED"
+    },
+    "B2": {
+      "adaptations": [
+        "disable source normal-only fallback because unqueried labels are unavailable",
+        "use source native numpy.quantile for C64 initialization; report separately from D2 theta0",
+        "balanced rescue and fast rescue remain source defaults disabled"
+      ],
+      "information": [
+        "additional C64 scalar scores at M0",
+        "queried labels"
+      ],
+      "name": "OriginalGuardedDualAnchorSidecar",
+      "no_guarantee": "Historical v22 behavior is wrapped for this interface; no native full-loop parity claim.",
+      "source": "test_phase3_AIF_simplified_v22.GuardedDualAnchorThresholdController",
+      "status": "IMPLEMENTED_ADAPTED"
+    },
+    "B3": {
+      "defaults": {
+        "Delta": 0.01,
+        "min_normals": 16,
+        "q": 0.9
+      },
+      "equation": "on M change: raw=higher_q90(C64 rescored at M); theta'=clip(raw,theta+-Delta); otherwise HOLD",
+      "information": [
+        "protected C64 current-M scores"
+      ],
+      "name": "StateConsistentQuantile",
+      "source_exclusion": "C64 protected-only primary; queried-normal LSO excluded from B3.",
+      "status": "IMPLEMENTED_PROPOSED"
+    },
+    "B4": {
+      "defaults": {
+        "alpha": 0.1,
+        "beta": 0.1,
+        "gamma_defect": 0.005,
+        "gamma_normal": 0.005
+      },
+      "equation": "aN+=gammaN*(alpha-1[pred=defect]) on queried y=0; aD+=gammaD*(beta-1[pred=normal]) on queried y=1; project to [Q_D(aD),Q_N(1-aN)] when consistent",
+      "information": [
+        "queried labels",
+        "current-M normal and defect anchors"
+      ],
+      "name": "ADAPTED_DUAL_ACI",
+      "no_guarantee": "Sparse selective feedback and dependent dynamic-memory scores do not inherit ACI guarantees.",
+      "source": "Gibbs and Cand\u00e8s, Adaptive Conformal Inference Under Distribution Shift, NeurIPS 2021, https://papers.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html",
+      "status": "IMPLEMENTED_ADAPTED"
+    },
+    "B5a": {
+      "blocker": "No source-equivalent Grimshaw fit plus pinned author-reference trace has been implemented and verified; no substitute estimator is labeled SPOT.",
+      "defaults": {
+        "level": 0.98,
+        "n_init": 1000,
+        "q": 0.001
+      },
+      "equation": "zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1); xi->0: u+sigma*log(Nu/(q*n))",
+      "name": "SPOT",
+      "source": "Siffer et al., KDD 2017, https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf",
+      "status": "BLOCKED_FIDELITY"
+    },
+    "B5b": {
+      "blocker": "The original source drift/update convention lacks a verified implementation trace in this package.",
+      "defaults": {
+        "d": 50,
+        "level": 0.98,
+        "n_init": 1000,
+        "q": 0.001
+      },
+      "equation": "SPOT on score minus causal local mean over d previous accepted normal observations; threshold=mean+zq",
+      "name": "dSPOT",
+      "source": "Siffer et al., KDD 2017 (same source as B5a)",
+      "status": "BLOCKED_FIDELITY"
+    },
+    "B6": {
+      "blocker": "Exact reference algorithm test and a preregistered mapping from abstention to primary balanced accuracy are not complete; dynamic-memory assumptions also fail to transfer automatically.",
+      "information": [
+        "source method uses an unsupervised score stream and emits a tri-state decision"
+      ],
+      "name": "SunCS",
+      "source": "Sun et al., ICML 2024, https://proceedings.mlr.press/v235/sun24h.html",
+      "status": "BLOCKED_FIDELITY"
+    },
+    "B7": {
+      "blocker": "Fail closed until authoritative proposal/version is supplied; no risk bound or conflict fallback is invented.",
+      "equations": "The internal candidate outline exists in BASELINE_FIDELITY_AND_REFERENCES.md, but exact bound, minimum counts, fallback and confidence rules are not available.",
+      "name": "SCDAC-G",
+      "source": "Internal Deep Research proposal referenced by handoff; full report absent from workspace",
+      "status": "BLOCKED_FIDELITY"
+    }
+  },
+  "overall_status": "BLOCKED_WIP",
+  "profile": {
+    "c64_mutable": false,
+    "c64_size": 64,
+    "memory_capacity_per_layer": 256,
+    "name": "calibration_isolated",
+    "query": {
+      "bins": 16,
+      "early_observations": 400,
+      "fraction": 0.03,
+      "group_unit": "official_sample_key",
+      "q_b_early_fraction": 0.2,
+      "rounding": "half_up_floor_0.03N_plus_0.5",
+      "seed": 37,
+      "version": "Q-A-TS-v1"
+    },
+    "reference_sigma_floor": 0.02,
+    "reference_theta_policy": "fixed_theta0_higher_q90_at_M0",
+    "scorer": {
+      "augmentation_seed": 0,
+      "augmentations": 4,
+      "bank_seed": 0,
+      "boost_lambda": 0.8,
+      "concept_assign_view": "id",
+      "device": "cpu",
+      "feature_fuse": "concat",
+      "fixed_capacity": 25000,
+      "fixed_per_image": 5000,
+      "fixed_support_count": 4,
+      "gamma": 1.0,
+      "image_aggregation": "max",
+      "image_quantile": 0.95,
+      "image_size": 392,
+      "image_topk": 64,
+      "include_identity": false,
+      "knn": 5,
+      "layer_fusion": "mean",
+      "mode_scoring": "boost",
+      "model_name": "dinov2_vitl14_reg",
+      "multiplier": 2.5,
+      "mutable_capacity_per_layer": 256,
+      "resize_size": 448,
+      "tau_close": 0.2,
+      "topk_patches": 32,
+      "use_fp16": true,
+      "view_fusion": "mean",
+      "view_names": [
+        "id"
+      ]
+    },
+    "stage": 0,
+    "support_regime": "strict4_support_plus_additional_C64"
+  },
+  "profile_sha256": "549203cfc5b76a89094e54a4af69ae79fe9938f81ae6e8af986367285fe801ce",
+  "protocol_version": "calibration-isolated-stage0-v1",
+  "query_tape_versions": [
+    "Q-A-TS-v1",
+    "Q-B via Q-A-TS-v1 allocation"
+  ],
+  "source_commit": "0b349ce67ce5ff635f35958eda4d0a3717fdfde8",
+  "stage": 0,
+  "stage1_run": false,
+  "stage2_run": false,
+  "support_regime": "four deployed supports plus 64 additional protected C64 normals"
+}

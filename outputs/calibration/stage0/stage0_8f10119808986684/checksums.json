@@ -1,0 +1,11 @@
+{
+  "controller_method_cards.json": "68f97e46e434e30f1b054ec8ba9e20319f16f3532c8a54ca9f126754350ad088",
+  "dependency_environment.json": "1dfe34b9f2afdc59b254749bffec33e4e8964dbd90ea3c289e2d639d32969d19",
+  "gates.json": "48ff1e9e33f461c88939ba622b0ca26e37ab4090d036a4320aa2f0f717cda2ba",
+  "protocol_manifest.json": "0a215d16b7157df74c0faff4cbdfd23ef51c49f5f540f364155d79be6438f283",
+  "source_hashes.json": "d56df2522f85a8f4969ac273c22b23e82ebaaf4ddd1acc1a60224934d2a62859",
+  "stage0_summary.md": "a47f53b7d0faee405846485c3169ef3646c293a36355428bedbcc0f77e3d3838",
+  "synthetic_event_trace.jsonl": "ddd359f21eeeb7f78660034496520898dd8b8abfb4e210429c6df37c89005eb9",
+  "synthetic_summary.json": "f4b4f5e00c3b08121f285f7c2ac919487d734a68f1dd6f024e9e77ecb81c1cd6",
+  "test_results.json": "f830d00fae3a39ae34fce276f310162a5cf370e094833ef8354ce325ec5103d2"
+}

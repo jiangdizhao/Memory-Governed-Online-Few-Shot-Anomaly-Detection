@@ -1,0 +1,8 @@
+{
+  "cuda_available": true,
+  "environment_prefix": "D:\\anaconda3\\envs\\torch",
+  "execution_device": "cpu",
+  "python_executable": "D:\\anaconda3\\envs\\torch\\python.exe",
+  "python_version": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+  "torch_version": "2.0.1+cu117"
+}
