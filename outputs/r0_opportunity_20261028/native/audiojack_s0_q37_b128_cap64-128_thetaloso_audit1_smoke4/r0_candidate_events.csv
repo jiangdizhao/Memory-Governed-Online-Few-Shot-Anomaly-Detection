@@ -1,0 +1,7 @@
+query_step,query_image_id,official_sample_key,camera_id,capacity,static_prequery_score,n_prior_normal,n_prior_defect,candidate_allowed,candidate_keep,shadow_audited,normal_utility,normal_score_gain,defect_score_erosion,defect_max_erosion,defect_crossing,memory_full_before,replacement_attempt,appended,replaced,skipped,normal_available,defect_available
+25,NG/HS/S0092/audiojack__0092_NG_HS_C5_20231023093111.jpg,audiojack__0092_NG_HS,5,64,0.4886035919189453,0,0,True,8,True,,,,,,False,False,8,0,0,False,False
+25,NG/HS/S0092/audiojack__0092_NG_HS_C5_20231023093111.jpg,audiojack__0092_NG_HS,5,128,0.4886035919189453,0,0,True,8,True,,,,,,False,False,8,0,0,False,False
+97,OK/S0311/audiojack_0311_OK_C2_20231021144550.jpg,audiojack_0311_OK,2,64,0.5124089121818542,1,0,True,8,True,0.0,0.0,,,,False,False,8,0,0,True,False
+97,OK/S0311/audiojack_0311_OK_C2_20231021144550.jpg,audiojack_0311_OK,2,128,0.5124089121818542,1,0,True,8,True,0.0,0.0,,,,False,False,8,0,0,True,False
+190,NG/BX/S0087/audiojack__0087_NG_BX_C5_20231023113242.jpg,audiojack__0087_NG_BX,5,64,0.5134328603744507,2,1,True,8,True,0.0,0.005603805184364319,0.0,0.0,False,False,False,8,0,0,True,True
+190,NG/BX/S0087/audiojack__0087_NG_BX_C5_20231023113242.jpg,audiojack__0087_NG_BX,5,128,0.5134328603744507,2,1,True,8,True,0.0,0.005603805184364319,0.0,0.0,False,False,False,8,0,0,True,True
