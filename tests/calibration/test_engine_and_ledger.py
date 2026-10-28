@@ -1,6 +1,9 @@
 import hashlib
+from pathlib import Path
+import tempfile
 import unittest
 
+import numpy as np
 import torch
 
 from experiments.calibration.anchor_ledger import AnchorLedger, AnchorLedgerError
@@ -37,7 +40,8 @@ class EngineLedgerTests(unittest.TestCase):
             outcomes=PrivateOutcomeLedger(labels), controllers=controllers,
             score_fn=score_fn,
             memory_state_fn=lambda: (memory["version"], memory["digest"]),
-            write_fn=write_fn, evidence_fn=evidence_fn).run()
+            write_fn=write_fn, evidence_fn=evidence_fn,
+            provenance_id="unit-test-stream-v1").run()
         return result, memory
 
     def test_predictions_share_one_score_and_memory_trajectory(self):
@@ -127,6 +131,88 @@ class EngineLedgerTests(unittest.TestCase):
         c64[0] = ("support-0", 1, None)
         with self.assertRaisesRegex(AnchorLedgerError, "disjoint"):
             AnchorLedger(c64, deployed_support_keys=[f"support-{i}" for i in range(4)])
+
+    def test_anchor_checkpoint_roundtrips_private_features(self):
+        rows = [(f"c64-{i}", 1, torch.tensor([float(i)])) for i in range(64)]
+        supports = [f"support-{i}" for i in range(4)]
+        original = AnchorLedger(rows, deployed_support_keys=supports)
+        original.add_queried(source_key="stream-a", camera_id=2, label=1,
+                             features=torch.tensor([9.]), t=7, memory_version=0)
+        state = original.state_dict()
+        restored = AnchorLedger(rows, deployed_support_keys=supports)
+        restored.load_state_dict(state)
+        self.assertEqual(restored.state_dict()["queried_count"], 1)
+        self.assertTrue(torch.equal(restored._anchors[0].features, rows[0][2]))
+        self.assertTrue(torch.equal(restored._anchors[-1].features, torch.tensor([9.])))
+
+    def test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng(self):
+        records = [TapeRecord(i, f"resume-{i}", i % 5 + 1, f"resume-r-{i}")
+                   for i in range(100)]
+        tape = build_qa_ts(records)
+        labels = [i % 3 == 0 for i in range(100)]
+        labels = [int(x) for x in labels]
+        events = [StreamEvent(record, i / 100.) for i, record in enumerate(records)]
+
+        class Memory:
+            def __init__(self): self.version, self.digest = 0, "memory-0"
+            def state_dict(self):
+                return {"version": self.version, "digest": self.digest}
+            def load_state_dict(self, state):
+                self.version, self.digest = int(state["version"]), str(state["digest"])
+
+        def make_engine(memory):
+            controllers = [FrozenTheta(.4), RollingQ90QueriedNormal(.4, 16, 2)]
+            def score_fn(event):
+                return ScoreResult(float(event.payload) + np.random.random() * 1e-6 +
+                                   memory.version * .001, memory.version,
+                                   f"score-state-{memory.version}")
+            def write_fn(event, score, feedback):
+                if feedback.queried and feedback.label == 0:
+                    memory.version += 1
+                    memory.digest = f"memory-{memory.version}"
+            return PrequentialEngine(
+                tape=tape, events=events,
+                outcomes=PrivateOutcomeLedger(labels), controllers=controllers,
+                score_fn=score_fn,
+                memory_state_fn=lambda: (memory.version, memory.digest),
+                write_fn=write_fn,
+                checkpoint_components={"memory": memory},
+                provenance_id="synthetic-resume-test-v1")
+
+        np.random.seed(791)
+        uninterrupted_memory = Memory()
+        uninterrupted = make_engine(uninterrupted_memory).run()
+        np.random.seed(791)
+        first_memory = Memory()
+        first = make_engine(first_memory)
+        partial = first.run(max_events=37)
+        self.assertEqual(partial["status"], "INCOMPLETE")
+        resumed_memory = Memory()
+        resumed = make_engine(resumed_memory)
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            checkpoint_path = Path(temporary_dir) / "engine.pt"
+            first.save_checkpoint(checkpoint_path)
+            resumed.load_checkpoint(checkpoint_path)
+            continued = resumed.run()
+        self.assertEqual(continued["status"], "COMPLETE")
+        self.assertEqual(continued["scores"], uninterrupted["scores"])
+        self.assertEqual(continued["predictions"], uninterrupted["predictions"])
+        self.assertEqual(continued["trace"], uninterrupted["trace"])
+        self.assertEqual(resumed_memory.state_dict(), uninterrupted_memory.state_dict())
+
+        changed_labels = labels.copy()
+        changed_labels[0] = 1 - changed_labels[0]
+        mismatch = PrequentialEngine(
+            tape=tape, events=events, outcomes=PrivateOutcomeLedger(changed_labels),
+            controllers=[FrozenTheta(.4), RollingQ90QueriedNormal(.4, 16, 2)],
+            score_fn=lambda event: ScoreResult(event.payload, 0, "constant"),
+            memory_state_fn=lambda: (0, "memory-0"), write_fn=lambda *args: None,
+            provenance_id="synthetic-resume-test-v1")
+        with self.assertRaisesRegex(Exception, "identity mismatch"):
+            with tempfile.TemporaryDirectory() as temporary_dir:
+                checkpoint_path = Path(temporary_dir) / "engine.pt"
+                first.save_checkpoint(checkpoint_path)
+                mismatch.load_checkpoint(checkpoint_path)
 
 
 if __name__ == "__main__": unittest.main()

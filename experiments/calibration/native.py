@@ -155,6 +155,7 @@ class SharedNativeGreedyWriter:
                  protected_source_keys: Sequence[str], sigma_ref: float = 0.02):
         self.impl = impl
         self.native_bank = native_bank
+        self.fixed_support_sha256 = _fixed_bank_digest(native_bank)
         self.theta_ref = float(theta_ref)
         self.sigma_ref = max(0.02, float(sigma_ref))
         self.protected_source_keys = frozenset(protected_source_keys)
@@ -170,6 +171,57 @@ class SharedNativeGreedyWriter:
 
     def source_row_counts(self, source_key: str) -> tuple[int, ...]:
         return tuple(layer.count(source_key) for layer in self.sources)
+
+    def state_dict(self) -> dict[str, Any]:
+        """Private, resumable snapshot of the one live native Greedy bank."""
+        return {
+            "schema": "calibration.shared_native_greedy.v1",
+            "fixed_support_sha256": self.fixed_support_sha256,
+            "theta_ref": self.theta_ref,
+            "sigma_ref": self.sigma_ref,
+            "protected_source_keys": sorted(self.protected_source_keys),
+            "capacities": list(self.bank.capacities),
+            "version": self.bank.version,
+            "layers": [layer.detach().to("cpu").contiguous().clone()
+                       for layer in self.bank.layers],
+            "sources": [list(rows) for rows in self.sources],
+            "sha256": self.bank.sha256(),
+        }
+
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        if (state.get("schema") != "calibration.shared_native_greedy.v1" or
+                state.get("fixed_support_sha256") != self.fixed_support_sha256 or
+                float(state.get("theta_ref")) != self.theta_ref or
+                float(state.get("sigma_ref")) != self.sigma_ref or
+                state.get("protected_source_keys") !=
+                sorted(self.protected_source_keys) or
+                state.get("capacities") != list(self.bank.capacities)):
+            raise NativeAdapterError("Native writer checkpoint profile mismatch")
+        import torch
+        layers = [torch.as_tensor(x).detach().clone().contiguous()
+                  for x in state.get("layers", ())]
+        sources = [list(rows) for rows in state.get("sources", ())]
+        if (len(layers) != len(self.bank.layers) or len(sources) != len(layers) or
+                any(len(layer) != len(rows) for layer, rows in zip(layers, sources)) or
+                any(len(layer) > cap for layer, cap in zip(layers, self.bank.capacities))):
+            raise NativeAdapterError("Native writer checkpoint rows are misaligned")
+        restored = GreedyBank(layers, self.bank.capacities,
+                              version=int(state.get("version", -1)))
+        if restored.version < 0 or restored.sha256() != state.get("sha256"):
+            raise NativeAdapterError("Native writer checkpoint bank digest mismatch")
+        live_before = native_bridge.snapshot(self.native_bank, version=self.bank.version)
+        if restored.version == live_before.version:
+            if restored.sha256() != live_before.sha256():
+                raise NativeAdapterError("Same-version native checkpoint changes memory")
+        else:
+            native_bridge.install_on_live(self.native_bank, restored,
+                                          expected_digest=live_before.sha256(),
+                                          version=live_before.version)
+        actual = native_bridge.snapshot(self.native_bank, version=restored.version)
+        if (actual.sha256() != restored.sha256() or
+                _fixed_bank_digest(self.native_bank) != self.fixed_support_sha256):
+            raise NativeAdapterError("Native bank restoration failed parity verification")
+        self.bank, self.sources = restored, sources
 
     def apply(self, *, queried: bool, label: int | None, source_key: str,
               score: float, static_amap: Mapping[str, Any],

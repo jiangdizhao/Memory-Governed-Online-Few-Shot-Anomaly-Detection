@@ -1,6 +1,6 @@
 # Calibration workstream — Stage 0 documentation index
 
-**Status: protocol specification only; code has NOT been implemented or experimentally validated by this branch.** Created 2026-10-29 from `p0p1-falsification-20261028` at commit `12c0e852d12773d02014bba178821d1d1c70fadf`.
+**Status: implemented Stage 0 infrastructure with a `BLOCKED_WIP` acceptance status; not scientifically validated.**
 
 ## Why this workstream exists
 Pattern Recognition submission PR-D-26-11359 was rejected; the October 2026 rejection recovery and R0/R1/P0/P1 audits exposed weak control/feedback attribution and stale-threshold effects. P0/P1 on a **single** Audiojack development condition suggested Greedy memory changed score ranking favorably but an old operating threshold severely increased false negatives. Recalibration also increased FPR; it is not proof that a two-sided safe method already works. Latest research handoff dated 2026-10-28 **stops the current CDARG/SAEG Safe Admission sprint** and pivots to state-consistent online calibration.
@@ -26,4 +26,4 @@ This Stage 0 builds a **reusable, switchable experimental engine**; the present 
 ## Work boundaries
 **Stage 0:** specification, code, synthetic mechanism tests, offline manifests, baseline fidelity; no Real-IAD result optimization. **Stage 1:** 4 development classes, matched Q-A-TS and Q-B profiles (separate). **Stage 2:** precommitted order stress and untouched Mint/PCB confirmation only after freeze. Pass/fail and scientific results must never be invented.
 
-A single `python -m experiments.calibration.runner --stage 0 --all` command is a **target interface**, not yet an existing command.
+A single `python -m experiments.calibration.runner --stage 0 --all` command is implemented for Stage 0 synthetic validation and audit generation.

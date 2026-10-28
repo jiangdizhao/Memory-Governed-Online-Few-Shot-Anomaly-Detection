@@ -7,6 +7,7 @@ from typing import Any
 from .controllers import (AdaptedDualACI, BlockedController, FrozenTheta,
                           OriginalGuardedSidecar, RollingQ90QueriedNormal,
                           StateConsistentQuantile)
+from .scdac_g import SCDACGController
 
 
 METHOD_CARDS: dict[str, dict[str, Any]] = {
@@ -34,29 +35,35 @@ METHOD_CARDS: dict[str, dict[str, Any]] = {
            "source_exclusion": "C64 protected-only primary; queried-normal LSO excluded from B3."},
     "B4": {"name": "ADAPTED_DUAL_ACI", "status": "IMPLEMENTED_ADAPTED",
            "source": "Gibbs and Candès, Adaptive Conformal Inference Under Distribution Shift, NeurIPS 2021, https://papers.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html",
-           "equation": "aN+=gammaN*(alpha-1[pred=defect]) on queried y=0; aD+=gammaD*(beta-1[pred=normal]) on queried y=1; project to [Q_D(aD),Q_N(1-aN)] when consistent",
+           "equation": "aN+=gammaN*(alpha-1[pred=defect]) on queried y=0; aD+=gammaD*(beta-1[pred=normal]) on queried y=1; exact empirical bounds: [normal lower, defect upper]",
            "information": ["queried labels", "current-M normal and defect anchors"],
            "defaults": {"alpha": 0.10, "beta": 0.10, "gamma_normal": 0.005,
                         "gamma_defect": 0.005},
            "no_guarantee": "Sparse selective feedback and dependent dynamic-memory scores do not inherit ACI guarantees."},
     "B5a": {"name": "SPOT", "status": "BLOCKED_FIDELITY",
             "source": "Siffer et al., KDD 2017, https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf",
+            "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+            "author_source_file_blob_sha": "fdebc8c216fffeea93afcc51efab83a2d6013351",
             "equation": "zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1); xi->0: u+sigma*log(Nu/(q*n))",
             "defaults": {"n_init": 1000, "level": 0.98, "q": 0.001},
-            "blocker": "No source-equivalent Grimshaw fit plus pinned author-reference trace has been implemented and verified; no substitute estimator is labeled SPOT."},
+            "blocker": "Pinned author source is libspot 3.0.0 SPOT code, but no exact cross-version equation/edge-case reference trace has been verified against the KDD 2017 Grimshaw procedure; no substitute estimator is labeled SPOT."},
     "B5b": {"name": "dSPOT", "status": "BLOCKED_FIDELITY",
             "source": "Siffer et al., KDD 2017 (same source as B5a)",
+            "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
             "equation": "SPOT on score minus causal local mean over d previous accepted normal observations; threshold=mean+zq",
             "defaults": {"n_init": 1000, "level": 0.98, "q": 0.001, "d": 50},
-            "blocker": "The original source drift/update convention lacks a verified implementation trace in this package."},
+            "blocker": "The pinned libspot 3.0.0 source has no dSPOT implementation; the paper describes a separate moving-average/non-anomaly window. No faithful dSPOT implementation or reference test is present."},
     "B6": {"name": "SunCS", "status": "BLOCKED_FIDELITY",
             "source": "Sun et al., ICML 2024, https://proceedings.mlr.press/v235/sun24h.html",
             "information": ["source method uses an unsupervised score stream and emits a tri-state decision"],
             "blocker": "Exact reference algorithm test and a preregistered mapping from abstention to primary balanced accuracy are not complete; dynamic-memory assumptions also fail to transfer automatically."},
-    "B7": {"name": "SCDAC-G", "status": "BLOCKED_FIDELITY",
-            "source": "Internal Deep Research proposal referenced by handoff; full report absent from workspace",
-            "equations": "The internal candidate outline exists in BASELINE_FIDELITY_AND_REFERENCES.md, but exact bound, minimum counts, fallback and confidence rules are not available.",
-            "blocker": "Fail closed until authoritative proposal/version is supplied; no risk bound or conflict fallback is invented."},
+    "B7": {"name": "SCDAC-G", "status": "IMPLEMENTED_PROVISIONAL",
+            "source": "docs/Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf; SHA-256 5fe07256384351c1170d67183eae5a80e5aa289a03586ba767671f062f4fb977",
+            "equations": "Current-state scores; empirical FPR/FNR; fixed-time one-sided Clopper-Pearson descriptive upper endpoints; minimize (U_FPR+U_FNR)/2 + lambda_move*abs(theta-theta_t)/(sigma_s+epsilon_s), then clip movement",
+            "information": ["protected C64 normal anchors", "queried verified normal anchors with all-layer LSO", "queried defect anchors", "shared unlabeled stream scores are not consumed by B7"],
+            "defaults": {"min_normals": 16, "min_defects": 8, "delta": 0.05, "support_fpr": 0.20, "support_fnr": 0.20, "lambda_move": 0.05, "max_step": 0.01, "fpr_diagnostic_targets": [0.05, 0.10, 0.20]},
+            "adaptation": "PROVISIONAL_METHOD_SPEC; exact numerical choices are registered in the new method spec because the proposal leaves them open",
+            "no_guarantee": "Descriptive only. Selective labels, serial dependence, repeated memory rescoring and threshold selection invalidate automatic transfer of binomial confidence guarantees."},
 }
 
 
@@ -74,6 +81,7 @@ def build_controllers(theta0: float, c64_scores: list[float], *,
         OriginalGuardedSidecar(c64_scores, float(theta0)),
         StateConsistentQuantile(float(theta0)),
         AdaptedDualACI(float(theta0)),
+        SCDACGController(float(theta0)),
     ]
     if include_blocked:
         controllers.extend(BlockedController(key, str(card.get("blocker")), theta0)

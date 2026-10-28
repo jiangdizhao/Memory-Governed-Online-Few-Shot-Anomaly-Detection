@@ -3,7 +3,7 @@ from dataclasses import fields
 
 from experiments.calibration.controllers import (AdaptedDualACI, FrozenTheta,
     OriginalGuardedSidecar, RollingQ90QueriedNormal, StateConsistentQuantile, higher_quantile,
-    theta0_from_c64)
+    theta0_from_c64, _normal_fpr_lower_bound, _defect_fnr_upper_bound)
 from experiments.calibration.protocol import (EvidenceAnchor, EvidenceSnapshot,
     Feedback, Observation, Prediction, ProtocolError)
 
@@ -81,6 +81,61 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(c.last_status, "DEFECT_ONLY")
         self.assertEqual(c.normal_scores, ())
         self.assertLessEqual(c.theta, .2)
+
+    def test_b4_normal_lower_and_defect_upper_geometry_is_not_reversed(self):
+        c = AdaptedDualACI(theta=.5)
+        normals = tuple(EvidenceAnchor(f"n:{i}", v, 0, True)
+                        for i, v in enumerate((.1, .2)))
+        defects = tuple(EvidenceAnchor(f"d:{i}", v, 0, False,
+                                      source_exclusion_policy="queried_defect_not_written")
+                        for i, v in enumerate((.8, .9)))
+        c.on_memory_change(EvidenceSnapshot(0, normals, defects, {}, 1))
+        self.assertEqual(c.finalize_step(), .5)
+        self.assertFalse(c.conflict)
+        self.assertEqual(c.last_status, "BOTH")
+
+    def test_b4_overlapping_scores_are_genuinely_conflicting(self):
+        c = AdaptedDualACI(theta=.5)
+        normals = tuple(EvidenceAnchor(f"n:{i}", v, 0, True)
+                        for i, v in enumerate((.1, .9)))
+        defects = tuple(EvidenceAnchor(f"d:{i}", v, 0, False,
+                                      source_exclusion_policy="queried_defect_not_written")
+                        for i, v in enumerate((.1, .9)))
+        c.on_memory_change(EvidenceSnapshot(0, normals, defects, {}, 1))
+        self.assertEqual(c.finalize_step(), .5)
+        self.assertTrue(c.conflict)
+        self.assertEqual(c.last_status, "CONFLICT")
+
+    def test_b4_exact_error_count_boundaries_handle_ties(self):
+        # At theta == .5 both tied normals are false positives because the
+        # operational predicate is score >= theta. The lower bound moves past
+        # the tie so no more than one of two normals is counted.
+        lower = _normal_fpr_lower_bound((.5, .5), .5)
+        self.assertGreater(lower, .5)
+        self.assertEqual(sum(x >= lower for x in (.5, .5)), 0)
+        upper = _defect_fnr_upper_bound((.5, .5), .5)
+        self.assertEqual(upper, .5)
+        self.assertEqual(sum(x < upper for x in (.5, .5)), 0)
+
+    def test_b4_current_memory_rescore_reverses_feasibility_without_stale_scores(self):
+        c = AdaptedDualACI(theta=.5)
+        n0 = tuple(EvidenceAnchor(f"n:{i}", v, 0, True)
+                   for i, v in enumerate((.1, .2)))
+        d0 = tuple(EvidenceAnchor(f"d:{i}", v, 0, False,
+                                  source_exclusion_policy="queried_defect_not_written")
+                   for i, v in enumerate((.8, .9)))
+        c.on_memory_change(EvidenceSnapshot(0, n0, d0, {}, 1))
+        self.assertEqual(c.finalize_step(), .5)
+        # The same anchor identities are rescored under M1 and now overlap.
+        n1 = tuple(EvidenceAnchor(f"n:{i}", .7 + .1*i, 1, True)
+                   for i in range(2))
+        d1 = tuple(EvidenceAnchor(f"d:{i}", .7 + .1*i, 1, False,
+                                  source_exclusion_policy="queried_defect_not_written")
+                   for i in range(2))
+        c.on_memory_change(EvidenceSnapshot(1, n1, d1, {}, 2))
+        c.finalize_step()
+        self.assertTrue(c.conflict)
+        self.assertEqual(c.evidence_version, 1)
 
     def test_b4_refreshes_new_queried_class_evidence_without_memory_change(self):
         c = AdaptedDualACI(theta=.5)

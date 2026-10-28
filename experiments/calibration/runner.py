@@ -39,6 +39,13 @@ HISTORICAL_SOURCES = (
     "experiments/risk_safe/d2_threshold_calibration.py",
     "experiments/risk_safe/p01_falsification_native.py",
 )
+ARTIFACT_FILES = frozenset({
+    "run_identity.json", "INCOMPLETE", "protocol_manifest.json",
+    "dependency_environment.json", "gates.json",
+    "controller_method_cards.json", "synthetic_event_trace.jsonl",
+    "synthetic_summary.json", "test_results.json", "source_hashes.json",
+    "stage0_summary.md", "checksums.json",
+})
 
 
 def _sha(data: bytes) -> str: return hashlib.sha256(data).hexdigest()
@@ -105,9 +112,10 @@ def _synthetic_run() -> dict[str, Any]:
             evidence_extra.append((EvidenceAnchor(
                 f"query:{event.record.position}",
                 float(event.payload) + memory.version * 0.001, memory.version,
-                False, 0, "synthetic_verified_feedback"), label))
+                False, 0, "queried_normal_all_layer_leave_source_out"
+                if label == 0 else "queried_defect_not_written"), label))
         c64 = tuple(EvidenceAnchor(f"c64:{i:03d}", value + memory.version * 0.001,
-                                   memory.version, True)
+                                   memory.version, True, 0, "C64_PROTECTED")
                     for i, value in enumerate(c64_scores))
         def current_version(anchor: EvidenceAnchor) -> EvidenceAnchor:
             shift = (memory.version - anchor.memory_version) * 0.001
@@ -125,7 +133,8 @@ def _synthetic_run() -> dict[str, Any]:
         tape=tape, events=events, outcomes=outcomes, controllers=controllers,
         score_fn=score_fn,
         memory_state_fn=lambda: (memory.version, memory.digest),
-        write_fn=write_fn, evidence_fn=evidence_fn)
+        write_fn=write_fn, evidence_fn=evidence_fn,
+        provenance_id=f"synthetic-stage0-v1:{tape.stream_digest}")
     result = engine.run()
     qb = build_qb([TapeRecord(i, f"qb-group-{i:04d}", i % 5 + 1,
                               f"qb-view-{i:04d}") for i in range(1000)])
@@ -151,7 +160,15 @@ def _run_tests() -> dict[str, Any]:
     loader = unittest.TestLoader()
     suite = loader.discover(str(ROOT / "tests" / "calibration"))
     stream = __import__("io").StringIO()
-    runner = unittest.TextTestRunner(stream=stream, verbosity=2)
+    class TrackingResult(unittest.TextTestResult):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.passed_test_ids: list[str] = []
+        def addSuccess(self, test):
+            self.passed_test_ids.append(test.id())
+            super().addSuccess(test)
+    runner = unittest.TextTestRunner(stream=stream, verbosity=2,
+                                     resultclass=TrackingResult)
     started = time.time()
     result = runner.run(suite)
     details = {
@@ -159,6 +176,7 @@ def _run_tests() -> dict[str, Any]:
         "passed": result.testsRun - len(result.failures) - len(result.errors) - len(result.skipped),
         "failed": len(result.failures), "errors": len(result.errors),
         "skipped": len(result.skipped), "duration_seconds": time.time() - started,
+        "passed_test_ids": result.passed_test_ids,
         "output": stream.getvalue(),
         "failures": [str(t) + "\n" + msg for t, msg in result.failures],
         "errors_detail": [str(t) + "\n" + msg for t, msg in result.errors],
@@ -171,6 +189,9 @@ def _source_hashes() -> dict[str, str]:
     paths = [ROOT / p for p in HISTORICAL_SOURCES]
     paths.extend(sorted((ROOT / "experiments" / "calibration").glob("*.py")))
     paths.extend(sorted((ROOT / "tests" / "calibration").glob("*.py")))
+    paths.extend(sorted((ROOT / "docs" / "calibration").glob("*.md")))
+    paths.append(ROOT / "docs" /
+                 "Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf")
     return {str(path.relative_to(ROOT)).replace("\\", "/"): _hash_file(path)
             for path in paths if path.is_file()}
 
@@ -189,6 +210,10 @@ def _verify_checksums(out_dir: Path) -> bool:
     path = out_dir / "checksums.json"
     if not path.exists(): return False
     manifest = json.loads(path.read_text(encoding="utf-8"))
+    actual = {p.name for p in out_dir.iterdir() if p.is_file() and
+              p.name != "checksums.json"}
+    if set(manifest) != actual:
+        return False
     for rel, expected in manifest.items():
         file = out_dir / rel
         if not file.is_file() or _hash_file(file) != expected:
@@ -205,7 +230,8 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     branch, source_commit = git.split("@", 1)
     source_hashes = _source_hashes()
     tests = _run_tests()
-    tests_ok = tests["failed"] == 0 and tests["errors"] == 0
+    tests_ok = (tests["failed"] == 0 and tests["errors"] == 0 and
+                tests["skipped"] == 0)
     synthetic = (_synthetic_run() if tests_ok else {
         "execution_scope": "skipped_after_unit_test_failure",
         "trace": [], "controller_states": {}, "scores": [], "predictions": {},
@@ -226,9 +252,9 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "G3": {"status": "BLOCKED", "reason": "Synthetic Greedy reference tests pass; live native K=256 and fp16 update parity have not run."},
         "G4": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed." if tests_ok else "Synthetic causal tests failed; see test_results.json."},
         "G5": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed." if tests_ok else "Synthetic evidence tests failed; see test_results.json."},
-        "G6": {"status": "BLOCKED_FIDELITY", "reason": "B5a/B5b, B6, and B7 remain blocked; see method cards."},
+        "G6": {"status": "BLOCKED_FIDELITY", "reason": "B5a/B5b and B6 remain BLOCKED_FIDELITY; B7 is executable only under its explicitly provisional method specification."},
         "G7": {"status": "BLOCKED", "reason": "Reference math verified for B0-B4; blocked baselines prevent all-family acceptance."},
-        "G8": {"status": "BLOCKED", "reason": "Completed synthetic artifacts are checksum-verifiable, but full midstream engine/controller/anchor checkpoint restoration is not implemented."},
+        "G8": {"status": "PASS" if any("test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng" in item for item in tests.get("passed_test_ids", [])) else "FAIL", "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration." if any("test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng" in item for item in tests.get("passed_test_ids", [])) else "Checkpoint/resume equivalence test did not pass; see test_results.json."},
         "G9": {"status": "BLOCKED", "reason": "Native score/AUROC parity across all controllers not run; synthetic trace is mechanism evidence only."},
     }
     manifest = {
@@ -257,6 +283,7 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     _json_write(out_dir / "source_hashes.json", {
         "stage0_source_hashes": source_hashes,
         "source_commit": source_commit,
+        "source_fingerprint_sha256": _sha(canonical_json(source_hashes).encode()),
         "historical_sources_unchanged_by_this_work": True})
     summary = [
         "# Stage 0 synthetic runner summary", "",
@@ -270,12 +297,34 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "`source_hashes.json`, `test_results.json`, and the synthetic trace.",
     ]
     (out_dir / "stage0_summary.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
-    files = [p for p in out_dir.iterdir() if p.is_file() and p.name not in
-             {"checksums.json", "INCOMPLETE"}]
+    files = [p for p in out_dir.iterdir() if p.is_file() and
+             p.name != "checksums.json"]
     _json_write(out_dir / "checksums.json", {p.name: _hash_file(p) for p in sorted(files)})
+    acceptance = all(gates[f"G{i}"]["status"] == "PASS" for i in range(10))
     return {"gates": gates, "tests": tests, "source_commit": source_commit,
             "branch": branch, "synthetic": compact,
-            "status": "BLOCKED_WIP" if tests_ok else "FAIL"}
+            "status": "PASS" if acceptance else "BLOCKED_WIP" if tests_ok else "FAIL"}
+
+
+def _verify_artifact(out_dir: Path) -> dict[str, Any]:
+    if not out_dir.is_dir() or not _verify_checksums(out_dir):
+        raise RuntimeError("Artifact missing or checksum verification failed")
+    manifest = json.loads((out_dir / "protocol_manifest.json").read_text(encoding="utf-8"))
+    hashes = json.loads((out_dir / "source_hashes.json").read_text(encoding="utf-8"))
+    identity_path = out_dir / "run_identity.json"
+    if not identity_path.is_file():
+        raise RuntimeError("Artifact lacks a resumable run identity record")
+    identity = json.loads(identity_path.read_text(encoding="utf-8"))
+    current_hashes = _source_hashes()
+    current_fp = _sha(canonical_json(current_hashes).encode())
+    if (manifest.get("profile_sha256") != DEFAULT_PROFILE.sha256 or
+            hashes.get("stage0_source_hashes") != current_hashes or
+            identity.get("source_fingerprint_sha256") != current_fp or
+            identity.get("profile_sha256") != DEFAULT_PROFILE.sha256):
+        raise RuntimeError("Artifact source/configuration provenance does not match this checkout")
+    return {"checksums_verified": True, "source_and_config_match": True,
+            "artifact_status": manifest.get("overall_status", "UNKNOWN"),
+            "run_key": identity.get("run_key")}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -291,17 +340,21 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("Only Stage 0 is implemented; Stage 1/2 are prohibited")
     _check_environment()
     if args.verify_only:
-        tests = _run_tests()
-        tests_ok = not tests["failed"] and not tests["errors"]
-        print(json.dumps({"mode": "verify-only", "status": "UNIT_TESTS_PASS" if tests_ok else "UNIT_TESTS_FAIL",
-                          "overall_status": "BLOCKED_WIP",
-                          "tests_run": tests["tests_run"], "passed": tests["passed"],
-                          "failed": tests["failed"], "skipped": tests["skipped"]}, indent=2))
-        return 0 if tests_ok else 1
+        if args.output_dir is None:
+            parser.error("--verify-only requires --output-dir for an exact artifact")
+        output = args.output_dir.resolve()
+        result = _verify_artifact(output)
+        print(json.dumps({"mode": "verify-only",
+                          "verification_status": "ARTIFACT_INTEGRITY_VERIFIED",
+                          "overall_status": result["artifact_status"],
+                          "output_dir": str(output),
+                          "checksums_verified": result["checksums_verified"],
+                          "source_and_config_match": result["source_and_config_match"]}, indent=2))
+        return 0
     git, _ = _git_info()
     source_commit = git.split("@", 1)[1]
     source_fingerprint = _sha(canonical_json(_source_hashes()).encode())
-    default_key = _sha((DEFAULT_PROFILE.sha256 + source_commit + source_fingerprint).encode())[:16]
+    default_key = _sha((DEFAULT_PROFILE.sha256 + source_fingerprint).encode())[:16]
     out_dir = (args.output_dir or ROOT / "outputs" / "calibration" / "stage0" /
                f"stage0_{default_key}").resolve()
     if not out_dir.is_relative_to(ROOT):
@@ -309,24 +362,36 @@ def main(argv: list[str] | None = None) -> int:
     if out_dir.exists():
         if not args.resume:
             raise FileExistsError(f"Refusing to overwrite existing Stage 0 output: {out_dir}")
-        if not (out_dir / "INCOMPLETE").exists() or not _verify_checksums(out_dir):
-            raise RuntimeError("Resume refused: incomplete marker/checksum/provenance mismatch")
-        manifest = json.loads((out_dir / "protocol_manifest.json").read_text(encoding="utf-8"))
-        source_manifest = json.loads((out_dir / "source_hashes.json").read_text(encoding="utf-8"))
-        test_manifest = json.loads((out_dir / "test_results.json").read_text(encoding="utf-8"))
-        current_git, _ = _git_info()
-        current_sources = _source_hashes()
-        if (manifest.get("profile_sha256") != DEFAULT_PROFILE.sha256 or
-                manifest.get("source_commit") != current_git.split("@", 1)[1] or
-                source_manifest.get("stage0_source_hashes") != current_sources or
-                test_manifest.get("failed") or test_manifest.get("errors")):
+        existing_names = {p.name for p in out_dir.iterdir()}
+        if existing_names - ARTIFACT_FILES:
+            raise RuntimeError("Resume refused: unexpected files/directories in output")
+        identity_file = out_dir / "run_identity.json"
+        if not identity_file.is_file():
+            raise RuntimeError("Resume refused: output has no Stage 0 run identity")
+        identity = json.loads(identity_file.read_text(encoding="utf-8"))
+        expected_identity = {"schema": "calibration.stage0_run_identity.v1",
+            "run_key": default_key, "profile_sha256": DEFAULT_PROFILE.sha256,
+            "source_fingerprint_sha256": source_fingerprint}
+        if identity != expected_identity:
             raise RuntimeError("Resume refused: source/configuration provenance changed")
-        # Deterministic smoke artifacts are already complete; verify and return.
-        print(json.dumps({"mode": "resume-verified", "status": "INCOMPLETE_SYNTHETIC_ONLY",
-                          "output_dir": str(out_dir), "checksums_verified": True,
-                          "source_and_config_match": True}, indent=2))
-        return 0
-    out_dir.mkdir(parents=True, exist_ok=False)
+        if _verify_checksums(out_dir):
+            result = _verify_artifact(out_dir)
+            print(json.dumps({"mode": "resume-verified",
+                              "verification_status": "ARTIFACT_INTEGRITY_VERIFIED",
+                              "overall_status": result["artifact_status"],
+                              "output_dir": str(out_dir), "checksums_verified": True,
+                              "source_and_config_match": True}, indent=2))
+            return 0
+        if not (out_dir / "INCOMPLETE").exists():
+            raise RuntimeError("Resume refused: incomplete marker is missing")
+        # Rebuild deterministic smoke files in place only after the immutable
+        # source/config identity matches; research streams are never resumed.
+    else:
+        out_dir.mkdir(parents=True, exist_ok=False)
+        _json_write(out_dir / "run_identity.json", {
+            "schema": "calibration.stage0_run_identity.v1",
+            "run_key": default_key, "profile_sha256": DEFAULT_PROFILE.sha256,
+            "source_fingerprint_sha256": source_fingerprint})
     result = _make_artifacts(out_dir)
     print(json.dumps({"mode": "all", "status": result["status"],
                       "output_dir": str(out_dir), "branch": result["branch"],
@@ -334,7 +399,7 @@ def main(argv: list[str] | None = None) -> int:
                       "gates": {k: v["status"] for k, v in result["gates"].items()},
                       "tests_run": result["tests"]["tests_run"],
                       "passed": result["tests"]["passed"]}, indent=2))
-    return 0 if result["status"] == "BLOCKED_WIP" else 1
+    return 0 if result["status"] == "PASS" else 2 if result["status"] == "BLOCKED_WIP" else 1
 
 
 if __name__ == "__main__":

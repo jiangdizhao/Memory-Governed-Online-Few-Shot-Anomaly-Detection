@@ -1,6 +1,6 @@
 # Stage 0 automated implementation, Windows environment and acceptance gates
 
-**All commands in this document describe target behavior; the Stage 0 Runner does not exist at contract-branch creation.** Do not report command success until actually executed and logged.
+**Stage 0 Runner is implemented in `experiments/calibration/runner.py`.** Commands still must be executed in the named Conda environment, and each run's gate artifact is authoritative. The runner is synthetic-only and returns a nonzero exit status when mandatory acceptance gates are blocked.
 
 ## A. Exact local environment (user-confirmed 2026-10-29)
 
@@ -29,12 +29,12 @@ Alternative for interactive shells: `conda activate torch`; always independently
 
 ```powershell
 & $PY -m experiments.calibration.runner --stage 0 --all
-& $PY -m experiments.calibration.runner --stage 0 --verify-only
+& $PY -m experiments.calibration.runner --stage 0 --verify-only --output-dir outputs/calibration/stage0/<run_key>
 ```
 
-`--all` performs deterministic preflight, imports, tests, pure synthetic mechanisms, optional **explicitly flagged** native parity checks and report generation. It MUST NOT run Stage 1 or Stage 2. `--verify-only` must verify manifests/checksums without recomputing empirical research results. Support `--resume`, `--output-dir`, and JSON machine-readable audit; set stage defaults only in versioned immutable Config.
+`--all` performs environment checks, tests, deterministic synthetic mechanisms, metadata-path presence checks, and report generation. It does not load Real-IAD data or run native-image parity. It MUST NOT run Stage 1 or Stage 2. `--verify-only` requires an exact `--output-dir` and verifies artifact checksums plus current source/configuration hashes without rerunning tests or empirical results. `--resume` verifies a complete artifact or rebuilds an interrupted deterministic synthetic artifact only when its run identity matches. `--output-dir` is confined to the repository and never overwrites an existing run unless `--resume` is explicit.
 
-Prefer a locally implemented `scripts/run_stage0.ps1` thin wrapper using exact $PY; shell should exit nonzero on critical gates and not continue after a failed dependent step.
+The runner exits 0 only when all mandatory gates pass, 2 when implementation checks pass but acceptance is blocked, and 1 for test/runtime failure.
 
 ### Mandatory reproducibility artifacts (under new isolated outputs)
 ```
@@ -47,6 +47,8 @@ outputs/calibration/stage0/<run_key>/
     test_results.json               # all executed test names, duration and status
     source_hashes.json
     checksums.json
+    run_identity.json
+    INCOMPLETE
     stage0_summary.md
 ```
 Output paths must never overwrite preexisting complete runs. Interrupted runs are `INCOMPLETE`; verify sha digests and resume with source+config matching. A synthetic audit is not Real-IAD evidence.
@@ -72,7 +74,7 @@ Output paths must never overwrite preexisting complete runs. Interrupted runs ar
 | G5 ledger | version invalidation, protected C64 no writer access, exact LSO or explicit BLOCKED augmented path | FAIL |
 | G6 controller | all method families correct API plus faithful/adapted declarations, no unknown method disguised as pass | BLOCKED_FIDELITY |
 | G7 reference math | exact comparator formulas, empirical risk edge cases and known synthetic traces, monotonic tests | FAIL |
-| G8 execution | checkpoint/resume and fail-closed non-overwrite, deterministic source hashes and logging | FAIL |
+| G8 execution | event-boundary checkpoint/resume equivalence, runner resume/non-overwrite, deterministic source hashes and logging | FAIL |
 | G9 scientific parity | identical native score sequence and AUROC across threshold controllers; BA differences only from theta trajectories | FAIL |
 
 Do not allow `SKIP` to satisfy a required `PASS`. Native parity with actual DINO features may require later local non-scientific smoke: until executed, overall stage readiness is `PROVISIONAL`, not `STAGE0_PASS`. If original Sun-CS source fidelity cannot be fully verified, register `BLOCKED_FIDELITY`, not a fabricated method.

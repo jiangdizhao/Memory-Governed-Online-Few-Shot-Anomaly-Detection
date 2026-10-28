@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import torch
 
-from experiments.calibration.method_registry import METHOD_CARDS
+from experiments.calibration.method_registry import METHOD_CARDS, build_controllers
 from experiments.calibration.native import (NativeAdapterError,
     validate_mutable_source_key, validate_p0_config)
 from experiments.calibration.profiles import NativeScorerConfig
@@ -29,9 +29,19 @@ class RegistryGreedyTests(unittest.TestCase):
             validate_p0_config(config, profile)
 
     def test_unresolved_baselines_are_not_claimed_implemented(self):
-        for key in ("B5a", "B5b", "B6", "B7"):
+        for key in ("B5a", "B5b", "B6"):
             self.assertEqual(METHOD_CARDS[key]["status"], "BLOCKED_FIDELITY")
-        self.assertNotIn("B7", ("IMPLEMENTED", "PASS"))
+        self.assertEqual(METHOD_CARDS["B7"]["status"], "IMPLEMENTED_PROVISIONAL")
+
+    def test_executable_controller_states_restore_with_matching_method_configs(self):
+        scores = [i / 1000 for i in range(64)]
+        original = build_controllers(.05, scores)
+        restored = build_controllers(.05, scores)
+        self.assertEqual([x.name for x in original], [x.name for x in restored])
+        for source, target in zip(original, restored):
+            state = source.state_dict()
+            target.load_state_dict(state)
+            self.assertEqual(target.state_dict(), state, source.name)
 
     def test_native_greedy_proposal_respects_capacity_and_version(self):
         initial = GreedyBank([torch.empty((0, 2), dtype=torch.float32)], [2])

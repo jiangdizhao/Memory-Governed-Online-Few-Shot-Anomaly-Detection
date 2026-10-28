@@ -50,6 +50,10 @@ class FrozenTheta:
     def on_memory_change(self, evidence: EvidenceSnapshot) -> None: pass
     def finalize_step(self) -> float: return self.theta
     def state_dict(self) -> dict[str, Any]: return {"name": self.name, "theta": self.theta}
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        if state.get("name") != self.name:
+            raise ValueError("Frozen controller identity mismatch")
+        self.theta = float(state["theta"])
 
 
 @dataclass
@@ -79,6 +83,16 @@ class RollingQ90QueriedNormal:
         return {"name": self.name, "theta": self.theta, "window": self.window,
                 "min_count": self.min_count, "history": list(self.history),
                 "score_semantics": "stale_at_arrival"}
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        if (state.get("name") != self.name or state.get("window") != self.window or
+                state.get("min_count") != self.min_count or
+                state.get("score_semantics") != "stale_at_arrival"):
+            raise ValueError("B1 checkpoint configuration mismatch")
+        history = [float(x) for x in state["history"]]
+        if len(history) > self.window:
+            raise ValueError("B1 checkpoint exceeds configured history window")
+        self.theta = float(state["theta"])
+        self.history = deque(history, maxlen=self.window)
 
 
 @dataclass
@@ -124,6 +138,16 @@ class StateConsistentQuantile:
                 "normal_scores": list(self.normal_scores), "status": self.status,
                 "fnr_status": self.fnr_status,
                 "update_pending": self._update_pending}
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        if (state.get("name") != self.name or state.get("delta") != self.delta or
+                state.get("min_normals") != self.min_normals):
+            raise ValueError("B3 checkpoint configuration mismatch")
+        self.theta = float(state["theta"])
+        self.evidence_version = int(state["evidence_version"])
+        self.normal_scores = tuple(float(x) for x in state["normal_scores"])
+        self.status = str(state["status"])
+        self.fnr_status = str(state["fnr_status"])
+        self._update_pending = bool(state["update_pending"])
 
 
 class OriginalGuardedSidecar:
@@ -178,8 +202,23 @@ class OriginalGuardedSidecar:
     def state_dict(self) -> dict[str, Any]:
         state = self.source.debug_state()
         state.update({"name": self.name, "theta": self.theta,
-                      "adaptation": self.adaptation})
+                      "adaptation": self.adaptation,
+                      "source_checkpoint": {
+                          key: value for key, value in self.source.__dict__.items()
+                          if key not in {"cfg", "fallback_cfg"}}})
         return state
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        if state.get("name") != self.name or state.get("adaptation") != self.adaptation:
+            raise ValueError("B2 checkpoint identity/adaptation mismatch")
+        source_state = state.get("source_checkpoint")
+        if not isinstance(source_state, dict):
+            raise ValueError("B2 checkpoint lacks native source state")
+        allowed = set(self.source.__dict__) - {"cfg", "fallback_cfg"}
+        if set(source_state) != allowed:
+            raise ValueError("B2 checkpoint fields differ from historical source")
+        for key, value in source_state.items():
+            setattr(self.source, key, value)
+        self.theta = float(state["theta"])
 
 
 @dataclass
@@ -229,21 +268,28 @@ class AdaptedDualACI:
         self.defect_scores = tuple(x.score for x in evidence.defect_anchors)
         self.last_status = evidence.state
     def finalize_step(self) -> float:
-        lower = (higher_quantile(list(self.defect_scores), self.alpha_defect)
-                 if self.defect_scores else None)
-        upper = (higher_quantile(list(self.normal_scores), 1 - self.alpha_normal)
+        # For predict_defect = score >= theta, normals impose a *lower*
+        # threshold bound and defects impose an *upper* bound. Use exact
+        # empirical error-count boundaries instead of interpolated quantiles:
+        # equality at a normal score is a false positive.
+        lower = (_normal_fpr_lower_bound(self.normal_scores, self.alpha_normal)
                  if self.normal_scores else None)
+        upper = (_defect_fnr_upper_bound(self.defect_scores, self.alpha_defect)
+                 if self.defect_scores else None)
         if lower is not None and upper is not None:
             self.conflict = lower > upper
-            if not self.conflict:
+            if self.conflict:
+                self.last_status = "CONFLICT"
+            else:
                 self.theta = min(max(self.theta, lower), upper)
-        elif upper is not None:
-            self.conflict = False
-            self.theta = max(self.theta, upper)
-            self.last_status = "NORMAL_ONLY"
+                self.last_status = "BOTH"
         elif lower is not None:
             self.conflict = False
-            self.theta = min(self.theta, lower)
+            self.theta = max(self.theta, lower)
+            self.last_status = "NORMAL_ONLY"
+        elif upper is not None:
+            self.conflict = False
+            self.theta = min(self.theta, upper)
             self.last_status = "DEFECT_ONLY"
         else:
             self.conflict = False
@@ -258,7 +304,55 @@ class AdaptedDualACI:
                 "evidence_revision": self.evidence_revision,
                 "normal_scores": list(self.normal_scores),
                 "defect_scores": list(self.defect_scores),
-                "conflict": self.conflict, "status": self.last_status}
+                "conflict": self.conflict, "status": self.last_status,
+                "last_prediction_error": self.last_prediction_error}
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        immutable = {"alpha_target": self.alpha_target,
+                     "beta_target": self.beta_target,
+                     "gamma_normal": self.gamma_normal,
+                     "gamma_defect": self.gamma_defect}
+        if state.get("name") != self.name or any(
+                state.get(key) != value for key, value in immutable.items()):
+            raise ValueError("B4 checkpoint configuration mismatch")
+        self.theta = float(state["theta"])
+        self.alpha_normal = float(state["alpha_normal"])
+        self.alpha_defect = float(state["alpha_defect"])
+        self.evidence_version = int(state["evidence_version"])
+        self.evidence_revision = int(state["evidence_revision"])
+        self.normal_scores = tuple(float(x) for x in state["normal_scores"])
+        self.defect_scores = tuple(float(x) for x in state["defect_scores"])
+        self.conflict = bool(state["conflict"])
+        self.last_status = str(state["status"])
+        self.last_prediction_error = state.get("last_prediction_error")
+
+
+def _normal_fpr_lower_bound(scores: tuple[float, ...], target: float) -> float:
+    """Smallest threshold whose observed normal FP count meets target.
+
+    The rule is exact for ``score >= theta`` including ties. If k errors are
+    permitted, theta must be strictly above the (n-k-1)th order statistic.
+    """
+    ordered = sorted(float(x) for x in scores)
+    if not ordered or not 0.0 <= target <= 1.0:
+        raise ValueError("Normal FPR bound requires scores and target in [0,1]")
+    allowed = min(len(ordered), math.floor(target * len(ordered)))
+    if allowed == len(ordered):
+        return math.nextafter(ordered[0], -math.inf)
+    boundary = ordered[len(ordered) - allowed - 1]
+    return math.nextafter(boundary, math.inf)
+
+
+def _defect_fnr_upper_bound(scores: tuple[float, ...], target: float) -> float:
+    """Largest threshold whose observed defect FN count meets target.
+
+    Since a tie at theta predicts defect, the (k)th ascending score is an
+    inclusive upper boundary when k misses are permitted.
+    """
+    ordered = sorted(float(x) for x in scores)
+    if not ordered or not 0.0 <= target <= 1.0:
+        raise ValueError("Defect FNR bound requires scores and target in [0,1]")
+    allowed = min(len(ordered) - 1, math.floor(target * len(ordered)))
+    return ordered[allowed]
 
 
 class BlockedController:

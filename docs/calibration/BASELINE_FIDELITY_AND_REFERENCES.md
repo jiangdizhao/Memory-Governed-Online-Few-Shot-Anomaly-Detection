@@ -7,7 +7,7 @@
 1. **VisionAD:** *Search is All You Need for Few-shot Anomaly Detection* (2025), arXiv:2504.11895, https://arxiv.org/abs/2504.11895 ; author code https://github.com/Qiqigeww/VisionAD . Source-code versions must be pinned before claiming parity. This is the visual **foundation**, not a threshold-calibration external baseline.
 2. **ACI:** Isaac Gibbs and Emmanuel Candès, *Adaptive Conformal Inference Under Distribution Shift*, NeurIPS 34, 2021, https://papers.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html ; PDF at https://papers.nips.cc/paper/2021/file/0d441de75945e5acbc865406fc9a2559-Paper.pdf . Standard coverage-controller concept; **not** a direct class-conditional threshold algorithm for sparsely labeled defect streams.
 3. **Adaptive step-size ACI extension:** Isaac Gibbs and Emmanuel Candès, *Conformal Inference for Online Prediction with Arbitrary Distribution Shifts*, Journal of Machine Learning Research 25 (2024), paper 22-1218, https://www.jmlr.org/papers/v25/22-1218.html ; https://www.jmlr.org/papers/volume25/22-1218/22-1218.pdf . Adaptive step-size variant is a **secondary extension**, not to be relabeled as original ACI.
-4. **SPOT/dSPOT:** Alban Siffer, Pierre-Alain Fouque, Alexandre Termier, Christine Largouët, *Anomaly Detection in Streams with Extreme Value Theory*, KDD 2017, pp. 1067–1075, DOI https://doi.org/10.1145/3097983.3098144 ; author reference https://asiffer.github.io/libspot/about/ and original KDD page https://kdd.org/kdd2017/papers/view/anomaly-detection-in-streams-with-extreme-value-theory . Stationary SPOT and drift-aware dSPOT must be treated as separate variants and tuned through disclosed settings.
+4. **SPOT/dSPOT:** Alban Siffer, Pierre-Alain Fouque, Alexandre Termier, Christine Largouet, *Anomaly Detection in Streams with Extreme Value Theory*, KDD 2017, pp. 1067-1075, DOI https://doi.org/10.1145/3097983.3098144; primary paper https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf. The author C implementation was inspected at `asiffer/libspot` commit `d57e921a08930b960d07adcbec3a839bd228fe94`; `src/spot.c` blob SHA-1 `fdebc8c216fffeea93afcc51efab83a2d6013351` identifies itself as version 3.0.0. It provides SPOT code but no dSPOT implementation in that pinned source. Neither method is enabled until paper/source estimator conventions have reference tests.
 5. **Sun-CS:** Sophia Huiwen Sun, Abishek Sankararaman, Balakrishnan Murali Narayanaswamy, *Online Adaptive Anomaly Thresholding with Confidence Sequences*, ICML 2024 / PMLR 235:47105–47132, https://proceedings.mlr.press/v235/sun24h.html ; full paper https://raw.githubusercontent.com/mlresearch/v235/main/assets/sun24h/sun24h.pdf . The **original paper's data model, observation protocol, objective, initialization, and assumptions** control what is faithful; do not conflate its unsupervised online setup with our sparse queried-label setup.
 6. **Historical source:** `test_phase3_AIF_simplified_v22.py` for Guarded Dual Anchor / Balanced Rescue Sidecar; use repo source as authoritative; rejected paper `pattern_recognition_main_elsarticle_v_10(3).pdf` and supplement are contextual method descriptions, not replacements for executable formula audit.
 7. **Internal method proposal:** research report `Designing and Prioritizing Memory-Dependent / State-Consistent Calibration for Dynamic-Memory Industrial Anomaly Detection` (provided as project PDF) and `docs/Calibration_Falsification_Research_Handoff_2026-10-28_v1.docx`. These are proposed designs, NOT peer-reviewed statistical guarantees.
@@ -69,9 +69,13 @@ aN_(t+1) = clip(aN_t + gamma_N*(alpha_target - 1[pred=defect]))
 aD_(t+1) = clip(aD_t + gamma_D*(beta_target  - 1[pred=normal]))
              ONLY when current queried true y is defect
 other side has NO update if not disclosed
-on current M_t: theta_N = quantile(N_t, 1-aN); theta_D = quantile(D_t, aD)
-project prior theta to available [theta_N, theta_D] if consistent;
-otherwise record CONFLICT and use declared fallback
+on current M_t use exact discrete error-count boundaries for predict=1[score>=theta]:
+  kN=floor(aN*|N|); lower=nextafter(N_(|N|-kN), +infinity) when kN<|N|
+  when kN=|N|, lower=nextafter(min(N), -infinity)
+  kD=min(floor(aD*|D|), |D|-1); upper=D_(kD+1) in ascending order
+project prior theta into [lower, upper] if consistent; otherwise CONFLICT/HOLD
+with only normals, raise theta to lower; with only defects, lower theta to upper
+an unavailable class side remains unavailable; it is never assigned zero risk
 ```
 The projection orientation follows the score threshold: FPR constraint typically requires theta >= normal upper quantile; FNR constraint typically requires theta <= defect lower quantile. Verify quantile conventions and equality ties with unit tests. Initial gamma=0.005 was suggested by internal report as an illustrative first choice; **do not attribute this as a mandated general source optimum**. Fix gamma grid and handling of missing sides pre-evaluation. Original ACI typically sees realized error every step; our queried-only variant cannot inherit its long-run coverage guarantee. May compare a **faithful generic ACI reference unit test** separately but the reported B4 is `ADAPTED_DUAL_ACI`. The Gibbs–Candès JMLR 2024 extension is an optional additional arm if independently implemented, not secretly folded into B4.
 
@@ -99,40 +103,22 @@ where n is source-defined total reference count and N_u source-defined exceedanc
 4. On dynamic memory, anchor score distribution changes and observed scores can be dependent. Neither confidence-sequence coverage nor FPR/FNR control automatically transports to our system. Use no phrase `certified risk` absent a new proof.
 5. If reference fidelity cannot be established, register `BLOCKED_FIDELITY` and stop Stage-0 **all-baselines** gate; do not fake a pass or claim the eight-arm comparison is ready.
 
-## B7 — Proposed SCDAC-G (candidate, not yet validated)
+## B7 - SCDAC-G (executable provisional v0; not validated)
 
-Primary design from internal Deep Research report; exact initial implementation rules must be versioned:
-```text
-on M change, rescore all eligible protected normal and queried defect anchors;
-N,D = exact current-M normal/defect scores; attach source/evidence version
-state = BOTH, NORMAL_ONLY, DEFECT_ONLY or NONE by availability
-G = {theta_t} U sorted unique midpoints of adjacent N/D scores
-for each candidate theta:
-    FP_hat(theta), FN_hat(theta) from known labels
-    U_FP(theta), U_FN(theta) = chosen descriptive upper bounds (where available)
-
-BOTH:
-    feasible = {theta: U_FP(theta)<=alpha AND U_FN(theta)<=beta}
-    if feasible nonempty:
-        choose min (0.5 U_FP + 0.5 U_FN + lambda_move*abs(theta-theta_t))
-    else:
-        state=CONFLICT; choose declared min-risk fallback, never claim certification
-NORMAL_ONLY:
-    optimize normal side ONLY inside prior valid defect-safe interval;
-    if no legally established historical opposite-side bound: HOLD
-DEFECT_ONLY:
-    optimize defect side ONLY inside prior valid normal-safe interval;
-    otherwise HOLD
-NONE: HOLD
-theta_(t+1) = bounded_step(theta_t, selected, Delta);
-record evidence_state, missing FPR/FNR, controller decision, counts and version
-```
-**Do not silently treat a historical empirically fitted interval as a guaranteed future defect-safe interval.** Define `last_two_sided_supported_interval` with score/memory version and expiration; if stale/unverifiable after M changes, either rebuild from current legal data or consider it untrusted and HOLD. For descriptive objective, choose a preregistered upper bound (e.g., one-sided fixed-time binomial) and label it `descriptive_upper`, never `anytime_CS`.
-
-Proposed first-round two modes:
-- `BA_MODE`: two-sided descriptive upper-risk objective with movement penalty.
-- `FPR_CONTROL_DIAGNOSTIC`: FNR evaluated at prespecified FPR targets alpha in {0.05, 0.10, 0.20}. Do not create arbitrary dynamically chosen alpha from development outcomes.
-Bound/target beta, delta, min N/D, move penalty, initial interval, cooldown, midpoint tie handling and deterministic fallback must be explicit in `METHOD_CONFIG_REGISTRY` before Stage 1. Candidate is **not finished** if the fallback is “whatever improves BA on sample data.”
+The internal proposal leaves confidence-bound, evidence-minimum, support-risk,
+movement-penalty, score-normalization, cooldown, and conflict choices open.
+The executable choices are recorded in
+`docs/calibration/SCDAC_G_V0_METHOD_SPEC.md`, which carries the proposal PDF
+SHA-256. Its status is `IMPLEMENTED_PROVISIONAL`, not a faithful unique
+translation and not a statistically certified controller. Version 0 uses
+current-state protected C64 and eligible queried anchors, one-sided fixed-time
+Clopper-Pearson upper endpoints labelled descriptive, a BA-oriented two-sided
+objective with normalized movement penalty, and a bounded minimum-descriptive-
+risk fallback when the two-sided support set is empty. `NORMAL_ONLY`,
+`DEFECT_ONLY`, and `NONE` hold. Stale two-sided intervals are diagnostic only.
+All provisional numerical values remain open for independent review. No claim
+is made that selective feedback, serial dependence, repeated memory rescoring,
+or post-selection preserves a binomial guarantee.
 
 ## Preregistration and strong-baseline requirements
 
