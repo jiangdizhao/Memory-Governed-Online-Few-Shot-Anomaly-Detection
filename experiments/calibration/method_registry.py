@@ -69,7 +69,10 @@ METHOD_CARDS: dict[str, dict[str, Any]] = {
     "B6": {"name": "SunCS", "status": "BLOCKED_FIDELITY",
             "source": "Sun et al., ICML 2024, https://proceedings.mlr.press/v235/sun24h.html",
             "information": ["source method uses an unsupervised score stream and emits a tri-state decision"],
-            "blocker": "No source-faithful implementation or independent reference vectors exist for the paper's confidence-set construction, offline-dataset matching, change-detection/reset schedule, and adaptive initialization. A generic CP/Hoeffding interval is not equivalent. Dynamic native score dependence also invalidates automatic transfer of the paper's guarantees, and primary abstention accounting has not been preregistered."},
+            "reference_implementation": "Paper-equation primitives only in experiments/calibration/sun_cs.py; no B6 controller is registered.",
+            "blocker": "The paper clips Equation (1) quantile levels to 0 or 1 without defining endpoint empirical-quantile behavior, and Algorithm 3 does not define the empty-prefix confidence set or first online decision. No verified author implementation or independent source trace for Algorithm 2/3 reset behavior was located. A B6 controller therefore cannot be source-faithfully initialized or validated. Dynamic native score dependence also prevents automatic transfer of the paper's guarantees.",
+            "source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+            "no_guarantee": "Paper assumptions do not automatically cover dynamic-memory dependent scores, selectively queried labels, or the calibration protocol."},
     "B7": {"name": "SCDAC-G", "version": "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC",
             "status": "IMPLEMENTED_PROVISIONAL",
             "source": "docs/Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf; SHA-256 5fe07256384351c1170d67183eae5a80e5aa289a03586ba767671f062f4fb977",
@@ -116,7 +119,14 @@ _REFERENCE_TESTS = {
             "test_spot_checkpoint_roundtrip_is_deterministic",
             "test_insufficient_peak_initialization_fails_closed"],
     "B5b": ["test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean",
-            "test_spot_checkpoint_roundtrip_is_deterministic"], "B6": [],
+            "test_spot_checkpoint_roundtrip_is_deterministic"],
+    "B6": ["test_radius_matches_paper_equation_and_time_zero",
+          "test_midpoint_quantile_uses_paper_floor_ceil_ranks",
+          "test_equation_one_matches_hand_computed_interior_confidence_set",
+          "test_algorithm_one_preserves_strict_anomaly_and_abstention_edges",
+          "test_algorithm_two_intersection_change_predicate",
+          "test_algorithm_four_uses_exactly_one_matching_offline_set",
+          "test_undefined_empty_and_clipped_endpoint_cases_fail_closed"],
     "B7": ["tests/calibration/test_scdac_g.py"],
 }
 _PAPER_URLS = {
@@ -133,7 +143,7 @@ _MISSING_DATA = {
     "B4": "Missing class-side evidence is unavailable and never assigned zero risk.",
     "B5a": "Before n_init scores, prediction is explicitly unavailable; fewer than two strict initial peaks fail closed. After warm-up, alarms are excluded from observation/peak updates.",
     "B5b": "First d raw observations and subsequent n_init residual observations have unavailable predictions; during residual warm-up the raw window slides, and runtime alarms update neither POT nor mean window.",
-    "B6": "No executable behavior; BLOCKED_FIDELITY.",
+    "B6": "No registered controller or online decisions; paper-equation reference primitives only. Empty-prefix and endpoint behavior fail closed.",
     "B7": "NONE/NORMAL_ONLY/DEFECT_ONLY hold; both-side minimums gate optimization.",
 }
 for _key, _card in METHOD_CARDS.items():

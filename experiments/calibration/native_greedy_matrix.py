@@ -19,6 +19,7 @@ from experiments.risk_safe.native_bridge import (
     dynamic_codebooks, normalized_native_candidate_rows, snapshot,
 )
 from experiments.risk_safe.shadow_memory import GreedyBank
+from .memory_state import CalibrationGreedyState
 from .native import SharedNativeGreedyWriter, _fixed_bank_digest
 
 
@@ -67,10 +68,16 @@ def _install_fixture_state(writer: SharedNativeGreedyWriter,
                            sources: list[list[str]], version: int) -> dict[str, set[str]]:
     state = writer.state_dict()
     seeded = GreedyBank(layers, writer.bank.capacities, version=version)
+    calibration = CalibrationGreedyState(seeded, memory_content_version=version)
     source_state = [list(rows) for rows in sources]
     state.update({"layers": [x.detach().clone() for x in seeded.layers],
-                  "sources": source_state, "version": version,
-                  "sha256": seeded.sha256(), "source_revision": 0})
+                  "sources": source_state,
+                  "memory_content_version": calibration.memory_content_version,
+                  "legacy_greedy_version": seeded.version,
+                  "sha256": calibration.sha256(),
+                  "content_sha256": calibration.content_sha256(),
+                  "legacy_greedy_sha256": seeded.sha256(),
+                  "source_revision": 0})
     state["source_map_sha256"] = hashlib.sha256(
         __import__("json").dumps(source_state, separators=(",", ":"),
                                  ensure_ascii=True).encode("ascii")).hexdigest()
@@ -186,12 +193,12 @@ def run_native_greedy_matrix() -> dict[str, Any]:
                 feature_tensors = [x.to(dtype=torch.float32).contiguous()
                                    for x in feature_layers]
                 before_support = _fixed_bank_digest(writer_bank)
-                before_bank = snapshot(writer_bank, version=current_version)
+                before_bank = writer.bank.clone()
                 chosen, indices = extract_v22_candidates(
                     impl, static_map, feature_tensors, keep=8)
                 normalized = normalized_native_candidate_rows(
                     impl, writer_bank, feature_tensors, indices, keep=8)
-                proposal, expected_audit = before_bank.proposed(
+                proposal, expected_audit, expected_content_changed = before_bank.proposed(
                     normalized, already_normalized=True)
                 source_key = f"fixture:{case}:event:{event_no}"
                 for layer, candidate in enumerate(normalized):
@@ -203,8 +210,8 @@ def run_native_greedy_matrix() -> dict[str, Any]:
                     impl, feature_tensors, indices, step=event_no,
                     score=0.0, theta=1.0, sigma=0.02)
                 direct_after = snapshot(direct_bank,
-                                        version=proposal.version)
-                if direct_after.sha256() != proposal.sha256():
+                                        version=proposal.legacy_greedy_version)
+                if direct_after.sha256() != proposal.legacy_bank.sha256():
                     raise AssertionError("MemoryArm.update differs from GreedyBank.proposed")
 
                 write = writer.apply(
@@ -219,7 +226,11 @@ def run_native_greedy_matrix() -> dict[str, Any]:
                     _tensor_sha(row) for layer in direct_after.layers for row in layer]
                 writer_digests = [
                     _tensor_sha(row) for layer in writer.bank.layers for row in layer]
-                if direct_digests != writer_digests or direct_after.version != writer.bank.version:
+                if (direct_digests != writer_digests or
+                        direct_after.version != writer.bank.legacy_greedy_version or
+                        write.memory_content_version_after !=
+                        before_bank.memory_content_version + int(expected_content_changed) or
+                        write.changed != expected_content_changed):
                     raise AssertionError("Native live, shadow, and shared writer states differ")
                 if _fixed_bank_digest(writer_bank) != before_support:
                     raise AssertionError("Fixed support changed during a Greedy operation")
@@ -252,10 +263,15 @@ def run_native_greedy_matrix() -> dict[str, Any]:
                     "counts": {"append": write.appended,
                                "replace": write.replaced,
                                "skip": write.skipped},
-                    "memory_version_before": before_bank.version,
-                    "memory_version_after": writer.bank.version,
+                    "memory_version_before": before_bank.memory_content_version,
+                    "memory_version_after": writer.bank.memory_content_version,
+                    "legacy_greedy_version_before": before_bank.legacy_greedy_version,
+                    "legacy_greedy_version_after": writer.bank.legacy_greedy_version,
                     "memory_content_changed": before_bank.content_sha256() !=
                         writer.bank.content_sha256(),
+                    "source_map_revision_before": write.source_revision_before,
+                    "source_map_revision_after": write.source_revision,
+                    "source_map_changed": write.source_map_changed,
                     "dtype": str(writer.bank.layers[0].dtype),
                     "layer_shapes": [list(t.shape) for t in writer.bank.layers],
                     "exact_native_memoryarm_shadow_shared_writer": True,
@@ -271,7 +287,7 @@ def run_native_greedy_matrix() -> dict[str, Any]:
                     "replaced_same_slot_row_indices": target if case ==
                         "repeated_replace_same_slot" else [],
                 })
-                current_version = writer.bank.version
+                current_version = writer.bank.memory_content_version
             if case == "repeated_replace_same_slot" and prior_slots != [[0], [0]]:
                 raise AssertionError(f"Expected row 0 replaced twice, got {prior_slots}")
 
@@ -284,6 +300,8 @@ def run_native_greedy_matrix() -> dict[str, Any]:
                 protected_source_keys=protected, sigma_ref=writer.sigma_ref)
             restored_writer.load_state_dict(checkpoint)
             if (restored_writer.bank.sha256() != writer.bank.sha256() or
+                    restored_writer.bank.legacy_bank.sha256() !=
+                    writer.bank.legacy_bank.sha256() or
                     restored_writer.sources != writer.sources or
                     restored_writer.source_map_sha256() != writer.source_map_sha256()):
                 raise AssertionError("Native shared writer checkpoint did not restore exactly")
@@ -376,6 +394,11 @@ def run_native_greedy_matrix() -> dict[str, Any]:
             },
             "source_aware_lso_after_replacement": lso,
             "memory_version_policy": "advance once per operation iff stored prototype bytes changed",
+            "version_axes": {
+                "memory_content_version": "score/evidence state; advances iff prototype content changes",
+                "legacy_greedy_version": "unchanged historical GreedyBank operation semantics",
+                "source_map_revision": "advances iff per-layer source attribution changes",
+            },
             "matrix": cases,
             "production_native_v22_scoring": "covered separately by bounded CUDA smoke/replay",
         }

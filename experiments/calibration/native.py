@@ -10,6 +10,7 @@ from typing import Any, Mapping, Sequence
 from experiments.risk_safe import native_bridge
 from experiments.risk_safe.shadow_memory import GreedyBank
 
+from .memory_state import CalibrationGreedyState
 from .profiles import NativeScorerConfig, canonical_json
 from .protocol import ScoreResult
 
@@ -111,7 +112,7 @@ class NativeScoreService:
             raise NativeAdapterError("Fixed support provenance hash is required")
         validate_p0_config(self.p0_config, self.config)
 
-    def score(self, bundle: Any, memory: GreedyBank) -> ScoreResult:
+    def score(self, bundle: Any, memory: CalibrationGreedyState) -> ScoreResult:
         try:
             image, features = bundle
             clone = native_bridge.install_on_clone(self.native_template, memory)
@@ -143,6 +144,11 @@ class SharedWriteResult:
     skipped: int
     source_map_changed: bool = False
     source_revision: int = 0
+    memory_content_version_before: int = 0
+    memory_content_version_after: int = 0
+    legacy_greedy_version_before: int = 0
+    legacy_greedy_version_after: int = 0
+    source_revision_before: int = 0
 
 
 class SharedNativeGreedyWriter:
@@ -163,7 +169,9 @@ class SharedNativeGreedyWriter:
         self.protected_source_keys = frozenset(protected_source_keys)
         if len(self.protected_source_keys) != 64:
             raise NativeAdapterError("Writer must receive the 64 protected C64 source keys")
-        self.bank = native_bridge.snapshot(native_bank, version=0)
+        self.bank = CalibrationGreedyState(
+            native_bridge.snapshot(native_bank, version=0),
+            memory_content_version=0)
         self.sources: list[list[str]] = [
             ["<unknown-preexisting>"] * len(layer) for layer in self.bank.layers]
         self.source_revision = 0
@@ -183,23 +191,26 @@ class SharedNativeGreedyWriter:
     def state_dict(self) -> dict[str, Any]:
         """Private, resumable snapshot of the one live native Greedy bank."""
         return {
-            "schema": "calibration.shared_native_greedy.v2",
+            "schema": "calibration.shared_native_greedy.v3",
             "fixed_support_sha256": self.fixed_support_sha256,
             "theta_ref": self.theta_ref,
             "sigma_ref": self.sigma_ref,
             "protected_source_keys": sorted(self.protected_source_keys),
             "capacities": list(self.bank.capacities),
-            "version": self.bank.version,
+            "memory_content_version": self.bank.memory_content_version,
+            "legacy_greedy_version": self.bank.legacy_greedy_version,
             "layers": [layer.detach().to("cpu").contiguous().clone()
                        for layer in self.bank.layers],
             "sources": [list(rows) for rows in self.sources],
             "source_revision": self.source_revision,
             "source_map_sha256": self.source_map_sha256(),
             "sha256": self.bank.sha256(),
+            "content_sha256": self.bank.content_sha256(),
+            "legacy_greedy_sha256": self.bank.legacy_bank.sha256(),
         }
 
     def load_state_dict(self, state: dict[str, Any]) -> None:
-        if (state.get("schema") != "calibration.shared_native_greedy.v2" or
+        if (state.get("schema") != "calibration.shared_native_greedy.v3" or
                 state.get("fixed_support_sha256") != self.fixed_support_sha256 or
                 float(state.get("theta_ref")) != self.theta_ref or
                 float(state.get("sigma_ref")) != self.sigma_ref or
@@ -229,10 +240,16 @@ class SharedNativeGreedyWriter:
                                     separators=(",", ":")).encode("ascii")
         if hashlib.sha256(source_payload).hexdigest() != state.get("source_map_sha256"):
             raise NativeAdapterError("Native writer source-map digest mismatch")
-        restored = GreedyBank(layers, self.bank.capacities,
-                              version=int(state.get("version", -1)))
-        if restored.version < 0 or restored.sha256() != state.get("sha256"):
-            raise NativeAdapterError("Native writer checkpoint bank digest mismatch")
+        restored_legacy = GreedyBank(
+            layers, self.bank.capacities,
+            version=int(state.get("legacy_greedy_version", -1)))
+        restored = CalibrationGreedyState(
+            restored_legacy,
+            memory_content_version=int(state.get("memory_content_version", -1)))
+        if (restored.sha256() != state.get("sha256") or
+                restored.content_sha256() != state.get("content_sha256") or
+                restored_legacy.sha256() != state.get("legacy_greedy_sha256")):
+            raise NativeAdapterError("Native writer checkpoint memory digest mismatch")
         live_before = native_bridge.snapshot(self.native_bank, version=self.bank.version)
         if restored.version == live_before.version:
             if restored.sha256() != live_before.sha256():
@@ -256,7 +273,12 @@ class SharedNativeGreedyWriter:
         if not queried or label != 0:
             return SharedWriteResult(False, False, 0, "feedback_not_verified_normal",
                                      before_digest, before_digest, source_key, 0, 0, 0,
-                                     False, self.source_revision)
+                                     False, self.source_revision,
+                                     before.memory_content_version,
+                                     before.memory_content_version,
+                                     before.legacy_greedy_version,
+                                     before.legacy_greedy_version,
+                                     self.source_revision)
         validate_mutable_source_key(source_key, self.protected_source_keys)
         allow, keep, reason, _ = self.impl.select_informative_normal_write(
             score=float(score), theta=self.theta_ref,
@@ -265,12 +287,18 @@ class SharedNativeGreedyWriter:
         if not allow or keep not in (8, 16, 24):
             return SharedWriteResult(False, False, int(keep), str(reason),
                                      before_digest, before_digest, source_key, 0, 0, 0,
-                                     False, self.source_revision)
+                                     False, self.source_revision,
+                                     before.memory_content_version,
+                                     before.memory_content_version,
+                                     before.legacy_greedy_version,
+                                     before.legacy_greedy_version,
+                                     self.source_revision)
         selected, selected_indices = native_bridge.extract_v22_candidates(
             self.impl, static_amap, full_features, keep=keep)
         normalized = native_bridge.normalized_native_candidate_rows(
             self.impl, self.native_bank, full_features, selected_indices, keep=keep)
-        proposed, audit = before.proposed(normalized, already_normalized=True)
+        proposed, audit, content_changed = before.proposed(
+            normalized, already_normalized=True)
 
         # Mirror exact append/replacement slot decisions to preserve source
         # attribution for future leave-source-out evidence.
@@ -296,7 +324,6 @@ class SharedNativeGreedyWriter:
                 raise NativeAdapterError("Source attribution replay diverged from Greedy proposal")
             next_sources.append(rows)
 
-        content_changed = proposed.version > before.version
         source_map_changed = next_sources != self.sources
         if content_changed:
             native_bridge.install_on_live(
@@ -305,16 +332,23 @@ class SharedNativeGreedyWriter:
             actual = native_bridge.snapshot(self.native_bank, version=proposed.version)
             if actual.sha256() != proposed.sha256():
                 raise NativeAdapterError("Live native bank differs from staged Greedy update")
-            self.bank = proposed
         else:
             if proposed.content_sha256() != before.content_sha256():
                 raise NativeAdapterError("Prototype content changed without a memory version")
-            proposed = before
+        # Keep the historical GreedyBank proposal/version even if it records
+        # an accepted operation whose stored bytes are unchanged. Calibration
+        # score/evidence versioning remains tied only to prototype content.
+        self.bank = proposed
         if source_map_changed:
             self.sources = next_sources
             self.source_revision += 1
-        return SharedWriteResult(True, proposed.version != before.version, keep,
+        return SharedWriteResult(True, content_changed, keep,
                                  str(reason), before_digest, proposed.sha256(),
                                  source_key, audit.appended, audit.replaced,
                                  audit.skipped, source_map_changed,
-                                 self.source_revision)
+                                 self.source_revision,
+                                 before.memory_content_version,
+                                 proposed.memory_content_version,
+                                 before.legacy_greedy_version,
+                                 proposed.legacy_greedy_version,
+                                 self.source_revision - int(source_map_changed))

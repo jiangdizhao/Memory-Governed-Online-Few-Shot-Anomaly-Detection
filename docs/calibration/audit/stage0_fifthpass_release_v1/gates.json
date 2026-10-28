@@ -1,0 +1,116 @@
+{
+  "G0": {
+    "authorized_branch": true,
+    "protected_source_status": "PASS",
+    "reason": "Transitive protected-source baseline and byte-level historical shadow_memory check passed on the authorized branch.",
+    "status": "PASS"
+  },
+  "G0_PROTECTED_SOURCE_INTEGRITY": {
+    "reason": "Transitive protected-source baseline and byte-level historical shadow_memory check passed on the authorized branch.",
+    "status": "PASS"
+  },
+  "G1": {
+    "reason": "Synthetic Q-A-TS/Q-B metadata tests passed.",
+    "status": "PASS"
+  },
+  "G1_QUERY_PROTOCOL": {
+    "reason": "Synthetic Q-A-TS/Q-B metadata tests passed.",
+    "status": "PASS"
+  },
+  "G1_real_data": {
+    "classes": {
+      "audiojack": "PASS",
+      "regulator": "PASS",
+      "rolled_strip_base": "PASS",
+      "switch": "PASS"
+    },
+    "dataset_root_present": true,
+    "json_root_present": true,
+    "reason": "Official sample identities, train-only support/C64 selection, and label-blind Q-A-TS/Q-B were checked using development-category JSON metadata; no image or mask was opened.",
+    "status": "PASS"
+  },
+  "G2": {
+    "reason": "Actual development train-normal score parity passed across live native v22, untouched clone, and calibration adapter.",
+    "status": "PASS"
+  },
+  "G2_NATIVE_SCORING": {
+    "reason": "Actual development train-normal score parity passed across live native v22, untouched clone, and calibration adapter.",
+    "status": "PASS"
+  },
+  "G3": {
+    "reason": "Synthetic native operator matrix passed APPEND/REPLACE/SKIP, repeated-slot source attribution, prototype-content audit, LSO filtering and exact checkpoint restore; bounded CUDA v22 smoke passed live-score and append parity.",
+    "status": "PASS"
+  },
+  "G3_NATIVE_GREEDY_OPERATOR": {
+    "reason": "Synthetic native operator matrix passed APPEND/REPLACE/SKIP, repeated-slot source attribution, prototype-content audit, LSO filtering and exact checkpoint restore; bounded CUDA v22 smoke passed live-score and append parity.",
+    "status": "PASS"
+  },
+  "G4": {
+    "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed.",
+    "status": "PASS"
+  },
+  "G4_CAUSAL_FIREWALL": {
+    "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed.",
+    "status": "PASS"
+  },
+  "G5": {
+    "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed.",
+    "status": "PASS"
+  },
+  "G5_ANCHOR_AND_LSO": {
+    "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed.",
+    "status": "PASS"
+  },
+  "G6": {
+    "reason": "B5a/B5b are paper-equation implementations with reference tests; B6 Sun-CS remains BLOCKED_FIDELITY; B7 remains provisional.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G6_ALL_METHOD_FAMILIES": {
+    "reason": "B5a/B5b are paper-equation implementations with reference tests; B6 Sun-CS remains BLOCKED_FIDELITY; B7 remains provisional.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G7": {
+    "reason": "SPOT/dSPOT equation references pass, but author-code trace parity is not claimed; B6 source fidelity and source-defined startup remain unresolved.",
+    "status": "BLOCKED"
+  },
+  "G7_EXTERNAL_SOURCE_FIDELITY": {
+    "reason": "SPOT/dSPOT equation references pass, but author-code trace parity is not claimed; B6 source fidelity and source-defined startup remain unresolved.",
+    "status": "BLOCKED"
+  },
+  "G8": {
+    "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration.",
+    "status": "PASS"
+  },
+  "G8_REPRODUCIBILITY": {
+    "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration.",
+    "status": "PASS"
+  },
+  "G9": {
+    "reason": "Native core and controller activation are separately scoped; the complete Stage 0 matrix remains blocked by B6 fidelity.",
+    "status": "BLOCKED"
+  },
+  "G9_CONTROLLER_ACTIVATION": {
+    "reason": "B0-B5 and B7 synthetic activation results are in controller_activation_matrix.json; B6 remains source-blocked.",
+    "status": "PARTIAL"
+  },
+  "G9_FULL_MATRIX": {
+    "reason": "Synthetic activation covers B0-B5 and B7; B6 remains blocked, so the complete native controller matrix is not run or claimed.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G9_NATIVE_CORE": {
+    "reason": "Bounded multi-event actual v22/DINO train-normal trajectory passed causal query/write, current-version C64 refresh, LSO, native checkpoint-resume equivalence and synthetic-label AUROC invariance.",
+    "status": "PASS"
+  },
+  "G9_all_controller_matrix": {
+    "reason": "Synthetic activation covers B0-B5 and B7; B6 remains blocked, so the complete native controller matrix is not run or claimed.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G9_controller_activation": {
+    "reason": "B0-B5 and B7 synthetic activation results are in controller_activation_matrix.json; B6 remains source-blocked.",
+    "status": "PARTIAL"
+  },
+  "G9_native_core": {
+    "reason": "Bounded multi-event actual v22/DINO train-normal trajectory passed causal query/write, current-version C64 refresh, LSO, native checkpoint-resume equivalence and synthetic-label AUROC invariance.",
+    "status": "PASS"
+  }
+}

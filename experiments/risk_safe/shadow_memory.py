@@ -89,16 +89,6 @@ class GreedyBank:
             h.update(x.numpy().tobytes())
         return h.hexdigest()
 
-    def content_sha256(self) -> str:
-        """Hash prototype content without the event/version counter."""
-        h = hashlib.sha256()
-        h.update(str(self.capacities).encode("ascii"))
-        for tensor in self.layers:
-            value = tensor.detach().cpu().contiguous()
-            h.update(str((tuple(value.shape), str(value.dtype))).encode("ascii"))
-            h.update(value.numpy().tobytes())
-        return h.hexdigest()
-
     def bytes(self) -> int:
         return sum(t.numel() * t.element_size() for t in self.layers)
 
@@ -151,9 +141,7 @@ class GreedyBank:
             next_layers.append(cb.protos.contiguous())
         shadow.layers = tuple(next_layers)
         _validate(shadow.layers, self.capacities)
-        content_changed = any(not torch.equal(old, new)
-                              for old, new in zip(self.layers, next_layers))
-        if content_changed:
+        if added or replaced:
             shadow.version = self.version + 1
         return shadow, GreedyAudit(
             added, replaced, skipped, examined, self.version, shadow.version)
@@ -162,19 +150,12 @@ class GreedyBank:
                expected_sha256: str) -> None:
         if self.version != expected_version or self.sha256() != expected_sha256:
             raise ShadowError("Stale shadow update: live bank changed")
-        if (shadow.capacities != self.capacities or
-                shadow.version not in (self.version, self.version + 1)):
-            raise ShadowError("Invalid version or capacity-incompatible shadow")
+        if shadow.capacities != self.capacities or shadow.version <= self.version:
+            raise ShadowError("Non-advancing or capacity-incompatible shadow")
         _validate(shadow.layers, self.capacities)
         for old, new in zip(self.layers, shadow.layers):
             if old.shape[1] != new.shape[1] or old.device != new.device:
                 raise ShadowError("Shadow feature/device mismatch")
-        content_changed = any(not torch.equal(old, new)
-                              for old, new in zip(self.layers, shadow.layers))
-        if content_changed != (shadow.version == self.version + 1):
-            raise ShadowError("Memory version must advance exactly on content change")
-        if not content_changed:
-            return
         self.layers = _copies(shadow.layers)
         self.version = shadow.version
 

@@ -1,0 +1,27 @@
+{
+  "author_implementation_search_status": "NO_VERIFIED_AUTHOR_IMPLEMENTATION_LOCATED",
+  "dynamic_memory_guarantee_transfer": false,
+  "full_paper_and_appendices_reviewed": true,
+  "full_pdf": "https://raw.githubusercontent.com/mlresearch/v235/main/assets/sun24h/sun24h.pdf",
+  "implementation_scope": "paper-equation primitives only; no controller registered",
+  "method": "B6 Sun-CS",
+  "primary_paper": "https://proceedings.mlr.press/v235/sun24h.html",
+  "reference_primitive_test_count": 7,
+  "reference_primitive_tests_passed": [
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm_four_uses_exactly_one_matching_offline_set",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm_one_preserves_strict_anomaly_and_abstention_edges",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm_two_intersection_change_predicate",
+    "test_sun_cs_reference.SunCSReferenceTests.test_equation_one_matches_hand_computed_interior_confidence_set",
+    "test_sun_cs_reference.SunCSReferenceTests.test_midpoint_quantile_uses_paper_floor_ceil_ranks",
+    "test_sun_cs_reference.SunCSReferenceTests.test_radius_matches_paper_equation_and_time_zero",
+    "test_sun_cs_reference.SunCSReferenceTests.test_undefined_empty_and_clipped_endpoint_cases_fail_closed"
+  ],
+  "source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+  "stage1_or_stage2_run": false,
+  "status": "BLOCKED_FIDELITY",
+  "unresolved_source_behavior": [
+    "endpoint empirical-quantile convention when Equation (1) clips to 0 or 1",
+    "empty-prefix confidence set and first online decision",
+    "independent source reference trace for Algorithm 2 and Algorithm 3 resets"
+  ]
+}

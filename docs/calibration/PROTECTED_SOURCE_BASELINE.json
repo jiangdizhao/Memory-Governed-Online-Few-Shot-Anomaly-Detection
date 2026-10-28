@@ -1,0 +1,76 @@
+{
+  "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+  "dependency_paths": [
+    "experiments/a0_a1_strict4_matched.py",
+    "experiments/p0_protocol_audit.py",
+    "experiments/risk_safe/__init__.py",
+    "experiments/risk_safe/d2_threshold_calibration.py",
+    "experiments/risk_safe/native_bridge.py",
+    "experiments/risk_safe/p01_falsification_native.py",
+    "experiments/risk_safe/preflight.py",
+    "experiments/risk_safe/query_protocol.py",
+    "experiments/risk_safe/shadow_memory.py",
+    "experiments/v02_architecture_core.py",
+    "experiments/v02_memory.py",
+    "test_phase3_AIF_simplified_v22.py",
+    "vmb_visionad_new.py"
+  ],
+  "files": {
+    "experiments/a0_a1_strict4_matched.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "629251fe41386fef35bd7f5d92a9099970803a1996ff98607550bb43c6ad3741"
+    },
+    "experiments/p0_protocol_audit.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "03586ae40f79e9e49ad6545a4131c411a5f6adef9d085feae0b885f2f98966da"
+    },
+    "experiments/risk_safe/__init__.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "f95084f037129dd9818a1cd78688b3d5da2a2e3f8f86869600ab7fd80e67a416"
+    },
+    "experiments/risk_safe/d2_threshold_calibration.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "417a55a41b3ee9fcba97a4c34662506bc228b4a774fccd0c2c5a6666ada3abc2"
+    },
+    "experiments/risk_safe/native_bridge.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "313b94e7a3df82a4996b0c8a97a1e2464380f0e4cded09ae2e1647866859dfb4"
+    },
+    "experiments/risk_safe/p01_falsification_native.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "377a3d8a3d6b168e5712692d53ac83ddfd0004046c904a24b5e985f082da8ea1"
+    },
+    "experiments/risk_safe/preflight.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "65d62b73a2835ee9625a26dc140c1c5b062be6292bc0b0981cd53218a424e0bb"
+    },
+    "experiments/risk_safe/query_protocol.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "aa1c67b9550d181a3b8f674c10ff01c073674434da720eef4e4fae9cf0c503ec"
+    },
+    "experiments/risk_safe/shadow_memory.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "70c2ba3d29b225f241d9ad147f5be168ee2e0613f452e1428cc585bbce3339b5"
+    },
+    "experiments/v02_architecture_core.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "38c8e31b831614400c2d461538d637a0a0dc215fee19893791187b0b229c38de"
+    },
+    "experiments/v02_memory.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "d4cf38e75fad9c3cef317e07370c283d660ae495da11a6d759c1f0be8b789d68"
+    },
+    "test_phase3_AIF_simplified_v22.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "a79b6a78ccf918c9314025ab0acef2d9e8d84cf44600615a4085cd82802bda4f"
+    },
+    "vmb_visionad_new.py": {
+      "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+      "sha256": "0430959e86ba75b029341aef003655e6a3ac7d08df22f3f48a04e0b2d7fc39c9"
+    }
+  },
+  "hash_algorithm": "sha256",
+  "historical_shadow_memory_required_exact_sha256": "70c2ba3d29b225f241d9ad147f5be168ee2e0613f452e1428cc585bbce3339b5",
+  "normalization": "Git blob bytes; worktree CRLF canonicalized to LF before comparison",
+  "schema": "calibration.protected_source_baseline.v1"
+}

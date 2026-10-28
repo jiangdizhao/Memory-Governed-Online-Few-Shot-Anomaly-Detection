@@ -1,5 +1,10 @@
 # Stage 0 source provenance
 
+> **Historical report:** this records the prior fourth-pass provenance and is
+> retained as an archive. The current fifth-pass hashes and dependency
+> baseline are in
+> [`STAGE0_FIFTHPASS_SOURCE_PROVENANCE.md`](STAGE0_FIFTHPASS_SOURCE_PROVENANCE.md).
+
 ## Current fourth-pass provenance (authoritative)
 
 Hash algorithm: SHA-256. Runner implementation snapshot: source commit

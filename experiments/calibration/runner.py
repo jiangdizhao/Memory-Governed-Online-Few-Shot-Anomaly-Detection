@@ -35,6 +35,9 @@ from .real_iad_preflight import run_metadata_preflight
 from .native_event_replay import run_native_event_replay
 from .native_greedy_matrix import run_native_greedy_matrix
 from .native_parity_smoke import run_native_parity_smoke
+from .controller_activation import run_controller_activation
+from .source_provenance import (PROTECTED_BASELINE_PATH, source_fingerprint_paths,
+                                verify_protected_sources)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +55,8 @@ ARTIFACT_FILES = frozenset({
     "dependency_environment.json", "gates.json",
     "controller_method_cards.json", "synthetic_event_trace.jsonl",
     "synthetic_summary.json", "test_results.json", "source_hashes.json",
+    "protected_source_verification.json", "controller_activation_matrix.json",
+    "sun_cs_reference_status.json",
     "real_iad_metadata_preflight.json", "native_parity_smoke.json",
     "native_greedy_parity_matrix.json", "native_event_replay.json",
     "stage0_summary.md", "checksums.json",
@@ -200,14 +205,18 @@ def _run_tests() -> dict[str, Any]:
 
 def _source_hashes() -> dict[str, str]:
     paths = [ROOT / p for p in HISTORICAL_SOURCES]
+    paths.extend(ROOT / p for p in source_fingerprint_paths())
     paths.extend(sorted((ROOT / "experiments" / "calibration").glob("*.py")))
     paths.extend(sorted((ROOT / "tests" / "calibration").glob("*.py")))
     paths.extend(path for path in sorted(
         (ROOT / "docs" / "calibration").glob("*.md"))
         if path.name not in {"STAGE0_IMPLEMENTATION_REPORT.md",
-                             "STAGE0_SOURCE_PROVENANCE.md"})
+                             "STAGE0_SOURCE_PROVENANCE.md",
+                             "STAGE0_FIFTHPASS_IMPLEMENTATION_REPORT.md",
+                             "STAGE0_FIFTHPASS_SOURCE_PROVENANCE.md"})
     paths.append(ROOT / "docs" /
                  "Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf")
+    paths.append(PROTECTED_BASELINE_PATH)
     return {str(path.relative_to(ROOT)).replace("\\", "/"): _hash_file(path)
             for path in paths if path.is_file()}
 
@@ -245,6 +254,7 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     git, status = _git_info()
     branch, source_commit = git.split("@", 1)
     source_hashes = _source_hashes()
+    protected_sources = verify_protected_sources()
     tests = _run_tests()
     tests_ok = (tests["failed"] == 0 and tests["errors"] == 0 and
                 tests["skipped"] == 0)
@@ -259,11 +269,46 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     native_smoke = run_native_parity_smoke(dataset_root, json_root)
     native_matrix = run_native_greedy_matrix()
     native_replay = run_native_event_replay(dataset_root, json_root)
-    preexisting_archive_changes = [s for s in status
-                                   if "outputs/risk_safe_sprint_20261027" in s]
+    try:
+        activation = run_controller_activation()
+    except Exception as exc:
+        activation = {"schema": "calibration.controller_activation_matrix.v1",
+                      "status": "FAIL", "reason":
+                      f"Activation harness raised: {type(exc).__name__}: {exc}",
+                      "methods": {}, "stage1_or_stage2_run": False,
+                      "confirmation_outcomes_opened": False}
+    sun_reference_test_ids = [test_id for test_id in tests.get("passed_test_ids", [])
+                              if "test_sun_cs_reference." in test_id]
+    sun_reference_status = {
+        "method": "B6 Sun-CS",
+        "status": "BLOCKED_FIDELITY",
+        "source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+        "primary_paper": "https://proceedings.mlr.press/v235/sun24h.html",
+        "full_pdf": "https://raw.githubusercontent.com/mlresearch/v235/main/assets/sun24h/sun24h.pdf",
+        "full_paper_and_appendices_reviewed": True,
+        "verified_author_implementation": None,
+        "author_implementation_search_status": "NO_VERIFIED_AUTHOR_IMPLEMENTATION_LOCATED",
+        "implementation_scope": "paper-equation primitives only; no controller registered",
+        "reference_primitive_tests_passed": sun_reference_test_ids,
+        "reference_primitive_test_count": len(sun_reference_test_ids),
+        "unresolved_source_behavior": [
+            "endpoint empirical-quantile convention when Equation (1) clips to 0 or 1",
+            "empty-prefix confidence set and first online decision",
+            "independent source reference trace for Algorithm 2 and Algorithm 3 resets",
+        ],
+        "dynamic_memory_guarantee_transfer": False,
+        "stage1_or_stage2_run": False,
+    }
+    correct_branch = branch == "calibration-stage0-contract-20261029"
+    g0_status = ("PASS" if protected_sources.get("status") == "PASS" and
+                 correct_branch else "BLOCKED")
     gates = {
-        "G0": {"status": "BLOCKED" if preexisting_archive_changes else "PASS",
-               "reason": "Pre-existing tracked historical archive deletions remain in worktree; not modified or staged." if preexisting_archive_changes else "Correct branch and no protected worktree changes."},
+        "G0": {"status": g0_status,
+               "reason": ("Transitive protected-source baseline and byte-level historical shadow_memory check passed on the authorized branch."
+                          if g0_status == "PASS" else
+                          "Protected-source verification or authorized-branch check is blocked; see protected_source_verification.json."),
+               "protected_source_status": protected_sources.get("status"),
+               "authorized_branch": correct_branch},
         "G1": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic Q-A-TS/Q-B metadata tests passed." if tests_ok else "Synthetic query tests failed; see test_results.json."},
         "G1_real_data": {"status": real_preflight["status"],
                          "reason": ("Official sample identities, train-only support/C64 selection, and label-blind Q-A-TS/Q-B were checked using development-category JSON metadata; no image or mask was opened."
@@ -285,17 +330,36 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
                           f"Native matrix={native_matrix.get('status')}; CUDA smoke={native_smoke.get('status')}: {native_smoke.get('reason', '')}")},
         "G4": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed." if tests_ok else "Synthetic causal tests failed; see test_results.json."},
         "G5": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed." if tests_ok else "Synthetic evidence tests failed; see test_results.json."},
-        "G6": {"status": "BLOCKED_FIDELITY", "reason": "B5a SPOT and B5b dSPOT are executable paper-equation implementations with independent numerical/stream tests; B6 Sun-CS remains BLOCKED_FIDELITY; B7 remains provisional."},
-        "G7": {"status": "BLOCKED", "reason": "B5a/B5b Grimshaw, POT, update/exclusion, warm-up and checkpoint tests passed; all-family reference acceptance remains blocked by B6 source-faithfulness and observation/abstention mapping."},
+        "G6": {"status": "BLOCKED_FIDELITY", "reason": "B5a/B5b are paper-equation implementations with reference tests; B6 Sun-CS remains BLOCKED_FIDELITY; B7 remains provisional."},
+        "G7": {"status": "BLOCKED", "reason": "SPOT/dSPOT equation references pass, but author-code trace parity is not claimed; B6 source fidelity and source-defined startup remain unresolved."},
         "G8": {"status": "PASS" if any("test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng" in item for item in tests.get("passed_test_ids", [])) else "FAIL", "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration." if any("test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng" in item for item in tests.get("passed_test_ids", [])) else "Checkpoint/resume equivalence test did not pass; see test_results.json."},
         "G9_native_core": {"status": native_replay["status"],
                "reason": ("Bounded multi-event actual v22/DINO train-normal trajectory passed causal query/write, current-version C64 refresh, LSO, native checkpoint-resume equivalence and synthetic-label AUROC invariance."
                           if native_replay["status"] == "PASS" else
                           native_replay.get("reason", "See native_event_replay.json."))},
+        "G9_controller_activation": {"status": activation.get("status", "BLOCKED"),
+               "reason": ("B0-B5 and B7 synthetic activation results are in controller_activation_matrix.json; B6 remains source-blocked." if activation.get("status") != "FAIL" else activation.get("reason", "Activation harness failed."))},
         "G9_all_controller_matrix": {"status": "BLOCKED_FIDELITY",
-               "reason": "B6 Sun-CS cannot participate until its source-faithful implementation and reference tests are complete."},
-        "G9": {"status": "BLOCKED", "reason": "Native core parity passed only if recorded by G9_native_core; full G9 remains blocked because B6 is unavailable."},
+               "reason": "Synthetic activation covers B0-B5 and B7; B6 remains blocked, so the complete native controller matrix is not run or claimed."},
+        "G9": {"status": "BLOCKED", "reason": "Native core and controller activation are separately scoped; the complete Stage 0 matrix remains blocked by B6 fidelity."},
     }
+    scoped = {
+        "G0_PROTECTED_SOURCE_INTEGRITY": "G0",
+        "G1_QUERY_PROTOCOL": "G1",
+        "G2_NATIVE_SCORING": "G2",
+        "G3_NATIVE_GREEDY_OPERATOR": "G3",
+        "G4_CAUSAL_FIREWALL": "G4",
+        "G5_ANCHOR_AND_LSO": "G5",
+        "G6_ALL_METHOD_FAMILIES": "G6",
+        "G7_EXTERNAL_SOURCE_FIDELITY": "G7",
+        "G8_REPRODUCIBILITY": "G8",
+        "G9_NATIVE_CORE": "G9_native_core",
+        "G9_CONTROLLER_ACTIVATION": "G9_controller_activation",
+        "G9_FULL_MATRIX": "G9_all_controller_matrix",
+    }
+    for scoped_name, source_name in scoped.items():
+        gates[scoped_name] = {"status": gates[source_name]["status"],
+                              "reason": gates[source_name]["reason"]}
     manifest = {
         "stage": 0, "overall_status": "BLOCKED_WIP" if tests_ok else "FAIL",
         "branch": branch, "source_commit": source_commit,
@@ -315,6 +379,9 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     _json_write(out_dir / "native_parity_smoke.json", native_smoke)
     _json_write(out_dir / "native_greedy_parity_matrix.json", native_matrix)
     _json_write(out_dir / "native_event_replay.json", native_replay)
+    _json_write(out_dir / "protected_source_verification.json", protected_sources)
+    _json_write(out_dir / "controller_activation_matrix.json", activation)
+    _json_write(out_dir / "sun_cs_reference_status.json", sun_reference_status)
     _json_write(out_dir / "controller_method_cards.json", METHOD_CARDS)
     with (out_dir / "synthetic_event_trace.jsonl").open("w", encoding="utf-8") as f:
         for row in synthetic["trace"]:
@@ -328,7 +395,10 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "stage0_source_hashes": source_hashes,
         "source_commit": source_commit,
         "source_fingerprint_sha256": _sha(canonical_json(source_hashes).encode()),
-        "historical_sources_unchanged_by_this_work": True})
+        "historical_sources_unchanged_by_this_work": False,
+        "historical_source_restoration": "experiments/risk_safe/shadow_memory.py restored byte-for-byte to protected baseline",
+        "protected_sources_match_reviewed_baseline": protected_sources.get("status") == "PASS",
+        "protected_source_baseline_status": protected_sources.get("status")})
     summary = [
         "# Stage 0 synthetic runner summary", "",
         f"Status: **{'BLOCKED_WIP' if tests_ok else 'FAIL'}; not scientifically validated**.", "",
@@ -337,13 +407,14 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         f"Real-IAD metadata preflight: {real_preflight['status']}; four development-category JSON indexes were checked without decoding images or masks.",
         f"Native parity smoke: {native_smoke['status']}; see `native_parity_smoke.json` for the bounded train-only scope.",
         f"Native Greedy operator matrix: {native_matrix['status']}; see `native_greedy_parity_matrix.json`.",
-        f"Native event replay: {native_replay['status']}; full controller matrix remains {gates['G9_all_controller_matrix']['status']}.",
+        f"Native event replay: {native_replay['status']}; controller activation: {activation.get('status', 'BLOCKED')}; full controller matrix remains {gates['G9_all_controller_matrix']['status']}.",
         "No test image, mask, or confirmation-category metadata/outcomes were opened.",
         "Stage 1 and Stage 2 were not run.", "",
         "Gate statuses: " + ", ".join(f"{k}={v['status']}" for k, v in gates.items()),
         "", "The independent review should use `controller_method_cards.json`, `gates.json`,",
         "`source_hashes.json`, `test_results.json`, `native_greedy_parity_matrix.json`,",
-        "`native_event_replay.json`, and the synthetic trace.",
+        "`native_event_replay.json`, `controller_activation_matrix.json`,",
+        "`protected_source_verification.json`, and the synthetic trace.",
     ]
     (out_dir / "stage0_summary.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
     files = [p for p in out_dir.iterdir() if p.is_file() and
@@ -366,12 +437,15 @@ def _verify_artifact(out_dir: Path) -> dict[str, Any]:
     identity = json.loads(identity_path.read_text(encoding="utf-8"))
     current_hashes = _source_hashes()
     current_fp = _sha(canonical_json(current_hashes).encode())
+    protected = verify_protected_sources()
     if (manifest.get("profile_sha256") != DEFAULT_PROFILE.sha256 or
             hashes.get("stage0_source_hashes") != current_hashes or
             identity.get("source_fingerprint_sha256") != current_fp or
-            identity.get("profile_sha256") != DEFAULT_PROFILE.sha256):
+            identity.get("profile_sha256") != DEFAULT_PROFILE.sha256 or
+            protected.get("status") != "PASS"):
         raise RuntimeError("Artifact source/configuration provenance does not match this checkout")
     return {"checksums_verified": True, "source_and_config_match": True,
+            "protected_source_status": protected.get("status"),
             "artifact_status": manifest.get("overall_status", "UNKNOWN"),
             "run_key": identity.get("run_key")}
 
@@ -398,7 +472,8 @@ def main(argv: list[str] | None = None) -> int:
                           "overall_status": result["artifact_status"],
                           "output_dir": str(output),
                           "checksums_verified": result["checksums_verified"],
-                          "source_and_config_match": result["source_and_config_match"]}, indent=2))
+                          "source_and_config_match": result["source_and_config_match"],
+                          "protected_source_status": result["protected_source_status"]}, indent=2))
         return 0
     git, _ = _git_info()
     source_commit = git.split("@", 1)[1]

@@ -1,0 +1,20 @@
+{
+  "files": {
+    "audit_manifest.json": "469fef26cd3a4bb0074b8523f389932ff8edbd390936c3ee50f3e7ef4c5a7c60",
+    "controller_activation_matrix.json": "34d73bdf1b20c39acbe23f47dad34ea8068bce6630bfb5fc4f30864ad8a2bccd",
+    "controller_method_cards.json": "ae6b2055879a89a0398f45e73b5531232e5651ac86cab46f7437f57b5f6be29e",
+    "gates.json": "6d9546d3786b343443218c284b1eae35d718016fb8951b7ee119b16a824d2b3e",
+    "independent_verification_summary.md": "ae6be8aebe17ed880fc8e2d9592017ee048b65f3f568b503a84888a2a5fd2715",
+    "native_event_replay.json": "3cdd888501387241957afc5c372ab98910075245c38bf5259b9b6f069df5b48e",
+    "native_greedy_parity_matrix.json": "5fd1757de8e5bbc55411d7390bf60975559d948827629ee75155af9acd22e3f0",
+    "native_parity_smoke.json": "8d81d0b4a02c5f437e34bcc434e58b76dc5e8c4dbe7601ef7a5d517b4b4d1d9e",
+    "protected_source_verification.json": "0ee0b5fed84ddf81c31adecd3854656f1bec9388c00267f31a9e5571c3ad3dad",
+    "protocol_fingerprints.json": "f89c3ce478dc9a163b2ece7d2269ab56a46c9485a782158920e4bcda28cdf345",
+    "real_iad_metadata_preflight.json": "b21141435d2196631f4f0b6099a108e1ddd76e52ee4e10833fa8e9ae93c8dffa",
+    "scientific_audit_summary.md": "131a4bdcafd731167ae2c155d8b420ba1002693f57666757afe00c5f3684aff3",
+    "sun_cs_reference_status.json": "a18a6ddd1eb106c2dbd7a940f238be17ee833bb1399921c2f2b50ec07d5f7ebd",
+    "test_results.json": "6fc0514d626ac90679476b2d90ec1e8a9c9323fdb8e240ed52e4f9a94bc21d81"
+  },
+  "schema": "calibration.stage0.audit_checksums.v1",
+  "source_artifact_checksums_sha256": "be2431f00c58a0e78dc9ffa76ecf95dd461bc9e33c24b35d044b4609992a888d"
+}

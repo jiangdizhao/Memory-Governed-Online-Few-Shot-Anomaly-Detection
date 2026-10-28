@@ -350,9 +350,17 @@ def run_native_event_replay(dataset_root: str | Path,
                 "basis": "one engine, one score call and one controller-independent writer per event"},
             "fixed_query_normal_update": {
                 "memory_version_before_after": [0, writer.bank.version],
+                "memory_content_version_before_after": [
+                    0, writer.bank.memory_content_version],
+                "legacy_greedy_version_after": writer.bank.legacy_greedy_version,
                 "content_sha256_after": writer.bank.content_sha256(),
                 "source_map_sha256": writer.source_map_sha256(),
                 "source_map_revision": writer.source_revision,
+                "version_axes": {
+                    "memory_content_version": "calibration score/evidence version; advances iff prototype content changes",
+                    "legacy_greedy_version": "unchanged historical GreedyBank semantics",
+                    "source_map_revision": "source attribution changes only",
+                },
                 "operation_counts": operation_counts,
                 "verified_normal_only": True},
             "execution_cost": {"native_score_calls": native_score_calls,

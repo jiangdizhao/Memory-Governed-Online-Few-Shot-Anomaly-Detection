@@ -13,6 +13,8 @@ PACKAGE_FILES = (
     "gates.json", "test_results.json", "native_parity_smoke.json",
     "native_greedy_parity_matrix.json", "native_event_replay.json",
     "real_iad_metadata_preflight.json", "controller_method_cards.json",
+    "controller_activation_matrix.json", "sun_cs_reference_status.json",
+    "protected_source_verification.json",
 )
 DROP_KEYS = {"path", "absolute_path", "dataset_root", "json_root",
              "python_executable", "environment_prefix", "output_dir"}
@@ -53,6 +55,12 @@ def _sanitize(value: Any, key: str = "") -> Any:
 def _write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, sort_keys=True, indent=2,
                                allow_nan=False) + "\n", encoding="utf-8")
+
+
+def _source_fingerprint(source_hashes: dict[str, Any]) -> str:
+    canonical = json.dumps(source_hashes, sort_keys=True, separators=(",", ":"),
+                           ensure_ascii=False, allow_nan=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _compact_tests(payload: dict[str, Any]) -> dict[str, Any]:
@@ -99,6 +107,19 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
     tests = json.loads((output / "test_results.json").read_text(encoding="utf-8"))
     replay = json.loads((output / "native_event_replay.json").read_text(encoding="utf-8"))
     matrix = json.loads((output / "native_greedy_parity_matrix.json").read_text(encoding="utf-8"))
+    protected = json.loads((output / "protected_source_verification.json").read_text(encoding="utf-8"))
+    fingerprint_matches = (
+        bool(fingerprints.get("stage0_source_hashes")) and
+        _source_fingerprint(fingerprints["stage0_source_hashes"]) ==
+        fingerprints.get("source_fingerprint_sha256"))
+    protected_ok = (
+        protected.get("status") == "PASS" and
+        protected.get("shadow_memory_byte_equal_to_baseline") is True and
+        not protected.get("unrecorded_resolved_dependencies") and
+        not protected.get("recorded_but_unresolved_dependencies") and
+        not protected.get("failures"))
+    g0 = gates.get("G0_PROTECTED_SOURCE_INTEGRITY", {})
+    g0_consistent = g0.get("status") == ("PASS" if protected_ok else "BLOCKED")
     summary = [
         "# Stage 0 compact scientific audit", "",
         f"Runner status: **{manifest.get('overall_status', 'UNVERIFIED')}**.",
@@ -122,17 +143,35 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
         "The compact evidence files are content-hashed in `checksums.json`. "
         "`audit_manifest.json` records the SHA-256 of the full local runner checksum manifest and the full source artifact files, "
         "so reviewers can verify the redacted export's relationship to that run.",
+        f"Source fingerprint recomputation: **{'PASS' if fingerprint_matches else 'FAIL'}**.",
+        f"Protected historical-source verification: **{'PASS' if protected_ok else 'BLOCKED'}**; "
+        f"G0 gate consistency: **{'PASS' if g0_consistent else 'FAIL'}**.",
         "",
         "Every unavailable requirement remains BLOCKED, SKIPPED, or UNVERIFIED in the machine-readable gates.",
     ]
     (output / "scientific_audit_summary.md").write_text("\n".join(summary) + "\n",
                                                            encoding="utf-8")
+    sun_status = json.loads(
+        (output / "sun_cs_reference_status.json").read_text(encoding="utf-8"))
+    (output / "independent_verification_summary.md").write_text(
+        "# Independent audit-package verification summary\n\n"
+        "This checks the compact package against the full Runner artifacts; it does not validate scientific claims or infer missing method behavior.\n\n"
+        f"- Full Runner artifact checksums: **PASS** ({len(source_checksums)} files verified before export).\n"
+        f"- Exported source fingerprint recomputation: **{'PASS' if fingerprint_matches else 'FAIL'}**.\n"
+        f"- Protected historical-source baseline: **{'PASS' if protected_ok else 'BLOCKED'}**.\n"
+        f"- G0 protected-source gate agrees with the baseline record: **{'PASS' if g0_consistent else 'FAIL'}**.\n"
+        f"- B6 Sun-CS status retained as `BLOCKED_FIDELITY`: **{'PASS' if sun_status.get('status') == 'BLOCKED_FIDELITY' else 'FAIL'}**.\n"
+        f"- Source artifact checksum-manifest SHA-256: `{_sha_file(source / 'checksums.json')}`.\n"
+        "- Stage 1/2: not run. Confirmation outcomes: not opened.\n",
+        encoding="utf-8")
     source_files = {name: _sha_file(source / name) for name in sorted(required)}
     _write_json(output / "audit_manifest.json", {
         "schema": "calibration.stage0.audit_export.v1",
         "run_key": identity.get("run_key"),
         "source_artifact_checksums_sha256": _sha_file(source / "checksums.json"),
         "source_artifact_file_sha256": source_files,
+        "source_fingerprint_recomputed": fingerprint_matches,
+        "protected_source_integrity_verified": protected_ok,
         "redaction_policy": "absolute local paths and example/sample identities removed; score vectors/features omitted",
         "overall_status": manifest.get("overall_status", "UNVERIFIED"),
     })
@@ -170,6 +209,38 @@ def verify_audit(package_dir: str | Path, *,
             content = path.read_text(encoding="utf-8")
             if ABSOLUTE_PATH.search(content):
                 return {"valid": False, "reason": f"absolute local path found in {path.name}"}
+    required_semantic = {
+        "protocol_fingerprints.json", "gates.json",
+        "protected_source_verification.json", "sun_cs_reference_status.json",
+        "audit_manifest.json",
+    }
+    absent = sorted(name for name in required_semantic if not (package / name).is_file())
+    if absent:
+        return {"valid": False, "reason": f"semantic audit evidence absent: {absent}"}
+    fingerprints = json.loads((package / "protocol_fingerprints.json").read_text(encoding="utf-8"))
+    source_hashes = fingerprints.get("stage0_source_hashes", {})
+    fingerprint_matches = (
+        bool(source_hashes) and
+        _source_fingerprint(source_hashes) ==
+        fingerprints.get("source_fingerprint_sha256"))
+    if not fingerprint_matches:
+        return {"valid": False, "reason": "source fingerprint does not match exported source hash map"}
+    protected = json.loads((package / "protected_source_verification.json").read_text(encoding="utf-8"))
+    protected_ok = (
+        protected.get("status") == "PASS" and
+        protected.get("shadow_memory_byte_equal_to_baseline") is True and
+        not protected.get("unrecorded_resolved_dependencies") and
+        not protected.get("recorded_but_unresolved_dependencies") and
+        not protected.get("failures"))
+    gates = json.loads((package / "gates.json").read_text(encoding="utf-8"))
+    g0 = gates.get("G0_PROTECTED_SOURCE_INTEGRITY", {})
+    if not protected_ok or g0.get("status") != "PASS":
+        return {"valid": False, "reason": "protected-source evidence or G0 status is not PASS",
+                "source_fingerprint_verified": fingerprint_matches,
+                "protected_source_integrity_verified": protected_ok}
+    sun = json.loads((package / "sun_cs_reference_status.json").read_text(encoding="utf-8"))
+    if sun.get("status") != "BLOCKED_FIDELITY":
+        return {"valid": False, "reason": "Sun-CS blocker status was not preserved as BLOCKED_FIDELITY"}
     linked = False
     if source_dir is not None:
         source = Path(source_dir)
@@ -182,7 +253,10 @@ def verify_audit(package_dir: str | Path, *,
                 return {"valid": False, "reason": f"source artifact link mismatch: {name}"}
         linked = True
     return {"valid": True, "package_checksums_verified": True,
-            "privacy_scan_passed": True, "source_artifact_link_verified": linked}
+            "privacy_scan_passed": True, "source_fingerprint_verified": True,
+            "protected_source_integrity_verified": True,
+            "g0_status_preserved": "PASS",
+            "source_artifact_link_verified": linked}
 
 
 def main(argv: list[str] | None = None) -> int:

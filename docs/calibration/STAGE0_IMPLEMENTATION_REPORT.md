@@ -1,5 +1,10 @@
 # Stage 0 implementation report
 
+> **Historical report:** this records the prior fourth-pass state and is
+> retained as an archive. The current fifth-pass implementation, evidence,
+> and blockers are in
+> [`STAGE0_FIFTHPASS_IMPLEMENTATION_REPORT.md`](STAGE0_FIFTHPASS_IMPLEMENTATION_REPORT.md).
+
 ## Current fourth-pass status (authoritative)
 
 **Overall status: `BLOCKED_WIP`; Stage 0 is not scientifically validated.**
