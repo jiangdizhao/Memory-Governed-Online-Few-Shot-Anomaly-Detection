@@ -341,10 +341,42 @@ def run(args):
         return evaluate_scores(labels, static_scores,
                                evaluator.score_state(state), theta,
                                lambda_defect=args.lambda_defect)
+    from .r1_oracle_core import transition
     greedy_all = initial
-    for cand in candidates:
-        from .r1_oracle_core import transition
-        greedy_all = transition(greedy_all, cand, True)
+    event_shadow = []
+    normal_infos = [entry for entry in queried if entry["eligible_normal"]][:len(candidates)]
+    if len(normal_infos) != len(candidates):
+        raise R1ProtocolError("R1 candidate-to-Q-A provenance mismatch")
+    for i, (cand, info) in enumerate(zip(candidates, normal_infos)):
+        pre_metrics = evaluate(greedy_all)
+        after = transition(greedy_all, cand, True)
+        post_metrics = evaluate(after)
+        event_shadow.append(dict(
+            normal_candidate_index=i, stream_position=info["stream_position"],
+            official_sample_key=info["official_sample_key"], image_id=info["image_id"],
+            pre_bank_sha256=greedy_all.bank.sha256(),
+            after_bank_sha256=after.bank.sha256(),
+            appended=after.appended-greedy_all.appended,
+            replaced=after.replaced-greedy_all.replaced,
+            skipped=after.skipped-greedy_all.skipped,
+            n_accepted_pre=greedy_all.admissions,
+            new_false_negatives_pre=pre_metrics["new_false_negatives"],
+            new_false_negatives_post=post_metrics["new_false_negatives"],
+            delta_new_false_negatives=post_metrics["new_false_negatives"]-
+                                       pre_metrics["new_false_negatives"],
+            rescued_false_positives_pre=pre_metrics["rescued_false_positives"],
+            rescued_false_positives_post=post_metrics["rescued_false_positives"],
+            delta_rescued_false_positives=post_metrics["rescued_false_positives"]-
+                                          pre_metrics["rescued_false_positives"],
+            risk_adjusted_relief_pre=pre_metrics["risk_adjusted_relief"],
+            risk_adjusted_relief_post=post_metrics["risk_adjusted_relief"],
+            delta_risk_adjusted_relief=post_metrics["risk_adjusted_relief"]-
+                                        pre_metrics["risk_adjusted_relief"],
+            delta_normal_score_relief=post_metrics["mean_normal_score_relief"]-
+                                       pre_metrics["mean_normal_score_relief"],
+            delta_defect_score_erosion=post_metrics["mean_defect_score_erosion"]-
+                                       pre_metrics["mean_defect_score_erosion"]))
+        greedy_all = after
     baseline_static = evaluate(initial)
     baseline_greedy = evaluate(greedy_all)
     search = (run_exact(candidates, initial, evaluate, max_leaves=args.max_leaves)
@@ -449,6 +481,7 @@ def run(args):
         oracle_n_effective_updates=oracle.effective_updates,
         oracle_memory_sha256=oracle.bank.sha256(),
         greedy_memory_sha256=greedy_all.bank.sha256(),
+        n_greedy_prefix_shadow_events=len(event_shadow),
         r0_reference_parity=r0_parity,
         score_search_subset=searched,
         score_disjoint_probe_a_audit=audit_metrics,
@@ -466,6 +499,7 @@ def run(args):
     out.mkdir(parents=True, exist_ok=False)
     write_json(out/"r1_summary.json",summary)
     csv_file(out/"r1_queries.csv",queried)
+    csv_file(out/"r1_event_shadow.csv",event_shadow)
     csv_file(out/"r1_search_states.csv",search["leaf_rows"])
     csv_file(out/"r1_frontier_by_count.csv",frontier)
     csv_file(out/"r1_search_probe_scores.csv",search_rows)
