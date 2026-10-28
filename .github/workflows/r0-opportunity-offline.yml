@@ -1,0 +1,22 @@
+name: R0 opportunity audit offline contracts
+on:
+  push:
+    branches:
+      - r0-opportunity-audit-20261028
+  pull_request:
+    paths:
+      - 'experiments/risk_safe/r0_*.py'
+      - 'tests/test_risk_safe_r0.py'
+      - '.github/workflows/r0-opportunity-offline.yml'
+jobs:
+  offline-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile R0 source and tests
+        run: python -m py_compile experiments/risk_safe/r0_opportunity.py experiments/risk_safe/r0_native_activation.py tests/test_risk_safe_r0.py
+      - name: Run metadata/probe causal contract tests without torch or Real-IAD
+        run: python -m unittest discover -s tests -p 'test_risk_safe_r0.py' -v
