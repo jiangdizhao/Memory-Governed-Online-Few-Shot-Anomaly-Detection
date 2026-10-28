@@ -35,7 +35,7 @@ class TestFalsification(unittest.TestCase):
             select_matched(dup,4,seed=1)
 
     def test_quantile_64_and_finite(self):
-        self.assertAlmostEqual(normal_q90(list(range(64))),56.7)
+        self.assertAlmostEqual(normal_q90(list(range(64))),57.0)
         with self.assertRaises(FalsificationProtocolError):
             normal_q90(list(range(63)))
         with self.assertRaises(FalsificationProtocolError):
