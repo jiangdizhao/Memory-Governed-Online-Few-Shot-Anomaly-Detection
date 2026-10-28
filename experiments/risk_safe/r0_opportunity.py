@@ -28,6 +28,32 @@ def integers(value: str) -> tuple[int, ...]:
     return result
 
 
+
+def native_output_name(args):
+    """Make smoke and full runs non-colliding without invoking the GPU."""
+    if args.out_dir is not None:
+        return Path(args.out_dir)
+    caps = "-".join(str(x) for x in integers(args.capacities))
+    suffix = f"smoke{args.max_query_events}" if args.max_query_events else "full"
+    return Path("outputs/r0_opportunity_20261028/native") / (
+        f"{args.class_name}_s{args.support_seed}_q{args.query_seed}_"
+        f"b{args.budget}_cap{caps}_audit{args.audit_every}_{suffix}")
+
+
+def probe_subset(plan, n):
+    """Offline Probe-A subset; sample groups classified for evaluation only."""
+    if n < 1 or n > 24:
+        raise ValueError("Probe sample groups per type must be 1..24")
+    normal_keys = sorted(k for k in plan.probe_a_samples if all(
+        r.is_good for r in plan.probe_a if r.sample_key == k))
+    defect_keys = sorted(k for k in plan.probe_a_samples if any(
+        not r.is_good for r in plan.probe_a if r.sample_key == k))
+    if len(normal_keys) < n or len(defect_keys) < n:
+        raise RuntimeError("Insufficient evaluation-only sample groups")
+    selected = set(normal_keys[:n] + defect_keys[:n])
+    return tuple(r for r in plan.probe_a if r.sample_key in selected)
+
+
 def offline_counts(events, label_by_path, *, anchors_needed=(1, 4, 8, 16)):
     """Audit true labels AFTER tape creation. Never export these to a policy."""
     normals = defects = 0
