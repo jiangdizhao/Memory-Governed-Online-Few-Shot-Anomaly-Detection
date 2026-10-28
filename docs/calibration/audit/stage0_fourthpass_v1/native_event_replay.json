@@ -1,0 +1,153 @@
+{
+  "all_controller_matrix_status": "BLOCKED_B6_FIDELITY",
+  "anchor_refreshes": [
+    {
+      "evidence_revision": 1,
+      "memory_version": 0,
+      "normal_anchor_count": 64,
+      "protected_c64_count": 64,
+      "queried_normal_count": 0,
+      "queried_normal_lso_rows": 0
+    },
+    {
+      "evidence_revision": 3,
+      "memory_version": 1,
+      "normal_anchor_count": 65,
+      "protected_c64_count": 64,
+      "queried_normal_count": 1,
+      "queried_normal_lso_rows": 8
+    }
+  ],
+  "blocked_method_names": [
+    "B6"
+  ],
+  "c64_group_sha256": "9b2ca4ed0dc4bae36a751a8a6367f716e6863b774981d9b8ea5966660a60ad6c",
+  "checkpoint_resume": {
+    "checkpoint_cursor": 17,
+    "resumed_scores_trace_predictions_controllers_and_memory_match_uninterrupted": true,
+    "status": "PASS"
+  },
+  "confirmation_data_opened": false,
+  "device": "cuda",
+  "duration_seconds": 39.73,
+  "events": 34,
+  "execution_cost": {
+    "checkpoint_replay_cursor": 17,
+    "feature_images_encoded": 102,
+    "native_score_calls": 326
+  },
+  "final_anchor_lso_rows": 8,
+  "fixed_query_normal_update": {
+    "content_sha256_after": "58658c21c780881498f98fbf9552a45659bbffa14d2c50470fb0bd93e6b03d43",
+    "memory_version_before_after": [
+      0,
+      1
+    ],
+    "operation_counts": {
+      "append": 8,
+      "replace": 0,
+      "skip": 0
+    },
+    "source_map_revision": 1,
+    "source_map_sha256": "c3347956877efc82c15c0d4a2ced14a43abeba63b1e264fee2b6802c295bf46e",
+    "verified_normal_only": true
+  },
+  "initial_c64_current_state_count": 64,
+  "initial_theta_policy": "D2_higher_q90_of_64_additional_C64_native_scores_at_M0",
+  "method_names": [
+    "B0",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5a",
+    "B5b",
+    "B7"
+  ],
+  "query_count": 1,
+  "query_tape": {
+    "one_view_per_official_group": true,
+    "policy": "Q-A-TS",
+    "selected_group_sha256": "38d0bbb37b2f28a19a0b0d6b4848657f0f1dd3f437ca1684b241fd81d348b625",
+    "selection_label_blind": true,
+    "sha256": "1c382f528aa6509df6b3d4b6cc452f71714c40978d671e04448612ac55dfc82f",
+    "version": "Q-A-TS-v1"
+  },
+  "ranking_status": "DEFINED",
+  "same_score_auroc_by_controller": {
+    "B0": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    },
+    "B1": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    },
+    "B2": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    },
+    "B3": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    },
+    "B4": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    },
+    "B5a": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    },
+    "B5b": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    },
+    "B7": {
+      "auprc": 0.652893575292956,
+      "auroc": 0.615916955017301,
+      "label_fixture": "synthetic_binary_diagnostic_only",
+      "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c"
+    }
+  },
+  "schema": "calibration.stage0.native_event_replay.v1",
+  "scope": "bounded_audiojack_train_normal_native_v22_non_scientific_diagnostic",
+  "score_state_versions": [
+    0,
+    1
+  ],
+  "score_values_emitted": false,
+  "score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c",
+  "stage1_or_stage2_run": false,
+  "status": "PASS",
+  "support_regime": "four_deployed_supports_plus_64_additional_C64_normals",
+  "support_sha256": "c5f3dd6494f105a9197e7fc9b275d56d8a084b0eb4aa4052a157a9a6fed5b3d2",
+  "synthetic_binary_label_fixture": {
+    "auc_status": "DEFINED",
+    "generation": "alternating 0/1 by event position; not Real-IAD labels",
+    "n": 34,
+    "status": "SYNTHETIC_DIAGNOSTIC_ONLY"
+  },
+  "threshold_counterfactual": {
+    "basis": "one engine, one score call and one controller-independent writer per event",
+    "controller": "B0_DIAGNOSTIC_HIGH_THRESHOLD",
+    "query_identity_unchanged": true,
+    "shared_memory_hashes_unchanged_by_threshold": true,
+    "shared_score_vector_sha256": "da0a4fcefc8c4e88b6598c0d43483c30fec0a6d06bd886dd1b02a6092d456d6c",
+    "threshold_divergent_events": 34
+  }
+}

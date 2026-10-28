@@ -78,12 +78,15 @@ class Prediction:
     threshold: float | None
     reason: str = ""
     details: Mapping[str, Any] = field(default_factory=dict)
+    available: bool = True
 
     def __post_init__(self) -> None:
         if self.label not in (0, 1, None):
             raise ProtocolError("Prediction label must be 0, 1, or abstain (None)")
         if self.threshold is not None and not math.isfinite(float(self.threshold)):
             raise ProtocolError("Prediction threshold must be finite or unavailable")
+        if not self.available and self.label is not None:
+            raise ProtocolError("An unavailable prediction cannot carry a binary label")
 
 
 @dataclass(frozen=True)

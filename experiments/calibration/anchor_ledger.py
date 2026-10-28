@@ -225,6 +225,13 @@ def _features_equal(left: Any, right: Any) -> bool:
         return (isinstance(left, torch.Tensor) and isinstance(right, torch.Tensor) and
                 left.dtype == right.dtype and tuple(left.shape) == tuple(right.shape) and
                 torch.equal(left.detach().cpu(), right.detach().cpu()))
+    if (type(left).__module__.startswith("PIL.") or
+            type(right).__module__.startswith("PIL.")):
+        return (type(left).__module__.startswith("PIL.") and
+                type(right).__module__.startswith("PIL.") and
+                getattr(left, "mode", None) == getattr(right, "mode", None) and
+                getattr(left, "size", None) == getattr(right, "size", None) and
+                left.tobytes() == right.tobytes())
     if isinstance(left, dict) or isinstance(right, dict):
         return (isinstance(left, dict) and isinstance(right, dict) and
                 left.keys() == right.keys() and

@@ -71,6 +71,8 @@ class PrequentialEngine:
         self._scores: list[float] = []
         self._predictions: dict[str, list[int | None]] = {
             c.name: [] for c in self.controllers}
+        self._prediction_availability: dict[str, list[bool]] = {
+            c.name: [] for c in self.controllers}
         self._trace: list[dict[str, Any]] = []
         self._queried_labels: list[tuple[int, int]] = []
         self._last_evidence: EvidenceSnapshot | None = None
@@ -87,6 +89,7 @@ class PrequentialEngine:
             "cursor": self._cursor,
             "scores": self._scores,
             "predictions": self._predictions,
+            "prediction_availability": self._prediction_availability,
             "trace": self._trace,
             "queried_labels": self._queried_labels,
             "last_evidence": self._last_evidence,
@@ -112,8 +115,11 @@ class PrequentialEngine:
         scores = list(state.get("scores", ()))
         trace = list(state.get("trace", ()))
         predictions = state.get("predictions", {})
+        availability = state.get("prediction_availability", {})
         if len(scores) != cursor or len(trace) != cursor or any(
-                len(predictions.get(c.name, ())) != cursor for c in self.controllers):
+                len(predictions.get(c.name, ())) != cursor or
+                len(availability.get(c.name, ())) != cursor
+                for c in self.controllers):
             raise EngineError("Checkpoint traces do not match the event cursor")
         controller_states = state.get("controllers", {})
         component_states = state.get("components", {})
@@ -133,6 +139,9 @@ class PrequentialEngine:
         self._scores = scores
         self._predictions = {name: list(values)
                              for name, values in predictions.items()}
+        self._prediction_availability = {
+            name: [bool(value) for value in values]
+            for name, values in availability.items()}
         self._trace = trace
         self._queried_labels = [tuple(x) for x in state.get("queried_labels", ())]
         self._last_evidence = copy.deepcopy(state.get("last_evidence"))
@@ -187,6 +196,8 @@ class PrequentialEngine:
                     raise EngineError(f"{controller.name}.predict mutated controller state")
                 current_preds[controller.name] = prediction
                 self._predictions[controller.name].append(prediction.label)
+                self._prediction_availability[controller.name].append(
+                    bool(prediction.available))
                 pre_states[controller.name] = controller.state_dict()
 
             is_query = t in queried
@@ -235,6 +246,8 @@ class PrequentialEngine:
                 "score_state_digest": result.score_state_digest,
                 "theta_pre": {name: p.threshold for name, p in current_preds.items()},
                 "prediction_pre": {name: p.label for name, p in current_preds.items()},
+                "prediction_available": {name: p.available
+                                         for name, p in current_preds.items()},
                 "prediction_reason": {name: p.reason for name, p in current_preds.items()},
                 "theta_post": post,
                 "evidence_state": evidence.state if evidence else "UNAVAILABLE",
@@ -246,9 +259,13 @@ class PrequentialEngine:
                     "n_events": len(self.events), "tape_digest": self.tape.digest,
                     "scores": list(self._scores),
                     "predictions": copy.deepcopy(self._predictions),
+                    "prediction_availability": copy.deepcopy(
+                        self._prediction_availability),
                     "trace": copy.deepcopy(self._trace),
                     "checkpoint": self.state_dict()}
-        metrics = self.outcomes.evaluate(self._scores, self._predictions)
+        metrics = self.outcomes.evaluate(
+            self._scores, self._predictions,
+            prediction_availability=self._prediction_availability)
         seen_query_classes: set[int] = set()
         first_both = None
         for t, label in self._queried_labels:
@@ -269,6 +286,8 @@ class PrequentialEngine:
         return {"status": "COMPLETE", "cursor": self._cursor,
                 "tape_digest": self.tape.digest,
                 "scores": list(self._scores), "predictions": copy.deepcopy(self._predictions),
+                "prediction_availability": copy.deepcopy(
+                    self._prediction_availability),
                 "trace": copy.deepcopy(self._trace), "metrics": metrics,
                 "controller_states": {c.name: c.state_dict() for c in self.controllers},
                 "query_count": len(self.tape.events), "query_audit": query_audit}

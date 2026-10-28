@@ -78,6 +78,17 @@ class RunnerIntegrityTests(unittest.TestCase):
         self.assertEqual(result["status"], "SKIP")
         self.assertIn("metadata roots are absent", result["reason"])
 
+    def test_native_event_replay_reports_missing_metadata_as_skip(self):
+        from experiments.calibration.native_event_replay import run_native_event_replay
+
+        with patch("experiments.calibration.native_event_replay.torch.cuda.is_available",
+                   return_value=True):
+            result = run_native_event_replay(
+                Path("Z:/missing-stage0-dataset"),
+                Path("Z:/missing-stage0-json"))
+        self.assertEqual(result["status"], "SKIP")
+        self.assertIn("metadata roots are absent", result["reason"])
+
 
 if __name__ == "__main__":
     unittest.main()

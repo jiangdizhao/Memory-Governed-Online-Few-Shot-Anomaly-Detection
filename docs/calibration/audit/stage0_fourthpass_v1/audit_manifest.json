@@ -1,0 +1,20 @@
+{
+  "overall_status": "BLOCKED_WIP",
+  "redaction_policy": "absolute local paths and example/sample identities removed; score vectors/features omitted",
+  "run_key": "6559712052f597be",
+  "schema": "calibration.stage0.audit_export.v1",
+  "source_artifact_checksums_sha256": "8b03e530ac59c59e449e282037421b276181f0e36d69a6b2364bee5bade5a6a4",
+  "source_artifact_file_sha256": {
+    "checksums.json": "8b03e530ac59c59e449e282037421b276181f0e36d69a6b2364bee5bade5a6a4",
+    "controller_method_cards.json": "38174b76b4f2dbddafa917fe93f172a73c577f4a46e55cfb11c5f81f1a3d7401",
+    "gates.json": "4d737eda4a7927f5bb8eb27ef9d8bf6d70dfa86b4ad7fc28dc788b578007d63c",
+    "native_event_replay.json": "ed8a73b40aaff7e903d4e19df0ad1bcfc00e2247451746a8787660e590ea83ef",
+    "native_greedy_parity_matrix.json": "098518be465666b7cd490cf15321aa1a3a657235d676fd55a78690e28e4a30f6",
+    "native_parity_smoke.json": "61fd0edbe32d25f8d691cb50ea652ebe6b182eb157d062a1fe9c96ab0bfc1569",
+    "protocol_manifest.json": "e30172189ce789f6434840d62ac82d236c750d44294b03933753bbca39e5eac6",
+    "real_iad_metadata_preflight.json": "b21141435d2196631f4f0b6099a108e1ddd76e52ee4e10833fa8e9ae93c8dffa",
+    "run_identity.json": "0a6b6792137b2bac322888f285913395479acdd72b5b8e8c7fb5fd6494d833cb",
+    "source_hashes.json": "90b678e8caaae285074444e98f3bece1dbceb91aa1fcfb8fd0b2b6121cfdd6c2",
+    "test_results.json": "ad98cd8e96e3ae35a71e544453d3aa786dea4675efc6a829b182d70930c9e826"
+  }
+}

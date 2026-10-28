@@ -44,8 +44,13 @@ class RegistryGreedyTests(unittest.TestCase):
         })
         validate_p0_config(p0_config, cpu.scorer)
 
-    def test_unresolved_baselines_are_not_claimed_implemented(self):
-        for key in ("B5a", "B5b", "B6"):
+    def test_spot_families_are_executable_and_sun_cs_remains_blocked(self):
+        for key in ("B5a", "B5b"):
+            self.assertEqual(METHOD_CARDS[key]["status"],
+                             "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED")
+            self.assertTrue(METHOD_CARDS[key]["independent_unit_test_reference"])
+        self.assertEqual(METHOD_CARDS["B6"]["status"], "BLOCKED_FIDELITY")
+        for key in ("B6",):
             self.assertEqual(METHOD_CARDS[key]["status"], "BLOCKED_FIDELITY")
             self.assertTrue(METHOD_CARDS[key]["blocker"])
         self.assertEqual(METHOD_CARDS["B7"]["status"], "IMPLEMENTED_PROVISIONAL")
@@ -72,6 +77,8 @@ class RegistryGreedyTests(unittest.TestCase):
         original = build_controllers(.05, scores)
         restored = build_controllers(.05, scores)
         self.assertEqual([x.name for x in original], [x.name for x in restored])
+        self.assertIn("B5a", [x.name for x in original])
+        self.assertIn("B5b", [x.name for x in original])
         for source, target in zip(original, restored):
             state = source.state_dict()
             target.load_state_dict(state)

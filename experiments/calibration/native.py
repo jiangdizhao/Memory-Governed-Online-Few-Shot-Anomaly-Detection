@@ -141,6 +141,8 @@ class SharedWriteResult:
     appended: int
     replaced: int
     skipped: int
+    source_map_changed: bool = False
+    source_revision: int = 0
 
 
 class SharedNativeGreedyWriter:
@@ -164,6 +166,7 @@ class SharedNativeGreedyWriter:
         self.bank = native_bridge.snapshot(native_bank, version=0)
         self.sources: list[list[str]] = [
             ["<unknown-preexisting>"] * len(layer) for layer in self.bank.layers]
+        self.source_revision = 0
         if any(len(layer) for layer in self.bank.layers):
             raise NativeAdapterError("Calibration memory must start empty")
         if any(cap != 256 for cap in self.bank.capacities):
@@ -172,10 +175,15 @@ class SharedNativeGreedyWriter:
     def source_row_counts(self, source_key: str) -> tuple[int, ...]:
         return tuple(layer.count(source_key) for layer in self.sources)
 
+    def source_map_sha256(self) -> str:
+        payload = json.dumps(self.sources, ensure_ascii=True,
+                             separators=(",", ":")).encode("ascii")
+        return hashlib.sha256(payload).hexdigest()
+
     def state_dict(self) -> dict[str, Any]:
         """Private, resumable snapshot of the one live native Greedy bank."""
         return {
-            "schema": "calibration.shared_native_greedy.v1",
+            "schema": "calibration.shared_native_greedy.v2",
             "fixed_support_sha256": self.fixed_support_sha256,
             "theta_ref": self.theta_ref,
             "sigma_ref": self.sigma_ref,
@@ -185,11 +193,13 @@ class SharedNativeGreedyWriter:
             "layers": [layer.detach().to("cpu").contiguous().clone()
                        for layer in self.bank.layers],
             "sources": [list(rows) for rows in self.sources],
+            "source_revision": self.source_revision,
+            "source_map_sha256": self.source_map_sha256(),
             "sha256": self.bank.sha256(),
         }
 
     def load_state_dict(self, state: dict[str, Any]) -> None:
-        if (state.get("schema") != "calibration.shared_native_greedy.v1" or
+        if (state.get("schema") != "calibration.shared_native_greedy.v2" or
                 state.get("fixed_support_sha256") != self.fixed_support_sha256 or
                 float(state.get("theta_ref")) != self.theta_ref or
                 float(state.get("sigma_ref")) != self.sigma_ref or
@@ -198,13 +208,27 @@ class SharedNativeGreedyWriter:
                 state.get("capacities") != list(self.bank.capacities)):
             raise NativeAdapterError("Native writer checkpoint profile mismatch")
         import torch
-        layers = [torch.as_tensor(x).detach().clone().contiguous()
-                  for x in state.get("layers", ())]
+        checkpoint_layers = [torch.as_tensor(x) for x in state.get("layers", ())]
+        if (len(checkpoint_layers) != len(self.bank.layers) or
+                any(value.dtype != template.dtype or
+                    value.ndim != 2 or value.shape[1] != template.shape[1]
+                    for value, template in zip(checkpoint_layers, self.bank.layers))):
+            raise NativeAdapterError("Native writer checkpoint tensor shape/dtype mismatch")
+        layers = [value.detach().to(device=template.device,
+                                    dtype=template.dtype).clone().contiguous()
+                  for value, template in zip(checkpoint_layers, self.bank.layers)]
         sources = [list(rows) for rows in state.get("sources", ())]
         if (len(layers) != len(self.bank.layers) or len(sources) != len(layers) or
                 any(len(layer) != len(rows) for layer, rows in zip(layers, sources)) or
                 any(len(layer) > cap for layer, cap in zip(layers, self.bank.capacities))):
             raise NativeAdapterError("Native writer checkpoint rows are misaligned")
+        source_revision = int(state.get("source_revision", -1))
+        if source_revision < 0:
+            raise NativeAdapterError("Native writer checkpoint lacks a valid source revision")
+        source_payload = json.dumps(sources, ensure_ascii=True,
+                                    separators=(",", ":")).encode("ascii")
+        if hashlib.sha256(source_payload).hexdigest() != state.get("source_map_sha256"):
+            raise NativeAdapterError("Native writer source-map digest mismatch")
         restored = GreedyBank(layers, self.bank.capacities,
                               version=int(state.get("version", -1)))
         if restored.version < 0 or restored.sha256() != state.get("sha256"):
@@ -222,6 +246,7 @@ class SharedNativeGreedyWriter:
                 _fixed_bank_digest(self.native_bank) != self.fixed_support_sha256):
             raise NativeAdapterError("Native bank restoration failed parity verification")
         self.bank, self.sources = restored, sources
+        self.source_revision = source_revision
 
     def apply(self, *, queried: bool, label: int | None, source_key: str,
               score: float, static_amap: Mapping[str, Any],
@@ -230,7 +255,8 @@ class SharedNativeGreedyWriter:
         before_digest = before.sha256()
         if not queried or label != 0:
             return SharedWriteResult(False, False, 0, "feedback_not_verified_normal",
-                                     before_digest, before_digest, source_key, 0, 0, 0)
+                                     before_digest, before_digest, source_key, 0, 0, 0,
+                                     False, self.source_revision)
         validate_mutable_source_key(source_key, self.protected_source_keys)
         allow, keep, reason, _ = self.impl.select_informative_normal_write(
             score=float(score), theta=self.theta_ref,
@@ -238,7 +264,8 @@ class SharedNativeGreedyWriter:
             novelty=0.0)
         if not allow or keep not in (8, 16, 24):
             return SharedWriteResult(False, False, int(keep), str(reason),
-                                     before_digest, before_digest, source_key, 0, 0, 0)
+                                     before_digest, before_digest, source_key, 0, 0, 0,
+                                     False, self.source_revision)
         selected, selected_indices = native_bridge.extract_v22_candidates(
             self.impl, static_amap, full_features, keep=keep)
         normalized = native_bridge.normalized_native_candidate_rows(
@@ -269,17 +296,25 @@ class SharedNativeGreedyWriter:
                 raise NativeAdapterError("Source attribution replay diverged from Greedy proposal")
             next_sources.append(rows)
 
-        if proposed.version > before.version:
+        content_changed = proposed.version > before.version
+        source_map_changed = next_sources != self.sources
+        if content_changed:
             native_bridge.install_on_live(
                 self.native_bank, proposed, expected_digest=before_digest,
                 version=before.version)
             actual = native_bridge.snapshot(self.native_bank, version=proposed.version)
             if actual.sha256() != proposed.sha256():
                 raise NativeAdapterError("Live native bank differs from staged Greedy update")
-            self.bank, self.sources = proposed, next_sources
+            self.bank = proposed
         else:
+            if proposed.content_sha256() != before.content_sha256():
+                raise NativeAdapterError("Prototype content changed without a memory version")
             proposed = before
+        if source_map_changed:
+            self.sources = next_sources
+            self.source_revision += 1
         return SharedWriteResult(True, proposed.version != before.version, keep,
                                  str(reason), before_digest, proposed.sha256(),
                                  source_key, audit.appended, audit.replaced,
-                                 audit.skipped)
+                                 audit.skipped, source_map_changed,
+                                 self.source_revision)

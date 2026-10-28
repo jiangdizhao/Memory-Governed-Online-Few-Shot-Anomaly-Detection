@@ -1,0 +1,62 @@
+{
+  "G0": {
+    "reason": "Correct branch and no protected worktree changes.",
+    "status": "PASS"
+  },
+  "G1": {
+    "reason": "Synthetic Q-A-TS/Q-B metadata tests passed.",
+    "status": "PASS"
+  },
+  "G1_real_data": {
+    "classes": {
+      "audiojack": "PASS",
+      "regulator": "PASS",
+      "rolled_strip_base": "PASS",
+      "switch": "PASS"
+    },
+    "dataset_root_present": true,
+    "json_root_present": true,
+    "reason": "Official sample identities, train-only support/C64 selection, and label-blind Q-A-TS/Q-B were checked using development-category JSON metadata; no image or mask was opened.",
+    "status": "PASS"
+  },
+  "G2": {
+    "reason": "Actual development train-normal score parity passed across live native v22, untouched clone, and calibration adapter.",
+    "status": "PASS"
+  },
+  "G3": {
+    "reason": "Synthetic native operator matrix passed APPEND/REPLACE/SKIP, repeated-slot source attribution, prototype-content audit, LSO filtering and exact checkpoint restore; bounded CUDA v22 smoke passed live-score and append parity.",
+    "status": "PASS"
+  },
+  "G4": {
+    "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed.",
+    "status": "PASS"
+  },
+  "G5": {
+    "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed.",
+    "status": "PASS"
+  },
+  "G6": {
+    "reason": "B5a SPOT and B5b dSPOT are executable paper-equation implementations with independent numerical/stream tests; B6 Sun-CS remains BLOCKED_FIDELITY; B7 remains provisional.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G7": {
+    "reason": "B5a/B5b Grimshaw, POT, update/exclusion, warm-up and checkpoint tests passed; all-family reference acceptance remains blocked by B6 source-faithfulness and observation/abstention mapping.",
+    "status": "BLOCKED"
+  },
+  "G8": {
+    "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration.",
+    "status": "PASS"
+  },
+  "G9": {
+    "reason": "Native core parity passed only if recorded by G9_native_core; full G9 remains blocked because B6 is unavailable.",
+    "status": "BLOCKED"
+  },
+  "G9_all_controller_matrix": {
+    "reason": "B6 Sun-CS cannot participate until its source-faithful implementation and reference tests are complete.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G9_native_core": {
+    "reason": "Bounded multi-event actual v22/DINO train-normal trajectory passed causal query/write, current-version C64 refresh, LSO, native checkpoint-resume equivalence and synthetic-label AUROC invariance.",
+    "status": "PASS"
+  }
+}

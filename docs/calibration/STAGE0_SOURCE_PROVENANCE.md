@@ -1,5 +1,52 @@
 # Stage 0 source provenance
 
+## Current fourth-pass provenance (authoritative)
+
+Hash algorithm: SHA-256. Runner implementation snapshot: source commit
+`9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44`; working source fingerprint
+`693b17200af009da4bf682ea0f25827e02d36d82f3fc30d8615d421d18fc7537`.
+The current source manifest is in the checksummed local runner artifact
+`outputs/calibration/stage0/stage0_fourthpass_run1_20261029/source_hashes.json`
+and its privacy-safe committed counterpart is
+`docs/calibration/audit/stage0_fourthpass_v1/protocol_fingerprints.json`.
+The runner hashes 48 source, test and scientific-contract files. This report
+and the implementation report are omitted from the source fingerprint to avoid
+self-reference. Their current content is committed as documentation.
+
+The compact audit's `audit_manifest.json` records the SHA-256 of the full
+runner checksum manifest and the selected full runner artifact files. The
+package's `checksums.json` verifies every exported file. Verification passed
+both against the local runner artifact and as a standalone privacy/checksum
+scan. The compact package contains no Real-IAD image, mask, feature tensor,
+absolute score vector, absolute local path, or unredacted sample identifier.
+
+### Newly implemented source hashes
+
+| File | SHA-256 |
+|---|---|
+| experiments/calibration/spot_dspot.py | 540c7b2ba68db6deca16687ae7c208918462b8dce72ee9ef968cec0289023414 |
+| experiments/calibration/native_greedy_matrix.py | 298f100b1d12e6c2c973d934b737bc040a639b0aaa22bfda82a4ef3fbdaf0937 |
+| experiments/calibration/native_event_replay.py | 66b3d9d7d801405b012f77761e2335d4e262eedf72f683746272a5686c1f2134 |
+| experiments/calibration/audit_export.py | 887ba9bc2dc48f6024355277e9af3b7c1549a20f98087932656c5dbcd3e308d9 |
+| docs/calibration/SPOT_DSPOT_IMPLEMENTATION.md | 652211533b509fc9541a8e3409d1475e1752f59daeec67fa8ae7b4b53cbc0fff |
+| docs/calibration/BASELINE_FIDELITY_AND_REFERENCES.md | 9ed226a3f97c8d56ec41d0ca0b275930b3b1ba6264cec8e4ccbea032edc95740 |
+
+### External and runtime provenance
+
+- Siffer et al. KDD 2017 primary paper: `https://doi.org/10.1145/3097983.3098144`.
+- Inspected `asiffer/libspot` commit: `d57e921a08930b960d07adcbec3a839bd228fe94`; `src/spot.c` blob SHA-1 `fdebc8c216fffeea93afcc51efab83a2d6013351`. SPOT source exists; dSPOT does not. No compiled C numerical trace parity is claimed.
+- Sun et al. ICML 2024 / PMLR 235 primary paper: `https://proceedings.mlr.press/v235/sun24h.html`. No implementation source is claimed; B6 remains blocked.
+- Environment used: Python 3.11, PyTorch `2.0.1+cu117`, NumPy `1.24.1`, SciPy `1.11.2`, CUDA available. No dependencies were installed or changed.
+- Cached DINOv2 checkpoint SHA-256: `36e4deffbaef061a2576705b0c36f93621e2ae20bf6274694821b0b492551b51`.
+- Cached DINOv2 Python source tree SHA-256: `1de67887ca330bdfaad8ccd45128d2b9313d63aa707bbe8e4f38310e52005b24`. The cache has no Git commit metadata.
+- `historical_sources_unchanged_by_this_work` is `true` in the runner manifest. No v22, VisionAD, P0/P1, V0.2, native bridge or archived experiment source was modified.
+
+## Historical third-pass source manifest (superseded)
+
+The table below is preserved as the third-pass snapshot only. It must not be
+used as current provenance; use the current fingerprint and compact audit
+package above.
+
 Hash algorithm: SHA-256. File hashes below are taken from the checksummed Stage 0 runner source manifest for the third-pass source snapshot. The implementation report itself and this provenance file are omitted to avoid self-reference; the final runner artifact records their hashes.
 
 Runner source commit before implementation commit: 42aecc32f865b5b5a9cf782c32e14755df305106.

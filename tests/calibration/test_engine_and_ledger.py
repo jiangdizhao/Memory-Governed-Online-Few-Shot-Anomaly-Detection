@@ -13,6 +13,7 @@ from experiments.calibration.metrics import PrivateOutcomeLedger
 from experiments.calibration.protocol import (EvidenceAnchor, EvidenceSnapshot,
     ScoreResult, StreamEvent, TapeRecord)
 from experiments.calibration.query_tape import build_qa_ts
+from experiments.calibration.spot_dspot import POTConfig, SPOTController
 from experiments.risk_safe.shadow_memory import GreedyBank
 
 
@@ -124,6 +125,54 @@ class EngineLedgerTests(unittest.TestCase):
         self.assertEqual(absent["windows"]["windows"][0]["status"],
                          "UNAVAILABLE_CLASS_ABSENT")
 
+    def test_startup_missing_is_distinct_from_abstention_and_survives_resume(self):
+        records = [TapeRecord(i, f"spot-{i}", 1, f"spot-r-{i}")
+                   for i in range(8)]
+        tape = build_qa_ts(records)
+        events = [StreamEvent(record, float(i)) for i, record in enumerate(records)]
+        labels = [0, 1, 0, 1, 0, 1, 0, 1]
+
+        def make_engine():
+            return PrequentialEngine(
+                tape=tape, events=events,
+                outcomes=PrivateOutcomeLedger(labels),
+                controllers=[SPOTController(POTConfig(
+                    n_init=4, level=.5, risk_q=.01))],
+                score_fn=lambda event: ScoreResult(
+                    event.payload, 0, "fixed-native-state"),
+                memory_state_fn=lambda: (0, "memory-v0"),
+                write_fn=lambda *args: None,
+                provenance_id="spot-startup-availability-v1")
+
+        uninterrupted = make_engine().run()
+        partial_engine = make_engine()
+        partial = partial_engine.run(max_events=5)
+        self.assertEqual(partial["status"], "INCOMPLETE")
+        resumed = make_engine()
+        resumed.load_state_dict(partial["checkpoint"])
+        continued = resumed.run()
+        self.assertEqual(continued["prediction_availability"],
+                         uninterrupted["prediction_availability"])
+        self.assertEqual(continued["predictions"], uninterrupted["predictions"])
+        available = continued["prediction_availability"]["B5a"]
+        self.assertEqual(available[:4], [False] * 4)
+        self.assertTrue(all(available[4:]))
+        metrics = continued["metrics"]["methods"]["B5a"]
+        self.assertEqual(metrics["missing_predictions"], 4)
+        self.assertEqual(metrics["abstentions"], 0)
+        self.assertEqual(metrics["balanced_accuracy_status"],
+                         "UNAVAILABLE_MISSING_PREDICTIONS")
+
+        classified = PrivateOutcomeLedger([0, 1]).evaluate(
+            [0.1, 0.9], {"mixed": [None, None]},
+            prediction_availability={"mixed": [False, True]})["methods"]["mixed"]
+        self.assertEqual(classified["missing_predictions"], 1)
+        self.assertEqual(classified["abstentions"], 1)
+        with self.assertRaisesRegex(ValueError, "Unavailable prediction carries"):
+            PrivateOutcomeLedger([0]).evaluate(
+                [0.1], {"bad": [0]},
+                prediction_availability={"bad": [False]})
+
     def test_c64_is_additional_and_disjoint_from_exactly_four_supports(self):
         c64 = [(f"id-{i}", 1, None) for i in range(64)]
         with self.assertRaisesRegex(AnchorLedgerError, "four distinct deployed"):
@@ -144,6 +193,25 @@ class EngineLedgerTests(unittest.TestCase):
         self.assertEqual(restored.state_dict()["queried_count"], 1)
         self.assertTrue(torch.equal(restored._anchors[0].features, rows[0][2]))
         self.assertTrue(torch.equal(restored._anchors[-1].features, torch.tensor([9.])))
+
+    def test_anchor_checkpoint_compares_pil_image_payloads_by_pixels(self):
+        from PIL import Image
+
+        supports = [f"support-{i}" for i in range(4)]
+        rows = [(f"c64-{i}", 1,
+                 (Image.new("RGB", (3, 2), color=(i, 3, 7)),
+                  torch.tensor([float(i)]))) for i in range(64)]
+        original = AnchorLedger(rows, deployed_support_keys=supports)
+        original.refresh(memory=GreedyBank([torch.empty((0, 2))], [256]),
+                         source_rows=[[]], scorer=lambda *_: 0.0)
+        state = original.state_dict()
+        restored_rows = [(key, camera,
+                          (Image.new("RGB", (3, 2), color=(i, 3, 7)),
+                           torch.tensor([float(i)])))
+                         for i, (key, camera, _) in enumerate(rows)]
+        restored = AnchorLedger(restored_rows, deployed_support_keys=supports)
+        restored.load_state_dict(state)
+        self.assertEqual(restored.state_dict()["last_refresh_version"], 0)
 
     def test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng(self):
         records = [TapeRecord(i, f"resume-{i}", i % 5 + 1, f"resume-r-{i}")

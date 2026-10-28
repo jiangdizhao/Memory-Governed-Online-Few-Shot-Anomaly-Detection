@@ -8,6 +8,8 @@ from .controllers import (AdaptedDualACI, BlockedController, FrozenTheta,
                           OriginalGuardedSidecar, RollingQ90QueriedNormal,
                           StateConsistentQuantile)
 from .scdac_g import SCDACGController
+from .spot_dspot import (DSPOTController, POTConfig, SPOTController,
+                         DSPOT_VERSION, SPOT_VERSION)
 
 
 METHOD_CARDS: dict[str, dict[str, Any]] = {
@@ -40,23 +42,34 @@ METHOD_CARDS: dict[str, dict[str, Any]] = {
            "defaults": {"alpha": 0.10, "beta": 0.10, "gamma_normal": 0.005,
                         "gamma_defect": 0.005},
            "no_guarantee": "Sparse selective feedback and dependent dynamic-memory scores do not inherit ACI guarantees."},
-    "B5a": {"name": "SPOT", "status": "BLOCKED_FIDELITY",
+    "B5a": {"name": "SPOT", "version": SPOT_VERSION,
+            "status": "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED",
             "source": "Siffer et al., KDD 2017, https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf",
             "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
             "author_source_file_blob_sha": "fdebc8c216fffeea93afcc51efab83a2d6013351",
-            "equation": "zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1); xi->0: u+sigma*log(Nu/(q*n))",
-            "defaults": {"n_init": 1000, "level": 0.98, "q": 0.001},
-            "blocker": "Pinned author source is libspot 3.0.0 SPOT code, but no exact cross-version equation/edge-case reference trace has been verified against the KDD 2017 Grimshaw procedure; no substitute estimator is labeled SPOT."},
-    "B5b": {"name": "dSPOT", "status": "BLOCKED_FIDELITY",
+            "equation": "KDD 2017 Algorithm 2 / Eq. (1): high empirical u, Grimshaw GPD MLE on strict excesses, zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1), exponential limit for xi=0; alarm iff score>zq and exclude alarm from n/Nu updates.",
+            "defaults": {"n_init": 1000, "level": 0.98, "risk_q": 0.001,
+                         "grimshaw_starts": 10, "root_tolerance": 1e-6},
+            "adaptations": ["Implements the KDD paper equations in Python; the pinned libspot C source is provenance/reference material and was not compiled for direct trace parity.",
+                            "Adds deterministic sign-bracket root recovery alongside paper-style multi-start bounded optimization; every accepted root is checked against the Grimshaw equation and GPD likelihood.",
+                            "Uses registered NumPy linear interpolation for the initial empirical level; the paper's practical 98% level does not prescribe an interpolation convention."],
+            "reference_validation": "Grimshaw MLE compared to scipy.stats.genpareto.fit on a seeded independent GPD sample; POT equation, zero-shape limit, causal warm-up, alarm exclusion, accepted-peak update, insufficient peaks and checkpoint restore are tested.",
+            "blocker": "No compiled libspot C numerical parity was possible in the local environment; implementation follows the paper equations and the difference is explicit."},
+    "B5b": {"name": "dSPOT", "version": DSPOT_VERSION,
+            "status": "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED",
             "source": "Siffer et al., KDD 2017 (same source as B5a)",
             "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
-            "equation": "SPOT on score minus causal local mean over d previous accepted normal observations; threshold=mean+zq",
-            "defaults": {"n_init": 1000, "level": 0.98, "q": 0.001, "d": 50},
-            "blocker": "The pinned libspot 3.0.0 source has no dSPOT implementation; the paper describes a separate moving-average/non-anomaly window. No faithful dSPOT implementation or reference test is present."},
+            "equation": "KDD 2017 Algorithm 3: residual r_t=x_t-mean(last d accepted normal raw observations); apply SPOT to residuals; reconstructed threshold=mean(window)+zq; an alarm changes neither the moving window nor POT state.",
+            "defaults": {"n_init": 1000, "level": 0.98, "risk_q": 0.001,
+                         "grimshaw_starts": 10, "root_tolerance": 1e-6, "d": 50},
+            "adaptations": ["Independent implementation of the paper's dSPOT algorithm; pinned libspot C source contains no dSPOT implementation and is not cited as one.",
+                            "During residual warm-up, the d raw-score history advances until the first POT threshold is available; initial decisions are explicitly unavailable."],
+            "reference_validation": "Shared independent SPOT equation tests plus dSPOT residual initialization, accepted-normal window updates, alarm exclusion, reconstructed threshold and checkpoint tests.",
+            "blocker": "No independent author dSPOT implementation was found in the pinned libspot source; verification is against the KDD paper algorithm/equations, not author-code parity."},
     "B6": {"name": "SunCS", "status": "BLOCKED_FIDELITY",
             "source": "Sun et al., ICML 2024, https://proceedings.mlr.press/v235/sun24h.html",
             "information": ["source method uses an unsupervised score stream and emits a tri-state decision"],
-            "blocker": "Exact reference algorithm test and a preregistered mapping from abstention to primary balanced accuracy are not complete; dynamic-memory assumptions also fail to transfer automatically."},
+            "blocker": "No source-faithful implementation or independent reference vectors exist for the paper's confidence-set construction, offline-dataset matching, change-detection/reset schedule, and adaptive initialization. A generic CP/Hoeffding interval is not equivalent. Dynamic native score dependence also invalidates automatic transfer of the paper's guarantees, and primary abstention accounting has not been preregistered."},
     "B7": {"name": "SCDAC-G", "version": "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC",
             "status": "IMPLEMENTED_PROVISIONAL",
             "source": "docs/Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf; SHA-256 5fe07256384351c1170d67183eae5a80e5aa289a03586ba767671f062f4fb977",
@@ -97,7 +110,13 @@ _REFERENCE_TESTS = {
     "B3": ["test_b3_updates_once_per_memory_version"],
     "B4": ["test_b4_exact_error_count_boundaries_handle_ties",
            "test_b4_missing_side_is_not_zero_risk"],
-    "B5a": [], "B5b": [], "B6": [],
+    "B5a": ["test_grimshaw_matches_independent_scipy_gpd_mle",
+            "test_pot_threshold_equation_and_near_zero_shape_limit",
+            "test_spot_warmup_missingness_alarm_exclusion_and_peak_update",
+            "test_spot_checkpoint_roundtrip_is_deterministic",
+            "test_insufficient_peak_initialization_fails_closed"],
+    "B5b": ["test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean",
+            "test_spot_checkpoint_roundtrip_is_deterministic"], "B6": [],
     "B7": ["tests/calibration/test_scdac_g.py"],
 }
 _PAPER_URLS = {
@@ -112,8 +131,8 @@ _MISSING_DATA = {
     "B2": "Unavailable labels do not enter the adapted sidecar; source fallback is disabled.",
     "B3": "Holds theta when current-memory protected-C64 evidence is insufficient.",
     "B4": "Missing class-side evidence is unavailable and never assigned zero risk.",
-    "B5a": "No executable behavior; BLOCKED_FIDELITY.",
-    "B5b": "No executable behavior; BLOCKED_FIDELITY.",
+    "B5a": "Before n_init scores, prediction is explicitly unavailable; fewer than two strict initial peaks fail closed. After warm-up, alarms are excluded from observation/peak updates.",
+    "B5b": "First d raw observations and subsequent n_init residual observations have unavailable predictions; during residual warm-up the raw window slides, and runtime alarms update neither POT nor mean window.",
     "B6": "No executable behavior; BLOCKED_FIDELITY.",
     "B7": "NONE/NORMAL_ONLY/DEFECT_ONLY hold; both-side minimums gate optimization.",
 }
@@ -144,7 +163,7 @@ for _key, _card in METHOD_CARDS.items():
         "independent_unit_test_reference": _REFERENCE_TESTS[_key],
         "missing_and_insufficient_data_behavior": _MISSING_DATA[_key],
         "numerical_edge_cases": (
-            "See independent_unit_test_reference; external reference cases remain blocked."
+            "See independent_unit_test_reference; reference implementation parity remains blocked."
             if _card["status"] == "BLOCKED_FIDELITY" else
             "See independent_unit_test_reference; no population guarantee is claimed."),
         "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
@@ -157,6 +176,10 @@ for _key, _card in METHOD_CARDS.items():
             "reference_test_ids": _REFERENCE_TESTS[_key],
         },
     })
+    if _key in ("B5a", "B5b"):
+        _card["faithful_or_adapted"] = (
+            "PAPER_EQUATION_IMPLEMENTATION_WITH_DECLARED_NUMERICAL_ADAPTATIONS; "
+            "no compiled author-code parity claim")
 
 
 def method_cards() -> dict[str, dict[str, Any]]:
@@ -173,6 +196,8 @@ def build_controllers(theta0: float, c64_scores: list[float], *,
         OriginalGuardedSidecar(c64_scores, float(theta0)),
         StateConsistentQuantile(float(theta0)),
         AdaptedDualACI(float(theta0)),
+        SPOTController(POTConfig()),
+        DSPOTController(POTConfig(version=DSPOT_VERSION), window=50),
         SCDACGController(float(theta0)),
     ]
     if include_blocked:

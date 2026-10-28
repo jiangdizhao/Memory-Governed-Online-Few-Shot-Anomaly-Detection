@@ -32,6 +32,8 @@ from .protocol import (EvidenceAnchor, EvidenceSnapshot, ScoreResult,
                        StreamEvent, TapeRecord)
 from .query_tape import build_qa_ts, build_qb
 from .real_iad_preflight import run_metadata_preflight
+from .native_event_replay import run_native_event_replay
+from .native_greedy_matrix import run_native_greedy_matrix
 from .native_parity_smoke import run_native_parity_smoke
 
 
@@ -51,6 +53,7 @@ ARTIFACT_FILES = frozenset({
     "controller_method_cards.json", "synthetic_event_trace.jsonl",
     "synthetic_summary.json", "test_results.json", "source_hashes.json",
     "real_iad_metadata_preflight.json", "native_parity_smoke.json",
+    "native_greedy_parity_matrix.json", "native_event_replay.json",
     "stage0_summary.md", "checksums.json",
 })
 
@@ -199,7 +202,10 @@ def _source_hashes() -> dict[str, str]:
     paths = [ROOT / p for p in HISTORICAL_SOURCES]
     paths.extend(sorted((ROOT / "experiments" / "calibration").glob("*.py")))
     paths.extend(sorted((ROOT / "tests" / "calibration").glob("*.py")))
-    paths.extend(sorted((ROOT / "docs" / "calibration").glob("*.md")))
+    paths.extend(path for path in sorted(
+        (ROOT / "docs" / "calibration").glob("*.md"))
+        if path.name not in {"STAGE0_IMPLEMENTATION_REPORT.md",
+                             "STAGE0_SOURCE_PROVENANCE.md"})
     paths.append(ROOT / "docs" /
                  "Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf")
     return {str(path.relative_to(ROOT)).replace("\\", "/"): _hash_file(path)
@@ -251,6 +257,8 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
                                    r"G:\dataset\realiad\jsons\realiad_jsons"))
     real_preflight = run_metadata_preflight(dataset_root, json_root)
     native_smoke = run_native_parity_smoke(dataset_root, json_root)
+    native_matrix = run_native_greedy_matrix()
+    native_replay = run_native_event_replay(dataset_root, json_root)
     preexisting_archive_changes = [s for s in status
                                    if "outputs/risk_safe_sprint_20261027" in s]
     gates = {
@@ -269,23 +277,31 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
                "reason": ("Actual development train-normal score parity passed across live native v22, untouched clone, and calibration adapter."
                           if native_smoke["status"] == "PASS" else
                           native_smoke.get("reason", "See native_parity_smoke.json."))},
-        "G3": {"status": native_smoke["status"],
-               "reason": ("Disposable native K=256 Greedy update matched the shared Greedy operator exactly per layer; static support digest remained unchanged."
-                          if native_smoke["status"] == "PASS" else
-                          native_smoke.get("reason", "See native_parity_smoke.json."))},
+        "G3": {"status": "PASS" if native_smoke["status"] == "PASS" and
+               native_matrix["status"] == "PASS" else "BLOCKED",
+               "reason": ("Synthetic native operator matrix passed APPEND/REPLACE/SKIP, repeated-slot source attribution, prototype-content audit, LSO filtering and exact checkpoint restore; bounded CUDA v22 smoke passed live-score and append parity."
+                          if native_smoke["status"] == "PASS" and
+                          native_matrix["status"] == "PASS" else
+                          f"Native matrix={native_matrix.get('status')}; CUDA smoke={native_smoke.get('status')}: {native_smoke.get('reason', '')}")},
         "G4": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed." if tests_ok else "Synthetic causal tests failed; see test_results.json."},
         "G5": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed." if tests_ok else "Synthetic evidence tests failed; see test_results.json."},
-        "G6": {"status": "BLOCKED_FIDELITY", "reason": "B5a/B5b and B6 remain BLOCKED_FIDELITY; B7 is executable only under its explicitly provisional method specification."},
-        "G7": {"status": "BLOCKED", "reason": "Reference math verified for B0-B4; blocked baselines prevent all-family acceptance."},
+        "G6": {"status": "BLOCKED_FIDELITY", "reason": "B5a SPOT and B5b dSPOT are executable paper-equation implementations with independent numerical/stream tests; B6 Sun-CS remains BLOCKED_FIDELITY; B7 remains provisional."},
+        "G7": {"status": "BLOCKED", "reason": "B5a/B5b Grimshaw, POT, update/exclusion, warm-up and checkpoint tests passed; all-family reference acceptance remains blocked by B6 source-faithfulness and observation/abstention mapping."},
         "G8": {"status": "PASS" if any("test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng" in item for item in tests.get("passed_test_ids", [])) else "FAIL", "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration." if any("test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng" in item for item in tests.get("passed_test_ids", [])) else "Checkpoint/resume equivalence test did not pass; see test_results.json."},
-        "G9": {"status": "BLOCKED", "reason": "Native score/AUROC parity across all controllers not run; synthetic trace is mechanism evidence only."},
+        "G9_native_core": {"status": native_replay["status"],
+               "reason": ("Bounded multi-event actual v22/DINO train-normal trajectory passed causal query/write, current-version C64 refresh, LSO, native checkpoint-resume equivalence and synthetic-label AUROC invariance."
+                          if native_replay["status"] == "PASS" else
+                          native_replay.get("reason", "See native_event_replay.json."))},
+        "G9_all_controller_matrix": {"status": "BLOCKED_FIDELITY",
+               "reason": "B6 Sun-CS cannot participate until its source-faithful implementation and reference tests are complete."},
+        "G9": {"status": "BLOCKED", "reason": "Native core parity passed only if recorded by G9_native_core; full G9 remains blocked because B6 is unavailable."},
     }
     manifest = {
         "stage": 0, "overall_status": "BLOCKED_WIP" if tests_ok else "FAIL",
         "branch": branch, "source_commit": source_commit,
         "protocol_version": PROTOCOL_VERSION,
         "profile": asdict(DEFAULT_PROFILE), "profile_sha256": DEFAULT_PROFILE.sha256,
-        "execution": "synthetic_cpu_dev_metadata_plus_optional_audiojack_train_only_native_parity_smoke",
+        "execution": "synthetic_cpu_dev_metadata_plus_optional_audiojack_train_only_native_smoke_greedy_matrix_and_multievent_replay",
         "stage1_run": False, "stage2_run": False,
         "confirmation_outcomes_opened": False,
         "support_regime": "four deployed supports plus 64 additional protected C64 normals",
@@ -297,6 +313,8 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     _json_write(out_dir / "gates.json", gates)
     _json_write(out_dir / "real_iad_metadata_preflight.json", real_preflight)
     _json_write(out_dir / "native_parity_smoke.json", native_smoke)
+    _json_write(out_dir / "native_greedy_parity_matrix.json", native_matrix)
+    _json_write(out_dir / "native_event_replay.json", native_replay)
     _json_write(out_dir / "controller_method_cards.json", METHOD_CARDS)
     with (out_dir / "synthetic_event_trace.jsonl").open("w", encoding="utf-8") as f:
         for row in synthetic["trace"]:
@@ -318,11 +336,14 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "Synthetic mechanisms ran in the configured torch environment on CPU.",
         f"Real-IAD metadata preflight: {real_preflight['status']}; four development-category JSON indexes were checked without decoding images or masks.",
         f"Native parity smoke: {native_smoke['status']}; see `native_parity_smoke.json` for the bounded train-only scope.",
+        f"Native Greedy operator matrix: {native_matrix['status']}; see `native_greedy_parity_matrix.json`.",
+        f"Native event replay: {native_replay['status']}; full controller matrix remains {gates['G9_all_controller_matrix']['status']}.",
         "No test image, mask, or confirmation-category metadata/outcomes were opened.",
         "Stage 1 and Stage 2 were not run.", "",
         "Gate statuses: " + ", ".join(f"{k}={v['status']}" for k, v in gates.items()),
         "", "The independent review should use `controller_method_cards.json`, `gates.json`,",
-        "`source_hashes.json`, `test_results.json`, and the synthetic trace.",
+        "`source_hashes.json`, `test_results.json`, `native_greedy_parity_matrix.json`,",
+        "`native_event_replay.json`, and the synthetic trace.",
     ]
     (out_dir / "stage0_summary.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
     files = [p for p in out_dir.iterdir() if p.is_file() and

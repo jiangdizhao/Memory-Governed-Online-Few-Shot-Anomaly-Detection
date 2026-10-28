@@ -138,6 +138,10 @@ claimed_guarantee (if any), invalidated_assumptions, source_and_test_hash
 
 ## Third-pass source audit (2026-10-29)
 
+This section preserves the third-pass audit record. Its statements that B5a/B5b
+were not enabled describe that earlier snapshot and are superseded by the
+fourth-pass status below.
+
 This audit records what the primary papers establish and what remains
 unimplemented. The distinctions below are fidelity blockers, not a relaxation
 of the required baseline set.
@@ -204,3 +208,63 @@ recomputed at the executed threshold. The secondary FPR diagnostic minimizes
 FNR upper endpoint plus movement cost and cannot alter the primary trajectory.
 These are deterministic provisional software choices, not choices uniquely
 dictated by the proposal and not certified guarantees.
+
+## Fourth-pass implementation status (2026-10-29)
+
+### B5a/B5b — executable SPOT and dSPOT
+
+`experiments/calibration/spot_dspot.py` now provides separately versioned
+SPOT and dSPOT controllers. The implementations use the KDD 2017 threshold
+equation and Grimshaw GPD likelihood fit; SPOT alarms are excluded from the
+accepted observation and peak counts, while dSPOT additionally excludes alarm
+scores from its local-mean window. Full-stream startup predictions remain
+explicitly unavailable and stay in the evaluation denominator. The controllers
+use all causally observed unlabeled scores and ignore queried labels.
+
+The B5 cards and `SPOT_DSPOT_IMPLEMENTATION.md` record the exact versions,
+equations, source permissions, parameters, startup policy, differences, and
+reference tests. Tests include an independent SciPy GPD fit, threshold
+equation/zero-shape checks, update and exclusion counters, dSPOT moving-window
+behavior, insufficient-tail failure, and checkpoint restoration.
+
+Fidelity is labeled `IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED`. The code
+adds a deterministic sign-bracket supplement to paper-style Grimshaw
+multi-start optimization and registers NumPy linear interpolation for the
+initial empirical quantile. The pinned libspot C source was inspected but not
+compiled for a numerical trace comparison; it contains no dSPOT implementation.
+The implementation therefore makes no author-code parity claim. Neither
+method's guarantee is transferred to dynamic-memory score streams.
+
+### B6 — Sun-CS remains blocked
+
+The full Sun et al. paper and appendices were reviewed. No controller or
+surrogate is registered. The paper's confidence sets, offline-set matching,
+change-detection/reset schedule, cold start, and abstention semantics still
+lack an independently tested implementation under the project protocol. A
+generic binomial interval would not be source-faithful. Score dependence caused
+by changing native memory also prevents automatic transfer of its guarantees.
+The exact blocker is in the B6 method card. G6/G7 and the complete controller
+matrix remain blocked.
+
+### Native G3/G9 evidence
+
+The CPU operator matrix uses the original `PatchVMB`, `MemoryArm.update`,
+`greedy_slot`, native candidate normalization, and shared writer. It exercises
+empty-bank append, saturated replacement, saturated skip, repeated replacement
+of one slot, source attribution against actual prototype bytes, source-aware
+LSO, static support immutability, content-version rules, and writer checkpoint
+restore. The matrix uses synthetic feature fixtures and is not an image scorer.
+
+The separate bounded CUDA replay uses actual DINOv2/v22 scoring on 34
+development-class training-normal events, one fixed Q-A-TS query, 64 additional
+current-state C64 anchors, and the shared writer. It checks a prediction before
+feedback, the legal verified-normal write, current-version anchor refresh,
+queried-normal LSO, divergent controller thresholds on the common trajectory,
+and native event-boundary checkpoint/resume against an uninterrupted run. The
+diagnostic AUROC labels are synthetic and do not represent Real-IAD outcomes.
+It does not complete G9's full controller matrix because B6 is blocked.
+
+The fourth-pass audit export is generated from checksummed Runner outputs and
+is redacted of absolute local paths, sample identifiers, feature tensors, and
+absolute score vectors. See `docs/calibration/audit/stage0_fourthpass_v1/` and
+`python -m experiments.calibration.audit_export --verify --output-dir ...`.

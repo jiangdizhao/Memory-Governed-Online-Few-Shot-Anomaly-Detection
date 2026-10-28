@@ -1,0 +1,300 @@
+{
+  "candidate_rows_per_layer": 8,
+  "capacity_per_layer": 256,
+  "device": "cpu",
+  "layer_count": 1,
+  "matrix": [
+    {
+      "checkpoint_restore": "PASS",
+      "counts": {
+        "append": 8,
+        "replace": 0,
+        "skip": 0
+      },
+      "counts_per_layer": [
+        {
+          "append": 8,
+          "layer": 0,
+          "replace": 0,
+          "skip": 0
+        }
+      ],
+      "dtype": "torch.float16",
+      "exact_native_memoryarm_shadow_shared_writer": true,
+      "fixture_case": "append",
+      "layer_shapes": [
+        [
+          8,
+          256
+        ]
+      ],
+      "memory_content_changed": true,
+      "memory_sha256": "1c8e81e9444429b48fc149e0d6a22cb36daa75e998ae67f62aa51590818cfc0c",
+      "memory_version_after": 6,
+      "memory_version_before": 5,
+      "numeric_tolerance": {
+        "atol": 0.0,
+        "comparison": "torch.equal",
+        "rtol": 0.0
+      },
+      "operation": "APPEND",
+      "replaced_same_slot_row_indices": [],
+      "source_attribution_audit": {
+        "passed": true,
+        "prototype_rows_checked": 8,
+        "source_map_sha256": "d191d60e370fe4fdedfa9793aa9e5ef9103db846780270ad01957100a6e516dd",
+        "source_revision": 1
+      },
+      "source_map_sha256": "d191d60e370fe4fdedfa9793aa9e5ef9103db846780270ad01957100a6e516dd",
+      "source_revision": 1,
+      "source_row_counts": [
+        8
+      ],
+      "static_support_sha256": "b0efcd18ae61daa5ca54f3d070ee8f7cff8c47f6c31cbd3bc7f81fe3f6365aff"
+    },
+    {
+      "checkpoint_restore": "PASS",
+      "counts": {
+        "append": 0,
+        "replace": 8,
+        "skip": 0
+      },
+      "counts_per_layer": [
+        {
+          "append": 0,
+          "layer": 0,
+          "replace": 8,
+          "skip": 0
+        }
+      ],
+      "dtype": "torch.float16",
+      "exact_native_memoryarm_shadow_shared_writer": true,
+      "fixture_case": "replace",
+      "layer_shapes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "memory_content_changed": true,
+      "memory_sha256": "6ae6c73e3fb0c3efe412716b0be31414e3d219675202c43dc226b34ae4ab6d89",
+      "memory_version_after": 6,
+      "memory_version_before": 5,
+      "numeric_tolerance": {
+        "atol": 0.0,
+        "comparison": "torch.equal",
+        "rtol": 0.0
+      },
+      "operation": "REPLACE",
+      "replaced_same_slot_row_indices": [],
+      "source_attribution_audit": {
+        "passed": true,
+        "prototype_rows_checked": 256,
+        "source_map_sha256": "0673e920cad257ffa31323f60406dacc7c613b63ea23394673a123498d30e4af",
+        "source_revision": 1
+      },
+      "source_map_sha256": "0673e920cad257ffa31323f60406dacc7c613b63ea23394673a123498d30e4af",
+      "source_revision": 1,
+      "source_row_counts": [
+        8
+      ],
+      "static_support_sha256": "b0efcd18ae61daa5ca54f3d070ee8f7cff8c47f6c31cbd3bc7f81fe3f6365aff"
+    },
+    {
+      "checkpoint_restore": "PASS",
+      "counts": {
+        "append": 0,
+        "replace": 0,
+        "skip": 8
+      },
+      "counts_per_layer": [
+        {
+          "append": 0,
+          "layer": 0,
+          "replace": 0,
+          "skip": 8
+        }
+      ],
+      "dtype": "torch.float16",
+      "exact_native_memoryarm_shadow_shared_writer": true,
+      "fixture_case": "skip",
+      "layer_shapes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "memory_content_changed": false,
+      "memory_sha256": "635e31df34f8184f4020b14d906b6c78460dfb31ae312bf2b93ec57d504764a7",
+      "memory_version_after": 5,
+      "memory_version_before": 5,
+      "numeric_tolerance": {
+        "atol": 0.0,
+        "comparison": "torch.equal",
+        "rtol": 0.0
+      },
+      "operation": "SKIP",
+      "replaced_same_slot_row_indices": [],
+      "source_attribution_audit": {
+        "passed": true,
+        "prototype_rows_checked": 256,
+        "source_map_sha256": "77425deb6e5c9048229986a05315be550426c26b9853ec9a90c5c9cbc7f1598b",
+        "source_revision": 0
+      },
+      "source_map_sha256": "77425deb6e5c9048229986a05315be550426c26b9853ec9a90c5c9cbc7f1598b",
+      "source_revision": 0,
+      "source_row_counts": [
+        0
+      ],
+      "static_support_sha256": "b0efcd18ae61daa5ca54f3d070ee8f7cff8c47f6c31cbd3bc7f81fe3f6365aff"
+    },
+    {
+      "counts": {
+        "append": 0,
+        "replace": 1,
+        "skip": 7
+      },
+      "counts_per_layer": [
+        {
+          "append": 0,
+          "layer": 0,
+          "replace": 1,
+          "skip": 7
+        }
+      ],
+      "dtype": "torch.float16",
+      "exact_native_memoryarm_shadow_shared_writer": true,
+      "fixture_case": "repeated_replace_same_slot",
+      "layer_shapes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "memory_content_changed": true,
+      "memory_sha256": "0dcaff415ca7b3f9c4a6c50ca82844b37b4e02c533c29be8a71c3addc0ba4e05",
+      "memory_version_after": 6,
+      "memory_version_before": 5,
+      "numeric_tolerance": {
+        "atol": 0.0,
+        "comparison": "torch.equal",
+        "rtol": 0.0
+      },
+      "operation": "REPLACE",
+      "replaced_same_slot_row_indices": [
+        0
+      ],
+      "source_attribution_audit": {
+        "passed": true,
+        "prototype_rows_checked": 256,
+        "source_map_sha256": "30c75735a60b23f22be41b21bfc69ed27ad6d710ee91ef99ab0263025f552cbd",
+        "source_revision": 1
+      },
+      "source_map_sha256": "30c75735a60b23f22be41b21bfc69ed27ad6d710ee91ef99ab0263025f552cbd",
+      "source_revision": 1,
+      "source_row_counts": [
+        1
+      ],
+      "static_support_sha256": "b0efcd18ae61daa5ca54f3d070ee8f7cff8c47f6c31cbd3bc7f81fe3f6365aff"
+    },
+    {
+      "checkpoint_restore": "PASS",
+      "counts": {
+        "append": 0,
+        "replace": 1,
+        "skip": 7
+      },
+      "counts_per_layer": [
+        {
+          "append": 0,
+          "layer": 0,
+          "replace": 1,
+          "skip": 7
+        }
+      ],
+      "dtype": "torch.float16",
+      "exact_native_memoryarm_shadow_shared_writer": true,
+      "fixture_case": "repeated_replace_same_slot",
+      "layer_shapes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "memory_content_changed": true,
+      "memory_sha256": "aafa8aa0d1650181ad4aa2d57e79e6a70b3176b61a0575aec1251e6fa90365c8",
+      "memory_version_after": 7,
+      "memory_version_before": 6,
+      "numeric_tolerance": {
+        "atol": 0.0,
+        "comparison": "torch.equal",
+        "rtol": 0.0
+      },
+      "operation": "REPLACE",
+      "replaced_same_slot_row_indices": [
+        0
+      ],
+      "source_attribution_audit": {
+        "passed": true,
+        "prototype_rows_checked": 256,
+        "source_map_sha256": "2e1b38bbec60c0d924305084eaf42651d2f00468582e0b64ed556cbc36e22c8b",
+        "source_revision": 2
+      },
+      "source_map_sha256": "2e1b38bbec60c0d924305084eaf42651d2f00468582e0b64ed556cbc36e22c8b",
+      "source_revision": 2,
+      "source_row_counts": [
+        1
+      ],
+      "static_support_sha256": "b0efcd18ae61daa5ca54f3d070ee8f7cff8c47f6c31cbd3bc7f81fe3f6365aff"
+    }
+  ],
+  "memory_version_policy": "advance once per operation iff stored prototype bytes changed",
+  "native_layer_profile": "feature_fuse=concat",
+  "native_sources": {
+    "candidate_normalization": "native_bridge.normalized_native_candidate_rows",
+    "codebook": "test_phase3_AIF_simplified_v22.PatchVMB",
+    "memory_update": "experiments.v02_memory.MemoryArm.update",
+    "replacement": "experiments.v02_memory.greedy_slot",
+    "shared_writer": "experiments.calibration.native.SharedNativeGreedyWriter"
+  },
+  "operation_counts": {
+    "APPEND": 8,
+    "REPLACE": 10,
+    "SKIP": 22
+  },
+  "production_native_v22_scoring": "covered separately by bounded CUDA smoke/replay",
+  "same_slot_replacement_source_audit": {
+    "slot_indices": [
+      [
+        0
+      ],
+      [
+        0
+      ]
+    ],
+    "source_after_second_replacement": "fixture:repeated_replace_same_slot:event:1",
+    "status": "PASS"
+  },
+  "schema": "calibration.stage0.native_greedy_parity_matrix.v1",
+  "scope": "synthetic_feature_operator_diagnostic; not an image scorer",
+  "source_attribution_vs_actual_prototype_contents": "PASS",
+  "source_aware_lso_after_replacement": {
+    "filtered_layer_shapes": [
+      [
+        255,
+        256
+      ]
+    ],
+    "memory_version": 7,
+    "removed_rows_all_layers": 1,
+    "source_map_checked_against_prototype_bytes": true,
+    "status": "PASS"
+  },
+  "static_support_immutability": "PASS",
+  "status": "PASS",
+  "tolerance": {
+    "atol": 0.0,
+    "exact": "torch.equal; FP16 prototype bytes",
+    "rtol": 0.0
+  }
+}

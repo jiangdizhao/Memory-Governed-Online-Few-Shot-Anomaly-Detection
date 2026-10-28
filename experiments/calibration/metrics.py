@@ -20,22 +20,36 @@ class PrivateOutcomeLedger:
             raise IndexError("Outcome index outside private ledger")
         return self._labels[t] if queried else None
     def evaluate(self, scores: Sequence[float],
-                 predictions: dict[str, Sequence[int | None]]) -> dict:
+                 predictions: dict[str, Sequence[int | None]], *,
+                 prediction_availability: dict[str, Sequence[bool]] | None = None) -> dict:
         if len(scores) != len(self._labels):
             raise ValueError("Score/outcome stream lengths differ")
         if any(not math.isfinite(float(score)) for score in scores):
             raise ValueError("Nonfinite score in offline evaluation")
         methods = {}
+        prediction_availability = prediction_availability or {}
         for name, labels in predictions.items():
             if len(labels) != len(self._labels):
                 raise ValueError(f"Prediction stream length differs for {name}")
+            available = list(prediction_availability.get(name, [True] * len(labels)))
+            if len(available) != len(labels):
+                raise ValueError(f"Prediction-availability stream length differs for {name}")
+            if any((not is_available) and pred is not None
+                   for pred, is_available in zip(labels, available)):
+                raise ValueError(f"Unavailable prediction carries a binary label for {name}")
             tn = fp = fn = tp = abstain = abstain_normal = abstain_defect = 0
+            missing = missing_normal = missing_defect = 0
             current_error_run = longest_error_run = 0
-            for y, pred in zip(self._labels, labels):
+            for y, pred, is_available in zip(self._labels, labels, available):
                 if pred is None:
-                    abstain += 1
-                    if y == 0: abstain_normal += 1
-                    else: abstain_defect += 1
+                    if is_available:
+                        abstain += 1
+                        if y == 0: abstain_normal += 1
+                        else: abstain_defect += 1
+                    else:
+                        missing += 1
+                        if y == 0: missing_normal += 1
+                        else: missing_defect += 1
                     current_error_run = 0
                 elif y == 0 and pred == 0: tn += 1
                 elif y == 0 and pred == 1: fp += 1
@@ -51,23 +65,31 @@ class PrivateOutcomeLedger:
             n_normal, n_defect = self._labels.count(0), self._labels.count(1)
             fpr_answered = fp / (tn + fp) if tn + fp else None
             fnr_answered = fn / (fn + tp) if fn + tp else None
-            fpr = (fp / n_normal if n_normal and not abstain_normal else None)
-            fnr = (fn / n_defect if n_defect and not abstain_defect else None)
-            ba = (None if abstain or fpr is None or fnr is None
+            fpr = (fp / n_normal if n_normal and not (abstain_normal or missing_normal) else None)
+            fnr = (fn / n_defect if n_defect and not (abstain_defect or missing_defect) else None)
+            ba = (None if abstain or missing or fpr is None or fnr is None
                   else 1 - (fpr + fnr) / 2)
             methods[name] = {
                 "tn": tn, "fp": fp, "fn": fn, "tp": tp,
                 "abstentions": abstain, "normal_abstentions": abstain_normal,
                 "defect_abstentions": abstain_defect,
-                "coverage": (len(labels) - abstain) / len(labels) if labels else None,
+                "missing_predictions": missing,
+                "normal_missing_predictions": missing_normal,
+                "defect_missing_predictions": missing_defect,
+                "withheld_predictions": abstain + missing,
+                "prediction_availability_fraction": (
+                    (len(labels) - missing) / len(labels) if labels else None),
+                "coverage": (len(labels) - abstain - missing) / len(labels) if labels else None,
                 "normal_denominator": n_normal, "defect_denominator": n_defect,
                 "fpr": fpr, "fnr": fnr, "balanced_accuracy": ba,
                 "fpr_answered_only": fpr_answered,
                 "fnr_answered_only": fnr_answered,
                 "longest_consecutive_errors": longest_error_run,
-                "balanced_accuracy_status": "UNAVAILABLE_ABSTENTION" if abstain else
+                "balanced_accuracy_status": "UNAVAILABLE_MISSING_PREDICTIONS" if missing else
+                    "UNAVAILABLE_ABSTENTION" if abstain else
                     "UNAVAILABLE_CLASS_ABSENT" if fpr is None or fnr is None else "DEFINED",
-                "windows": _window_metrics(self._labels, labels, window_size=256),
+                "windows": _window_metrics(self._labels, labels, window_size=256,
+                                           prediction_availability=available),
             }
         auc, auprc, auc_status = _ranking_metrics(self._labels, scores)
         return {"n": len(self._labels), "n_normal": self._labels.count(0),
@@ -77,33 +99,47 @@ class PrivateOutcomeLedger:
 
 
 def _window_metrics(labels: Sequence[int], predictions: Sequence[int | None],
-                    *, window_size: int) -> dict:
+                    *, window_size: int,
+                    prediction_availability: Sequence[bool] | None = None) -> dict:
+    prediction_availability = (list(prediction_availability) if
+                               prediction_availability is not None else
+                               [True] * len(predictions))
+    if len(prediction_availability) != len(predictions):
+        raise ValueError("Window prediction-availability stream length differs")
     windows = []
     for begin in range(0, len(labels), window_size):
         end = min(len(labels), begin + window_size)
         ys, ps = labels[begin:end], predictions[begin:end]
+        av = prediction_availability[begin:end]
         tn = fp = fn = tp = abstain_n = abstain_d = 0
-        for y, pred in zip(ys, ps):
+        missing_n = missing_d = 0
+        for y, pred, is_available in zip(ys, ps, av):
             if pred is None:
-                if y == 0: abstain_n += 1
-                else: abstain_d += 1
+                if is_available:
+                    if y == 0: abstain_n += 1
+                    else: abstain_d += 1
+                elif y == 0: missing_n += 1
+                else: missing_d += 1
             elif y == 0 and pred == 0: tn += 1
             elif y == 0 and pred == 1: fp += 1
             elif y == 1 and pred == 0: fn += 1
             elif y == 1 and pred == 1: tp += 1
         n_normal = sum(y == 0 for y in ys)
         n_defect = sum(y == 1 for y in ys)
-        fpr = fp / n_normal if n_normal and not abstain_n else None
-        fnr = fn / n_defect if n_defect and not abstain_d else None
+        fpr = fp / n_normal if n_normal and not (abstain_n or missing_n) else None
+        fnr = fn / n_defect if n_defect and not (abstain_d or missing_d) else None
         ba = 1 - (fpr + fnr) / 2 if fpr is not None and fnr is not None else None
         status = ("DEFINED" if ba is not None else
                   "UNAVAILABLE_CLASS_ABSENT" if not n_normal or not n_defect else
+                  "UNAVAILABLE_MISSING_PREDICTIONS" if missing_n or missing_d else
                   "UNAVAILABLE_ABSTENTION")
         windows.append({"start": begin, "stop_exclusive": end, "n": end - begin,
                         "n_normal": n_normal, "n_defect": n_defect,
                         "tn": tn, "fp": fp, "fn": fn, "tp": tp,
                         "normal_abstentions": abstain_n,
                         "defect_abstentions": abstain_d,
+                        "normal_missing_predictions": missing_n,
+                        "defect_missing_predictions": missing_d,
                         "fpr": fpr, "fnr": fnr,
                         "balanced_accuracy": ba, "status": status})
     return {
