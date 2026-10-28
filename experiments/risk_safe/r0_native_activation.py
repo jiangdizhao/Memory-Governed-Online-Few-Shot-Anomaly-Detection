@@ -27,7 +27,7 @@ from . import d1d_native_smoke as d1d
 from . import d2_native_replay as d2
 from . import d1b_protocol as d1b
 from . import query_protocol as qp
-from .native_bridge import (NativeScoreAdapter, NativeParityError,
+from .native_bridge import (NativeParityError, install_on_clone,
     dynamic_codebooks, extract_v22_candidates, install_on_live, native_score,
     normalized_native_candidate_rows, snapshot, verify_untouched_parity)
 from .d2_metrics import image_metrics, probe_deltas
@@ -73,7 +73,11 @@ def build_parser():
 
 def shadow_audit(impl, arm, cfg, before, shadow, recent_normal, recent_defect, theta, margin):
     """Only historical queried whole-image anchors, no probe evaluation labels."""
-    scorer = NativeScoreAdapter(impl, arm.bank, cfg)
+    before_native = install_on_clone(arm.bank, before)
+    after_native = install_on_clone(arm.bank, shadow)
+    def scores(image, features):
+        return (native_score(impl, before_native, image, features, cfg)[0],
+                native_score(impl, after_native, image, features, cfg)[0])
     result = dict(normal_available=bool(recent_normal),
                   defect_available=bool(recent_defect),
                   normal_utility=None, normal_score_gain=None,
@@ -82,8 +86,7 @@ def shadow_audit(impl, arm, cfg, before, shadow, recent_normal, recent_defect, t
     if recent_normal:
         hinges, gains = [], []
         for image, features in recent_normal:
-            b = scorer((image, features), before)
-            a = scorer((image, features), shadow)
+            b, a = scores(image, features)
             hinges.append(max(b-theta, 0.)-max(a-theta, 0.))
             gains.append(max(0., b-a))
         result["normal_utility"] = float(sum(hinges)/len(hinges))
@@ -92,8 +95,7 @@ def shadow_audit(impl, arm, cfg, before, shadow, recent_normal, recent_defect, t
         erosion = []
         crossing = False
         for image, features in recent_defect:
-            b = scorer((image, features), before)
-            a = scorer((image, features), shadow)
+            b, a = scores(image, features)
             erosion.append(max(0., b-a))
             crossing |= bool(b >= theta+margin and a < theta+margin)
         result["defect_score_erosion"] = float(sum(erosion)/len(erosion))
