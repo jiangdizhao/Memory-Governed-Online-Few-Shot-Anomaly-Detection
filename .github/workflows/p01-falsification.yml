@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - 'experiments/risk_safe/p01_*.py'
-      - 'tests/test_risk_safe_p01.py'
+      - 'tests/test_risk_safe_p01*.py'
       - '.github/workflows/p01-falsification.yml'
 jobs:
   cpu-contracts:
@@ -18,4 +18,4 @@ jobs:
       - name: Python compile checks (no CUDA)
         run: python -m py_compile experiments/risk_safe/p01_falsification_core.py experiments/risk_safe/p01_falsification_native.py tests/test_risk_safe_p01.py
       - name: Calibration and admission selection contract tests
-        run: python -m unittest discover -s tests -p 'test_risk_safe_p01.py' -v
+        run: python -m unittest discover -s tests -p 'test_risk_safe_p01*.py' -v
