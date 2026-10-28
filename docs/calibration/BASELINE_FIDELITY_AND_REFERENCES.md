@@ -135,3 +135,72 @@ claimed_guarantee (if any), invalidated_assumptions, source_and_test_hash
 **No intentional handicap:** tune external methods on the same development categories and comparable search effort to proposed methods in Stage 1; never optimize on Mint/PCB confirmation outcomes. Count all feature/anchor buffers, startup delay and computation. Every adaptation must have its own name; do not silently call SC-Dual-ACI “ACI theorem validated”, or an arbitrary CS baseline “Sun et al. reproduction”.
 
 **B5 and B6 fidelity may be legitimately difficult.** The correct scientific response is a BLOCKED gate with a precise remediation request, not a fabricated method.
+
+## Third-pass source audit (2026-10-29)
+
+This audit records what the primary papers establish and what remains
+unimplemented. The distinctions below are fidelity blockers, not a relaxation
+of the required baseline set.
+
+### B5a/B5b — POT, SPOT, and dSPOT
+
+The full Siffer et al. KDD 2017 paper was read. Its SPOT update predicts against
+the current risk threshold, excludes alarms from the reference tail, adds
+non-alarming observations to the total count, and refits the GPD after peaks
+above the initial level. The paper's risk-threshold convention uses its own
+total-observation and exceedance-count definitions; those source meanings must
+be transcribed and independently tested before implementation. The author
+repository was pinned to commit
+`d57e921a08930b960d07adcbec3a839bd228fe94` (`src/spot.c` blob
+`fdebc8c216fffeea93afcc51efab83a2d6013351`). That source supplies SPOT code,
+but no dSPOT implementation. No exact Grimshaw/reference trace is currently
+registered, so neither B5a nor B5b is enabled. A third-party drift implementation
+without a pinned version and source-equation parity does not resolve this gate.
+
+Remediation: pin a faithful SPOT source or provide an independent Grimshaw
+reference against the paper, then test initialization, `xi -> 0`, nonfinite or
+insufficient tail samples, equality at the alarm threshold, alarm exclusion,
+normal/peak updates, and the online `n`/`N_u` counters. Implement dSPOT as a
+separate method only after its local-mean initialization and update schedule are
+verified against the paper or a pinned source. Until then, both method cards
+remain `BLOCKED_FIDELITY`.
+
+### B6 — Sun et al. confidence-sequence thresholding
+
+The complete ICML 2024 paper and appendix were read. Its setting uses an
+independent score stream with piecewise-stationary i.i.d. segments, targets a
+specified upper-quantile anomaly rule, and returns a three-way anomaly,
+benign, or abstain decision from a quantile confidence sequence. The paper's
+algorithm family includes an explicit change-detection/reset path; it is not a
+generic binomial confidence interval followed by threshold optimization. The
+reference quantile definition averages adjacent order statistics at
+non-integer ranks, and the confidence-sequence radius is time-dependent.
+
+No source-consistent empty-history/startup decision has been established for
+our evaluation protocol, and an original-source reference controller with
+independent test vectors has not been implemented. C64-only normal calibration
+and a changing, memory-dependent score path do not satisfy the paper's complete
+observation assumptions by inspection; sparse queried feedback is not a
+substitute for its unlabeled score stream. The abstention treatment in primary
+metrics also needs to be frozen before any comparator run. Therefore B6 remains
+`BLOCKED_FIDELITY`; no “Sun-CS” or adapted controller is reported as implemented.
+
+Remediation: add a paper-equation reference module and tests for quantile ranks,
+confidence-sequence radii, tri-state decisions, change detection, reset timing,
+and startup. Separately declare a source-faithful observation mapping or name
+and test any adapted selective-feedback method, including its delayed-prediction
+and abstention accounting policy. Do not transfer the paper's guarantee to a
+dynamic-memory score stream without a separate proof.
+
+### B7 — provisional SCDAC-G specification correction
+
+The third-pass executable and method specification now distinguish the
+primary balanced upper-risk objective from the secondary FPR-constrained
+diagnostic objective. Primary selection minimizes the balanced objective only
+over descriptive-feasible candidates when that set exists; otherwise it uses
+the documented minimum-risk compromise over the full grid and explicitly enters
+`CONFLICT`. The bounded threshold is clipped afterward and feasibility is
+recomputed at the executed threshold. The secondary FPR diagnostic minimizes
+FNR upper endpoint plus movement cost and cannot alter the primary trajectory.
+These are deterministic provisional software choices, not choices uniquely
+dictated by the proposal and not certified guarantees.

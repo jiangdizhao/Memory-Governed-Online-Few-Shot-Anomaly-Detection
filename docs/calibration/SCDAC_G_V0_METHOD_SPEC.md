@@ -1,6 +1,6 @@
 # SCDAC-G v0 method specification
 
-**Version:** `SCDAC-G-v0-PROVISIONAL_METHOD_SPEC`
+**Version:** `SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC`
 **Status:** executable Stage 0 mechanism; numerical design is provisional and not scientifically validated.
 **Authoritative conceptual source:** `docs/Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf`
 **Source SHA-256:** `5fe07256384351c1170d67183eae5a80e5aa289a03586ba767671f062f4fb977`.
@@ -71,6 +71,12 @@ closed if that registered calculation is unavailable.
 
 Minimum counts are 16 eligible normals and 8 eligible defects. A class below
 its minimum is unavailable to optimization, even if a few raw anchors exist.
+Meeting the count minimum does not guarantee descriptive precision: for zero
+errors, the one-sided 95% Clopper--Pearson upper endpoint is `1 - 0.05^(1/n)`.
+It is approximately 0.31234 for 8 defects, 0.2059 for 13, and 0.1926 for 14.
+Thus perfectly separated classes with 8 or 13 queried defects can activate
+`BOTH` evidence yet still have no candidate satisfying the 0.20 descriptive
+FNR limit. The minimum of 8 is an activation count, not a precision claim.
 
 | State | Eligible evidence | B7 action |
 |---|---|---|
@@ -82,6 +88,19 @@ its minimum is unavailable to optimization, even if a few raw anchors exist.
 
 The diagnostic state can change from `BOTH` to `CONFLICT` only after current
 scores have been evaluated. Raw counts and eligible counts are both recorded.
+For a `CONFLICT`, `constraint_diagnostic_reason` is one of:
+
+- `INSUFFICIENT_PRECISION`: some candidate satisfies both empirical support
+  limits but none satisfies both descriptive upper-endpoint limits.
+- `RISK_CONSTRAINT_INCOMPATIBILITY`: no candidate satisfies both empirical
+  support limits and the two empirical score distributions are not identical.
+- `UNIDENTIFIABLE_SCORE_DISTRIBUTIONS`: normalized empirical normal and defect
+  score distributions are identical, so the available scalar scores do not
+  identify a separating threshold under these constraints.
+
+With a nonempty descriptive feasible set, the reason is
+`DESCRIPTIVE_FEASIBLE_SET`. Missing-side states identify the absent class and
+never fill its risk with zero.
 
 ## Primary BA-oriented mode
 
@@ -94,20 +113,36 @@ J(theta) = 0.5 * U_FPR(theta)
          + lambda_move * abs(theta - theta_t) / (sigma_s + epsilon_s)
 ```
 
-The candidate with the smallest objective is selected, with deterministic
-ties broken by smallest movement and then smallest threshold. The selected
-threshold is clipped to `[theta_t - Delta_theta, theta_t + Delta_theta]`.
-This objective uses both class risks; the missing side is never optimized as a
-zero. If the two-sided support set is empty, the same objective supplies the
-proposal's bounded conflict compromise; this is the documented `CONFLICT`
-fallback, not a claim that both risks are controlled.
+Let G be the candidate grid and F = {theta in G : U_FPR(theta) <=
+support_fpr and U_FNR(theta) <= support_fnr}. If F is nonempty, select the
+smallest J over F only; infeasible candidates are excluded from primary
+selection. Break ties by smallest movement and then smallest threshold. If
+F is empty, enter CONFLICT and select the minimum-risk compromise by minimizing
+the same balanced descriptive upper-risk objective plus movement cost over all
+of G. This fallback makes no feasibility or safety claim. Clip the proposal to
+[theta_t - Delta_theta, theta_t + Delta_theta], then recompute both descriptive
+upper endpoints at the executed threshold and report
+executed_threshold_in_descriptive_feasible_region. Clipping can move an
+otherwise feasible proposal outside F; feasibility must be reported for the
+executed threshold separately from the proposal.
+
+In symbols, for the registered objective `J`:
+
+```text
+theta_proposed = argmin_{theta in F} J(theta)        if F is nonempty
+theta_proposed = argmin_{theta in G} J(theta)        if F is empty (CONFLICT)
+theta_{t+1} = clip(theta_proposed,
+                   theta_t - Delta_theta,
+                   theta_t + Delta_theta)
+```
 
 ## Secondary FPR-constrained diagnostic
 
-For each predeclared `alpha in {0.05, 0.10, 0.20}`, report the candidate with
-`U_FPR(theta) <= alpha` that minimizes `U_FNR(theta)` plus the same normalized
-movement penalty. If no such candidate exists, report
-`NO_DESCRIPTIVE_FEASIBLE_THRESHOLD`. These diagnostics do not change B7's
+For each predeclared alpha in {0.05, 0.10, 0.20}, report the candidate with
+U_FPR(theta) <= alpha that minimizes U_FNR(theta) plus the registered movement
+cost. This FNR-plus-movement objective is separate from the primary balanced
+FPR/FNR objective. If no candidate exists, report
+NO_DESCRIPTIVE_FEASIBLE_THRESHOLD. These diagnostics do not change B7's
 primary threshold trajectory and are not population risk guarantees.
 
 ## Supported interval and stale-evidence policy
@@ -129,7 +164,7 @@ state. In missing-evidence states, B7 holds even if an old interval exists.
 | Parameter | Default | Rationale/status |
 |---|---:|---|
 | `min_normals` | 16 | Provisional guard; C64 normally supplies 64. |
-| `min_defects` | 8 | Provisional minimum; sparse defects may delay B7 activation. |
+| `min_defects` | 8 | Provisional activation minimum; 8--13 zero-error defects remain imprecise for a 0.20 descriptive FNR limit. |
 | `confidence_delta` | 0.05 | Fixed-time one-sided CP descriptive endpoint. |
 | `support_fpr`, `support_fnr` | 0.20, 0.20 | Provisional interval/conflict diagnostic limits. |
 | FPR diagnostic targets | 0.05, 0.10, 0.20 | Predeclared per request; diagnostic only. |

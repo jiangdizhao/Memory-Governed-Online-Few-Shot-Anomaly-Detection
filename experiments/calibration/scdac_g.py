@@ -11,6 +11,7 @@ from dataclasses import asdict, dataclass
 import hashlib
 import json
 import math
+from collections import Counter
 from typing import Any
 
 from .protocol import EvidenceSnapshot, Observation, Prediction
@@ -22,7 +23,7 @@ class SCDACGError(RuntimeError):
 
 @dataclass(frozen=True)
 class SCDACGConfig:
-    version: str = "SCDAC-G-v0-PROVISIONAL_METHOD_SPEC"
+    version: str = "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC"
     min_normals: int = 16
     min_defects: int = 8
     confidence_delta: float = 0.05
@@ -34,7 +35,7 @@ class SCDACGConfig:
     score_scale_epsilon: float = 1e-12
 
     def __post_init__(self) -> None:
-        if self.version != "SCDAC-G-v0-PROVISIONAL_METHOD_SPEC":
+        if self.version != "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC":
             raise ValueError("SCDAC-G method version must be explicit")
         if self.min_normals < 1 or self.min_defects < 1:
             raise ValueError("Minimum evidence counts must be positive")
@@ -92,6 +93,7 @@ class SCDACGController:
         self.evidence_revision = -1
         self.state = "NONE"
         self.decision = "INITIAL_HOLD"
+        self.constraint_diagnostic_reason = "MISSING_BOTH_CLASS_EVIDENCE"
         self.normal_scores: tuple[tuple[str, float], ...] = ()
         self.defect_scores: tuple[tuple[str, float], ...] = ()
         self.normal_count_raw = 0
@@ -106,6 +108,7 @@ class SCDACGController:
             "risk_constrained": [], "candidate_count": 0,
             "candidate_evaluations": 0,
             "bound_evaluations": 0,
+            "constraint_diagnostic_reason": self.constraint_diagnostic_reason,
             "bound_name": "one-sided Clopper-Pearson descriptive_upper",
             "guarantee": "none; dependent/selective/dynamic-state assumptions are unverified",
         }
@@ -163,6 +166,12 @@ class SCDACGController:
         self.state = ("BOTH" if n_ok and d_ok else
                       "NORMAL_ONLY" if n_ok else
                       "DEFECT_ONLY" if d_ok else "NONE")
+        self.constraint_diagnostic_reason = {
+            "BOTH": "AWAITING_FEASIBILITY_EVALUATION",
+            "NORMAL_ONLY": "MISSING_DEFECT_CLASS_EVIDENCE",
+            "DEFECT_ONLY": "MISSING_NORMAL_CLASS_EVIDENCE",
+            "NONE": "MISSING_BOTH_CLASS_EVIDENCE",
+        }[self.state]
         self.pending = True
         interval = self.last_two_sided_supported_interval
         self.interval_stale = bool(interval and
@@ -202,26 +211,69 @@ class SCDACGController:
         variance = math.fsum((x - mean) ** 2 for x in values) / len(values)
         return math.sqrt(max(0.0, variance))
 
-    def _objective(self, theta: float, fpr_u: float, fnr_u: float) -> float:
+    def _movement_cost(self, theta: float) -> float:
         scale = self._score_scale()
-        return (0.5 * fpr_u + 0.5 * fnr_u +
-                self.config.movement_penalty * abs(theta - self.theta) /
+        return (self.config.movement_penalty * abs(theta - self.theta) /
                 (scale + self.config.score_scale_epsilon))
+
+    def _objective(self, theta: float, fpr_u: float, fnr_u: float) -> float:
+        """Primary BA-oriented upper-risk objective plus movement cost."""
+        return 0.5 * fpr_u + 0.5 * fnr_u + self._movement_cost(theta)
+
+    def _fpr_diagnostic_objective(self, theta: float, fnr_u: float) -> float:
+        """Secondary objective: descriptive FNR plus registered movement cost."""
+        return fnr_u + self._movement_cost(theta)
+
+    def _empirical_risks(self, theta: float) -> tuple[float, float]:
+        n_fp = sum(score >= theta for _, score in self.normal_scores)
+        n_fn = sum(score < theta for _, score in self.defect_scores)
+        return n_fp / len(self.normal_scores), n_fn / len(self.defect_scores)
+
+    def _same_empirical_distribution(self) -> bool:
+        """Whether class score multisets have exactly equal empirical masses."""
+        normals = [score for _, score in self.normal_scores]
+        defects = [score for _, score in self.defect_scores]
+        n_hist, d_hist = Counter(normals), Counter(defects)
+        if set(n_hist) != set(d_hist):
+            return False
+        n_total, d_total = len(normals), len(defects)
+        return all(n_hist[value] * d_total == d_hist[value] * n_total
+                   for value in n_hist)
+
+    def _conflict_reason(self, candidates: tuple[float, ...],
+                         feasible: list[float]) -> tuple[str, int]:
+        if feasible:
+            return "DESCRIPTIVE_FEASIBLE_SET", 0
+        empirical_feasible = 0
+        for theta in candidates:
+            fpr, fnr = self._empirical_risks(theta)
+            if (fpr <= self.config.support_fpr and
+                    fnr <= self.config.support_fnr):
+                empirical_feasible += 1
+        if empirical_feasible:
+            return "INSUFFICIENT_PRECISION", empirical_feasible
+        if self._same_empirical_distribution():
+            return "UNIDENTIFIABLE_SCORE_DISTRIBUTIONS", 0
+        return "RISK_CONSTRAINT_INCOMPATIBILITY", 0
 
     def _risk_diagnostics(self, candidates: tuple[float, ...],
                           rows: dict[float, tuple[float, float]]) -> list[dict[str, Any]]:
         reports = []
         for target in self.config.diagnostic_fpr_targets:
-            feasible = [(self._objective(theta, *risk), abs(theta - self.theta), theta, risk)
+            feasible = [(self._fpr_diagnostic_objective(theta, risk[1]),
+                         abs(theta - self.theta), theta, risk)
                         for theta, risk in rows.items() if risk[0] <= target]
             if not feasible:
                 reports.append({"fpr_target": target, "status": "NO_DESCRIPTIVE_FEASIBLE_THRESHOLD",
                                 "threshold": None, "fpr_upper": None, "fnr_upper": None})
                 continue
-            _, _, chosen, (fpr_u, fnr_u) = min(feasible)
+            objective, _, chosen, (fpr_u, fnr_u) = min(feasible)
             reports.append({"fpr_target": target, "status": "AVAILABLE",
                             "threshold": chosen, "fpr_upper": fpr_u,
-                            "fnr_upper": fnr_u})
+                            "fnr_upper": fnr_u,
+                            "objective_name": "fnr_upper_plus_movement_cost",
+                            "objective": objective,
+                            "movement_cost": self._movement_cost(chosen)})
         return reports
 
     def finalize_step(self) -> float:
@@ -242,6 +294,7 @@ class SCDACGController:
                 "fnr_upper": None if not self.defect_scores else "NOT_OPTIMIZED_WITHOUT_BOTH_SIDES",
                 "risk_constrained": [], "candidate_count": 0,
                 "candidate_evaluations": 0, "bound_evaluations": 0,
+                "constraint_diagnostic_reason": self.constraint_diagnostic_reason,
                 "bound_name": "one-sided Clopper-Pearson descriptive_upper",
                 "guarantee": "none; dependent/selective/dynamic-state assumptions are unverified",
                 "last_two_sided_supported_interval": self.last_two_sided_supported_interval,
@@ -274,31 +327,48 @@ class SCDACGController:
             }
             self.interval_stale = False
             self.state = "BOTH"
+            self.constraint_diagnostic_reason = "DESCRIPTIVE_FEASIBLE_SET"
         else:
             self.state = "CONFLICT"
+            (self.constraint_diagnostic_reason,
+             empirical_feasible_count) = self._conflict_reason(candidates, feasible)
             if self.last_two_sided_supported_interval:
                 self.last_two_sided_supported_interval = {
                     **self.last_two_sided_supported_interval, "active": False}
                 self.interval_stale = True
 
-        ranked = [(self._objective(theta, *risk), abs(theta - self.theta), theta, risk)
-                  for theta, risk in rows.items()]
-        _, _, proposed, proposed_risk = min(ranked)
+        selection_domain = feasible if feasible else list(rows)
+        ranked = [(self._objective(theta, *rows[theta]), abs(theta - self.theta),
+                   theta, rows[theta]) for theta in selection_domain]
+        _, _, proposed, _ = min(ranked)
+        proposed_feasible = bool(feasible and proposed in feasible)
         lower_step = self.theta - self.config.max_threshold_step
         upper_step = self.theta + self.config.max_threshold_step
         updated = min(max(proposed, lower_step), upper_step)
         self.theta = float(updated)
-        self.decision = ("BA_MODE_MINIMUM_DESCRIPTIVE_RISK" if self.state == "BOTH"
-                         else "CONFLICT_BOUNDED_MINIMUM_DESCRIPTIVE_RISK")
+        self.decision = ("BA_OBJECTIVE_WITHIN_DESCRIPTIVE_FEASIBLE_SET"
+                         if self.state == "BOTH" else
+                         "CONFLICT_MINIMUM_RISK_COMPROMISE")
         selected_risk = self._upper_risks(self.theta, self.normal_scores,
                                           self.defect_scores)
         self.total_bound_evaluations += 2
+        executed_feasible = bool(
+            selected_risk[0] <= self.config.support_fpr and
+            selected_risk[1] <= self.config.support_fnr)
         self.last_diagnostics = {
             "status": self.state, "decision": self.decision,
+            "constraint_diagnostic_reason": self.constraint_diagnostic_reason,
             "normal_count": len(self.normal_scores),
             "defect_count": len(self.defect_scores),
             "fpr_upper": selected_risk[0], "fnr_upper": selected_risk[1],
             "proposed_threshold": proposed, "threshold": self.theta,
+            "selection_domain": ("descriptive_feasible_candidates" if feasible
+                                 else "all_candidates_minimum_risk_compromise"),
+            "support_feasible_candidate_count": len(feasible),
+            "empirical_feasible_candidate_count": (
+                empirical_feasible_count if not feasible else None),
+            "proposed_threshold_in_descriptive_feasible_region": proposed_feasible,
+            "executed_threshold_in_descriptive_feasible_region": executed_feasible,
             "objective": self._objective(self.theta, *selected_risk),
             "score_scale": self._score_scale(),
             "risk_constrained": self._risk_diagnostics(candidates, rows),
@@ -326,7 +396,9 @@ class SCDACGController:
             "name": self.name, "config": asdict(self.config),
             "theta": self.theta, "memory_version": self.memory_version,
             "evidence_revision": self.evidence_revision, "state": self.state,
-            "decision": self.decision, "normal_scores": list(self.normal_scores),
+            "decision": self.decision,
+            "constraint_diagnostic_reason": self.constraint_diagnostic_reason,
+            "normal_scores": list(self.normal_scores),
             "defect_scores": list(self.defect_scores),
             "normal_count_raw": self.normal_count_raw,
             "defect_count_raw": self.defect_count_raw,
@@ -346,6 +418,7 @@ class SCDACGController:
             raise SCDACGError("Checkpoint threshold is nonfinite")
         self.theta = theta
         for key in ("memory_version", "evidence_revision", "state", "decision",
+                    "constraint_diagnostic_reason",
                     "normal_count_raw", "defect_count_raw", "evidence_digest",
                     "pending", "last_two_sided_supported_interval", "interval_stale",
                     "last_diagnostics", "total_candidate_evaluations",

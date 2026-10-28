@@ -20,7 +20,6 @@ def digest_json(value: Any) -> str:
 class NativeScorerConfig:
     """Values inherited from P0/P1 and the frozen v22 score path."""
 
-    device: str = "cpu"
     augmentation_seed: int = 0
     bank_seed: int = 0
     fixed_capacity: int = 25000
@@ -51,7 +50,7 @@ class NativeScorerConfig:
 
     def __post_init__(self) -> None:
         locked = {
-            "device": "cpu", "augmentation_seed": 0, "bank_seed": 0,
+            "augmentation_seed": 0, "bank_seed": 0,
             "fixed_capacity": 25000, "fixed_per_image": 5000,
             "augmentations": 4, "multiplier": 2.5,
             "feature_fuse": "concat", "topk_patches": 32,
@@ -121,6 +120,7 @@ class CalibrationIsolatedProfile:
     memory_capacity_per_layer: int = 256
     reference_theta_policy: str = "fixed_theta0_higher_q90_at_M0"
     reference_sigma_floor: float = 0.02
+    execution_device: str = "cpu"
     scorer: NativeScorerConfig = NativeScorerConfig()
     query: QueryProtocolConfig = QueryProtocolConfig()
 
@@ -141,6 +141,13 @@ class CalibrationIsolatedProfile:
     @property
     def sha256(self) -> str:
         return digest_json(asdict(self))
+
+    @property
+    def scientific_sha256(self) -> str:
+        """Hash detector/protocol semantics independent of CPU vs CUDA execution."""
+        payload = asdict(self)
+        payload.pop("execution_device", None)
+        return digest_json(payload)
 
 
 DEFAULT_PROFILE = CalibrationIsolatedProfile()

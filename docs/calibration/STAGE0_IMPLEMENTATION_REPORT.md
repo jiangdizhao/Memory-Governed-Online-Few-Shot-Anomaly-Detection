@@ -1,77 +1,180 @@
-# Stage 0 implementation and audit report
+# Stage 0 implementation and third-pass audit report
 
-**Status: `BLOCKED_WIP`: infrastructure mechanisms pass their synthetic tests, but Stage 0 acceptance is incomplete. This is not scientific validation and is not authorization to start Stage 1.**
+**Status: `BLOCKED_WIP`.** The infrastructure and permitted parity mechanisms
+have executable evidence, but G0, G6, G7, and G9 remain open. This is not
+scientific validation and does not authorize Stage 1.
 
-## Scope and provenance
+## Branch, environment, and protected worktree
 
-Work is on `calibration-stage0-contract-20261029`, whose synchronized parent was `83041f6506d40af9614de661c95a69e3481b07fe`. The required interpreter is `D:\anaconda3\envs\torch\python.exe` (Python 3.11, PyTorch 2.0.1+cu117, SciPy 1.11.2). Validation runs use CPU; CUDA availability is recorded but no GPU computation was needed. No package or environment was changed.
+- Branch: `calibration-stage0-contract-20261029`.
+- Synchronized base at start of this continuation: `42aecc32f865b5b5a9cf782c32e14755df305106`.
+- Interpreter: `D:\anaconda3\envs\torch\python.exe`; Python 3.11,
+  PyTorch `2.0.1+cu117`, CUDA available. No environment or dependency changes.
+- The shared worktree already contained **36 tracked deletions** under
+  `outputs/risk_safe_sprint_20261027/` and six untracked earlier Stage 0 smoke
+  directories. They were not read, modified, restored, or staged. G0 remains
+  blocked until the unrelated deletions are resolved by the workspace owner.
+- Historical v22, VisionAD, P0/P1, V0.2, risk-safe bridge, and archived
+  experiment sources were inspected as read-only dependencies. No historical
+  source or prior result file is changed by this implementation.
 
-Historical v22, VisionAD, P0/P1, V0.2, native bridge and archived experiment sources were inspected read-only. The adapter continues to call `experiments/risk_safe/native_bridge.py` and `a0_a1_strict4_matched.score_bank` into the historical v22 scoring path; it has no nearest-neighbor fallback. The K=256 shared Greedy writer reuses the native candidate extraction, normalization and `v02_memory.greedy_slot` operator. Historical sources were not modified.
+## Implemented Stage 0 infrastructure
 
-The SCDAC-G source proposal is `docs/Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf`, SHA-256 `5fe07256384351c1170d67183eae5a80e5aa289a03586ba767671f062f4fb977`. Proposal-open numerical choices are frozen only in `SCDAC_G_V0_METHOD_SPEC.md` as `PROVISIONAL_METHOD_SPEC`; they are not attributed to the proposal as mandated values or validated science.
+New implementation code is confined to `experiments/calibration/` and tests to
+`tests/calibration/`.
 
-The original SPOT/dSPOT paper and author code were inspected. Author repository `asiffer/libspot` was pinned for audit to commit `d57e921a08930b960d07adcbec3a839bd228fe94`; its `src/spot.c` blob SHA-1 is `fdebc8c216fffeea93afcc51efab83a2d6013351` and identifies as version 3.0.0. The pinned source has SPOT code but no dSPOT implementation. No baseline is claimed complete from this source inspection alone.
+- Versioned CPU/CUDA-execution-independent scientific profile; query-tape
+  identities are label blind and use the official Real-IAD sample grouping.
+- Prequential engine gives all threshold controllers one shared score and
+  memory trajectory, predicts before disclosure, and routes only verified
+  queried labels to the shared writer. Evaluation labels remain offline.
+- Protected C64 anchors are additional to the four deployed supports; they are
+  read-only. Current-state normal anchors require all-layer leave-source-out
+  provenance. Checkpoints include private anchor features, controller/memory
+  state, provenance, and RNG state.
+- Shared native Greedy wrapper uses the historical candidate selection,
+  full-matrix normalization, fp16 prototype storage, and K=256 per-layer cap.
+  The static support bank has an explicit content digest.
+- Real-IAD metadata preflight verifies the historical train-only D2 support and
+  64-anchor selection, official group separation, Q-A-TS and Q-B feasibility,
+  budget fractions, one-view-per-group behavior, and realized query/bin counts
+  for the four development classes. It reads no confirmation-category
+  metadata, opens no image or mask, and does not pass test labels to tape logic.
+- One-command Stage 0 runner writes a source/config-locked manifest, method
+  cards, tests, synthetic trace, metadata preflight and optional native smoke
+  records. Outputs are checksummed, non-overwriting, resumable only under an
+  exact source/config identity, and marked `INCOMPLETE` while required gates
+  remain open.
 
-## Implementation
+## Native parity smoke
 
-New calibration engine code is under `experiments/calibration/`; calibration tests are under `tests/calibration/`.
+The reusable runner smoke uses the existing cached DINOv2 model and P0/v22
+scorer on the four historical audiojack train supports. It selects 64 other
+train-normal official groups for protected C64 identities and one further
+verified train normal as a disposable update fixture. No test image, mask,
+confirmation class, or test outcome is opened. The update fixture uses an
+explicit synthetic threshold above its native score only to exercise the
+normal-write operator; it is not a calibration result.
 
-- **Protocol and query tapes:** locked CPU scorer/profile settings, the exact distinction between four deployed supports and 64 additional protected C64 normals, label-blind Q-A-TS/Q-B schedules and group limits, causal observations, and explicit query-only feedback.
-- **Shared engine:** one score per event for all controllers; predict-before-label disclosure; query-independent reference write policy; evidence refresh after queried feedback or memory change; memory version/digest checks; offline-only metrics and unavailable risk handling.
-- **Checkpointing:** event-boundary snapshots include cursor, score/prediction/trace history, controller state, named component states, last evidence, query/evaluator identity digests and Python/NumPy/Torch RNG state. Anchor checkpoints include private features; native Greedy checkpoints include per-layer tensors, source rows, version, capacity and fixed-support digest. Restore fails closed on source/config/runtime/controller/component identity mismatches.
-- **Controller families:** B0 frozen theta; B1 rolling q90 over queried verified normals at arrival; B2 historical v22 sidecar adapter with its unlabeled-normal fallback disabled and C64 initialization recorded as an adaptation; B3 current-state protected-C64 q90; B4 queried-label class-conditional ACI adaptation with corrected normal-lower/defect-upper exact empirical boundaries; and B7 executable provisional SCDAC-G. B5a SPOT, B5b dSPOT, and B6 Sun-CS fail closed as `BLOCKED_FIDELITY`.
-- **Runner:** `python -m experiments.calibration.runner --stage 0 --all` performs configured-environment checks, unit tests, deterministic synthetic mechanisms, metadata-path presence checks and manifest/checksum generation. It does not load Real-IAD files, run image-based parity, or launch Stage 1/2. Output is non-overwriting by default, content-keyed, checksummed and marked `INCOMPLETE` while mandatory gates remain open. Resume verifies completed outputs or rebuilds an interrupted deterministic synthetic artifact after source/config identity validation. Verify-only checks a specific output's hashes and does not rerun tests or empirical results.
+The smoke compares a live native bank with an untouched clone, direct v22
+scoring with the calibration adapter, and genuine V0.2 Greedy `MemoryArm.update`
+with the shared operator after an exact K=256 isolation. It records only score
+deltas, opaque identity hashes, and memory parity evidence, never absolute
+image scores. This proves a bounded implementation path, not a full stream,
+theta0 calibration, cross-controller trajectory, or empirical performance.
 
-## Method fidelity record
+## Method fidelity
 
-| Method | Status | Fidelity and unresolved issue |
+| Family | Status | Record |
 |---|---|---|
-| B0 | `IMPLEMENTED` | D2 higher q90 of 64 additional C64 scores at M0; rank index 57. |
-| B1 | `IMPLEMENTED` | Stale-at-arrival q90 of queried, verified normals; W=256, minimum 16. |
-| B2 | `IMPLEMENTED_ADAPTED` | Historical v22 `GuardedDualAnchorThresholdController`; disables the unavailable unlabeled-normal path and separately reports native NumPy C64 initialization. No full-loop parity claim. |
-| B3 | `IMPLEMENTED_PROPOSED` | Protected-C64 current-memory higher q90, minimum 16, step clip 0.01; queried-normal LSO is not included in this primary arm. |
-| B4 | `IMPLEMENTED_ADAPTED` | Queried-only class-conditional ACI-style updates (alpha/beta=.10, gamma=.005), exact empirical threshold geometry and current-state evidence. Sparse feedback/dynamic memory do not inherit ACI guarantees. |
-| B5a | `BLOCKED_FIDELITY` | No exact KDD Grimshaw/source convention parity trace. No alternate EVT estimator is labeled SPOT. |
-| B5b | `BLOCKED_FIDELITY` | Pinned author source lacks dSPOT; no faithful dSPOT implementation/reference test. |
-| B6 | `BLOCKED_FIDELITY` | Full source-equation reference test, observation mapping and abstention-to-primary-metric policy remain incomplete. No generic confidence bound is labeled Sun-CS. |
-| B7 | `IMPLEMENTED_PROVISIONAL` | Versioned SCDAC-G mechanism and synthetic reference tests are present. Numerical choices remain proposals for independent research review; CP endpoints are descriptive and no guarantee is claimed. |
+| B0 frozen threshold | `IMPLEMENTED` | D2 higher q90 of 64 additional C64 scores at M0; zero-based rank 57. |
+| B1 rolling quantile | `IMPLEMENTED` | Stale-at-arrival queried verified-normal scores; fixed window and minimum are in the method card. |
+| B2 historical sidecar | `IMPLEMENTED_ADAPTED` | Wraps v22 `GuardedDualAnchorThresholdController`; the unavailable unlabelled-normal path is disabled and adaptation is declared. No full-loop parity claim. |
+| B3 state-consistent quantile | `IMPLEMENTED_PROPOSED` | Current-memory protected-C64 higher q90 with fixed movement limit; not a proposed-method validation. |
+| B4 dual ACI | `IMPLEMENTED_ADAPTED` | Query-only class-specific feedback and discrete threshold geometry; it inherits no original ACI guarantee. |
+| B5a SPOT | `BLOCKED_FIDELITY` | No paper-equation/Grimshaw reference parity trace; no substitute EVT estimator is called SPOT. |
+| B5b dSPOT | `BLOCKED_FIDELITY` | Pinned author source has no dSPOT implementation; no verified drift update policy. |
+| B6 Sun-CS | `BLOCKED_FIDELITY` | Source-consistent startup, reference controller tests, observation mapping, and abstention policy are unresolved. |
+| B7 SCDAC-G | `IMPLEMENTED_PROVISIONAL` | Versioned executable proposal with descriptive CP endpoints. Feasible-set selection, conflict fallback, clipping, and secondary FPR diagnostic are separately specified and tested. Numerical choices remain open for independent review. |
 
-## Validation evidence
+The detailed source and method audit is in
+`docs/calibration/BASELINE_FIDELITY_AND_REFERENCES.md`; the executable B7
+defaults and objective are in `docs/calibration/SCDAC_G_V0_METHOD_SPEC.md`.
+Code, tests, protected historical inputs, checkpoint weights, and proposal
+source hashes are tabulated in
+`docs/calibration/STAGE0_SOURCE_PROVENANCE.md`.
+Neither document claims that a provisional mechanism is scientifically
+validated.
 
-The focused calibration suite was run with the required environment:
+## Validation record
+
+Commands use only the existing `torch` environment:
 
 ```powershell
 & 'D:\anaconda3\envs\torch\python.exe' -m compileall -q experiments/calibration tests/calibration
 & 'D:\anaconda3\envs\torch\python.exe' -m unittest discover -s tests/calibration -v
+& 'D:\anaconda3\envs\torch\python.exe' -m experiments.calibration.runner --stage 0 --all --output-dir outputs/calibration/stage0/stage0_thirdpass_20261029_final
+& 'D:\anaconda3\envs\torch\python.exe' -m experiments.calibration.runner --stage 0 --verify-only --output-dir outputs/calibration/stage0/stage0_thirdpass_20261029_final
 ```
 
-Latest recorded suite result: **37 tests, 37 passed, 0 failed, 0 errors, 0 skipped**. It covers the causal label firewall, unqueried-label swap invariance, Q-A-TS/Q-B determinism and group limits, missing-class metrics, B1/B2/B3/B4 behavior, B4 ties and conflicts, B7 evidence states and thresholds, C64/strict4 separation, all-layer LSO, anchor feature checkpoint roundtrip, disk checkpoint-resume equivalence against an uninterrupted run, all executable-controller state restore, RNG restoration, and source/method registry checks. The B2 import emits existing torchvision/Pillow deprecation warnings.
+The suite covers causal disclosure, query tape label-swap invariance,
+controller/memory trajectory isolation, evidence versioning and LSO,
+checkpoint/resume and RNG equivalence, Greedy capacity logic, B7 confidence
+endpoints and conflicts, Real-IAD selection/tapes, runner checksum corruption
+and provenance mismatch, and honest optional-smoke skip behavior. The runner
+also executes the CUDA native score/update smoke and metadata preflight when
+prerequisites exist. The final run artifact is saved locally at
+`outputs/calibration/stage0/stage0_thirdpass_20261029_final/`; its checksums,
+exact test count/output, source hashes, metadata-only preflight, native parity
+record, and gate matrix provide the run-level evidence. The generated runner
+directory is not committed; the text implementation and provenance reports
+carry the reviewable results.
 
-No Real-IAD images, features, masks, confirmation-class outcomes, or hidden class histograms were opened. The dataset metadata path check is reported separately as `SKIP`; it is not a data preflight pass. No Stage 1 or Stage 2 run occurred.
+Final recorded unit suite: **51 passed, 0 failed, 0 errors, 0 skipped**.
+Compilation passed. The runner reports `G1=PASS`, all four development
+metadata classes `PASS`, `G2=PASS`, `G3=PASS`, `G4=PASS`, `G5=PASS`, and
+`G8=PASS`; exact statuses and source/config checks are in the run artifact.
 
-## Gate matrix
+Metadata-only test-stream results are: audiojack 3,815 images / 763 official
+groups / 114 Q-A-TS queries; regulator 3,855 / 771 / 116; switch 3,820 / 764 /
+115; rolled_strip_base 3,805 / 761 / 114. Q-B produced the registered 23 early
+queries per class. All Q-A-TS 16-bin realized counts match their registered
+quotas; each query tape is label blind and one-view-per-official-group.
 
-| Gate | Status | Evidence or blocker |
+The original manual CUDA smoke on this checkout returned exact live/clone and
+adapter score agreement (`0.0` absolute difference), and exact fp16 Greedy
+update equality on the one dynamic layer, with 8 appended, 0 replaced, and 0
+skipped rows. The reusable runner repeats this smoke and stores its complete
+versioned record. This diagnostic append branch does not independently verify
+the saturated replacement/skip path on the native bank. Two fresh CUDA smoke
+runs with P0's math-only SDPA mode produced identical support/C64/update-group
+hashes, fixed-bank digest, checkpoint hash, and zero score deltas; both updates
+were bit-exact. The cached DINOv2 Hub directory lacks Git commit metadata, so
+the artifact pins its Python source tree by a deterministic SHA-256 instead.
+The final runner smoke records one native dynamic layer at K=256, exact live /
+clone and adapter score deltas of zero, and exact append of eight candidate
+rows. It records the checkpoint and Hub Python-tree SHA-256 values and does not
+emit absolute image scores.
+
+## Stage 0 gates
+
+| Gate | Expected status | Evidence / blocker |
 |---|---|---|
-| G0 branch / protected worktree | `BLOCKED` | Correct requested branch and parent; pre-existing tracked deletions in `outputs/risk_safe_sprint_20261027/` remain in the shared worktree. They were not modified or staged. |
-| G1 query identities | `PASS` synthetic; `SKIP` Real-IAD metadata | Q-A-TS/Q-B synthetic identity, one-query-per-group, 16-bin and label-blind tests pass. Dataset roots were only presence-checked. |
-| G2 native scorer parity | `BLOCKED` | Direct-vs-shadow VisionAD/v22 scoring parity was not run on a native image/feature bundle. |
-| G3 Greedy parity | `BLOCKED` | Greedy mechanism/source-map tests pass; actual native K=256 update, fp16 normalization, static-bank immutability and write parity were not executed. |
-| G4 causal firewall | `PASS` synthetic | Predictions precede disclosure; only queried labels are disclosed; threshold controllers share one score/memory trajectory. |
-| G5 evidence ledger | `PASS` synthetic | C64 protection, current-version invalidation, private feature restore and all-layer source exclusion are tested. Native score/write attribution remains under G3. |
-| G6 controller families | `BLOCKED_FIDELITY` | B5a, B5b and B6 are blocked. B7 is executable only under its provisional specification. |
-| G7 reference math | `BLOCKED` | Reference mechanics pass for implemented methods, but all required external baseline families do not have verified implementations. |
-| G8 execution/reproducibility | `PASS` synthetic | Midstream engine resume matches uninterrupted score, prediction and trace outputs; RNG restore and private-label identity checks pass. Runner output is checksummed, source/config-addressed and non-overwriting by default. |
-| G9 scientific parity | `BLOCKED` | Native shared-score/AUROC invariance across controllers is not verified without the actual native feature path. |
+| G0 branch and protected worktree | `BLOCKED` | 36 unrelated tracked archive deletions pre-existed; left untouched and excluded from commit. |
+| G1 synthetic query identities | `PASS` | Q-A-TS/Q-B determinism, 16 bins, label blindness, exact budgets, and one query per official group. |
+| G1 Real-IAD metadata | `PASS` | Four development-class JSON indexes passed official-group separation, one-view query tapes, 16-bin Q-A-TS, exact budgets, and Q-B split checks. |
+| G2 native scorer bridge | `PASS` bounded | Audiojack training-only native v22, untouched clone, and calibration adapter score differences are all zero. |
+| G3 native Greedy update | `PASS` bounded | Native K=256 append update matches shared Greedy exactly on the dynamic layer; fixed support digest is unchanged. Replacement/skip remains unverified natively. |
+| G4 causal firewall | `PASS` | Synthetic predict-before-disclosure and queried-only feedback tests. |
+| G5 calibration evidence | `PASS` | Synthetic C64 immutability, version invalidation, LSO, and source attribution tests. |
+| G6 all controller families | `BLOCKED_FIDELITY` | B5a/B5b/B6 remain incomplete; B7 is explicitly provisional. |
+| G7 external reference math | `BLOCKED` | Baseline reference tests do not cover every required external family. |
+| G8 execution/reproducibility | `PASS` | Synthetic resume equivalence, RNG restore, source/profile mismatch and artifact corruption checks. |
+| G9 shared scientific trajectory | `BLOCKED` | No full native sequence/AUROC invariance across all controllers was run. |
 
-Overall status remains `BLOCKED_WIP`. Individual passing software gates are mechanism evidence only; they do not make the research scientifically validated.
+Overall status stays `BLOCKED_WIP`: G0 is `BLOCKED`, G6 is
+`BLOCKED_FIDELITY`, G7 and G9 are `BLOCKED`. Independent research review is
+still required.
 
-## Remaining blockers
+## Explicitly not run
 
-1. Resolve the pre-existing protected archive deletions before G0 can pass. This implementation does not restore or stage them.
-2. Execute permitted non-scientific native CPU parity when an approved native support/C64 feature bundle is available: direct/shadow scores, fixed-support immutability, K=256 update parity, fp16 normalization and source attribution.
-3. Implement and reference-test exact SPOT Grimshaw behavior and separate dSPOT drift semantics; verify source initialization, update and tie/edge conventions.
-4. Read and implement the complete Sun-CS algorithm/reference sequence, and decide how its source tri-state abstentions map to the primary metric without disguising adaptation.
-5. Obtain independent research review of SCDAC-G provisional defaults and conflict/missing-side rules. The code executes but is not an authoritative scientific translation.
+- No Stage 1 or Stage 2 experiments.
+- No Real-IAD test stream scoring, threshold tuning, or metric optimization.
+- No Mint/PCB confirmation metadata, images, labels, outcomes, or hidden class
+  histograms.
+- No confirmation of empirical superiority or risk guarantees.
 
-The Stage 0 output directory and its run-specific hashes/checksums are emitted by the runner and captured in the execution result. No generated runner output or prior smoke output is treated as empirical evidence.
+## Remaining blockers and remediation
+
+1. Resolve the 36 pre-existing protected archive deletions before G0 can pass.
+2. Verify native saturated K=256 replacement/skip behavior and end-to-end
+   source attribution; current GPU smoke covers the exact append branch only.
+3. Complete pinned source or independent equation tests for SPOT and dSPOT,
+   including Grimshaw, update/exclusion, and initialization semantics.
+4. Complete Sun-CS reference math, source-consistent startup/reset behavior,
+   observation compatibility, and predeclared abstention accounting.
+5. Review B7's versioned provisional minima, bounds, constraints, movement
+   objective, and conflict fallback; these choices are not settled by software
+   tests.
+6. Run full shared native score/state trajectories across all controllers only
+   after the methodological gates are accepted. G9 remains blocked.

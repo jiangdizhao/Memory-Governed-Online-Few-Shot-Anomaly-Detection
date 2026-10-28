@@ -28,7 +28,7 @@ def validate_mutable_source_key(source_key: str,
 
 def validate_p0_config(p0_config: Any, profile: NativeScorerConfig) -> None:
     """Fail closed unless the inherited P0 fields match the frozen profile."""
-    fields = ("device", "augmentation_seed", "bank_seed", "fixed_capacity",
+    fields = ("augmentation_seed", "bank_seed", "fixed_capacity",
               "fixed_per_image", "augmentations", "include_identity",
               "multiplier", "feature_fuse", "topk_patches",
               "image_aggregation", "image_topk", "image_quantile", "knn")

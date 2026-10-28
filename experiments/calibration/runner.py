@@ -1,6 +1,10 @@
-"""One-command Stage 0 synthetic validation and audit artifact writer.
+"""One-command Stage 0 validation and audit artifact writer.
 
-This runner never loads a dataset, image, model weight, or confirmation label.
+Execution is synthetic CPU validation plus metadata-only preflight over the
+four preregistered development classes. When CUDA, the existing cached DINOv2
+source/checkpoint, and Real-IAD train metadata are available, it also runs a
+bounded audiojack train-only native score/update parity smoke. It never opens a
+test image, mask, or confirmation-category metadata.
 """
 from __future__ import annotations
 
@@ -27,6 +31,8 @@ from .profiles import DEFAULT_PROFILE, canonical_json
 from .protocol import (EvidenceAnchor, EvidenceSnapshot, ScoreResult,
                        StreamEvent, TapeRecord)
 from .query_tape import build_qa_ts, build_qb
+from .real_iad_preflight import run_metadata_preflight
+from .native_parity_smoke import run_native_parity_smoke
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,6 +50,7 @@ ARTIFACT_FILES = frozenset({
     "dependency_environment.json", "gates.json",
     "controller_method_cards.json", "synthetic_event_trace.jsonl",
     "synthetic_summary.json", "test_results.json", "source_hashes.json",
+    "real_iad_metadata_preflight.json", "native_parity_smoke.json",
     "stage0_summary.md", "checksums.json",
 })
 
@@ -68,7 +75,10 @@ def _check_environment() -> dict[str, Any]:
         raise RuntimeError(f"Wrong Python environment prefix: {sys.prefix}")
     return {"python_executable": str(actual), "python_version": sys.version,
             "environment_prefix": sys.prefix, "torch_version": torch.__version__,
-            "cuda_available": torch.cuda.is_available(), "execution_device": "cpu"}
+            "cuda_available": torch.cuda.is_available(),
+            "synthetic_execution_device": "cpu",
+            "optional_native_smoke_device": (
+                "cuda" if torch.cuda.is_available() else "unavailable")}
 
 
 def _synthetic_run() -> dict[str, Any]:
@@ -239,17 +249,30 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     dataset_root = Path(os.environ.get("REALIAD_ROOT", r"G:\dataset\realiad"))
     json_root = Path(os.environ.get("REALIAD_JSON_ROOT",
                                    r"G:\dataset\realiad\jsons\realiad_jsons"))
+    real_preflight = run_metadata_preflight(dataset_root, json_root)
+    native_smoke = run_native_parity_smoke(dataset_root, json_root)
     preexisting_archive_changes = [s for s in status
                                    if "outputs/risk_safe_sprint_20261027" in s]
     gates = {
         "G0": {"status": "BLOCKED" if preexisting_archive_changes else "PASS",
                "reason": "Pre-existing tracked historical archive deletions remain in worktree; not modified or staged." if preexisting_archive_changes else "Correct branch and no protected worktree changes."},
         "G1": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic Q-A-TS/Q-B metadata tests passed." if tests_ok else "Synthetic query tests failed; see test_results.json."},
-        "G1_real_data": {"status": "SKIP", "reason": "Dataset path presence checked only; no Real-IAD files or labels opened.",
+        "G1_real_data": {"status": real_preflight["status"],
+                         "reason": ("Official sample identities, train-only support/C64 selection, and label-blind Q-A-TS/Q-B were checked using development-category JSON metadata; no image or mask was opened."
+                                    if real_preflight["status"] == "PASS" else
+                                    real_preflight.get("reason", "See per-class preflight status.")),
+                         "classes": {item["class"]: item["status"]
+                                     for item in real_preflight.get("classes", [])},
                          "dataset_root_present": dataset_root.is_dir(),
                          "json_root_present": json_root.is_dir()},
-        "G2": {"status": "BLOCKED", "reason": "Native v22 score parity not executed; no dataset image/features used."},
-        "G3": {"status": "BLOCKED", "reason": "Synthetic Greedy reference tests pass; live native K=256 and fp16 update parity have not run."},
+        "G2": {"status": native_smoke["status"],
+               "reason": ("Actual development train-normal score parity passed across live native v22, untouched clone, and calibration adapter."
+                          if native_smoke["status"] == "PASS" else
+                          native_smoke.get("reason", "See native_parity_smoke.json."))},
+        "G3": {"status": native_smoke["status"],
+               "reason": ("Disposable native K=256 Greedy update matched the shared Greedy operator exactly per layer; static support digest remained unchanged."
+                          if native_smoke["status"] == "PASS" else
+                          native_smoke.get("reason", "See native_parity_smoke.json."))},
         "G4": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed." if tests_ok else "Synthetic causal tests failed; see test_results.json."},
         "G5": {"status": "PASS" if tests_ok else "FAIL", "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed." if tests_ok else "Synthetic evidence tests failed; see test_results.json."},
         "G6": {"status": "BLOCKED_FIDELITY", "reason": "B5a/B5b and B6 remain BLOCKED_FIDELITY; B7 is executable only under its explicitly provisional method specification."},
@@ -262,7 +285,8 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "branch": branch, "source_commit": source_commit,
         "protocol_version": PROTOCOL_VERSION,
         "profile": asdict(DEFAULT_PROFILE), "profile_sha256": DEFAULT_PROFILE.sha256,
-        "execution": "synthetic_cpu_only", "stage1_run": False, "stage2_run": False,
+        "execution": "synthetic_cpu_dev_metadata_plus_optional_audiojack_train_only_native_parity_smoke",
+        "stage1_run": False, "stage2_run": False,
         "confirmation_outcomes_opened": False,
         "support_regime": "four deployed supports plus 64 additional protected C64 normals",
         "method_cards": METHOD_CARDS,
@@ -271,6 +295,8 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     _json_write(out_dir / "protocol_manifest.json", manifest)
     _json_write(out_dir / "dependency_environment.json", env)
     _json_write(out_dir / "gates.json", gates)
+    _json_write(out_dir / "real_iad_metadata_preflight.json", real_preflight)
+    _json_write(out_dir / "native_parity_smoke.json", native_smoke)
     _json_write(out_dir / "controller_method_cards.json", METHOD_CARDS)
     with (out_dir / "synthetic_event_trace.jsonl").open("w", encoding="utf-8") as f:
         for row in synthetic["trace"]:
@@ -289,8 +315,10 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "# Stage 0 synthetic runner summary", "",
         f"Status: **{'BLOCKED_WIP' if tests_ok else 'FAIL'}; not scientifically validated**.", "",
         f"Branch/commit: `{branch}` / `{source_commit}`.",
-        "Execution used the configured torch environment, CPU, and synthetic metadata only.",
-        "No Real-IAD image, feature, mask, or confirmation label was opened.",
+        "Synthetic mechanisms ran in the configured torch environment on CPU.",
+        f"Real-IAD metadata preflight: {real_preflight['status']}; four development-category JSON indexes were checked without decoding images or masks.",
+        f"Native parity smoke: {native_smoke['status']}; see `native_parity_smoke.json` for the bounded train-only scope.",
+        "No test image, mask, or confirmation-category metadata/outcomes were opened.",
         "Stage 1 and Stage 2 were not run.", "",
         "Gate statuses: " + ", ".join(f"{k}={v['status']}" for k, v in gates.items()),
         "", "The independent review should use `controller_method_cards.json`, `gates.json`,",
