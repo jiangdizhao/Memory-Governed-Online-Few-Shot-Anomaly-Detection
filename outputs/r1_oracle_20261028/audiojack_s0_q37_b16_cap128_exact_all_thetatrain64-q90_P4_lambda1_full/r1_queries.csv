@@ -1,0 +1,17 @@
+stream_position,image_id,official_sample_key,camera_id,label_revealed,static_score,eligible_normal,normal_candidate_index,keep,write_reason
+25,NG/HS/S0092/audiojack__0092_NG_HS_C5_20231023093111.jpg,audiojack__0092_NG_HS,5,normal,0.4886035919189453,True,0,8,easy_but_keep_small
+271,NG/QS/S0086/audiojack__0086_NG_QS_C1_20231023095413.jpg,audiojack__0086_NG_QS,1,normal,0.6133508682250977,True,1,24,fp_rescue
+458,OK/S0303/audiojack_0303_OK_C3_20231021144244.jpg,audiojack_0303_OK,3,normal,0.534634530544281,True,2,8,easy_but_keep_small
+629,NG/ZW/S0086/audiojack__0086_NG_ZW_C4_20231023103543.jpg,audiojack__0086_NG_ZW,4,normal,0.5390318036079407,True,3,8,easy_but_keep_small
+655,NG/BX/S0112/audiojack__0112_NG_BX_C5_20231023130610.jpg,audiojack__0112_NG_BX,5,defect,0.5133337378501892,False,,,
+690,NG/BX/S0075/audiojack__0075_NG_BX_C5_20231023113020.jpg,audiojack__0075_NG_BX,5,defect,0.540712833404541,False,,,
+1085,NG/QS/S0088/audiojack__0088_NG_QS_C5_20231023095438.jpg,audiojack__0088_NG_QS,5,normal,0.5116761326789856,True,4,8,easy_but_keep_small
+1159,OK/S0461/audiojack_0461_OK_C4_20231021153509.jpg,audiojack_0461_OK,4,normal,0.5303615927696228,True,5,8,easy_but_keep_small
+1335,NG/ZW/S0125/audiojack__0125_NG_ZW_C5_20231023104637.jpg,audiojack__0125_NG_ZW,5,normal,0.5117754340171814,True,6,8,easy_but_keep_small
+1430,NG/HS/S0071/audiojack__0071_NG_HS_C5_20231023092721.jpg,audiojack__0071_NG_HS,5,defect,0.507340133190155,False,,,
+1733,NG/ZW/S0054/audiojack__0054_NG_ZW_C3_20231023102745.jpg,audiojack__0054_NG_ZW,3,normal,0.525947630405426,True,7,8,easy_but_keep_small
+1785,NG/ZW/S0070/audiojack__0070_NG_ZW_C5_20231023103003.jpg,audiojack__0070_NG_ZW,5,normal,0.508611798286438,True,8,8,easy_but_keep_small
+1895,NG/ZW/S0087/audiojack__0087_NG_ZW_C5_20231023103549.jpg,audiojack__0087_NG_ZW,5,normal,0.5276741981506348,True,9,8,easy_but_keep_small
+2508,NG/BX/S0084/audiojack__0084_NG_BX_C3_20231023113159.jpg,audiojack__0084_NG_BX,3,defect,0.5476199984550476,False,,,
+2532,NG/QS/S0080/audiojack__0080_NG_QS_C2_20231023095321.jpg,audiojack__0080_NG_QS,2,normal,0.5439441204071045,True,10,8,easy_but_keep_small
+2541,NG/BX/S0114/audiojack__0114_NG_BX_C1_20231023130625.jpg,audiojack__0114_NG_BX,1,defect,0.5944393277168274,False,,,

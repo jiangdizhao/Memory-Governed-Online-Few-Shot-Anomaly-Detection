@@ -1,0 +1,10 @@
+{
+  "r1_audit_probe_scores.csv": "bea5db4507289121b5f47afb7ad23856030def36f7404665785f9805bb19ac37",
+  "r1_event_shadow.csv": "bab4ba6ef11ae85ac14bc9aa5a14f0d863877836dd281542d3da5377004acbf7",
+  "r1_frontier_by_count.csv": "64ae6662c9fbe37e1a93d8088a3ac0662696768d195dc90721cd60af36646590",
+  "r1_provenance.json": "dbce15db1215149a8c41c10b6d2cb170545e3f115c0fee0df25b73e678ca7ed5",
+  "r1_queries.csv": "f5dd8c7d51c284eef634e3de70c895099b9d8a2b482109bcd52ee9084080b2a3",
+  "r1_search_probe_scores.csv": "755e2b97d668af43fcf5c62236c859c5c7e2156d5cf44e97b88c667c878115ee",
+  "r1_search_states.csv": "5c4d1a5e9c08234e70a1684feed9f12100dfa88b89ca39fff9d0e7d8ab0c3160",
+  "r1_summary.json": "7556fc9e7287863dd9f7da3b563000f81847121be53f27024138a84a48ffbc92"
+}
