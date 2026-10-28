@@ -67,6 +67,10 @@ class R0ContractTests(unittest.TestCase):
         self.assertNotEqual(smoke, full)
         self.assertIn("smoke4", str(smoke))
         self.assertIn("full", str(full))
+        q90 = native_output_name(SimpleNamespace(**base, max_query_events=0,
+                                                 theta_mode="train64-q90"))
+        self.assertNotEqual(full, q90)
+        self.assertIn("train64-q90", str(q90))
 
 
 if __name__ == "__main__":
