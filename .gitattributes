@@ -9,3 +9,9 @@ experiments/calibration/stage05_runner.py text eol=lf
 tests/calibration/test_stage05.py text eol=lf
 docs/calibration/STAGE05_*.md text eol=lf
 docs/calibration/audit/stage05_exploratory_v1/** text eol=lf
+
+# Stage 0.75-A protocol and source hashes use canonical LF bytes across platforms.
+experiments/calibration/stage075a*.py text eol=lf
+tests/calibration/test_stage075a.py text eol=lf
+docs/calibration/STAGE075A_*.md text eol=lf
+docs/calibration/audit/stage075a_greedy_ranking_v1/** text eol=lf
