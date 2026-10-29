@@ -44,3 +44,12 @@ The current final protocol decision record is
 It records the Sun-CS endpoint pathology and applicability boundary, B7
 sample-size/query-budget feasibility, method-fidelity limits, and decisions
 still requiring researcher approval.
+
+
+## Stage 0.5 exposure and Stage 0.75 design-only plan
+
+The [Stage 0.5 exploratory statistical report](STAGE05_EXPLORATORY_STATISTICAL_REPORT.md) and [data-exposure ledger](STAGE05_DATA_EXPOSURE_LEDGER.md) record authorized access to labels from four development categories, 200 label-blind query schedules per class/rate, and 20 static native scorer configurations. These outcomes are **exposed development information**, not unseen scientific confirmation. Mint/PCB and masks remain unopened.
+
+The **[Stage 0.75 research agenda](STAGE075_RESEARCH_AGENDA_v0_1.md)** explains why total queried defect count is not the same as timely feedback, why fixed-M0 threshold headroom is distinct from dynamic-memory ranking, and how a future **0.75-A paired native Greedy falsification** should account for five-view same-group memorization and current-state C64 transport. The **[B8 MTEAC hypothesis and method design](STAGE075_B8_MTEAC_RESEARCH_DESIGN_v0_1.md)** records a proposed paired-score memory-transport, normal-only calibration objective, evidence-ladder control states, assumptions, negative controls and required B3/B7 ablations. B8 is **not implemented or frozen**; no new method settings or results are claimed.
+
+**Authorization:** documentation-only in this commit. Stage 0.75-A/B/C experiments, Stage 1 and Stage 2 remain **HOLD** until the researcher issues a separate scoped execution instruction. These design documents do not supersede historical experiment source or authorize changing any frozen controller or query tape.
