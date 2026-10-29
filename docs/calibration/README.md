@@ -70,3 +70,11 @@ The [candidate v3 implementation contract](STAGE075B_IMPLEMENTATION_CONTRACT_CAN
 The [full synthetic results](STAGE075B_SYNTHETIC_RESULTS_REPORT.md), [mathematical falsification report](STAGE075B_B8_MATHEMATICAL_FALSIFICATION_REPORT.md), [ablation report](STAGE075B_B8_ABLATION_REPORT.md), and [research decision candidate](STAGE075B_RESEARCH_DECISION_CANDIDATE.md) describe the v3 matrix. The full calibration suite passed 133 tests and the 48 scenario/seed trajectories replayed deterministically. G1–G15 passed, but G16/Control E is BLOCKED: the B8-M/S/P arms do not independently remove each Full component, and removing the two-class gate would leave the paired gain undefined when either class is missing. Overall Stage 0.75-B acceptance is therefore `STAGE075B_BLOCKED_WIP`. The synthetic observation remains negative for Full: its threshold trajectory matched actual B3 in every row; B3+Offset had higher descriptive BA in 35 of 42 defined pairs.
 
 The compact checksummed [final audit package](audit/stage075b_synthetic_v8/README.md) links to the local blocked runner artifact at `outputs/calibration/stage075b_synthetic_v3_blocked_final_20261029/`. The earlier [audit package v1](audit/stage075b_synthetic_v1/README.md) preserves the superseded candidate-v2 run. No Stage 0.75-C, Stage 1/2, Real-IAD performance evaluation, Mint/PCB outcome access, mask access, or model tuning was performed. This candidate does not authorize a later stage.
+
+## Stage 0.75-A actual B3 and local headroom audit
+
+- [Actual B3 replay report](STAGE075A_ACTUAL_B3_REPLAY_REPORT.md)
+- [Local operating-point headroom report](STAGE075A_LOCAL_HEADROOM_REPORT.md)
+- [B8 simplification research diagnosis](STAGE075A_B8_SIMPLIFICATION_RESEARCH_DIAGNOSIS.md)
+- [B3 headroom decision candidate](STAGE075A_B3_HEADROOM_DECISION_CANDIDATE.md)
+- [Compact audited evidence package](audit/stage075a_b3_headroom_v1/)
