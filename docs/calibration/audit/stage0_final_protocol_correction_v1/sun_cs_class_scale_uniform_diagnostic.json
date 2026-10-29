@@ -1,0 +1,64 @@
+{
+  "diagnostic": {
+    "abstention_fraction": 0.1908256880733945,
+    "amortized_runtime_seconds_per_observation": 0.050274819711669985,
+    "binary_coverage": 0.8091743119266055,
+    "endpoint_policy": "conservative_extended_real",
+    "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+    "endpoint_policy_status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+    "false_reset_count_stationary": 0,
+    "first_binary_prediction_position_zero_based": 46,
+    "first_change_detection_position_zero_based": null,
+    "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+    "n_events": 3815,
+    "offline_target_positive_count": 35,
+    "offline_true_quantile_interval_contains_count": 3814,
+    "offline_true_quantile_interval_coverage": 1.0,
+    "offline_true_quantile_interval_evaluations": 3814,
+    "peak_python_bytes_tracemalloc_separate_run": 3926124,
+    "post_shift_change_detected": null,
+    "post_shift_change_detection_latency": null,
+    "prediction_counts": {
+      "ABSTAIN_CHANGE_DETECTED": 0,
+      "ABSTAIN_COLD_START": 1,
+      "SUN_CS_ABSTAIN": 727,
+      "SUN_CS_ANOMALY": 0,
+      "SUN_CS_BENIGN": 3087
+    },
+    "process_rss_peak_bytes_sampled": 45846528,
+    "process_rss_sampling_status": "SAMPLED_PSUTIL",
+    "python_peak_measurement_status": "MEASURED_SEPARATE_TRACED_RUN",
+    "reset_count": 0,
+    "runtime_seconds_untraced": 191.798437200021,
+    "scenario": "class_scale_uniform",
+    "score_history_final": 3815,
+    "seed": 2026102904,
+    "shift_event_zero_based": null,
+    "source_target": "1[score > true synthetic Q_Ft(0.99)]",
+    "source_target_binary_confusion_on_covered_events": {
+      "FN": 0,
+      "FP": 0,
+      "TN": 3087,
+      "TP": 0
+    },
+    "source_target_binary_coverage": 0.8091743119266055,
+    "source_target_selective_accuracy": 1.0,
+    "source_target_selective_fnr": null,
+    "source_target_selective_fpr": 0.0,
+    "stationarity": "STATIONARY"
+  },
+  "provenance": {
+    "decoded_json_prefix_characters": 17465,
+    "real_iad_data_or_outcomes_used": false,
+    "source_artifact": "docs/calibration/audit/stage0_research_closure_v1/sun_cs_continuous_diagnostics.json",
+    "source_artifact_package_copy": "sun_cs_class_scale_uniform_source_artifact.json",
+    "source_artifact_package_copy_sha256": "f2d4eaf8573858e7df1213c91bfcb2be75378189071475b1883653ee4d096f9e",
+    "source_artifact_sha256": "23d94bc8d7ef5a39898bca3ecadcd34db5a74d15d6e124e25881bf471105dbd9",
+    "source_fingerprints_at_execution": {
+      "diagnostic_source": "b746a0b26d28022b0743dd5e140c4caa3daf1a533a83f350ec654d2531773645",
+      "sun_cs_source": "a7aa53de6f6eab9b084b5f167b6dc3c399b0c7b91f39fff67111188502be306e"
+    },
+    "stage1_or_stage2_executed": false
+  },
+  "schema": "calibration.sun_cs_class_scale_uniform_supplement.v1"
+}

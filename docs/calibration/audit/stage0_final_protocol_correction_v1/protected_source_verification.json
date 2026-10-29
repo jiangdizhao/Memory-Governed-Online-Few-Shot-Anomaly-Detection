@@ -1,0 +1,42 @@
+{
+  "baseline_commit": "9d2d20df0bd94629eaea0f8cbd6a6f84ebc28a44",
+  "baseline_path": "docs/calibration/PROTECTED_SOURCE_BASELINE.json",
+  "dependency_hash_count": 13,
+  "failures": [],
+  "recorded_but_unresolved_dependencies": [],
+  "recorded_dependency_paths": [
+    "experiments/a0_a1_strict4_matched.py",
+    "experiments/p0_protocol_audit.py",
+    "experiments/risk_safe/__init__.py",
+    "experiments/risk_safe/d2_threshold_calibration.py",
+    "experiments/risk_safe/native_bridge.py",
+    "experiments/risk_safe/p01_falsification_native.py",
+    "experiments/risk_safe/preflight.py",
+    "experiments/risk_safe/query_protocol.py",
+    "experiments/risk_safe/shadow_memory.py",
+    "experiments/v02_architecture_core.py",
+    "experiments/v02_memory.py",
+    "test_phase3_AIF_simplified_v22.py",
+    "vmb_visionad_new.py"
+  ],
+  "resolved_dependency_paths": [
+    "experiments/a0_a1_strict4_matched.py",
+    "experiments/p0_protocol_audit.py",
+    "experiments/risk_safe/__init__.py",
+    "experiments/risk_safe/d2_threshold_calibration.py",
+    "experiments/risk_safe/native_bridge.py",
+    "experiments/risk_safe/p01_falsification_native.py",
+    "experiments/risk_safe/preflight.py",
+    "experiments/risk_safe/query_protocol.py",
+    "experiments/risk_safe/shadow_memory.py",
+    "experiments/v02_architecture_core.py",
+    "experiments/v02_memory.py",
+    "test_phase3_AIF_simplified_v22.py",
+    "vmb_visionad_new.py"
+  ],
+  "shadow_memory_baseline_sha256": "70c2ba3d29b225f241d9ad147f5be168ee2e0613f452e1428cc585bbce3339b5",
+  "shadow_memory_byte_equal_to_baseline": true,
+  "shadow_memory_worktree_sha256": "70c2ba3d29b225f241d9ad147f5be168ee2e0613f452e1428cc585bbce3339b5",
+  "status": "PASS",
+  "unrecorded_resolved_dependencies": []
+}

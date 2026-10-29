@@ -9,7 +9,8 @@ from experiments.calibration.metrics import PrivateOutcomeLedger
 from experiments.calibration.protocol import ScoreResult, StreamEvent, TapeRecord
 from experiments.calibration.query_tape import build_qa_ts
 from experiments.calibration.sun_cs import (
-    EXTENDED_REAL_ENDPOINT_POLICY, PRIMARY_ENDPOINT_POLICY, SunCSController,
+    EMPIRICAL_EXTREMA_SENSITIVITY_POLICY, EXTENDED_REAL_ENDPOINT_POLICY,
+    PRIMARY_ENDPOINT_POLICY, SUN_CS_CHECKPOINT_SCHEMA, SunCSController,
     SunCSUndefinedSourceBehavior, algorithm2_optimized, algorithm2_reference,
     algorithm3_reference, classify_score, confidence_radius,
     empirical_quantile, encode_interval, quantile_confidence_set,
@@ -29,9 +30,12 @@ class SunCSReferenceTests(unittest.TestCase):
         values = [7.0, 1.0, 9.0, 3.0, 5.0]
         self.assertEqual(empirical_quantile(0.55, values), 4.0)
         self.assertEqual(empirical_quantile(0.60, values), 5.0)
-        self.assertEqual(empirical_quantile(0.0, values), 1.0)
-        self.assertEqual(empirical_quantile(1.0, values), 9.0)
-        self.assertEqual(empirical_quantile(0.01, values), 1.0)
+        self.assertEqual(empirical_quantile(
+            0.0, values, endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY), 1.0)
+        self.assertEqual(empirical_quantile(
+            1.0, values, endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY), 9.0)
+        self.assertEqual(empirical_quantile(
+            0.01, values, endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY), 1.0)
         self.assertEqual(empirical_quantile(0.0, values,
                                             endpoint_policy=EXTENDED_REAL_ENDPOINT_POLICY),
                          -math.inf)
@@ -55,7 +59,8 @@ class SunCSReferenceTests(unittest.TestCase):
         self.assertAlmostEqual(actual[0], ref(low_q), places=12)
         self.assertAlmostEqual(actual[1], ref(high_q), places=12)
         small = [0.25, 0.5, 0.75]
-        self.assertEqual(quantile_confidence_set(.99, .01, small),
+        self.assertEqual(quantile_confidence_set(.99, .01, small,
+                         endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY),
                          (min(small), max(small)))
         self.assertEqual(quantile_confidence_set(
             .99, .01, small, endpoint_policy=EXTENDED_REAL_ENDPOINT_POLICY),
@@ -78,7 +83,8 @@ class SunCSReferenceTests(unittest.TestCase):
             [0.1 + (i % 7) * .01 for i in range(31)],
         ]
         for seq in sequences:
-            for policy in (PRIMARY_ENDPOINT_POLICY, EXTENDED_REAL_ENDPOINT_POLICY):
+            for policy in (PRIMARY_ENDPOINT_POLICY,
+                           EMPIRICAL_EXTREMA_SENSITIVITY_POLICY):
                 ref = algorithm2_reference(seq, .99, .01, endpoint_policy=policy)
                 optimized = algorithm2_optimized(seq, .99, .01,
                                                 endpoint_policy=policy)
@@ -89,8 +95,12 @@ class SunCSReferenceTests(unittest.TestCase):
         piecewise = [0.05 + .01 * (i % 5) for i in range(20)] + [
             0.75 + .01 * (i % 5) for i in range(20)]
         for scores in (stationary, piecewise):
-            expected = algorithm3_reference(scores, .99, .01)
-            controller = SunCSController(.99, .01)
+            expected = algorithm3_reference(
+                scores, .99, .01,
+                endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY)
+            controller = SunCSController(
+                .99, .01,
+                endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY)
             observed = []
             for t, score in enumerate(scores):
                 obs = Observation(t, f"sun-{t}", t % 5 + 1, score, 0,
@@ -108,14 +118,83 @@ class SunCSReferenceTests(unittest.TestCase):
             self.assertEqual(observed, expected)
         self.assertEqual(expected[0]["reason"], "ABSTAIN_COLD_START")
         self.assertTrue(any(row["reason"] == "ABSTAIN_CHANGE_DETECTED"
-                            for row in algorithm3_reference(piecewise)))
+                            for row in algorithm3_reference(
+                                piecewise, endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY)))
+
+    def test_empirical_extrema_false_reset_pathology_and_conservative_control(self):
+        a, b = 0.25, 0.75
+        for policy in (EMPIRICAL_EXTREMA_SENSITIVITY_POLICY,
+                       PRIMARY_ENDPOINT_POLICY):
+            reference = algorithm2_reference([a, b], .99, .01,
+                                             endpoint_policy=policy)
+            optimized = algorithm2_optimized([a, b], .99, .01,
+                                             endpoint_policy=policy)
+            self.assertEqual(optimized, reference)
+            trace = algorithm3_reference([a, b, a], .99, .01,
+                                          endpoint_policy=policy)
+            controller = SunCSController(.99, .01, endpoint_policy=policy)
+            live = []
+            for t, score in enumerate((a, b, a)):
+                obs = Observation(t, f"endpoint-pathology-{policy.name}-{t}",
+                                  1, score, 0, "fixed-state")
+                pred = controller.predict(obs)
+                live.append({
+                    "t": t, "prediction": pred.label,
+                    "reason": pred.reason,
+                    "confidence_set": pred.details["confidence_set"],
+                    "change_detected": pred.details["change_detected"],
+                    "segment_start": pred.details["segment_start"],
+                    "history_size": pred.details["history_size"],
+                })
+                controller.observe_score(obs)
+            self.assertEqual(live, trace)
+
+        empirical = EMPIRICAL_EXTREMA_SENSITIVITY_POLICY
+        self.assertEqual(quantile_confidence_set(.99, .01, [a],
+                         endpoint_policy=empirical), (a, a))
+        self.assertEqual(quantile_confidence_set(.99, .01, [a, b],
+                         endpoint_policy=empirical), (a, b))
+        self.assertEqual(quantile_confidence_set(.99, .01, [b],
+                         endpoint_policy=empirical), (b, b))
+        self.assertTrue(algorithm2_reference(
+            [a, b], .99, .01, endpoint_policy=empirical)["change_detected"])
+
+        for values in ([a], [a, b], [b]):
+            self.assertEqual(quantile_confidence_set(
+                .99, .01, values, endpoint_policy=PRIMARY_ENDPOINT_POLICY),
+                (-math.inf, math.inf))
+        self.assertFalse(algorithm2_reference(
+            [a, b], .99, .01,
+            endpoint_policy=PRIMARY_ENDPOINT_POLICY)["change_detected"])
+        self.assertFalse(algorithm2_optimized(
+            [a, b], .99, .01,
+            endpoint_policy=PRIMARY_ENDPOINT_POLICY)["change_detected"])
+        self.assertNotEqual(algorithm3_reference(
+            [a, b, a], .99, .01,
+            endpoint_policy=PRIMARY_ENDPOINT_POLICY)[2]["reason"],
+            "ABSTAIN_CHANGE_DETECTED")
+
+    def test_conservative_upper_endpoint_clipping_precludes_anomaly(self):
+        values = [float(i) for i in range(1, 3816)]
+        for n in (64, 256, 1050, 3815):
+            radius = confidence_radius(n, .01)
+            low_q = max(.99 - 2 * radius, 0.0)
+            high_q = min(.99 + 2 * radius, 1.0)
+            self.assertEqual(high_q, 1.0)
+            interval = quantile_confidence_set(
+                .99, .01, values[:n], endpoint_policy=PRIMARY_ENDPOINT_POLICY)
+            self.assertEqual(interval[1], math.inf)
+            self.assertIsNone(classify_score(values[n - 1] + 1.0, interval))
+            self.assertGreater(low_q, 0.0)
 
     def test_algorithm3_stationary_coverage_and_piecewise_reset_diagnostics(self):
         stationary = [0.5 + .08 * math.sin(i * .19) for i in range(80)]
         piecewise = [0.1 + .02 * math.sin(i * .37) for i in range(40)] + [
             0.8 + .02 * math.sin(i * .37) for i in range(40)]
-        stationary_trace = algorithm3_reference(stationary)
-        piecewise_trace = algorithm3_reference(piecewise)
+        stationary_trace = algorithm3_reference(
+            stationary, endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY)
+        piecewise_trace = algorithm3_reference(
+            piecewise, endpoint_policy=EMPIRICAL_EXTREMA_SENSITIVITY_POLICY)
         for trace in (stationary_trace, piecewise_trace):
             self.assertEqual(trace[0]["reason"], "ABSTAIN_COLD_START")
             covered = sum(row["prediction"] is not None for row in trace)
@@ -123,6 +202,9 @@ class SunCSReferenceTests(unittest.TestCase):
             self.assertEqual(covered + abstained, len(trace))
             self.assertGreater(covered, 0)
         self.assertTrue(any(row["change_detected"] for row in piecewise_trace))
+        conservative_piecewise = algorithm3_reference(piecewise)
+        self.assertFalse(any(row["change_detected"]
+                             for row in conservative_piecewise))
 
     def test_checkpoint_restore_reproduces_remaining_event_trace(self):
         scores = [0.2 + .1 * math.sin(i * .23) for i in range(36)]
@@ -146,6 +228,15 @@ class SunCSReferenceTests(unittest.TestCase):
             restored.observe_score(obs)
         self.assertEqual(actual, expected)
         self.assertEqual(restored.state_dict(), original.state_dict())
+        self.assertEqual(restored.state_dict()["schema"], SUN_CS_CHECKPOINT_SCHEMA)
+
+    def test_checkpoint_v1_is_rejected_after_endpoint_candidate_versioning(self):
+        state = SunCSController().state_dict()
+        state["version"] = "B6-SUN-CS-A3-PAPER-EQUATIONS-DECLARED-CONVENTIONS-v1.0.0"
+        state.pop("schema")
+        state.pop("endpoint_policy_schema")
+        with self.assertRaisesRegex(ValueError, "checkpoint identity mismatch"):
+            SunCSController().load_state_dict(state)
 
     def test_engine_event_boundary_checkpoint_resume_is_identical(self):
         scores = [0.2 + .08 * math.sin(i * .17) for i in range(44)]

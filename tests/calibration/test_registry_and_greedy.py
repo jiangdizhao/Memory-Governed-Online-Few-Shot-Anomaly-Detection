@@ -52,6 +52,10 @@ class RegistryGreedyTests(unittest.TestCase):
         self.assertEqual(METHOD_CARDS["B6"]["status"],
                          "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS")
         self.assertEqual(METHOD_CARDS["B6"]["defaults"]["p"], .99)
+        self.assertEqual(METHOD_CARDS["B6"]["defaults"]["endpoint_policy"],
+                         "conservative_extended_real")
+        self.assertEqual(METHOD_CARDS["B6"]["sensitivity_variants"][0]["id"],
+                         "SUN_CS_A3_EMPIRICAL_EXTREMA")
         self.assertIn("no author-code trace parity claim",
                       METHOD_CARDS["B6"]["implementation_conventions"][-1])
         for key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK",

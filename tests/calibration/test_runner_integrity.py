@@ -4,7 +4,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from experiments.calibration import runner
+from experiments.calibration import PROTOCOL_VERSION, runner
+from experiments.calibration.method_registry import METHOD_CARDS
 from experiments.calibration.profiles import DEFAULT_PROFILE, canonical_json
 
 
@@ -20,6 +21,9 @@ class RunnerIntegrityTests(unittest.TestCase):
         })
         runner._json_write(directory / "protocol_manifest.json", {
             "profile_sha256": DEFAULT_PROFILE.sha256,
+            "method_cards_sha256": runner._sha(
+                canonical_json(METHOD_CARDS).encode()),
+            "protocol_version": PROTOCOL_VERSION,
             "overall_status": "BLOCKED_WIP",
         })
         runner._json_write(directory / "source_hashes.json", {

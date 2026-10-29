@@ -1,0 +1,39 @@
+{
+  "absolute_image_scores_emitted": false,
+  "additional_protected_c64_count": 64,
+  "c64_group_sha256": "d61a332a7698117fe0152482ef48b5e3583e8248a5578c8ffc5f056196c9ce16",
+  "checkpoint_sha256": "36e4deffbaef061a2576705b0c36f93621e2ae20bf6274694821b0b492551b51",
+  "device": "cuda",
+  "dinov2_hub_source_tree_sha256": "1de67887ca330bdfaad8ccd45128d2b9313d63aa707bbe8e4f38310e52005b24",
+  "direct_native_vs_calibration_adapter_score_abs_delta": 0.0,
+  "dynamic_capacity_per_layer": [
+    256
+  ],
+  "live_native_vs_untouched_clone_score_abs_delta": 0.0,
+  "model": "dinov2_vitl14_reg",
+  "native_greedy_update": {
+    "comparison": "full native MemoryArm.update vs GreedyBank.proposed",
+    "equal_each_layer": [
+      true
+    ],
+    "greedy_operator_counts": {
+      "appended": 8,
+      "replaced": 0,
+      "skipped": 0
+    },
+    "keep_selected": 8,
+    "passed": true
+  },
+  "schema": "calibration.stage0.native_parity_smoke.v1",
+  "scope": "audiojack_train_only_non_scientific_parity_smoke",
+  "stage1_or_stage2_run": false,
+  "static_support_sha256": "c5f3dd6494f105a9197e7fc9b275d56d8a084b0eb4aa4052a157a9a6fed5b3d2",
+  "status": "PASS",
+  "support_c64_official_groups_disjoint": true,
+  "support_count": 4,
+  "support_group_sha256": "27152d5ae58919a13f8b0c93072f3b86cc14db4f69dc248c07ca32449d398eb4",
+  "synthetic_update_threshold_policy": "fixture_score + max(1, abs(fixture_score)); diagnostic only",
+  "test_or_confirmation_images_opened": false,
+  "torch_version": "2.0.1+cu117",
+  "update_fixture_group_sha256": "fdb4d898d5098d09618d09e59dbc7bd5e89fa304843d3a613d22aca3d184a23b"
+}

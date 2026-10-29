@@ -1,4 +1,4 @@
-# Stage 1 evaluation protocol — frozen candidate v1
+# Stage 1 evaluation protocol — frozen candidate v2
 
 **Status: `RESEARCHER_APPROVAL_REQUIRED`. Stage 1 is not authorized by this
 document.** This candidate freezes an evaluation plan for independent review
@@ -42,7 +42,7 @@ The outcome target for evaluation is the Real-IAD physical-defect label
 |---|---|---|
 | B5a | SPOT | Every causal unlabeled score; upper-tail EVT alarms. It ignores physical labels and queries. |
 | B5b | dSPOT | Every causal unlabeled score; detrended upper-tail EVT alarms. It ignores physical labels and queries. |
-| B6 | Sun-CS Algorithm 3 | Every causal unlabeled scalar score; unsupervised score-quantile anomaly target and native abstention. It ignores physical labels, queried feedback, and C64 offline matching. |
+| B6 | Sun-CS Algorithm 3, conservative extended-real primary | Every causal unlabeled scalar score; unsupervised score-quantile anomaly target and native abstention. It ignores physical labels, queried feedback, and C64 offline matching. Empirical-extrema is a named sensitivity version, not the primary. |
 
 Group II methods retain their original score-only update rules. The evaluator
 may score their predictions against Real-IAD physical-defect labels after the
@@ -119,8 +119,18 @@ generated output may overwrite an earlier run.
 | B4 | alpha/beta targets 0.10; gamma-normal/gamma-defect 0.005; class-side state updates only on the matching queried label; exact registered empirical bound convention. |
 | B5a SPOT | n_init=1000 scores, high empirical level 0.98, tail risk q=0.001, ten Grimshaw starts, tolerance 1e-6. Source-native predictions unavailable before initialization. |
 | B5b dSPOT | d=50 local window, then 1000 residual warm-up scores, level .98, risk q=.001, ten Grimshaw starts, tolerance 1e-6. Both stages are source-native unavailable predictions. |
-| B6 Sun-CS | p=.99, delta=.01; primary `empirical_extrema` endpoint policy; raw Equation (2) radius, no clamp; empty past -> `ABSTAIN_COLD_START`; decision-before-append; change-event abstention and reset. The extended-real endpoint sensitivity is a separate diagnostic, not selected by observed data. |
+| B6 Sun-CS | Version `B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0`; p=.99, delta=.01; primary `conservative_extended_real` endpoint policy; raw Equation (2) radius, no clamp; empty past -> `ABSTAIN_COLD_START`; decision-before-append; change-event abstention and reset. `SUN_CS_A3_EMPIRICAL_EXTREMA` is a separate sensitivity version. Checkpoints use schema `calibration.sun_cs_checkpoint.v2` and reject v1 identity. |
 | B7 SCDAC-G | v0.1 provisional defaults: min normals 16, min queried defects 8, delta=.05, descriptive support FPR/FNR .20/.20, diagnostic FPR targets .05/.10/.20, movement penalty .05, epsilon 1e-12, max threshold step .01, no cooldown. These choices remain subject to independent method review. |
+
+The B6 source-paper target is `1[S_t > Q_Ft(.99)]`, an anomaly relative to
+the score-stream quantile. Evaluation may additionally compare the resulting
+predictions with the Real-IAD physical-defect target, but those targets are not
+interchangeable. The conservative endpoint candidate can have limited
+source-native binary coverage at finite stream lengths; this is reported as
+applicability evidence, not repaired by using defect labels. The empirical
+endpoint sensitivity is reported separately. There is no verified author-code
+parity, and neither endpoint convention inherits a theorem for scores changed
+by adaptive memory or selective physical-label feedback.
 
 No parameter is tuned on Real-IAD outcomes in Stage 0. Any post-approval
 methodological change requires a versioned rationale and a pre-frozen holdout
@@ -169,6 +179,87 @@ failure. Report image-level and official-sample-group-level query fractions.
 For B7, label its one-sided Clopper-Pearson values as descriptive diagnostics.
 They do not certify online risk control under selective labels, serial
 dependence, memory rescoring, and post-selection.
+
+### B7 activation and descriptive-feasibility reporting
+
+For B7, report queried normal and defect image counts separately from the
+eligible current-memory normal-anchor and queried-defect-anchor counts. Record
+the first event reaching each evidence state (`NORMAL_ONLY`, `BOTH`,
+`CONFLICT`), each state's event fraction, HOLD frequency, actual threshold
+update count, first event with two-sided evidence, first event with a
+descriptive feasible set, and first nonzero threshold change. Also report
+candidate and risk-bound evaluations, descriptive feasibility rate (both
+conditional on two-sided evidence availability and over the full stream),
+conflict reasons (`INSUFFICIENT_PRECISION`,
+`RISK_CONSTRAINT_INCOMPATIBILITY`, and
+`UNIDENTIFIABLE_SCORE_DISTRIBUTIONS`), memory changes, and anchor-evidence
+revision counts.
+
+Use separate fields for `TWO_SIDED_EVIDENCE_AVAILABLE` and
+`DESCRIPTIVE_TWO_SIDED_CONSTRAINT_FEASIBLE`. The first means the current
+minimum eligible counts are met; the second means at least one candidate
+threshold satisfies both registered descriptive upper-endpoint limits. An
+available two-sided sample is not automatically feasible.
+
+With minimum queried defects 8, confidence delta .05, and descriptive FNR
+target .20, zero errors among 8 defects gives an upper endpoint of about
+.31234. The minimum sample size whose zero-error endpoint is at most .20 is 14:
+`U(0,n)=1-.05^(1/n)`, with `U(0,13)>.20` and `U(0,14)<=.20`. At least 14 zero-error
+queried defect anchors are required for this specific descriptive
++precision condition. Thus eight
+defects can activate nominal two-sided processing but cannot by themselves
+support the target, even under zero observed errors. This is a fixed-time
+descriptive sample-size calculation, not an online risk guarantee.
+
+### B6 endpoint identifiability and applicability reporting
+
+The primary endpoint policy represents a clipped lower q=0 endpoint as
+negative infinity and a clipped upper q=1 endpoint as positive infinity.
+For p=.99 and delta=.01, the upper requested level is 1 at n=64, 256, 1,050,
+and 3,815. At those stream sizes the primary controller cannot issue a finite
+score anomaly decision (`score > +infinity` is false); it can issue benign
+decisions below the lower endpoint or abstain. Report this as an endpoint
+identifiability limitation, not a software failure or Real-IAD performance
+estimate. The empirical-extrema sensitivity remains fully reported to expose
+its numerical behavior.
+
+### Preregistered source-native coverage decision
+
+For each unsupervised source-native method, report full-stream, common-horizon,
+normal-class, and defect-class coverage from its actual output modes. A
+source-native method is eligible for ordinary Full-stream binary BA only when
+it emits a binary prediction for every event in that denominator. If any
+startup-unavailable or abstention event remains, report BA as undefined and
+report coverage and selective metrics instead. This is a denominator rule,
+not a post-result coverage cutoff; no comparator is removed because its
+coverage is low. Report the registered common horizon at zero-based `t=1050`
+on the identical event positions for all methods.
+
+If a source-native method has little or no usable binary coverage, retain it
+as an unsupervised applicability reference and report the result as
+supplementary source-task evidence. Do not describe it as a full-coverage
+binary detector. Its separate Frozen-Theta row may receive full-stream binary
+metrics only if it actually emits a binary decision for every event; always
+report the fractions decided by the original method, startup fallback, and
+abstention fallback. A hybrid's result is not attributed to the unmodified
+source method.
+
+### Locked query-count and B7 feasibility context
+
+Metadata-only Stage 0 counts give 3% Q-A-TS budgets of 114 Audiojack, 116
+Regulator, 115 Switch, and 114 Rolled Strip Base queried images (459 total
+across 15,295 images). These counts use half-up rounding and the label-blind
+one-view-per-official-group tape; they do not disclose defect prevalence.
+The separate [B7 activation feasibility specification](B7_ACTIVATION_FEASIBILITY_REPORTING_v1.md)
+contains hypothetical independent-Bernoulli calculations at queried defect
+fractions .05, .10, .20, and .30. Those assumptions are sensitivity scenarios,
+not Real-IAD prevalence estimates and not query-policy changes.
+
+If Stage 1 B7 fails to reach two-sided evidence or never obtains a descriptive
+feasible threshold, report the state occupancy, HOLD frequency, counts,
+feasibility denominator, and conflict reasons as the result. Do not lower the
+minimum defect count, change delta, raise the query budget, use unqueried
+defects, or substitute another method while retaining the B7 label.
 
 ## 7. Cross-method assumptions and valid claims
 

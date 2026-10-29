@@ -1,10 +1,13 @@
-# Stage 0 gate amendment — versioned candidate
+# Stage 0 gate amendment — versioned candidate with final protocol correction
+
+**Revision:** sixth-pass gate dimensions plus the v2 Sun-CS endpoint and B7
+feasibility correction.
 
 **Status: `RESEARCHER_APPROVAL_REQUIRED`.** This document proposes reporting
 dimensions for independent review. It does not change the current mandatory
 gate definitions, remove a comparator, or authorize Stage 1. Until a researcher
 approves or rejects it, report both the existing gate result and the candidate
-dimensions.
+dimensions. No candidate PASS is a Stage 1 authorization.
 
 ## Rationale
 
@@ -29,6 +32,15 @@ guarantee transfer. If a source equation remains materially ambiguous, that
 method remains BLOCKED and the existing mandatory comparator requirement stays
 in force pending researcher decision.
 
+For B6, the v2 implementation makes `conservative_extended_real` the primary
+declared endpoint convention and retains `empirical_extrema` as a separately
+named sensitivity version. The two-observation stationary false-reset
+pathology is reproduced and regression-tested. Both remain
+`PAPER_EQUATIONS_WITH_DECLARED_CONVENTIONS`; no verified author-code parity is
+claimed. The conservative policy's lack of finite anomaly decisions at
+registered class-length sizes is an applicability result, not a gate failure
+or reason to silently remove Sun-CS.
+
 ## G7 — four independent validity dimensions
 
 | Candidate dimension | Evidence required | Candidate reporting rule |
@@ -43,6 +55,14 @@ mathematically well-specified, independent-reference-tested method; it does
 leave source implementation parity explicitly unverified. This distinction is
 a candidate amendment and is not approved by this implementation.
 
+Sun-CS's paper target remains a score-quantile anomaly, distinct from the
+Real-IAD physical-defect target. Its source assumes an IID score process for
+the cited coverage result, with additional conditions for change-detection
+claims. Adaptive memory can make scores dependent and nonstationary. Empirical
+physical-defect measurements may be reported under a frozen protocol, but
+source guarantees do not transfer. `Empirical comparability does not imply
+theoretical equivalence.`
+
 ## G9 — scope-specific integration evidence
 
 | Candidate dimension | Evidence required | Candidate reporting rule |
@@ -52,6 +72,14 @@ a candidate amendment and is not approved by this implementation.
 | `G9_FULL_ENGINE_INTEGRATION` | Actual PrequentialEngine, B7, query-normal memory writes, queried-normal LSO, current C64 rescore, both feedback scenarios, and complete resume parity. | Name the result `B7_SYNTHETIC_FULL_ENGINE_ACTIVATION_PASS`; synthetic only. |
 | `G9_ALL_REGISTERED_METHODS` | Every original and separately registered operational variant participates in the tested shared engine; availability, abstentions, fallbacks, and metrics are accounted. | Never infer from a subset or omit a blocked row. |
 | `G9_SCIENTIFIC_VALIDATION_NOT_STAGE0` | Real-IAD precommitted evaluation, statistical analysis, independent classes/seeds, and later review. | OUT OF SCOPE / NOT RUN in Stage 0. |
+
+The added seeded continuous-stream tests distinguish stationary IID uniform,
+stationary lognormal, and a predeclared piecewise-uniform shift for both Sun-CS
+endpoint policies. They provide endpoint-mechanism, coverage, reset, and
+computational evidence only; they do not establish Real-IAD performance.
+B7's separate query-budget probabilities are hypothetical Bernoulli
+sensitivity scenarios from metadata-only query counts, not estimates of
+development defect prevalence.
 
 ## Existing-gate preservation and approval
 

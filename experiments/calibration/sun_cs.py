@@ -31,27 +31,39 @@ class SunCSUndefinedSourceBehavior(SunCSReferenceError):
 
 Interval = tuple[float, float]
 EndpointPolicy = Literal["empirical_extrema", "conservative_extended_real"]
-SUN_CS_VERSION = "B6-SUN-CS-A3-PAPER-EQUATIONS-DECLARED-CONVENTIONS-v1.0.0"
+SUN_CS_VERSION = "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0"
+SUN_CS_EMPIRICAL_EXTREMA_VERSION = (
+    "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0")
+SUN_CS_ENDPOINT_POLICY_SCHEMA = "sun_cs_endpoint_policy.v2"
+SUN_CS_CHECKPOINT_SCHEMA = "calibration.sun_cs_checkpoint.v2"
 
 
 @dataclass(frozen=True)
 class SunCSEndpointPolicy:
-    name: EndpointPolicy = "empirical_extrema"
+    name: EndpointPolicy = "conservative_extended_real"
     status: str = "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS"
 
     def __post_init__(self) -> None:
-        expected = ("PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS"
-                    if self.name == "empirical_extrema" else
-                    "CONSERVATIVE_ENDPOINT_SENSITIVITY")
         if self.name not in ("empirical_extrema", "conservative_extended_real"):
             raise ValueError("Unknown Sun-CS endpoint policy")
+        expected = ("PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS"
+                    if self.name == "conservative_extended_real" else
+                    "EMPIRICAL_EXTREMA_SENSITIVITY")
         if self.status != expected:
             raise ValueError("Sun-CS endpoint policy status/version mismatch")
 
+    @property
+    def method_version(self) -> str:
+        return (SUN_CS_VERSION if self.name == "conservative_extended_real" else
+                SUN_CS_EMPIRICAL_EXTREMA_VERSION)
+
 
 PRIMARY_ENDPOINT_POLICY = SunCSEndpointPolicy()
-EXTENDED_REAL_ENDPOINT_POLICY = SunCSEndpointPolicy(
-    "conservative_extended_real", "CONSERVATIVE_ENDPOINT_SENSITIVITY")
+EMPIRICAL_EXTREMA_SENSITIVITY_POLICY = SunCSEndpointPolicy(
+    "empirical_extrema", "EMPIRICAL_EXTREMA_SENSITIVITY")
+# Compatibility name retained for historical callers. It resolves to the new
+# primary policy; the old endpoint behavior is explicitly named as a sensitivity.
+EXTENDED_REAL_ENDPOINT_POLICY = PRIMARY_ENDPOINT_POLICY
 
 
 def confidence_radius(t: int, delta: float) -> float:
@@ -75,10 +87,11 @@ def empirical_quantile(q: float, values: Iterable[float], *,
     """Paper midpoint quantile with the registered endpoint/rank convention.
 
     The paper specifies midpoint order statistics at floor(q*n), ceil(q*n),
-    one-based. At q=0 the primary variant selects the minimum; q=1 selects the
-    maximum. For a strictly interior q with floor(q*n)=0, both rank lookups
-    are extended to the first order statistic. The secondary diagnostic uses
-    -inf/+inf at exact q endpoints and is not author-code parity.
+    one-based. At exact q endpoints the conservative primary uses -inf/+inf;
+    the separately versioned empirical-extrema sensitivity uses the sample
+    minimum/maximum. For a strictly interior q with floor(q*n)=0, both rank
+    lookups extend to the first order statistic. Neither convention claims
+    author-code parity.
     """
     q = float(q)
     ordered = sorted(float(value) for value in values)
@@ -393,7 +406,8 @@ class SunCSController:
         upper = confidence_set[1] if confidence_set else None
         threshold = upper if upper is not None and math.isfinite(upper) else None
         details = {
-            "method_version": SUN_CS_VERSION,
+            "method_version": self.endpoint_policy.method_version,
+            "endpoint_policy_schema": SUN_CS_ENDPOINT_POLICY_SCHEMA,
             "endpoint_policy": self.endpoint_policy.name,
             "source_target": "1[S_t > Q_Ft(p)]",
             "physical_defect_guarantee": False,
@@ -444,7 +458,9 @@ class SunCSController:
         return float(self._next_interval[1])
 
     def state_dict(self) -> dict[str, Any]:
-        return {"name": self.name, "version": SUN_CS_VERSION,
+        return {"name": self.name, "version": self.endpoint_policy.method_version,
+                "schema": SUN_CS_CHECKPOINT_SCHEMA,
+                "endpoint_policy_schema": SUN_CS_ENDPOINT_POLICY_SCHEMA,
                 "p": self.p, "delta": self.delta,
                 "endpoint_policy": self.endpoint_policy.name,
                 "endpoint_status": self.endpoint_policy.status,
@@ -455,7 +471,10 @@ class SunCSController:
                 "target": "score_quantile_indicator_not_physical_defect"}
 
     def load_state_dict(self, state: dict[str, Any]) -> None:
-        if (state.get("name") != self.name or state.get("version") != SUN_CS_VERSION or
+        if (state.get("schema") != SUN_CS_CHECKPOINT_SCHEMA or
+                state.get("endpoint_policy_schema") != SUN_CS_ENDPOINT_POLICY_SCHEMA or
+                state.get("name") != self.name or
+                state.get("version") != self.endpoint_policy.method_version or
                 state.get("p") != self.p or state.get("delta") != self.delta or
                 state.get("endpoint_policy") != self.endpoint_policy.name or
                 state.get("endpoint_status") != self.endpoint_policy.status or
@@ -485,7 +504,9 @@ def unique_offline_match(dataset_sets: Sequence[Interval],
     return matches[0] if len(matches) == 1 else None
 
 
-def run_class_scale_synthetic_diagnostic(n: int = 3815) -> dict[str, Any]:
+def run_class_scale_synthetic_diagnostic(
+        n: int = 3815,
+        endpoint_policy: SunCSEndpointPolicy = PRIMARY_ENDPOINT_POLICY) -> dict[str, Any]:
     """Measure the exact causal controller on a stationary class-length fixture.
 
     This is a computational stress diagnostic only. The constant synthetic
@@ -497,7 +518,7 @@ def run_class_scale_synthetic_diagnostic(n: int = 3815) -> dict[str, Any]:
     from .protocol import Feedback, Observation
 
     controller = SunCSController(p=0.99, delta=0.01,
-                                 endpoint_policy=PRIMARY_ENDPOINT_POLICY)
+                                 endpoint_policy=endpoint_policy)
     counts = {"SUN_CS_ANOMALY": 0, "SUN_CS_BENIGN": 0, "SUN_CS_ABSTAIN": 0,
               "ABSTAIN_COLD_START": 0, "ABSTAIN_CHANGE_DETECTED": 0}
     tracemalloc.start()
@@ -521,6 +542,9 @@ def run_class_scale_synthetic_diagnostic(n: int = 3815) -> dict[str, Any]:
     return {
         "schema": "calibration.sun_cs_class_scale_synthetic_diagnostic.v1",
         "status": "PASS_SYNTHETIC_COMPLETED",
+        "method_version": endpoint_policy.method_version,
+        "endpoint_policy": endpoint_policy.name,
+        "endpoint_policy_schema": SUN_CS_ENDPOINT_POLICY_SCHEMA,
         "n_events": n,
         "fixture": "constant_score_0.5_stationary_unlabeled_stream_no_change_resets",
         "prediction_counts": counts,

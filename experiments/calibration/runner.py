@@ -38,8 +38,12 @@ from .native_greedy_matrix import run_native_greedy_matrix
 from .native_parity_smoke import run_native_parity_smoke
 from .controller_activation import run_controller_activation
 from .b7_engine_activation import run_b7_engine_activation
-from .sun_cs import (algorithm3_reference,
+from .sun_cs import (EMPIRICAL_EXTREMA_SENSITIVITY_POLICY,
+                     PRIMARY_ENDPOINT_POLICY, algorithm3_reference,
                      run_class_scale_synthetic_diagnostic)
+from .sun_cs_diagnostics import (b7_query_budget_feasibility,
+                                build_diagnostic_suite,
+                                clopper_pearson_zero_error_minimum)
 from .source_provenance import (PROTECTED_BASELINE_PATH, source_fingerprint_paths,
                                 verify_protected_sources)
 
@@ -63,9 +67,15 @@ ARTIFACT_FILES = frozenset({
     "sun_cs_reference_status.json",
     "b7_engine_activation.json",
     "sun_cs_class_scale_synthetic_diagnostic.json",
+    "sun_cs_continuous_diagnostics.json",
+    "sun_cs_endpoint_policy_comparison.json",
+    "b7_query_budget_feasibility.json",
+    "stage0_final_scientific_protocol_review.md",
     "stage1_evaluation_protocol_candidate.md",
     "stage0_gate_amendment_candidate.md",
     "sun_cs_a3_declared_conventions.md",
+    "sun_cs_a3_conservative_endpoints_v2.md",
+    "b7_activation_feasibility_reporting_v1.md",
     "real_iad_metadata_preflight.json", "native_parity_smoke.json",
     "native_greedy_parity_matrix.json", "native_event_replay.json",
     "stage0_summary.md", "checksums.json",
@@ -277,6 +287,58 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     json_root = Path(os.environ.get("REALIAD_JSON_ROOT",
                                    r"G:\dataset\realiad\jsons\realiad_jsons"))
     real_preflight = run_metadata_preflight(dataset_root, json_root)
+    if tests_ok:
+        try:
+            sun_continuous_diagnostics = build_diagnostic_suite(n=512)
+            expected_development = {
+                "audiojack", "regulator", "switch", "rolled_strip_base"}
+            counts = {}
+            for row in real_preflight.get("classes", []):
+                n_images = int(row["test_stream"]["images"])
+                query_count = int(row["Q-A-TS"]["query_count"])
+                if query_count != math.floor(.03 * n_images + .5):
+                    raise RuntimeError(
+                        f"Metadata Q-A-TS budget mismatch: {row['class']}")
+                counts[row["class"]] = query_count
+            if (real_preflight.get("status") != "PASS" or
+                    set(counts) != expected_development):
+                raise RuntimeError(
+                    "Metadata preflight did not validate exactly four development classes")
+            b7_query_feasibility = {
+                "schema": "calibration.b7_query_feasibility.v1",
+                "per_class_query_budgets": counts,
+                "total_query_budget": sum(counts.values()),
+                "zero_error_sample_size": clopper_pearson_zero_error_minimum(),
+                "hypothetical_scenarios": b7_query_budget_feasibility(counts),
+                "source": "Runner metadata-only development-class Q-A-TS preflight",
+                "real_iad_labels_or_prevalence_inspected": False,
+            }
+        except Exception as exc:
+            sun_continuous_diagnostics = {
+                "schema": "calibration.sun_cs_continuous_diagnostics.v1",
+                "status": "FAIL",
+                "reason": f"Continuous diagnostic raised: {type(exc).__name__}: {exc}",
+                "stage1_or_stage2_executed": False,
+                "real_iad_data_or_outcomes_used": False,
+            }
+            b7_query_feasibility = {
+                "schema": "calibration.b7_query_feasibility.v1",
+                "status": "BLOCKED_METADATA_OR_QUERY_BUDGET_CHECK",
+                "reason": f"Query feasibility raised: {type(exc).__name__}: {exc}",
+                "real_iad_labels_or_prevalence_inspected": False,
+            }
+    else:
+        sun_continuous_diagnostics = {
+            "schema": "calibration.sun_cs_continuous_diagnostics.v1",
+            "status": "SKIP_TESTS_NOT_PASSING",
+            "stage1_or_stage2_executed": False,
+            "real_iad_data_or_outcomes_used": False,
+        }
+        b7_query_feasibility = {
+            "schema": "calibration.b7_query_feasibility.v1",
+            "status": "SKIP_TESTS_NOT_PASSING",
+            "real_iad_labels_or_prevalence_inspected": False,
+        }
     native_smoke = run_native_parity_smoke(dataset_root, json_root)
     native_matrix = run_native_greedy_matrix()
     native_replay = run_native_event_replay(dataset_root, json_root)
@@ -301,12 +363,19 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
             "scenarios": {},
         }
     sun_reference_test_ids = [test_id for test_id in tests.get("passed_test_ids", [])
-                              if "test_sun_cs_reference." in test_id]
+                              if ("test_sun_cs_reference." in test_id or
+                                  "test_sun_cs_diagnostics." in test_id)]
     sun_tests_ok = (
         tests["failed"] == 0 and tests["errors"] == 0 and tests["skipped"] == 0 and
         any("test_algorithm2_optimized_matches_independent_reference" in item
             for item in sun_reference_test_ids) and
         any("test_algorithm3_event_trace_matches_independent_reference" in item
+            for item in sun_reference_test_ids) and
+        any("test_empirical_extrema_false_reset_pathology_and_conservative_control" in item
+            for item in sun_reference_test_ids) and
+        any("test_conservative_upper_endpoint_clipping_precludes_anomaly" in item
+            for item in sun_reference_test_ids) and
+        any("test_seeded_continuous_streams_are_reproducible_and_distinct" in item
             for item in sun_reference_test_ids) and
         any("test_checkpoint_restore_reproduces_remaining_event_trace" in item
             for item in sun_reference_test_ids) and
@@ -332,10 +401,16 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         }
     sun_reference_status = {
         "method": "B6 Sun-CS",
+        "primary_candidate": "SUN_CS_A3_CONSERVATIVE_EXTENDED_REAL",
+        "sensitivity_candidate": "SUN_CS_A3_EMPIRICAL_EXTREMA",
         "status": ("PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS"
                     if sun_tests_ok else "FAIL_REFERENCE_TESTS"),
         "source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
-        "registered_conventions": "docs/calibration/SUN_CS_A3_DECLARED_CONVENTIONS_v1.md",
+        "registered_conventions": "docs/calibration/SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md",
+        "method_version": PRIMARY_ENDPOINT_POLICY.method_version,
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "checkpoint_schema": "calibration.sun_cs_checkpoint.v2",
+        "sensitivity_method_version": EMPIRICAL_EXTREMA_SENSITIVITY_POLICY.method_version,
         "primary_paper": "https://proceedings.mlr.press/v235/sun24h.html",
         "full_pdf": "https://raw.githubusercontent.com/mlresearch/v235/main/assets/sun24h/sun24h.pdf",
         "full_paper_and_appendices_reviewed": True,
@@ -349,13 +424,16 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "algorithm3_event_trace_parity": "PASS" if sun_tests_ok else "FAIL_OR_SKIPPED",
         "checkpoint_resume": "PASS" if sun_tests_ok else "FAIL_OR_SKIPPED",
         "implementation_conventions": [
-            "Primary q=0 endpoint selects the sample minimum; q=1 selects maximum.",
+            "Primary clipped q=0 endpoint is negative infinity and clipped q=1 endpoint is positive infinity.",
+            "Empirical-extrema q=0/sample-minimum and q=1/sample-maximum behavior is a separately named sensitivity version.",
             "Interior midpoint empirical quantiles use the declared one-based floor/ceiling ranks; a zero floor rank extends to the first order statistic.",
             "Empty historical prefix abstains before the current score is appended.",
             "At a detected change event: abstain, reset, then append that event as the first event in the new segment.",
-            "A separate conservative extended-real endpoint sensitivity is registered; it is not selected by data outcomes.",
+            "Both endpoint variants preserve decision-before-update and Algorithm 3 reset behavior; neither claims author-code parity.",
         ],
         "synthetic_reference_sequence_coverage": {},
+        "continuous_synthetic_diagnostics": sun_continuous_diagnostics,
+        "query_budget_feasibility": b7_query_feasibility,
         "complexity": {
             "algorithm2_optimized": "O(n log n) time and O(n log n) peak auxiliary storage per invocation.",
             "algorithm3_recomputes_algorithm2_on_each_history": "O(T^2 log T) cumulative worst-case time and O(T log T) peak auxiliary storage for a segment of length T; no truncation or rolling window.",
@@ -371,20 +449,26 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
             ("piecewise_stationary_short",
              [0.1 + .02 * math.sin(i * .37) for i in range(40)] +
              [0.8 + .02 * math.sin(i * .37) for i in range(40)])):
-        trace = algorithm3_reference(sequence, .99, .01)
-        reasons = [row["reason"] for row in trace]
-        predicted = sum(row["prediction"] is not None for row in trace)
-        sun_reference_status["synthetic_reference_sequence_coverage"][sequence_name] = {
-            "n": len(trace), "binary_predictions": predicted,
-            "abstentions_including_cold_start": len(trace) - predicted,
-            "coverage": predicted / len(trace),
-            "anomalies": sum(row["prediction"] == 1 for row in trace),
-            "benign": sum(row["prediction"] == 0 for row in trace),
-            "cold_start_abstentions": reasons.count("ABSTAIN_COLD_START"),
-            "change_detection_abstentions": reasons.count("ABSTAIN_CHANGE_DETECTED"),
-            "interval_abstentions": reasons.count("SUN_CS_ABSTAIN"),
-            "synthetic_scores_only_no_physical_labels": True,
-        }
+        for policy in (PRIMARY_ENDPOINT_POLICY,
+                       EMPIRICAL_EXTREMA_SENSITIVITY_POLICY):
+            trace = algorithm3_reference(sequence, .99, .01,
+                                          endpoint_policy=policy)
+            reasons = [row["reason"] for row in trace]
+            predicted = sum(row["prediction"] is not None for row in trace)
+            sun_reference_status["synthetic_reference_sequence_coverage"][
+                f"{sequence_name}:{policy.name}"] = {
+                    "endpoint_policy": policy.name,
+                    "method_version": policy.method_version,
+                    "n": len(trace), "binary_predictions": predicted,
+                    "abstentions_including_cold_start": len(trace) - predicted,
+                    "coverage": predicted / len(trace),
+                    "anomalies": sum(row["prediction"] == 1 for row in trace),
+                    "benign": sum(row["prediction"] == 0 for row in trace),
+                    "cold_start_abstentions": reasons.count("ABSTAIN_COLD_START"),
+                    "change_detection_abstentions": reasons.count("ABSTAIN_CHANGE_DETECTED"),
+                    "interval_abstentions": reasons.count("SUN_CS_ABSTAIN"),
+                    "synthetic_scores_only_no_physical_labels": True,
+                }
     correct_branch = branch == "calibration-stage0-contract-20261029"
     native_all_controller_ok = (
         native_replay.get("status") == "PASS" and
@@ -531,6 +615,7 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
         "branch": branch, "source_commit": source_commit,
         "protocol_version": PROTOCOL_VERSION,
         "profile": asdict(DEFAULT_PROFILE), "profile_sha256": DEFAULT_PROFILE.sha256,
+        "method_cards_sha256": _sha(canonical_json(METHOD_CARDS).encode()),
         "execution": "synthetic_cpu_dev_metadata_plus_optional_audiojack_train_only_native_smoke_greedy_matrix_and_multievent_replay",
         "stage1_run": False, "stage2_run": False,
         "confirmation_outcomes_opened": False,
@@ -551,13 +636,44 @@ def _make_artifacts(out_dir: Path) -> dict[str, Any]:
     _json_write(out_dir / "b7_engine_activation.json", b7_engine)
     _json_write(out_dir / "sun_cs_class_scale_synthetic_diagnostic.json",
                 sun_class_scale)
+    _json_write(out_dir / "sun_cs_continuous_diagnostics.json",
+                sun_continuous_diagnostics)
+    _json_write(out_dir / "sun_cs_endpoint_policy_comparison.json", {
+        "schema": "calibration.sun_cs_endpoint_policy_comparison.v1",
+        "primary": {
+            "method_version": sun_continuous_diagnostics.get("method_version"),
+            "policy": "conservative_extended_real",
+            "status": "PAPER_EQUATIONS_WITH_DECLARED_CONVENTIONS",
+        },
+        "sensitivity": {
+            "method_version": EMPIRICAL_EXTREMA_SENSITIVITY_POLICY.method_version,
+            "policy": "empirical_extrema",
+            "status": "SENSITIVITY_ONLY_NOT_PRIMARY",
+        },
+        "comparison_basis": "same seeded synthetic streams, causal score order, p=.99, delta=.01; offline source-target scoring",
+        "endpoint_identifiability": sun_continuous_diagnostics.get(
+            "finite_stream_identifiability", []),
+        "upper_endpoint_identifiability_horizon": sun_continuous_diagnostics.get(
+            "upper_endpoint_identifiability_horizon"),
+        "runs": sun_continuous_diagnostics.get("runs", []),
+        "real_iad_data_or_outcomes_used": False,
+        "stage1_or_stage2_executed": False,
+    })
+    _json_write(out_dir / "b7_query_budget_feasibility.json",
+                b7_query_feasibility)
     for source_name, artifact_name in (
             ("STAGE1_EVALUATION_PROTOCOL_FROZEN_CANDIDATE.md",
              "stage1_evaluation_protocol_candidate.md"),
             ("STAGE0_GATE_AMENDMENT_CANDIDATE.md",
              "stage0_gate_amendment_candidate.md"),
             ("SUN_CS_A3_DECLARED_CONVENTIONS_v1.md",
-             "sun_cs_a3_declared_conventions.md")):
+             "sun_cs_a3_declared_conventions.md"),
+            ("SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md",
+             "sun_cs_a3_conservative_endpoints_v2.md"),
+            ("B7_ACTIVATION_FEASIBILITY_REPORTING_v1.md",
+             "b7_activation_feasibility_reporting_v1.md"),
+            ("STAGE0_FINAL_SCIENTIFIC_PROTOCOL_REVIEW.md",
+             "stage0_final_scientific_protocol_review.md")):
         source_path = ROOT / "docs" / "calibration" / source_name
         (out_dir / artifact_name).write_text(source_path.read_text(encoding="utf-8"),
                                              encoding="utf-8")
@@ -619,6 +735,9 @@ def _verify_artifact(out_dir: Path) -> dict[str, Any]:
     current_fp = _sha(canonical_json(current_hashes).encode())
     protected = verify_protected_sources()
     if (manifest.get("profile_sha256") != DEFAULT_PROFILE.sha256 or
+            manifest.get("method_cards_sha256") !=
+            _sha(canonical_json(METHOD_CARDS).encode()) or
+            manifest.get("protocol_version") != PROTOCOL_VERSION or
             hashes.get("stage0_source_hashes") != current_hashes or
             identity.get("source_fingerprint_sha256") != current_fp or
             identity.get("profile_sha256") != DEFAULT_PROFILE.sha256 or

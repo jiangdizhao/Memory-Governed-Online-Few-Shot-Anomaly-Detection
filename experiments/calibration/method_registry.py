@@ -8,7 +8,11 @@ from .controllers import (AdaptedDualACI, BlockedController, FrozenTheta,
                           FrozenThresholdFallback, OriginalGuardedSidecar,
                           RollingQ90QueriedNormal, StateConsistentQuantile)
 from .scdac_g import SCDACGController
-from .sun_cs import (PRIMARY_ENDPOINT_POLICY, SUN_CS_VERSION, SunCSController)
+from .sun_cs import (EMPIRICAL_EXTREMA_SENSITIVITY_POLICY,
+                     PRIMARY_ENDPOINT_POLICY, SUN_CS_CHECKPOINT_SCHEMA,
+                     SUN_CS_EMPIRICAL_EXTREMA_VERSION,
+                     SUN_CS_ENDPOINT_POLICY_SCHEMA, SUN_CS_VERSION,
+                     SunCSController)
 from .spot_dspot import (DSPOTController, POTConfig, SPOTController,
                          DSPOT_VERSION, SPOT_VERSION)
 
@@ -75,17 +79,26 @@ METHOD_CARDS: dict[str, dict[str, Any]] = {
             "equation": "ICML 2024 Eq. (1)-(2), Algorithms 1-3: quantile confidence set; forward/backward confidence-set intersection change detector; decision-time abstain/reset; strict upper anomaly, lower benign, interval abstain.",
             "defaults": {"p": 0.99, "delta": 0.01,
                          "endpoint_policy": PRIMARY_ENDPOINT_POLICY.name,
+                         "endpoint_policy_schema": SUN_CS_ENDPOINT_POLICY_SCHEMA,
                          "empty_prefix": "ABSTAIN_COLD_START",
                          "radius": "raw Equation (2), no clamp"},
+            "sensitivity_variants": [{
+                "id": "SUN_CS_A3_EMPIRICAL_EXTREMA",
+                "endpoint_policy": EMPIRICAL_EXTREMA_SENSITIVITY_POLICY.name,
+                "status": EMPIRICAL_EXTREMA_SENSITIVITY_POLICY.status,
+                "version": SUN_CS_EMPIRICAL_EXTREMA_VERSION,
+            }],
+            "checkpoint_schema": SUN_CS_CHECKPOINT_SCHEMA,
             "reference_implementation": "Independent O(n^2 log n) small-sequence reference and exact O(n log n) per-invocation Algorithm 2 implementation. Algorithm 3 rechecks each full past prefix, giving O(T^2 log T) worst-case cumulative time and O(T log T) peak auxiliary space for a length-T no-reset segment; causal and checkpointable.",
             "implementation_conventions": [
-                "q=0 selects sample minimum in primary; q=1 selects maximum",
+                "primary clipped q=0 endpoint is negative infinity and clipped q=1 endpoint is positive infinity",
+                "empirical-extrema q=0/sample minimum and q=1/sample maximum are a separate named sensitivity variant",
                 "interior midpoint ranks with floor rank zero extend to first order statistic",
                 "empty historical prefix abstains before current score is appended",
                 "at change event abstain, reset, then seed new segment with current score",
                 "no verified author code located; no author-code trace parity claim"],
             "historical_source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
-            "source_fidelity_spec": "docs/calibration/SUN_CS_A3_DECLARED_CONVENTIONS_v1.md",
+            "source_fidelity_spec": "docs/calibration/SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md",
             "no_guarantee": "Score-quantile target differs from physical defects. Guarantees do not automatically cover dependent scores under dynamic memory or feedback."},
     "B7": {"name": "SCDAC-G", "version": "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC",
             "status": "IMPLEMENTED_PROVISIONAL",
@@ -150,11 +163,17 @@ _REFERENCE_TESTS = {
     "B5b": ["test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean",
             "test_spot_checkpoint_roundtrip_is_deterministic"],
     "B6": ["test_radius_matches_paper_equation_without_clamping",
-          "test_primary_and_extended_real_endpoint_conventions",
+          "test_empirical_extrema_false_reset_pathology_and_conservative_control",
+          "test_conservative_upper_endpoint_clipping_precludes_anomaly",
+          "test_registered_finite_stream_endpoints_are_exact_for_unit_ramp",
+          "test_seeded_continuous_streams_are_reproducible_and_distinct",
+          "test_small_diagnostic_keeps_online_and_offline_information_separate",
           "test_algorithm2_optimized_matches_independent_reference",
           "test_algorithm3_event_trace_matches_independent_reference",
-          "test_algorithm3_checkpoint_resume_is_deterministic"],
-    "B7": ["tests/calibration/test_scdac_g.py"],
+          "test_checkpoint_restore_reproduces_remaining_event_trace"],
+    "B7": ["tests/calibration/test_scdac_g.py",
+           "test_b7_zero_error_cp_minimum_is_fourteen_not_eight",
+           "test_metadata_query_budgets_and_hypothetical_defect_fractions"],
 }
 for _key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK", "B6_FROZEN_FALLBACK"):
     _REFERENCE_TESTS[_key] = ["test_operational_fallback_records_startup_and_abstention_modes"]
@@ -172,7 +191,7 @@ _MISSING_DATA = {
     "B4": "Missing class-side evidence is unavailable and never assigned zero risk.",
     "B5a": "Before n_init scores, prediction is explicitly unavailable; fewer than two strict initial peaks fail closed. After warm-up, alarms are excluded from observation/peak updates.",
     "B5b": "First d raw observations and subsequent n_init residual observations have unavailable predictions; during residual warm-up the raw window slides, and runtime alarms update neither POT nor mean window.",
-    "B6": "Empty historical prefix yields ABSTAIN_COLD_START; primary endpoints use empirical extrema. Physical labels, feedback, and C64 offline matching are not consumed.",
+    "B6": "Empty historical prefix yields ABSTAIN_COLD_START; primary clipped endpoint policy uses explicit extended-real bounds. Physical labels, feedback, and C64 offline matching are not consumed.",
     "B7": "NONE/NORMAL_ONLY/DEFECT_ONLY hold; both-side minimums gate optimization.",
 }
 for _key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK", "B6_FROZEN_FALLBACK"):
@@ -230,8 +249,9 @@ METHOD_CARDS["B6"]["complexity_and_runtime"] = (
     "A3 worst-case O(T^2 log T) cumulative time and O(T log T) peak temporary "
     "nodes. Runtime/memory are reported in the sixth-pass audit.")
 METHOD_CARDS["B6"]["reference_validation"] = (
-    "Simple independent A2/A3 reference, exact optimized trace parity, reset "
-    "boundary tests, stationary/piecewise sequences, and event-boundary resume; "
+    "Simple independent A2/A3 reference, exact optimized trace parity under "
+    "both endpoint policies, endpoint-pathology reproduction, reset boundary "
+    "tests, seeded continuous synthetic diagnostics, and event-boundary resume; "
     "no verified author-code trace parity.")
 for _key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK", "B6_FROZEN_FALLBACK"):
     _base = _key.split("_")[0]

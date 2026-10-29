@@ -1,0 +1,185 @@
+{
+  "G0": {
+    "authorized_branch": true,
+    "protected_source_status": "PASS",
+    "reason": "Transitive protected-source baseline and byte-level historical shadow_memory check passed on the authorized branch.",
+    "status": "PASS"
+  },
+  "G0_PROTECTED_SOURCE_INTEGRITY": {
+    "reason": "Transitive protected-source baseline and byte-level historical shadow_memory check passed on the authorized branch.",
+    "status": "PASS"
+  },
+  "G1": {
+    "reason": "Synthetic Q-A-TS/Q-B metadata tests passed.",
+    "status": "PASS"
+  },
+  "G1_QUERY_PROTOCOL": {
+    "reason": "Synthetic Q-A-TS/Q-B metadata tests passed.",
+    "status": "PASS"
+  },
+  "G1_real_data": {
+    "classes": {
+      "audiojack": "PASS",
+      "regulator": "PASS",
+      "rolled_strip_base": "PASS",
+      "switch": "PASS"
+    },
+    "dataset_root_present": true,
+    "json_root_present": true,
+    "reason": "Official sample identities, train-only support/C64 selection, and label-blind Q-A-TS/Q-B were checked using development-category JSON metadata; no image or mask was opened.",
+    "status": "PASS"
+  },
+  "G2": {
+    "reason": "Actual development train-normal score parity passed across live native v22, untouched clone, and calibration adapter.",
+    "status": "PASS"
+  },
+  "G2_NATIVE_SCORING": {
+    "reason": "Actual development train-normal score parity passed across live native v22, untouched clone, and calibration adapter.",
+    "status": "PASS"
+  },
+  "G3": {
+    "reason": "Synthetic native operator matrix passed APPEND/REPLACE/SKIP, repeated-slot source attribution, prototype-content audit, LSO filtering and exact checkpoint restore; bounded CUDA v22 smoke passed live-score and append parity.",
+    "status": "PASS"
+  },
+  "G3_NATIVE_GREEDY_OPERATOR": {
+    "reason": "Synthetic native operator matrix passed APPEND/REPLACE/SKIP, repeated-slot source attribution, prototype-content audit, LSO filtering and exact checkpoint restore; bounded CUDA v22 smoke passed live-score and append parity.",
+    "status": "PASS"
+  },
+  "G4": {
+    "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed.",
+    "status": "PASS"
+  },
+  "G4_CAUSAL_FIREWALL": {
+    "reason": "Synthetic predict-before-disclosure and queried-only feedback tests passed.",
+    "status": "PASS"
+  },
+  "G5": {
+    "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed.",
+    "status": "PASS"
+  },
+  "G5_ANCHOR_AND_LSO": {
+    "reason": "Synthetic protected C64, current-version evidence, and all-layer LSO source attribution tests passed.",
+    "status": "PASS"
+  },
+  "G6": {
+    "reason": "Existing G6 acceptance remains in force pending researcher review of the proposed gate amendment: external author-code parity is not claimed for SPOT/dSPOT/Sun-CS, B2 is an explicitly adapted historical sidecar, and B7 remains provisional. B6 itself is registered as a paper-equation implementation with disclosed finite-sample conventions, not labeled BLOCKED solely for those conventions.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G6_ALL_METHOD_FAMILIES": {
+    "reason": "Existing G6 acceptance remains in force pending researcher review of the proposed gate amendment: external author-code parity is not claimed for SPOT/dSPOT/Sun-CS, B2 is an explicitly adapted historical sidecar, and B7 remains provisional. B6 itself is registered as a paper-equation implementation with disclosed finite-sample conventions, not labeled BLOCKED solely for those conventions.",
+    "status": "BLOCKED_FIDELITY"
+  },
+  "G6_CORE_METHODS": {
+    "reason": "B0-B4 and provisional B7 registered paths are covered by the passing calibration suite; B7 remains explicitly provisional.",
+    "status": "PASS"
+  },
+  "G6_EXTERNAL_PAPER_EQUATION_IMPLEMENTATIONS": {
+    "reason": "B5a/B5b and B6 paper-equation implementations have independent equation/stream references; no author-code parity is claimed.",
+    "status": "PASS"
+  },
+  "G6_OPERATIONAL_VARIANTS": {
+    "reason": "SPOT, dSPOT, and Sun-CS Frozen-Theta wrappers are separate registered rows with startup/abstention mode accounting.",
+    "status": "PASS"
+  },
+  "G6_UNRESOLVED_METHODS": {
+    "method_rows": [
+      "B2 full native-loop parity is not claimed",
+      "B7 remains provisional pending researcher review"
+    ],
+    "reason": "Unresolved limitations remain visible; no method row is removed.",
+    "status": "BLOCKED_RESEARCH_REVIEW"
+  },
+  "G7": {
+    "reason": "Existing G7 source-fidelity acceptance remains in force: mathematical reference tests are reported separately, while verified author-code trace parity is unavailable for the external implementations and theoretical assumptions/guarantee transfer are not established for this score, feedback, and memory process.",
+    "status": "BLOCKED"
+  },
+  "G7_ASSUMPTION_COMPATIBILITY": {
+    "reason": "Score dependence, physical-defect target, selective feedback, and dynamic memory differ from external source assumptions; disclosures are in the frozen candidate.",
+    "status": "NOT_ESTABLISHED"
+  },
+  "G7_EXTERNAL_SOURCE_FIDELITY": {
+    "reason": "Existing G7 source-fidelity acceptance remains in force: mathematical reference tests are reported separately, while verified author-code trace parity is unavailable for the external implementations and theoretical assumptions/guarantee transfer are not established for this score, feedback, and memory process.",
+    "status": "BLOCKED"
+  },
+  "G7_MATHEMATICAL_REFERENCE_TESTS": {
+    "reason": "Calibration reference suite status; includes independent Sun-CS A2/A3 reference comparisons and SPOT/dSPOT equations.",
+    "status": "PASS"
+  },
+  "G7_SOURCE_IMPLEMENTATION_PARITY": {
+    "reason": "No verified author implementation trace was available for external SPOT/dSPOT/Sun-CS parity; independent equation tests are not a substitute.",
+    "status": "BLOCKED_UNAVAILABLE"
+  },
+  "G7_THEORETICAL_GUARANTEE_TRANSFER": {
+    "reason": "No transfer proof for physical-defect risk under sparse feedback and adaptively changing memory is claimed.",
+    "status": "NOT_ESTABLISHED"
+  },
+  "G8": {
+    "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration.",
+    "status": "PASS"
+  },
+  "G8_REPRODUCIBILITY": {
+    "reason": "Event-boundary checkpoint/resume is compared with an uninterrupted synthetic run, including memory, controller, trace, private-label identity, and Python/NumPy/Torch RNG restoration.",
+    "status": "PASS"
+  },
+  "G9": {
+    "reason": "Stage 0 native score/memory/AUROC invariance, all-controller synthetic activation, and B7 full-engine resume/counterfactual checks passed. This establishes engineering parity only, not Real-IAD scientific validation.",
+    "status": "PASS"
+  },
+  "G9_ALL_REGISTERED_METHODS": {
+    "activation_method_names": [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5a",
+      "B5a_FROZEN_FALLBACK",
+      "B5b",
+      "B5b_FROZEN_FALLBACK",
+      "B6",
+      "B6_FROZEN_FALLBACK",
+      "B7"
+    ],
+    "all_registered_names_match": true,
+    "full_engine_method_names": [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5a",
+      "B5a_FROZEN_FALLBACK",
+      "B5b",
+      "B5b_FROZEN_FALLBACK",
+      "B6",
+      "B6_FROZEN_FALLBACK",
+      "B7"
+    ],
+    "reason": "Every original controller and separate fallback row participates in the full PrequentialEngine test; B7 is covered by both two-scenario full-engine integration and the complete method activation matrix.",
+    "status": "PASS"
+  },
+  "G9_CONTROLLER_ACTIVATION": {
+    "reason": "All registered original methods and separate fallback variants are represented in the causal synthetic controller activation matrix; see per-method rows.",
+    "status": "PASS"
+  },
+  "G9_CONTROLLER_SYNTHETIC_ACTIVATION": {
+    "reason": "Causal shared-engine controller activation is synthetic mechanism evidence only.",
+    "status": "PASS"
+  },
+  "G9_FULL_ENGINE_INTEGRATION": {
+    "reason": "B7 two-scenario multi-event PrequentialEngine integration, deterministic resume, current-memory C64 refresh, queried-normal LSO, and score/query/memory counterfactual invariance; synthetic only.",
+    "status": "PASS"
+  },
+  "G9_FULL_MATRIX": {
+    "reason": "Every registered original and operational controller participated in the same bounded native-v22 score/memory/query replay; this is an engineering diagnostic, not an empirical performance result.",
+    "status": "PASS"
+  },
+  "G9_NATIVE_CORE": {
+    "reason": "Bounded multi-event actual v22/DINO train-normal trajectory passed causal query/write, current-version C64 refresh, LSO, native checkpoint-resume equivalence and synthetic-label AUROC invariance.",
+    "status": "PASS"
+  },
+  "G9_SCIENTIFIC_VALIDATION_NOT_STAGE0": {
+    "reason": "Stage 0 does not establish Real-IAD scientific performance or Stage 1/2 authorization.",
+    "status": "OUT_OF_SCOPE_NOT_RUN"
+  }
+}

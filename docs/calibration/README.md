@@ -27,3 +27,20 @@ This Stage 0 builds a **reusable, switchable experimental engine**; the present 
 **Stage 0:** specification, code, synthetic mechanism tests, offline manifests, baseline fidelity; no Real-IAD result optimization. **Stage 1:** 4 development classes, matched Q-A-TS and Q-B profiles (separate). **Stage 2:** precommitted order stress and untouched Mint/PCB confirmation only after freeze. Pass/fail and scientific results must never be invented.
 
 A single `python -m experiments.calibration.runner --stage 0 --all` command is implemented for Stage 0 synthetic validation and audit generation.
+
+## Sixth-pass scientific closure candidates
+
+The post-sixth-pass endpoint review is recorded in the versioned
+[Sun-CS conservative endpoint specification](SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md),
+[B7 activation-feasibility reporting specification](B7_ACTIVATION_FEASIBILITY_REPORTING_v1.md),
+and [Stage 1 protocol candidate v2](STAGE1_EVALUATION_PROTOCOL_FROZEN_CANDIDATE_v2.md).
+The associated closure decision and compact synthetic audit are separate from
+the archived sixth-pass audit. These documents remain candidates for
+independent researcher review; they do not approve the Gate Amendment or
+authorize Stage 1/2.
+
+The current final protocol decision record is
+[STAGE0_FINAL_SCIENTIFIC_PROTOCOL_REVIEW.md](STAGE0_FINAL_SCIENTIFIC_PROTOCOL_REVIEW.md).
+It records the Sun-CS endpoint pathology and applicability boundary, B7
+sample-size/query-budget feasibility, method-fidelity limits, and decisions
+still requiring researcher approval.

@@ -1,0 +1,24 @@
+{
+  "post_runner_export_only_correction": {
+    "compilation": "PASS: python -m compileall -q experiments/calibration tests/calibration",
+    "current_changed_file_sha256": {
+      "experiments/calibration/audit_export.py": "0bd1b172d2bbb084c16f2cb7c1f2f9ec48fbaad7f542f2102c7fc58090240ec4",
+      "tests/calibration/test_audit_export.py": "f82d93bd27446f78ab81b2d49a049673c51cd0d5f8f5740ce64d779bdcfe0ad8"
+    },
+    "duration_seconds": 0.305,
+    "errors": 0,
+    "failed": 0,
+    "focused_test_command": "python -m unittest tests.calibration.test_audit_export",
+    "git_diff_check": "PASS",
+    "passed": 2,
+    "scope": "Separate raw source method-card hash from the privacy-redacted package method-card hash; no engine, controller, score, memory, query, or scientific protocol code changed.",
+    "skipped": 0,
+    "tests_run": 2
+  },
+  "runner_full_suite": {
+    "captured_audit_export_test_sha256": "492738c9fbd752f112ee4039c52ea01e51ef7ca37cbb8a6c3ab188c4186ed3db",
+    "captured_audit_exporter_sha256": "febd9bd9641d3869c03b9f2a9c829b41fc63712dca5b2ece78a5f6fc8fb9ff23",
+    "source_snapshot": "Runner artifact source_hashes.json; 96/96 tests passed"
+  },
+  "schema": "calibration.post_runner_audit_export_verification.v1"
+}

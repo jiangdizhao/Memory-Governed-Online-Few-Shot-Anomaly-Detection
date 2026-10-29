@@ -17,6 +17,11 @@ PACKAGE_FILES = (
     "b7_engine_activation.json", "stage1_evaluation_protocol_candidate.md",
     "stage0_gate_amendment_candidate.md", "sun_cs_a3_declared_conventions.md",
     "sun_cs_class_scale_synthetic_diagnostic.json",
+    "sun_cs_continuous_diagnostics.json", "b7_query_budget_feasibility.json",
+    "sun_cs_endpoint_policy_comparison.json",
+    "sun_cs_a3_conservative_endpoints_v2.md",
+    "b7_activation_feasibility_reporting_v1.md",
+    "stage0_final_scientific_protocol_review.md",
     "protected_source_verification.json",
 )
 DROP_KEYS = {"path", "absolute_path", "dataset_root", "json_root",
@@ -66,6 +71,12 @@ def _source_fingerprint(source_hashes: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _canonical_json_sha256(value: Any) -> str:
+    canonical = json.dumps(value, sort_keys=True, separators=(",", ":"),
+                           ensure_ascii=False, allow_nan=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def _compact_tests(payload: dict[str, Any]) -> dict[str, Any]:
     return {key: payload.get(key) for key in (
         "tests_run", "passed", "failed", "errors", "skipped",
@@ -86,6 +97,11 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
     source_hashes = json.loads((source / "source_hashes.json").read_text(encoding="utf-8"))
     identity = json.loads((source / "run_identity.json").read_text(encoding="utf-8"))
     manifest = json.loads((source / "protocol_manifest.json").read_text(encoding="utf-8"))
+    source_method_cards = json.loads(
+        (source / "controller_method_cards.json").read_text(encoding="utf-8"))
+    source_method_cards_sha256 = _canonical_json_sha256(source_method_cards)
+    if source_method_cards_sha256 != manifest.get("method_cards_sha256"):
+        raise RuntimeError("Runner method-card fingerprint does not match its manifest")
     for name, expected in source_checksums.items():
         if not (source / name).is_file() or _sha_file(source / name) != expected:
             raise RuntimeError(f"Runner artifact checksum mismatch: {name}")
@@ -108,11 +124,37 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
         "source_fingerprint_sha256": source_hashes.get("source_fingerprint_sha256"),
         "stage0_source_hashes": source_hashes.get("stage0_source_hashes", {}),
         "profile_sha256": manifest.get("profile_sha256"),
+        "method_cards_sha256": manifest.get("method_cards_sha256"),
+        "method_cards_export_sha256": _canonical_json_sha256(json.loads(
+            (output / "controller_method_cards.json").read_text(encoding="utf-8"))),
+        "method_cards_source_fingerprint_verified": True,
         "protocol_version": manifest.get("protocol_version"),
         "support_regime": manifest.get("support_regime"),
     }
     _write_json(output / "protocol_fingerprints.json", fingerprints)
     gates = json.loads((output / "gates.json").read_text(encoding="utf-8"))
+    operative_keys = {
+        "G0", "G1", "G1_real_data", "G2", "G3", "G4", "G5", "G6", "G7",
+        "G8", "G9",
+    }
+    candidate_keys = {
+        "G6_CORE_METHODS", "G6_EXTERNAL_PAPER_EQUATION_IMPLEMENTATIONS",
+        "G6_OPERATIONAL_VARIANTS", "G6_UNRESOLVED_METHODS",
+        "G7_MATHEMATICAL_REFERENCE_TESTS", "G7_SOURCE_IMPLEMENTATION_PARITY",
+        "G7_ASSUMPTION_COMPATIBILITY", "G7_THEORETICAL_GUARANTEE_TRANSFER",
+        "G9_NATIVE_CORE", "G9_CONTROLLER_SYNTHETIC_ACTIVATION",
+        "G9_FULL_ENGINE_INTEGRATION", "G9_ALL_REGISTERED_METHODS",
+        "G9_SCIENTIFIC_VALIDATION_NOT_STAGE0",
+    }
+    _write_json(output / "gate_matrices.json", {
+        "schema": "calibration.stage0_gate_matrices.v1",
+        "gate_amendment_status": "RESEARCHER_APPROVAL_REQUIRED",
+        "actual_existing_gate_results": {
+            key: gates[key] for key in sorted(operative_keys) if key in gates},
+        "proposed_amendment_dimensions": {
+            key: gates[key] for key in sorted(candidate_keys) if key in gates},
+        "actual_and_proposed_results_are_separate": True,
+    })
     tests = json.loads((output / "test_results.json").read_text(encoding="utf-8"))
     replay = json.loads((output / "native_event_replay.json").read_text(encoding="utf-8"))
     matrix = json.loads((output / "native_greedy_parity_matrix.json").read_text(encoding="utf-8"))
@@ -121,6 +163,12 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
         bool(fingerprints.get("stage0_source_hashes")) and
         _source_fingerprint(fingerprints["stage0_source_hashes"]) ==
         fingerprints.get("source_fingerprint_sha256"))
+    method_cards = json.loads(
+        (output / "controller_method_cards.json").read_text(encoding="utf-8"))
+    method_cards_match = (
+        fingerprints.get("method_cards_source_fingerprint_verified") is True and
+        _canonical_json_sha256(method_cards) ==
+        fingerprints.get("method_cards_export_sha256"))
     protected_ok = (
         protected.get("status") == "PASS" and
         protected.get("shadow_memory_byte_equal_to_baseline") is True and
@@ -167,6 +215,7 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
         "This checks the compact package against the full Runner artifacts; it does not validate scientific claims or infer missing method behavior.\n\n"
         f"- Full Runner artifact checksums: **PASS** ({len(source_checksums)} files verified before export).\n"
         f"- Exported source fingerprint recomputation: **{'PASS' if fingerprint_matches else 'FAIL'}**.\n"
+        f"- Method-card/configuration fingerprint recomputation: **{'PASS' if method_cards_match else 'FAIL'}**.\n"
         f"- Protected historical-source baseline: **{'PASS' if protected_ok else 'BLOCKED'}**.\n"
         f"- G0 protected-source gate agrees with the baseline record: **{'PASS' if g0_consistent else 'FAIL'}**.\n"
         f"- B6 Sun-CS status and declared conventions retained: **{'PASS' if sun_status.get('status') == 'PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS' and sun_status.get('author_code_parity', '').startswith('NOT_CLAIMED') else 'FAIL'}**.\n"
@@ -221,7 +270,7 @@ def verify_audit(package_dir: str | Path, *,
     required_semantic = {
         "protocol_fingerprints.json", "gates.json",
         "protected_source_verification.json", "sun_cs_reference_status.json",
-        "audit_manifest.json",
+        "audit_manifest.json", "gate_matrices.json",
     }
     absent = sorted(name for name in required_semantic if not (package / name).is_file())
     if absent:
@@ -234,6 +283,14 @@ def verify_audit(package_dir: str | Path, *,
         fingerprints.get("source_fingerprint_sha256"))
     if not fingerprint_matches:
         return {"valid": False, "reason": "source fingerprint does not match exported source hash map"}
+    method_cards = json.loads(
+        (package / "controller_method_cards.json").read_text(encoding="utf-8"))
+    method_cards_match = (
+        fingerprints.get("method_cards_source_fingerprint_verified") is True and
+        _canonical_json_sha256(method_cards) ==
+        fingerprints.get("method_cards_export_sha256"))
+    if not method_cards_match:
+        return {"valid": False, "reason": "method-card/configuration fingerprint mismatch"}
     protected = json.loads((package / "protected_source_verification.json").read_text(encoding="utf-8"))
     protected_ok = (
         protected.get("status") == "PASS" and

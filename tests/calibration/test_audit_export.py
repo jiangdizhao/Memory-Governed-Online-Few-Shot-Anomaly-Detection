@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -31,6 +32,12 @@ class AuditExportTests(unittest.TestCase):
             root = Path(temporary)
             source, output = root / "runner", root / "audit"
             source.mkdir()
+            method_cards = {
+                "B6": {
+                    "status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+                    "example_support_keys": ["method-private"],
+                },
+            }
             payloads = {
                 "gates.json": {
                     "G0": {"status": "PASS", "reason": "clean"},
@@ -45,7 +52,7 @@ class AuditExportTests(unittest.TestCase):
                 "real_iad_metadata_preflight.json": {
                     "status": "PASS", "dataset_root": "G:\\dataset\\realiad",
                     "example_shared_samples": ["sample-private"]},
-                "controller_method_cards.json": {"B6": {"status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS"}},
+                "controller_method_cards.json": method_cards,
                 "controller_activation_matrix.json": {"status": "PARTIAL"},
                 "sun_cs_reference_status.json": {
                     "status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
@@ -56,11 +63,24 @@ class AuditExportTests(unittest.TestCase):
                 "sun_cs_class_scale_synthetic_diagnostic.json": {
                     "status": "PASS_SYNTHETIC_COMPLETED", "n_events": 3815,
                     "real_iad_data_or_outcomes_used": False},
+                "sun_cs_continuous_diagnostics.json": {
+                    "status": "PASS_SYNTHETIC_ONLY", "runs": []},
+                "sun_cs_endpoint_policy_comparison.json": {
+                    "schema": "calibration.sun_cs_endpoint_policy_comparison.v1",
+                    "runs": []},
+                "b7_query_budget_feasibility.json": {
+                    "status": "PASS_HYPOTHETICAL_ONLY", "results": []},
                 "protected_source_verification.json": {
                     "status": "PASS", "shadow_memory_byte_equal_to_baseline": True,
                     "unrecorded_resolved_dependencies": [],
                     "recorded_but_unresolved_dependencies": [], "failures": []},
                 "protocol_manifest.json": {"profile_sha256": "a" * 64,
+                                            "method_cards_sha256": hashlib.sha256(
+                                                json.dumps(
+                                                    method_cards,
+                                                    sort_keys=True, separators=(",", ":"),
+                                                    ensure_ascii=False, allow_nan=False
+                                                ).encode("utf-8")).hexdigest(),
                                             "protocol_version": "test-v1",
                                             "support_regime": "four plus C64",
                                             "overall_status": "BLOCKED_WIP"},
@@ -74,7 +94,10 @@ class AuditExportTests(unittest.TestCase):
                 self._json(source / name, payload)
             for name in ("stage1_evaluation_protocol_candidate.md",
                          "stage0_gate_amendment_candidate.md",
-                         "sun_cs_a3_declared_conventions.md"):
+                         "sun_cs_a3_declared_conventions.md",
+                         "sun_cs_a3_conservative_endpoints_v2.md",
+                         "b7_activation_feasibility_reporting_v1.md",
+                         "stage0_final_scientific_protocol_review.md"):
                 (source / name).write_text("Candidate document; researcher approval required.\n",
                                            encoding="utf-8")
             checksums = {path.name: audit_export._sha_file(path)
@@ -90,6 +113,7 @@ class AuditExportTests(unittest.TestCase):
                              for path in output.iterdir() if path.is_file())
             self.assertNotIn("G:\\dataset\\realiad", text)
             self.assertNotIn("sample-private", text)
+            self.assertNotIn("method-private", text)
             self.assertTrue((output / "controller_activation_matrix.json").is_file())
             self.assertTrue((output / "protected_source_verification.json").is_file())
             self.assertTrue((output / "sun_cs_reference_status.json").is_file())

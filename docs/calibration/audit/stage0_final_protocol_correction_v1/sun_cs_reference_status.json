@@ -1,0 +1,719 @@
+{
+  "algorithm2_reference_parity": "PASS",
+  "algorithm3_event_trace_parity": "PASS",
+  "author_code_parity": "NOT_CLAIMED_NO_VERIFIED_AUTHOR_IMPLEMENTATION",
+  "author_implementation_search_status": "NO_VERIFIED_AUTHOR_IMPLEMENTATION_LOCATED",
+  "checkpoint_resume": "PASS",
+  "checkpoint_schema": "calibration.sun_cs_checkpoint.v2",
+  "complexity": {
+    "algorithm2_optimized": "O(n log n) time and O(n log n) peak auxiliary storage per invocation.",
+    "algorithm3_recomputes_algorithm2_on_each_history": "O(T^2 log T) cumulative worst-case time and O(T log T) peak auxiliary storage for a segment of length T; no truncation or rolling window.",
+    "class_scale_runtime_claim": "Not established by the Stage 0 short-stream tests; no long Real-IAD sequence was run."
+  },
+  "continuous_synthetic_diagnostics": {
+    "b7_zero_error_descriptive_feasibility": {
+      "bound_at_n": 0.19263617565013536,
+      "bound_at_n_minus_1": 0.20581666518655073,
+      "delta": 0.05,
+      "eight_defects_satisfy_descriptive_target": false,
+      "formula": "U(0,n)=1-delta^(1/n)",
+      "minimum_queried_defects_for_two_sided_activation": 8,
+      "minimum_zero_error_n": 14,
+      "online_guarantee_claimed": false,
+      "status": "DESCRIPTIVE_FIXED_TIME_SAMPLE_SIZE_ONLY",
+      "target_upper": 0.2
+    },
+    "controller_information_boundary": "Only current causal score; synthetic true quantile and source-target labels are evaluated offline after each prediction.",
+    "delta": 0.01,
+    "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+    "finite_stream_identifiability": [
+      {
+        "conservative_extended_real_interval_for_sample_1_to_n": [
+          17.5,
+          "+infinity"
+        ],
+        "empirical_extrema_interval_for_sample_1_to_n": [
+          17.5,
+          64
+        ],
+        "finite_score_anomaly_possible_under_primary_endpoint": false,
+        "lower_order_statistic_midpoint_for_sample_1_to_n": 17.5,
+        "lower_requested_level": 0.2777907561321059,
+        "n": 64,
+        "radius": 0.35610462193394704,
+        "upper_requested_level": 1.0
+      },
+      {
+        "conservative_extended_real_interval_for_sample_1_to_n": [
+          161.5,
+          "+infinity"
+        ],
+        "empirical_extrema_interval_for_sample_1_to_n": [
+          161.5,
+          256
+        ],
+        "finite_score_anomaly_possible_under_primary_endpoint": false,
+        "lower_order_statistic_midpoint_for_sample_1_to_n": 161.5,
+        "lower_requested_level": 0.6301425371189922,
+        "n": 256,
+        "radius": 0.17992873144050392,
+        "upper_requested_level": 1.0
+      },
+      {
+        "conservative_extended_real_interval_for_sample_1_to_n": [
+          851.5,
+          "+infinity"
+        ],
+        "empirical_extrema_interval_for_sample_1_to_n": [
+          851.5,
+          1050
+        ],
+        "finite_score_anomaly_possible_under_primary_endpoint": false,
+        "lower_order_statistic_midpoint_for_sample_1_to_n": 851.5,
+        "lower_requested_level": 0.8108069605102113,
+        "n": 1050,
+        "radius": 0.08959651974489437,
+        "upper_requested_level": 1.0
+      },
+      {
+        "conservative_extended_real_interval_for_sample_1_to_n": [
+          3415.5,
+          "+infinity"
+        ],
+        "empirical_extrema_interval_for_sample_1_to_n": [
+          3415.5,
+          3815
+        ],
+        "finite_score_anomaly_possible_under_primary_endpoint": false,
+        "lower_order_statistic_midpoint_for_sample_1_to_n": 3415.5,
+        "lower_requested_level": 0.8953876821902449,
+        "n": 3815,
+        "radius": 0.04730615890487752,
+        "upper_requested_level": 1.0
+      }
+    ],
+    "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+    "p": 0.99,
+    "real_iad_data_or_outcomes_used": false,
+    "runs": [
+      {
+        "abstention_fraction": 0.4453125,
+        "amortized_runtime_seconds_per_observation": 0.002976652539018687,
+        "binary_coverage": 0.5546875,
+        "endpoint_policy": "conservative_extended_real",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "endpoint_policy_status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+        "false_reset_count_stationary": 0,
+        "first_binary_prediction_position_zero_based": 36,
+        "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+        "n_events": 512,
+        "offline_target_positive_count": 5,
+        "offline_true_quantile_interval_contains_count": 511,
+        "offline_true_quantile_interval_coverage": 1.0,
+        "offline_true_quantile_interval_evaluations": 511,
+        "peak_python_bytes_tracemalloc_separate_run": 342714,
+        "prediction_counts": {
+          "ABSTAIN_CHANGE_DETECTED": 0,
+          "ABSTAIN_COLD_START": 1,
+          "SUN_CS_ABSTAIN": 227,
+          "SUN_CS_ANOMALY": 0,
+          "SUN_CS_BENIGN": 284
+        },
+        "process_rss_peak_bytes_sampled": 505741312,
+        "process_rss_sampling_status": "SAMPLED_PSUTIL",
+        "python_peak_measurement_status": "MEASURED_SEPARATE_TRACED_RUN",
+        "reset_count": 0,
+        "runtime_seconds_untraced": 1.5240460999775678,
+        "scenario": "stationary_uniform",
+        "score_history_final": 512,
+        "seed": 2026102901,
+        "source_fingerprints": {
+          "diagnostic_source": "a0fa593fa15ca1412c76852a294b7e28676d73a1e495fa3cba3c8500f74412dd",
+          "sun_cs_source": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+        },
+        "source_target": "1[score > true synthetic Q_Ft(0.99)]",
+        "source_target_binary_confusion_on_covered_events": {
+          "FN": 0,
+          "FP": 0,
+          "TN": 284,
+          "TP": 0
+        },
+        "source_target_binary_coverage": 0.5546875,
+        "source_target_negative_event_abstention_rate": 0.43984220907297833,
+        "source_target_negative_event_coverage": 0.5601577909270217,
+        "source_target_positive_event_abstention_rate": 1.0,
+        "source_target_positive_event_coverage": 0.0,
+        "source_target_selective_accuracy": 1.0,
+        "source_target_selective_fpr": 0.0,
+        "stationarity": "STATIONARY"
+      },
+      {
+        "abstention_fraction": 0.5,
+        "amortized_runtime_seconds_per_observation": 1.966582067325362e-05,
+        "binary_coverage": 0.5,
+        "endpoint_policy": "empirical_extrema",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "endpoint_policy_status": "EMPIRICAL_EXTREMA_SENSITIVITY",
+        "false_reset_count_stationary": 255,
+        "first_binary_prediction_position_zero_based": 1,
+        "first_change_detection_position_zero_based": 2,
+        "method_version": "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0",
+        "n_events": 512,
+        "offline_target_positive_count": 5,
+        "offline_true_quantile_interval_contains_count": 0,
+        "offline_true_quantile_interval_coverage": 0.0,
+        "offline_true_quantile_interval_evaluations": 256,
+        "peak_python_bytes_tracemalloc_separate_run": 28894,
+        "prediction_counts": {
+          "ABSTAIN_CHANGE_DETECTED": 255,
+          "ABSTAIN_COLD_START": 1,
+          "SUN_CS_ABSTAIN": 0,
+          "SUN_CS_ANOMALY": 127,
+          "SUN_CS_BENIGN": 129
+        },
+        "process_rss_peak_bytes_sampled": 505741312,
+        "process_rss_sampling_status": "SAMPLED_PSUTIL",
+        "python_peak_measurement_status": "MEASURED_SEPARATE_TRACED_RUN",
+        "reset_count": 255,
+        "runtime_seconds_untraced": 0.010068900184705853,
+        "scenario": "stationary_uniform",
+        "score_history_final": 2,
+        "seed": 2026102901,
+        "source_fingerprints": {
+          "diagnostic_source": "a0fa593fa15ca1412c76852a294b7e28676d73a1e495fa3cba3c8500f74412dd",
+          "sun_cs_source": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+        },
+        "source_target": "1[score > true synthetic Q_Ft(0.99)]",
+        "source_target_binary_confusion_on_covered_events": {
+          "FN": 0,
+          "FP": 125,
+          "TN": 129,
+          "TP": 2
+        },
+        "source_target_binary_coverage": 0.5,
+        "source_target_negative_event_abstention_rate": 0.4990138067061144,
+        "source_target_negative_event_coverage": 0.5009861932938856,
+        "source_target_positive_event_abstention_rate": 0.6,
+        "source_target_positive_event_coverage": 0.4,
+        "source_target_selective_accuracy": 0.51171875,
+        "source_target_selective_fnr": 0.0,
+        "source_target_selective_fpr": 0.4921259842519685,
+        "stationarity": "STATIONARY"
+      },
+      {
+        "abstention_fraction": 0.447265625,
+        "amortized_runtime_seconds_per_observation": 0.0030907882814972254,
+        "binary_coverage": 0.552734375,
+        "endpoint_policy": "conservative_extended_real",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "endpoint_policy_status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+        "false_reset_count_stationary": 0,
+        "first_binary_prediction_position_zero_based": 37,
+        "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+        "n_events": 512,
+        "offline_target_positive_count": 6,
+        "offline_true_quantile_interval_contains_count": 511,
+        "offline_true_quantile_interval_coverage": 1.0,
+        "offline_true_quantile_interval_evaluations": 511,
+        "peak_python_bytes_tracemalloc_separate_run": 342742,
+        "prediction_counts": {
+          "ABSTAIN_CHANGE_DETECTED": 0,
+          "ABSTAIN_COLD_START": 1,
+          "SUN_CS_ABSTAIN": 228,
+          "SUN_CS_ANOMALY": 0,
+          "SUN_CS_BENIGN": 283
+        },
+        "process_rss_peak_bytes_sampled": 505741312,
+        "process_rss_sampling_status": "SAMPLED_PSUTIL",
+        "python_peak_measurement_status": "MEASURED_SEPARATE_TRACED_RUN",
+        "reset_count": 0,
+        "runtime_seconds_untraced": 1.5824836001265794,
+        "scenario": "stationary_lognormal",
+        "score_history_final": 512,
+        "seed": 2026102902,
+        "source_fingerprints": {
+          "diagnostic_source": "a0fa593fa15ca1412c76852a294b7e28676d73a1e495fa3cba3c8500f74412dd",
+          "sun_cs_source": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+        },
+        "source_target": "1[score > true synthetic Q_Ft(0.99)]",
+        "source_target_binary_confusion_on_covered_events": {
+          "FN": 0,
+          "FP": 0,
+          "TN": 283,
+          "TP": 0
+        },
+        "source_target_binary_coverage": 0.552734375,
+        "source_target_negative_event_abstention_rate": 0.4407114624505929,
+        "source_target_negative_event_coverage": 0.5592885375494071,
+        "source_target_positive_event_abstention_rate": 1.0,
+        "source_target_positive_event_coverage": 0.0,
+        "source_target_selective_accuracy": 1.0,
+        "source_target_selective_fpr": 0.0,
+        "stationarity": "STATIONARY"
+      },
+      {
+        "abstention_fraction": 0.5,
+        "amortized_runtime_seconds_per_observation": 2.1271288915158948e-05,
+        "binary_coverage": 0.5,
+        "endpoint_policy": "empirical_extrema",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "endpoint_policy_status": "EMPIRICAL_EXTREMA_SENSITIVITY",
+        "false_reset_count_stationary": 255,
+        "first_binary_prediction_position_zero_based": 1,
+        "first_change_detection_position_zero_based": 2,
+        "method_version": "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0",
+        "n_events": 512,
+        "offline_target_positive_count": 6,
+        "offline_true_quantile_interval_contains_count": 0,
+        "offline_true_quantile_interval_coverage": 0.0,
+        "offline_true_quantile_interval_evaluations": 256,
+        "peak_python_bytes_tracemalloc_separate_run": 26210,
+        "prediction_counts": {
+          "ABSTAIN_CHANGE_DETECTED": 255,
+          "ABSTAIN_COLD_START": 1,
+          "SUN_CS_ABSTAIN": 0,
+          "SUN_CS_ANOMALY": 130,
+          "SUN_CS_BENIGN": 126
+        },
+        "process_rss_peak_bytes_sampled": 505741312,
+        "process_rss_sampling_status": "SAMPLED_PSUTIL",
+        "python_peak_measurement_status": "MEASURED_SEPARATE_TRACED_RUN",
+        "reset_count": 255,
+        "runtime_seconds_untraced": 0.010890899924561381,
+        "scenario": "stationary_lognormal",
+        "score_history_final": 2,
+        "seed": 2026102902,
+        "source_fingerprints": {
+          "diagnostic_source": "a0fa593fa15ca1412c76852a294b7e28676d73a1e495fa3cba3c8500f74412dd",
+          "sun_cs_source": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+        },
+        "source_target": "1[score > true synthetic Q_Ft(0.99)]",
+        "source_target_binary_confusion_on_covered_events": {
+          "FN": 0,
+          "FP": 126,
+          "TN": 126,
+          "TP": 4
+        },
+        "source_target_binary_coverage": 0.5,
+        "source_target_negative_event_abstention_rate": 0.5019762845849802,
+        "source_target_negative_event_coverage": 0.4980237154150198,
+        "source_target_positive_event_abstention_rate": 0.33333333333333337,
+        "source_target_positive_event_coverage": 0.6666666666666666,
+        "source_target_selective_accuracy": 0.5078125,
+        "source_target_selective_fnr": 0.0,
+        "source_target_selective_fpr": 0.5,
+        "stationarity": "STATIONARY"
+      },
+      {
+        "abstention_fraction": 0.748046875,
+        "amortized_runtime_seconds_per_observation": 0.0030251466796471504,
+        "binary_coverage": 0.251953125,
+        "endpoint_policy": "conservative_extended_real",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "endpoint_policy_status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+        "first_binary_prediction_position_zero_based": 46,
+        "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+        "n_events": 512,
+        "offline_target_positive_count": 3,
+        "offline_true_quantile_interval_contains_count": 511,
+        "offline_true_quantile_interval_coverage": 1.0,
+        "offline_true_quantile_interval_evaluations": 511,
+        "peak_python_bytes_tracemalloc_separate_run": 342684,
+        "post_shift_change_detected": false,
+        "prediction_counts": {
+          "ABSTAIN_CHANGE_DETECTED": 0,
+          "ABSTAIN_COLD_START": 1,
+          "SUN_CS_ABSTAIN": 382,
+          "SUN_CS_ANOMALY": 0,
+          "SUN_CS_BENIGN": 129
+        },
+        "process_rss_peak_bytes_sampled": 505741312,
+        "process_rss_sampling_status": "SAMPLED_PSUTIL",
+        "python_peak_measurement_status": "MEASURED_SEPARATE_TRACED_RUN",
+        "reset_count": 0,
+        "runtime_seconds_untraced": 1.548875099979341,
+        "scenario": "piecewise_uniform_shift",
+        "score_history_final": 512,
+        "seed": 2026102903,
+        "shift_event_zero_based": 256,
+        "source_fingerprints": {
+          "diagnostic_source": "a0fa593fa15ca1412c76852a294b7e28676d73a1e495fa3cba3c8500f74412dd",
+          "sun_cs_source": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+        },
+        "source_target": "1[score > true synthetic Q_Ft(0.99)]",
+        "source_target_binary_confusion_on_covered_events": {
+          "FN": 0,
+          "FP": 0,
+          "TN": 129,
+          "TP": 0
+        },
+        "source_target_binary_coverage": 0.251953125,
+        "source_target_negative_event_abstention_rate": 0.7465618860510805,
+        "source_target_negative_event_coverage": 0.25343811394891946,
+        "source_target_positive_event_abstention_rate": 1.0,
+        "source_target_positive_event_coverage": 0.0,
+        "source_target_selective_accuracy": 1.0,
+        "source_target_selective_fpr": 0.0,
+        "stationarity": "PIECEWISE_STATIONARY"
+      },
+      {
+        "abstention_fraction": 0.5,
+        "amortized_runtime_seconds_per_observation": 2.232871065643849e-05,
+        "binary_coverage": 0.5,
+        "endpoint_policy": "empirical_extrema",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "endpoint_policy_status": "EMPIRICAL_EXTREMA_SENSITIVITY",
+        "first_binary_prediction_position_zero_based": 1,
+        "first_change_detection_after_shift_position_zero_based": 256,
+        "first_change_detection_position_zero_based": 2,
+        "method_version": "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0",
+        "n_events": 512,
+        "offline_target_positive_count": 3,
+        "offline_true_quantile_interval_contains_count": 0,
+        "offline_true_quantile_interval_coverage": 0.0,
+        "offline_true_quantile_interval_evaluations": 256,
+        "peak_python_bytes_tracemalloc_separate_run": 14792,
+        "post_shift_change_detected": true,
+        "post_shift_change_detection_latency": 0,
+        "prediction_counts": {
+          "ABSTAIN_CHANGE_DETECTED": 255,
+          "ABSTAIN_COLD_START": 1,
+          "SUN_CS_ABSTAIN": 0,
+          "SUN_CS_ANOMALY": 146,
+          "SUN_CS_BENIGN": 110
+        },
+        "process_rss_peak_bytes_sampled": 505741312,
+        "process_rss_sampling_status": "SAMPLED_PSUTIL",
+        "python_peak_measurement_status": "MEASURED_SEPARATE_TRACED_RUN",
+        "reset_count": 255,
+        "runtime_seconds_untraced": 0.011432299856096506,
+        "scenario": "piecewise_uniform_shift",
+        "score_history_final": 2,
+        "seed": 2026102903,
+        "shift_event_zero_based": 256,
+        "source_fingerprints": {
+          "diagnostic_source": "a0fa593fa15ca1412c76852a294b7e28676d73a1e495fa3cba3c8500f74412dd",
+          "sun_cs_source": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+        },
+        "source_target": "1[score > true synthetic Q_Ft(0.99)]",
+        "source_target_binary_confusion_on_covered_events": {
+          "FN": 0,
+          "FP": 144,
+          "TN": 110,
+          "TP": 2
+        },
+        "source_target_binary_coverage": 0.5,
+        "source_target_negative_event_abstention_rate": 0.5009823182711198,
+        "source_target_negative_event_coverage": 0.49901768172888017,
+        "source_target_positive_event_abstention_rate": 0.33333333333333337,
+        "source_target_positive_event_coverage": 0.6666666666666666,
+        "source_target_selective_accuracy": 0.4375,
+        "source_target_selective_fnr": 0.0,
+        "source_target_selective_fpr": 0.5669291338582677,
+        "stationarity": "PIECEWISE_STATIONARY"
+      }
+    ],
+    "schema": "calibration.sun_cs_continuous_diagnostics.v1",
+    "source_fingerprints": {
+      "diagnostic_source": "a0fa593fa15ca1412c76852a294b7e28676d73a1e495fa3cba3c8500f74412dd",
+      "sun_cs_source": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+    },
+    "stage1_or_stage2_executed": false,
+    "status": "PASS_SYNTHETIC_ONLY",
+    "upper_endpoint_identifiability_horizon": {
+      "first_prefix_n_with_unclipped_upper_level": 353018,
+      "interpretation": "A conservative primary anomaly decision is impossible before this prefix length because the upper confidence endpoint is +infinity.",
+      "upper_level_at_n": 0.9999999868405409,
+      "upper_level_at_n_minus_1": 1.0
+    }
+  },
+  "dynamic_memory_guarantee_transfer": false,
+  "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+  "full_paper_and_appendices_reviewed": true,
+  "full_pdf": "https://raw.githubusercontent.com/mlresearch/v235/main/assets/sun24h/sun24h.pdf",
+  "implementation_conventions": [
+    "Primary clipped q=0 endpoint is negative infinity and clipped q=1 endpoint is positive infinity.",
+    "Empirical-extrema q=0/sample-minimum and q=1/sample-maximum behavior is a separately named sensitivity version.",
+    "Interior midpoint empirical quantiles use the declared one-based floor/ceiling ranks; a zero floor rank extends to the first order statistic.",
+    "Empty historical prefix abstains before the current score is appended.",
+    "At a detected change event: abstain, reset, then append that event as the first event in the new segment.",
+    "Both endpoint variants preserve decision-before-update and Algorithm 3 reset behavior; neither claims author-code parity."
+  ],
+  "implementation_scope": "Registered causal Algorithm 3 controller; Algorithm 2 exact optimized implementation checked against an independent small-sequence reference.",
+  "method": "B6 Sun-CS",
+  "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+  "physical_defect_guarantee": false,
+  "primary_candidate": "SUN_CS_A3_CONSERVATIVE_EXTENDED_REAL",
+  "primary_paper": "https://proceedings.mlr.press/v235/sun24h.html",
+  "query_budget_feasibility": {
+    "hypothetical_scenarios": {
+      "assumption": "Within each hypothetical scenario, queried labels are independent Bernoulli(p) draws with the same p for each development class. The fractions are not Real-IAD prevalence estimates.",
+      "minimum_defects_for_nominal_two_sided_evidence": 8,
+      "per_class_query_budgets": {
+        "audiojack": 114,
+        "regulator": 116,
+        "rolled_strip_base": 114,
+        "switch": 115
+      },
+      "query_budget_rule": "half_up(0.03*N_images), one label-blind query per official sample group",
+      "real_iad_labels_or_prevalence_inspected": false,
+      "results": [
+        {
+          "classes": {
+            "audiojack": {
+              "probability_below_8_and_remain_normal_only_hold": 0.7885538540790817,
+              "probability_queried_defects_at_least_14": 0.0017093904721429904,
+              "probability_queried_defects_at_least_8": 0.2114461459209182,
+              "query_count": 114
+            },
+            "regulator": {
+              "probability_below_8_and_remain_normal_only_hold": 0.7751860975000562,
+              "probability_queried_defects_at_least_14": 0.0020174944723975034,
+              "probability_queried_defects_at_least_8": 0.22481390249994376,
+              "query_count": 116
+            },
+            "rolled_strip_base": {
+              "probability_below_8_and_remain_normal_only_hold": 0.7885538540790817,
+              "probability_queried_defects_at_least_14": 0.0017093904721429904,
+              "probability_queried_defects_at_least_8": 0.2114461459209182,
+              "query_count": 114
+            },
+            "switch": {
+              "probability_below_8_and_remain_normal_only_hold": 0.781908433086977,
+              "probability_queried_defects_at_least_14": 0.0018581554805499033,
+              "probability_queried_defects_at_least_8": 0.218091566913023,
+              "query_count": 115
+            }
+          },
+          "expected_development_classes_reaching_14": 0.007294430897233388,
+          "expected_development_classes_reaching_8": 0.8657977612548031,
+          "hypothetical_queried_defect_fraction": 0.05,
+          "independent_bernoulli_assumption": true,
+          "probability_all_classes_reach_14": 1.0954106576343002e-11,
+          "probability_all_classes_reach_8": 0.002192106169772452,
+          "probability_at_least_one_class_reaches_14": 0.007274534194975701,
+          "probability_at_least_one_class_reaches_8": 0.6231013430761927
+        },
+        {
+          "classes": {
+            "audiojack": {
+              "probability_below_8_and_remain_normal_only_hold": 0.1066243208120865,
+              "probability_queried_defects_at_least_14": 0.24840824517195192,
+              "probability_queried_defects_at_least_8": 0.8933756791879135,
+              "query_count": 114
+            },
+            "regulator": {
+              "probability_below_8_and_remain_normal_only_hold": 0.09638734152293438,
+              "probability_queried_defects_at_least_14": 0.2692791704912824,
+              "probability_queried_defects_at_least_8": 0.9036126584770656,
+              "query_count": 116
+            },
+            "rolled_strip_base": {
+              "probability_below_8_and_remain_normal_only_hold": 0.1066243208120865,
+              "probability_queried_defects_at_least_14": 0.24840824517195192,
+              "probability_queried_defects_at_least_8": 0.8933756791879135,
+              "query_count": 114
+            },
+            "switch": {
+              "probability_below_8_and_remain_normal_only_hold": 0.10139692713251913,
+              "probability_queried_defects_at_least_14": 0.2587675365713275,
+              "probability_queried_defects_at_least_8": 0.8986030728674809,
+              "query_count": 115
+            }
+          },
+          "expected_development_classes_reaching_14": 1.0248631974065137,
+          "expected_development_classes_reaching_8": 3.5889670897203736,
+          "hypothetical_queried_defect_fraction": 0.1,
+          "independent_bernoulli_assumption": true,
+          "probability_all_classes_reach_14": 0.004299763472358931,
+          "probability_all_classes_reach_8": 0.6480648343221797,
+          "probability_at_least_one_class_reaches_14": 0.6940362795666688,
+          "probability_at_least_one_class_reaches_8": 0.9998888889245
+        },
+        {
+          "classes": {
+            "audiojack": {
+              "probability_below_8_and_remain_normal_only_hold": 2.9888299130531593e-05,
+              "probability_queried_defects_at_least_14": 0.9889829859262302,
+              "probability_queried_defects_at_least_8": 0.9999701117008695,
+              "query_count": 114
+            },
+            "regulator": {
+              "probability_below_8_and_remain_normal_only_hold": 2.155510475465583e-05,
+              "probability_queried_defects_at_least_14": 0.9911836146632141,
+              "probability_queried_defects_at_least_8": 0.9999784448952453,
+              "query_count": 116
+            },
+            "rolled_strip_base": {
+              "probability_below_8_and_remain_normal_only_hold": 2.9888299130531593e-05,
+              "probability_queried_defects_at_least_14": 0.9889829859262302,
+              "probability_queried_defects_at_least_8": 0.9999701117008695,
+              "query_count": 114
+            },
+            "switch": {
+              "probability_below_8_and_remain_normal_only_hold": 2.5388374167989447e-05,
+              "probability_queried_defects_at_least_14": 0.990140017530211,
+              "probability_queried_defects_at_least_8": 0.999974611625832,
+              "query_count": 115
+            }
+          },
+          "expected_development_classes_reaching_14": 3.9592896040458854,
+          "expected_development_classes_reaching_8": 3.9998932799228166,
+          "hypothetical_queried_defect_fraction": 0.2,
+          "independent_bernoulli_assumption": true,
+          "probability_all_classes_reach_14": 0.9599052519732115,
+          "probability_all_classes_reach_8": 0.9998932841694227,
+          "probability_at_least_one_class_reaches_14": 0.9999999894489784,
+          "probability_at_least_one_class_reaches_8": 1.0
+        },
+        {
+          "classes": {
+            "audiojack": {
+              "probability_below_8_and_remain_normal_only_hold": 2.811559873805436e-10,
+              "probability_queried_defects_at_least_14": 0.9999978042621852,
+              "probability_queried_defects_at_least_8": 0.999999999718844,
+              "query_count": 114
+            },
+            "regulator": {
+              "probability_below_8_and_remain_normal_only_hold": 1.5564460831285487e-10,
+              "probability_queried_defects_at_least_14": 0.9999986439133612,
+              "probability_queried_defects_at_least_8": 0.9999999998443554,
+              "query_count": 116
+            },
+            "rolled_strip_base": {
+              "probability_below_8_and_remain_normal_only_hold": 2.811559873805436e-10,
+              "probability_queried_defects_at_least_14": 0.9999978042621852,
+              "probability_queried_defects_at_least_8": 0.999999999718844,
+              "query_count": 114
+            },
+            "switch": {
+              "probability_below_8_and_remain_normal_only_hold": 2.092450657187328e-10,
+              "probability_queried_defects_at_least_14": 0.9999982735466779,
+              "probability_queried_defects_at_least_8": 0.9999999997907549,
+              "query_count": 115
+            }
+          },
+          "expected_development_classes_reaching_14": 3.9999925259844096,
+          "expected_development_classes_reaching_8": 3.999999999072798,
+          "hypothetical_queried_defect_fraction": 0.3,
+          "independent_bernoulli_assumption": true,
+          "probability_all_classes_reach_14": 0.999992526005109,
+          "probability_all_classes_reach_8": 0.9999999990727984,
+          "probability_at_least_one_class_reaches_14": 1.0,
+          "probability_at_least_one_class_reaches_8": 1.0
+        }
+      ],
+      "stage1_or_stage2_executed": false,
+      "total_query_budget": 459,
+      "zero_error_defects_for_descriptive_fnr_upper_le_0_20": 14
+    },
+    "per_class_query_budgets": {
+      "audiojack": 114,
+      "regulator": 116,
+      "rolled_strip_base": 114,
+      "switch": 115
+    },
+    "real_iad_labels_or_prevalence_inspected": false,
+    "schema": "calibration.b7_query_feasibility.v1",
+    "source": "Runner metadata-only development-class Q-A-TS preflight",
+    "total_query_budget": 459,
+    "zero_error_sample_size": {
+      "bound_at_n": 0.19263617565013536,
+      "bound_at_n_minus_1": 0.20581666518655073,
+      "delta": 0.05,
+      "eight_defects_satisfy_descriptive_target": false,
+      "formula": "U(0,n)=1-delta^(1/n)",
+      "minimum_queried_defects_for_two_sided_activation": 8,
+      "minimum_zero_error_n": 14,
+      "online_guarantee_claimed": false,
+      "status": "DESCRIPTIVE_FIXED_TIME_SAMPLE_SIZE_ONLY",
+      "target_upper": 0.2
+    }
+  },
+  "reference_test_count": 19,
+  "reference_tests_passed": [
+    "test_sun_cs_diagnostics.SunCSDiagnosticsTests.test_b7_zero_error_cp_minimum_is_fourteen_not_eight",
+    "test_sun_cs_diagnostics.SunCSDiagnosticsTests.test_metadata_query_budgets_and_hypothetical_defect_fractions",
+    "test_sun_cs_diagnostics.SunCSDiagnosticsTests.test_registered_finite_stream_endpoints_are_exact_for_unit_ramp",
+    "test_sun_cs_diagnostics.SunCSDiagnosticsTests.test_seeded_continuous_streams_are_reproducible_and_distinct",
+    "test_sun_cs_diagnostics.SunCSDiagnosticsTests.test_small_diagnostic_keeps_online_and_offline_information_separate",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm2_optimized_matches_independent_reference",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm3_event_trace_matches_independent_reference",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm3_stationary_coverage_and_piecewise_reset_diagnostics",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm_four_unique_intersection_helper",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm_one_strict_anomaly_benign_and_inclusive_abstention",
+    "test_sun_cs_reference.SunCSReferenceTests.test_checkpoint_restore_reproduces_remaining_event_trace",
+    "test_sun_cs_reference.SunCSReferenceTests.test_checkpoint_v1_is_rejected_after_endpoint_candidate_versioning",
+    "test_sun_cs_reference.SunCSReferenceTests.test_conservative_upper_endpoint_clipping_precludes_anomaly",
+    "test_sun_cs_reference.SunCSReferenceTests.test_empirical_extrema_false_reset_pathology_and_conservative_control",
+    "test_sun_cs_reference.SunCSReferenceTests.test_empirical_quantile_midpoint_and_endpoint_conventions",
+    "test_sun_cs_reference.SunCSReferenceTests.test_engine_event_boundary_checkpoint_resume_is_identical",
+    "test_sun_cs_reference.SunCSReferenceTests.test_equation_one_interior_and_clipped_endpoint_confidence_sets",
+    "test_sun_cs_reference.SunCSReferenceTests.test_radius_matches_paper_equation_without_clamping",
+    "test_sun_cs_reference.SunCSReferenceTests.test_short_stream_sample_size_diagnostic_is_explicit"
+  ],
+  "registered_conventions": "docs/calibration/SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md",
+  "sensitivity_candidate": "SUN_CS_A3_EMPIRICAL_EXTREMA",
+  "sensitivity_method_version": "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0",
+  "source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+  "stage1_or_stage2_run": false,
+  "status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+  "synthetic_reference_sequence_coverage": {
+    "piecewise_stationary_short:conservative_extended_real": {
+      "abstentions_including_cold_start": 80,
+      "anomalies": 0,
+      "benign": 0,
+      "binary_predictions": 0,
+      "change_detection_abstentions": 0,
+      "cold_start_abstentions": 1,
+      "coverage": 0.0,
+      "endpoint_policy": "conservative_extended_real",
+      "interval_abstentions": 79,
+      "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+      "n": 80,
+      "synthetic_scores_only_no_physical_labels": true
+    },
+    "piecewise_stationary_short:empirical_extrema": {
+      "abstentions_including_cold_start": 40,
+      "anomalies": 20,
+      "benign": 20,
+      "binary_predictions": 40,
+      "change_detection_abstentions": 39,
+      "cold_start_abstentions": 1,
+      "coverage": 0.5,
+      "endpoint_policy": "empirical_extrema",
+      "interval_abstentions": 0,
+      "method_version": "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0",
+      "n": 80,
+      "synthetic_scores_only_no_physical_labels": true
+    },
+    "stationary_short:conservative_extended_real": {
+      "abstentions_including_cold_start": 71,
+      "anomalies": 0,
+      "benign": 9,
+      "binary_predictions": 9,
+      "change_detection_abstentions": 0,
+      "cold_start_abstentions": 1,
+      "coverage": 0.1125,
+      "endpoint_policy": "conservative_extended_real",
+      "interval_abstentions": 70,
+      "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+      "n": 80,
+      "synthetic_scores_only_no_physical_labels": true
+    },
+    "stationary_short:empirical_extrema": {
+      "abstentions_including_cold_start": 40,
+      "anomalies": 20,
+      "benign": 20,
+      "binary_predictions": 40,
+      "change_detection_abstentions": 39,
+      "cold_start_abstentions": 1,
+      "coverage": 0.5,
+      "endpoint_policy": "empirical_extrema",
+      "interval_abstentions": 0,
+      "method_version": "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0",
+      "n": 80,
+      "synthetic_scores_only_no_physical_labels": true
+    }
+  }
+}

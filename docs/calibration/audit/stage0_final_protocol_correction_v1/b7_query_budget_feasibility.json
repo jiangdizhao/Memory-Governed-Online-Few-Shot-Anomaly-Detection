@@ -1,0 +1,185 @@
+{
+  "hypothetical_scenarios": {
+    "assumption": "Within each hypothetical scenario, queried labels are independent Bernoulli(p) draws with the same p for each development class. The fractions are not Real-IAD prevalence estimates.",
+    "minimum_defects_for_nominal_two_sided_evidence": 8,
+    "per_class_query_budgets": {
+      "audiojack": 114,
+      "regulator": 116,
+      "rolled_strip_base": 114,
+      "switch": 115
+    },
+    "query_budget_rule": "half_up(0.03*N_images), one label-blind query per official sample group",
+    "real_iad_labels_or_prevalence_inspected": false,
+    "results": [
+      {
+        "classes": {
+          "audiojack": {
+            "probability_below_8_and_remain_normal_only_hold": 0.7885538540790817,
+            "probability_queried_defects_at_least_14": 0.0017093904721429904,
+            "probability_queried_defects_at_least_8": 0.2114461459209182,
+            "query_count": 114
+          },
+          "regulator": {
+            "probability_below_8_and_remain_normal_only_hold": 0.7751860975000562,
+            "probability_queried_defects_at_least_14": 0.0020174944723975034,
+            "probability_queried_defects_at_least_8": 0.22481390249994376,
+            "query_count": 116
+          },
+          "rolled_strip_base": {
+            "probability_below_8_and_remain_normal_only_hold": 0.7885538540790817,
+            "probability_queried_defects_at_least_14": 0.0017093904721429904,
+            "probability_queried_defects_at_least_8": 0.2114461459209182,
+            "query_count": 114
+          },
+          "switch": {
+            "probability_below_8_and_remain_normal_only_hold": 0.781908433086977,
+            "probability_queried_defects_at_least_14": 0.0018581554805499033,
+            "probability_queried_defects_at_least_8": 0.218091566913023,
+            "query_count": 115
+          }
+        },
+        "expected_development_classes_reaching_14": 0.007294430897233388,
+        "expected_development_classes_reaching_8": 0.8657977612548031,
+        "hypothetical_queried_defect_fraction": 0.05,
+        "independent_bernoulli_assumption": true,
+        "probability_all_classes_reach_14": 1.0954106576343002e-11,
+        "probability_all_classes_reach_8": 0.002192106169772452,
+        "probability_at_least_one_class_reaches_14": 0.007274534194975701,
+        "probability_at_least_one_class_reaches_8": 0.6231013430761927
+      },
+      {
+        "classes": {
+          "audiojack": {
+            "probability_below_8_and_remain_normal_only_hold": 0.1066243208120865,
+            "probability_queried_defects_at_least_14": 0.24840824517195192,
+            "probability_queried_defects_at_least_8": 0.8933756791879135,
+            "query_count": 114
+          },
+          "regulator": {
+            "probability_below_8_and_remain_normal_only_hold": 0.09638734152293438,
+            "probability_queried_defects_at_least_14": 0.2692791704912824,
+            "probability_queried_defects_at_least_8": 0.9036126584770656,
+            "query_count": 116
+          },
+          "rolled_strip_base": {
+            "probability_below_8_and_remain_normal_only_hold": 0.1066243208120865,
+            "probability_queried_defects_at_least_14": 0.24840824517195192,
+            "probability_queried_defects_at_least_8": 0.8933756791879135,
+            "query_count": 114
+          },
+          "switch": {
+            "probability_below_8_and_remain_normal_only_hold": 0.10139692713251913,
+            "probability_queried_defects_at_least_14": 0.2587675365713275,
+            "probability_queried_defects_at_least_8": 0.8986030728674809,
+            "query_count": 115
+          }
+        },
+        "expected_development_classes_reaching_14": 1.0248631974065137,
+        "expected_development_classes_reaching_8": 3.5889670897203736,
+        "hypothetical_queried_defect_fraction": 0.1,
+        "independent_bernoulli_assumption": true,
+        "probability_all_classes_reach_14": 0.004299763472358931,
+        "probability_all_classes_reach_8": 0.6480648343221797,
+        "probability_at_least_one_class_reaches_14": 0.6940362795666688,
+        "probability_at_least_one_class_reaches_8": 0.9998888889245
+      },
+      {
+        "classes": {
+          "audiojack": {
+            "probability_below_8_and_remain_normal_only_hold": 2.9888299130531593e-05,
+            "probability_queried_defects_at_least_14": 0.9889829859262302,
+            "probability_queried_defects_at_least_8": 0.9999701117008695,
+            "query_count": 114
+          },
+          "regulator": {
+            "probability_below_8_and_remain_normal_only_hold": 2.155510475465583e-05,
+            "probability_queried_defects_at_least_14": 0.9911836146632141,
+            "probability_queried_defects_at_least_8": 0.9999784448952453,
+            "query_count": 116
+          },
+          "rolled_strip_base": {
+            "probability_below_8_and_remain_normal_only_hold": 2.9888299130531593e-05,
+            "probability_queried_defects_at_least_14": 0.9889829859262302,
+            "probability_queried_defects_at_least_8": 0.9999701117008695,
+            "query_count": 114
+          },
+          "switch": {
+            "probability_below_8_and_remain_normal_only_hold": 2.5388374167989447e-05,
+            "probability_queried_defects_at_least_14": 0.990140017530211,
+            "probability_queried_defects_at_least_8": 0.999974611625832,
+            "query_count": 115
+          }
+        },
+        "expected_development_classes_reaching_14": 3.9592896040458854,
+        "expected_development_classes_reaching_8": 3.9998932799228166,
+        "hypothetical_queried_defect_fraction": 0.2,
+        "independent_bernoulli_assumption": true,
+        "probability_all_classes_reach_14": 0.9599052519732115,
+        "probability_all_classes_reach_8": 0.9998932841694227,
+        "probability_at_least_one_class_reaches_14": 0.9999999894489784,
+        "probability_at_least_one_class_reaches_8": 1.0
+      },
+      {
+        "classes": {
+          "audiojack": {
+            "probability_below_8_and_remain_normal_only_hold": 2.811559873805436e-10,
+            "probability_queried_defects_at_least_14": 0.9999978042621852,
+            "probability_queried_defects_at_least_8": 0.999999999718844,
+            "query_count": 114
+          },
+          "regulator": {
+            "probability_below_8_and_remain_normal_only_hold": 1.5564460831285487e-10,
+            "probability_queried_defects_at_least_14": 0.9999986439133612,
+            "probability_queried_defects_at_least_8": 0.9999999998443554,
+            "query_count": 116
+          },
+          "rolled_strip_base": {
+            "probability_below_8_and_remain_normal_only_hold": 2.811559873805436e-10,
+            "probability_queried_defects_at_least_14": 0.9999978042621852,
+            "probability_queried_defects_at_least_8": 0.999999999718844,
+            "query_count": 114
+          },
+          "switch": {
+            "probability_below_8_and_remain_normal_only_hold": 2.092450657187328e-10,
+            "probability_queried_defects_at_least_14": 0.9999982735466779,
+            "probability_queried_defects_at_least_8": 0.9999999997907549,
+            "query_count": 115
+          }
+        },
+        "expected_development_classes_reaching_14": 3.9999925259844096,
+        "expected_development_classes_reaching_8": 3.999999999072798,
+        "hypothetical_queried_defect_fraction": 0.3,
+        "independent_bernoulli_assumption": true,
+        "probability_all_classes_reach_14": 0.999992526005109,
+        "probability_all_classes_reach_8": 0.9999999990727984,
+        "probability_at_least_one_class_reaches_14": 1.0,
+        "probability_at_least_one_class_reaches_8": 1.0
+      }
+    ],
+    "stage1_or_stage2_executed": false,
+    "total_query_budget": 459,
+    "zero_error_defects_for_descriptive_fnr_upper_le_0_20": 14
+  },
+  "per_class_query_budgets": {
+    "audiojack": 114,
+    "regulator": 116,
+    "rolled_strip_base": 114,
+    "switch": 115
+  },
+  "real_iad_labels_or_prevalence_inspected": false,
+  "schema": "calibration.b7_query_feasibility.v1",
+  "source": "Runner metadata-only development-class Q-A-TS preflight",
+  "total_query_budget": 459,
+  "zero_error_sample_size": {
+    "bound_at_n": 0.19263617565013536,
+    "bound_at_n_minus_1": 0.20581666518655073,
+    "delta": 0.05,
+    "eight_defects_satisfy_descriptive_target": false,
+    "formula": "U(0,n)=1-delta^(1/n)",
+    "minimum_queried_defects_for_two_sided_activation": 8,
+    "minimum_zero_error_n": 14,
+    "online_guarantee_claimed": false,
+    "status": "DESCRIPTIVE_FIXED_TIME_SAMPLE_SIZE_ONLY",
+    "target_upper": 0.2
+  }
+}

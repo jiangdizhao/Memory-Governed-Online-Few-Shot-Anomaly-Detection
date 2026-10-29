@@ -6,4 +6,4 @@ writer.
 """
 
 __version__ = "0.1.0"
-PROTOCOL_VERSION = "calibration-isolated-stage0-v1"
+PROTOCOL_VERSION = "calibration-isolated-stage0-v2"

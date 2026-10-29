@@ -1,0 +1,27 @@
+{
+  "abstention_fraction": 1.0,
+  "binary_coverage": 0.0,
+  "endpoint_policy": "conservative_extended_real",
+  "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+  "fixture": "constant_score_0.5_stationary_unlabeled_stream_no_change_resets",
+  "memory_scope": "Python allocations only; native process RSS is not measured",
+  "method_version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+  "n_events": 3815,
+  "peak_auxiliary_space": "O(T log T) for the largest per-event Algorithm 2 persistent order-statistic structure",
+  "peak_python_traced_bytes": 1101983,
+  "prediction_counts": {
+    "ABSTAIN_CHANGE_DETECTED": 0,
+    "ABSTAIN_COLD_START": 1,
+    "SUN_CS_ABSTAIN": 3814,
+    "SUN_CS_ANOMALY": 0,
+    "SUN_CS_BENIGN": 0
+  },
+  "real_iad_data_or_outcomes_used": false,
+  "reset_count": 0,
+  "runtime_seconds_with_tracemalloc": 174.2641591001302,
+  "schema": "calibration.sun_cs_class_scale_synthetic_diagnostic.v1",
+  "segment_history_size": 3815,
+  "stage1_or_stage2_run": false,
+  "status": "PASS_SYNTHETIC_COMPLETED",
+  "time_complexity": "O(T^2 log T) worst case across a length-T no-reset Algorithm 3 segment"
+}
