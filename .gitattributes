@@ -2,3 +2,10 @@
 # Disable Git's platform-specific newline conversion for these outputs.
 outputs/r1_oracle_20261028/** -text
 outputs/p01_falsification_20261028/** -text
+
+# Stage 0.5 provenance hashes use canonical LF bytes across platforms.
+experiments/calibration/stage05.py text eol=lf
+experiments/calibration/stage05_runner.py text eol=lf
+tests/calibration/test_stage05.py text eol=lf
+docs/calibration/STAGE05_*.md text eol=lf
+docs/calibration/audit/stage05_exploratory_v1/** text eol=lf

@@ -1,0 +1,184 @@
+{
+  "automated_gates": {
+    "Mint_PCB_or_other_confirmation_outcomes_accessed": false,
+    "controller_code_or_parameters_modified": false,
+    "final_label_blind_query_tape_verification": "PASS 2400 tapes after final source fingerprint rebind; no test labels read",
+    "five_seed_support_C64_disjointness": "PASS",
+    "frozen_query_archive_sha256_matches_manifest": "PASS",
+    "full_calibration_unittest_suite": "PASS 108/108",
+    "historical_source_protection_tests": "PASS",
+    "native_score_tape_integrity": "PASS 20/20",
+    "native_v22_vs_p0_score_parity": "PASS 20/20; maximum absolute score delta 0.0",
+    "nestedness_quota_group_limits_and_seed37_parity": "PASS",
+    "published_query_tape_fingerprints": "PASS 2400 compact hash-only rows",
+    "python_compilation": "PASS",
+    "query_window_aggregate_rows": "PASS 42825",
+    "segmentation_masks_opened": false,
+    "stage05_unit_tests": "PASS 12/12",
+    "stage1_or_stage2_executed": false,
+    "static_evaluator_configurations": "PASS 20/20",
+    "support_seed0_historical_compatibility": "PASS"
+  },
+  "commands": [
+    {
+      "command": "Conda torch Python -m compileall -q experiments/calibration tests/calibration",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "Conda torch Python -m unittest tests.calibration.test_stage05 -v",
+      "failures": 0,
+      "status": "PASS",
+      "tests": 13
+    },
+    {
+      "command": "Conda torch Python -m unittest discover -s tests/calibration -p 'test_*.py' -v",
+      "duration_seconds": 317.336,
+      "failures": 0,
+      "status": "PASS",
+      "tests": 109
+    },
+    {
+      "command": "pytest launcher attempt",
+      "detail": "The configured environment has no pytest module; the unittest suite ran successfully without installing dependencies.",
+      "status": "UNAVAILABLE_NOT_REQUIRED"
+    }
+  ],
+  "created_at_utc": "2026-10-29T05:27:22Z",
+  "overall": "ENGINEERING_AND_ARTIFACT_CHECKS_PASS_EXPLORATORY_NOT_SCIENTIFIC_VALIDATION",
+  "privacy": "No per-image label table, raw score tape, image, mask, model weight, or feature tensor is included in this public package.",
+  "query_tape_count": 2400,
+  "query_tape_fingerprint_count": 2400,
+  "query_window_row_count": 42825,
+  "schema": "stage05.validation_results.v1",
+  "scientific_validation": "NOT_CLAIMED",
+  "score_tape_count": 20,
+  "score_tape_verification": [
+    {
+      "class": "audiojack",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "ad6edc2677809f1f0c455f80ea8aa002e9123fd9f19711936b5c8501696fdd93",
+      "support_seed": 0
+    },
+    {
+      "class": "audiojack",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "ae4b8aaa0891f5a664e282cdb7fa19e5e7d794a9e994b4f475350fd5b331d165",
+      "support_seed": 1
+    },
+    {
+      "class": "audiojack",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "7bcf03a144e284bb1a87297f3de9768c7dfaf42d7815365402d6121f66122aaa",
+      "support_seed": 2
+    },
+    {
+      "class": "audiojack",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "426715a085327857414cab5763e157dceb86abe6a706dafd2e4645fa784607fe",
+      "support_seed": 3
+    },
+    {
+      "class": "audiojack",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "2fd8eac532f989b21641a5f4ba5c89c6fc6c6d1233a2117d76b725c5ce6d0c3f",
+      "support_seed": 4
+    },
+    {
+      "class": "regulator",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "0f6fdb241810bb3943ffd93d8fa5b9e2005c2eb6a1e6e9d53d99dcde5235f9f2",
+      "support_seed": 0
+    },
+    {
+      "class": "regulator",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "2af3fd91ef437ca5d6641fe35e93769816f66ae36def614a2e84cadd1f0faa59",
+      "support_seed": 1
+    },
+    {
+      "class": "regulator",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "bf9fe83f698386cec5a21821f889e7a462ee527aaadb56f9eeac651f6ac41054",
+      "support_seed": 2
+    },
+    {
+      "class": "regulator",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "2eee0b5e3c9f25aa5a3ff136914657397efb22d343cda37af92cba0ae0e4c92c",
+      "support_seed": 3
+    },
+    {
+      "class": "regulator",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "6a12c3757b725dfa3334be5d6ab66651efa7ae9dc8ea4c3b9395d46087b00852",
+      "support_seed": 4
+    },
+    {
+      "class": "rolled_strip_base",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "774c02efb5744337fc881e3f1469943e8780fb68dbccedac161c6bfa8a5bddc6",
+      "support_seed": 0
+    },
+    {
+      "class": "rolled_strip_base",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "a8b5eef2af1b158f0321a97e24b11828ed66784ebfcaaecdb20d571c77df2af0",
+      "support_seed": 1
+    },
+    {
+      "class": "rolled_strip_base",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "7e09f047b10a745d27bb32021781a6fd1be5342240bdea277c0f81b1ac3a2cf5",
+      "support_seed": 2
+    },
+    {
+      "class": "rolled_strip_base",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "df1763c62870bf3e44d81cfe3834c6d84a1f7ec7579487684d06b281d0346169",
+      "support_seed": 3
+    },
+    {
+      "class": "rolled_strip_base",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "a422f506d907c593dad8f8cb0a49e8f6673ef71e02e8f4281052f485a2b767cf",
+      "support_seed": 4
+    },
+    {
+      "class": "switch",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "91fefe78fe54a2d933770b120df08894b4c8e6f69297d0cd2d2ac7b950e0aa9e",
+      "support_seed": 0
+    },
+    {
+      "class": "switch",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "7116ce25061208caabf8db968e4f786d6a771cf00df5736ad477273b56d52127",
+      "support_seed": 1
+    },
+    {
+      "class": "switch",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "146ac77031b183d488d6793598dc9fc1b29cb0bb336807ef0e51a3462deab9d1",
+      "support_seed": 2
+    },
+    {
+      "class": "switch",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "534ad7d34576969a3332afc2f2b27f81a97bdcf2f161a138871a63f049b47b79",
+      "support_seed": 3
+    },
+    {
+      "class": "switch",
+      "native_parity_abs_delta": 0.0,
+      "sha256": "5179e3d6ebb26be44ec13eb888601c1cf35935517602a112312c1096606b7143",
+      "support_seed": 4
+    }
+  ],
+  "source_fingerprints": {
+    "stage05_core_sha256": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+    "stage05_runner_sha256": "1d110e1ca813a064767ebeab597b609b3d863f8afd4c8085b06948ad88347e14",
+    "stage05_tests_sha256": "ad7ea56f3cd5f69fcddde254933da38ac250acbee3a8676384a65d9bf5bbbdb1"
+  },
+  "static_evaluator_count": 20
+}

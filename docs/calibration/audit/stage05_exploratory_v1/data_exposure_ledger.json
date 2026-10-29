@@ -1,0 +1,143 @@
+{
+  "authorized_scope": [
+    "audiojack",
+    "regulator",
+    "switch",
+    "rolled_strip_base"
+  ],
+  "blindness_consequence": "Four development-class test outcomes are exposed exploratory information and cannot be described as unseen for future method development.",
+  "confirmation_classes": "NOT_ACCESSED",
+  "controller_code_or_parameters_modified": false,
+  "label_use": [
+    "query-composition counts",
+    "full-stream class composition",
+    "temporal/query-seed sensitivity summaries"
+  ],
+  "no_masks_or_confirmation_outcomes_accessed": true,
+  "notice": "Stage 0.5 user authorization does not authorize Stage 1/2 or Mint/PCB access.",
+  "oracle_threshold_delivered_to_any_controller": false,
+  "query_composition_label_access_status": "COMPLETED_AFTER_QUERY_TAPE_FREEZE",
+  "query_tape_file_sha256": "db61283c1d2b368687604d8e29b668e200a229bf9cb0d4cbaa41970026e7e031",
+  "query_window_label_analysis": {
+    "class_label_counts": {
+      "audiojack": 3815,
+      "regulator": 3855,
+      "rolled_strip_base": 3805,
+      "switch": 3820
+    },
+    "output_is_aggregate_only": true,
+    "status": "COMPLETED_AFTER_TAPE_FREEZE",
+    "window_summaries_sha256": "aefcfdc66579588a32f1188209cf9547ed1d41a2b9192619ceea00ad22aa4eae"
+  },
+  "schema": "stage05.data_exposure.v1",
+  "score_tape_manifest_sha256": "0e09148778bf1ca1ff93cf2db5b966c6a4af825b7e88241db4f65bc64a17a18c",
+  "score_tapes_frozen_before_this_label_join": true,
+  "stage1_or_stage2_executed": false,
+  "static_score_evaluation_label_access_status": "COMPLETED_AFTER_SCORE_TAPE_FREEZE",
+  "static_score_evaluation_labels_accessed_classes": [
+    "audiojack",
+    "regulator",
+    "rolled_strip_base",
+    "switch"
+  ],
+  "static_score_evaluation_labels_used_for": [
+    "AUROC/AUPRC",
+    "theta0 confusion metrics",
+    "retrospective static threshold oracle",
+    "temporal 256-image window metrics"
+  ],
+  "static_score_label_access_status": "COMPLETED_AFTER_SCORE_TAPE_FREEZE",
+  "support_and_c64_identity_digests": {
+    "audiojack": {
+      "c64_group_sha256": "88f61b52b1678d3f154907b65115896632e577c61c3da32992c4fcd20405b321",
+      "c64_image_sha256": "8093ef50e911bea3a5ff8e6e2375b188b829c561c29c614895de20a8f1600809",
+      "support_group_sha256_by_seed": {
+        "0": "596aace2f6446db821f5456f4ca06161d9eae5d8d0b93c810fd8b03fc7bcac5a",
+        "1": "56a991b98c692f35bb505cfbf4ce58d45edb8f69eff0f95ce309251b27f4100b",
+        "2": "7cef60374494a2a47ac42e983972042894ebfd1a7f72ba2b30051bc35eca58f9",
+        "3": "d4204ae951add5e62b567a903b485fac386f7f76807f05c7b38fcb4f81e06628",
+        "4": "25d2af002a535683278e257f19a8605bc211e594ec9e653d32f1e9f59369ff49"
+      },
+      "support_image_sha256_by_seed": {
+        "0": "0f5de47d2465fac92317207399e607bbb08990615407198d76814a8a98b24f11",
+        "1": "fff0111ad0dbaee762b938ba3bd3b74a8fe2bc414aecb5e14abbd4e4f32802d5",
+        "2": "3973f193d674688c6813480f88159e57f116826816881a92d511e6936fd225a6",
+        "3": "173a326ccfe4d6750554ac199a03611e84d9bec104c6389a1112f592b4ccaab7",
+        "4": "42c510126cf63b12a7d3ff18fe653e90dd0b369db17dae9d640ebf620eba0721"
+      }
+    },
+    "regulator": {
+      "c64_group_sha256": "b67740f3dd88aff13d0615a6da58e0ef0db11a606bed8f3af4a60787e9fcc27d",
+      "c64_image_sha256": "70870d11e1e7a3d51c7658748fdf3efb4481cab990af56cd9b71146f69a3fcbe",
+      "support_group_sha256_by_seed": {
+        "0": "cf4ee46d1afa826d30ef85e9d14b21e850a2875dd37aa3a83473284c6aa42a5a",
+        "1": "b621beeac437533e4c4a077b75b8cde2e6c9bef72d1ab68d9e5ae726f94e6c65",
+        "2": "856986e354cf0b16b0c6c298225c8c9caceb24eb331132860758409afe59f8f8",
+        "3": "88a8f05c52b82fe6fbcc6093810b682395c9f972f429b52a50d9a24cecd3902b",
+        "4": "be4e776557d0083b90c8897fa4cdd6bcd0a830f328acdb13d9c42c1d878f3d3b"
+      },
+      "support_image_sha256_by_seed": {
+        "0": "4a3a651ce886b217bb64e40b74719a156775a239eeb950c33dbc2dae0e3c1f55",
+        "1": "9ee914ae725385611ac39f6c213ba7176f646123a8ac04f67314e3353609b3ee",
+        "2": "9aca59fb856401d09c7126138cb0e00c427c8e3ce767454d853d41acd20c9887",
+        "3": "f4e944a63896fbf427a3ca7ca36a4347b926b851105d1c128647333bfefbc4d4",
+        "4": "6bb6bbc08179bbb6b16caeaa4dad300d78bfd09175446327dd5d2f32352707c6"
+      }
+    },
+    "rolled_strip_base": {
+      "c64_group_sha256": "1cd93b91415ba4fb582d2057bf42d0efaab84a5b2273c7f02559b7ffd9f65dc8",
+      "c64_image_sha256": "62693ed27c1c607be5691ab423f95e739ff6adb40c550b4fd1d60af04979ea1c",
+      "support_group_sha256_by_seed": {
+        "0": "4f065c5059e7ab3acb66601d3556dae3ac7e20d2f5e78d36fb833ee58576f8ac",
+        "1": "93e566ea207d8c5574a64d2492fef0ed5a117b24353c5dc61c5cb9b238c45c47",
+        "2": "0920612f094cc31fdf3ba69e06b6e3b60b4b01f823c72fadef1c24b9f5c56c1f",
+        "3": "9d149409c9119ae1fe07d7ba819c47526eab2a278894a1ff167d425584e4df39",
+        "4": "59fea94a0a0edd878ae6d68742343ff028568f2b8ab1e371a4820439ccbf72c1"
+      },
+      "support_image_sha256_by_seed": {
+        "0": "c9b3e99d9c31a7d335a6497c1a5a79c2b4310a5b235c66ae2da05d55d6267bc5",
+        "1": "5b8bd2a6c67af5bbeb4275034b0c04df0d5c5b3678fbed48266085e633fb6449",
+        "2": "933a2cb224796741fb2d3dc7ab6b3451a05d402e7d36d304aac6a3f76ac5858f",
+        "3": "7440efea3fa8b43c6ceed8acdef40ffb26bf622463739225cb5c3744efdf5c72",
+        "4": "e44834fa9c49b7f645fb0800f3e261677240420a9296acd423db0c965f7d26dc"
+      }
+    },
+    "switch": {
+      "c64_group_sha256": "b6d27657b707f22a43ee68ee63e3cb61676ba21c31a2f007d2feadbbf965719f",
+      "c64_image_sha256": "561164a4f42bf00394539ebcd021e3d62fc490a7698633b8008d273b5cf7fcbc",
+      "support_group_sha256_by_seed": {
+        "0": "ed48457bddd13cc15dd9199e08653f8a94d2fc1f652b14c078c92f82bdc5a83f",
+        "1": "de00e3121ce628c726677579ce202cd14d193aebac90ef7c2fa683523c97f02f",
+        "2": "e735e0d343d5282b1cffafe2672f909d6a58e3063001497604b3eedfd4246959",
+        "3": "4222259881310ccac2f5d38962c98b8bd3a0c29440f29c32d66ec88020011a44",
+        "4": "a76524879dd86a9eb6b3e7b6cb0add844163adfbde9eb38aa70b9270df11a521"
+      },
+      "support_image_sha256_by_seed": {
+        "0": "6f831e8245fa4d78569c53b4c95624c420aa50dc5511c061eefdf3643409127e",
+        "1": "64fb7e2fe85d2e5a4ad7a3b4015c34dea19d0db1a8c31eae2ffe670fe39ddb23",
+        "2": "e3e38969a5f815f05b313f737aba77ce2082b059c49b7fad679a904a83a77981",
+        "3": "44779cf5b10550ebd78ae32b13c32c4b59fa6942d25160f51d830927d37f50ee",
+        "4": "20c29477f1ed5a37897e8146414fbc35bea582a262bc52071c3f816adf4b6a41"
+      }
+    }
+  },
+  "support_and_query_tapes_frozen_first": true,
+  "test_image_status": "NOT_ACCESSED",
+  "test_label_access_started_at_utc": "2026-10-29T04:17:14Z",
+  "test_label_accessed_at_utc": "2026-10-29T04:17:25Z",
+  "test_label_source_sha256_by_class": {
+    "audiojack": "03333ade4def8710688fd8f23d568a1aaad55629115c36cf23662b0aa57fd267",
+    "regulator": "a487d9516790709440c0545c52b260a8e0beb89bee6dc3bf783f6eee8c369d32",
+    "rolled_strip_base": "c5eaa563cfe5faa01b31434c808b640851d1a988b0054e7819bb0065e250ae23",
+    "switch": "b863b819fe7734a9c83acc26b25d419c8d8897a9ae93d5b8fd9d0e424ecf42d8"
+  },
+  "test_label_status": "ACCESSED_FOR_QUERY_AND_STATIC_SCORE_EXPLORATORY_AGGREGATES",
+  "test_labels_accessed_classes": [
+    "audiojack",
+    "regulator",
+    "rolled_strip_base",
+    "switch"
+  ],
+  "test_mask_status": "NOT_ACCESSED",
+  "train_label_status": "ACCESSED_FOR_NORMAL_SUPPORT_AND_C64_SELECTION"
+}
