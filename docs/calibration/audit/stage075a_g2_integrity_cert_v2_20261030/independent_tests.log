@@ -1,0 +1,12 @@
+Independent G2 integrity verification test log
+Historical target hash inventory entries: 6
+Historical target unchanged after verification: True
+PASS payload_byte_mutation_rejected_by_checksum
+PASS checksum_entry_one_byte_mutation_rejected
+PASS run_manifest_replay_link_one_byte_mutation_rejected
+PASS run_manifest_analysis_link_one_byte_mutation_rejected
+PASS run_manifest_source_provenance_link_one_byte_mutation_rejected
+PASS complete_checksum_manifest_link_one_byte_mutation_rejected
+PASS reconstructed_manifest_byte_mutation_rejected
+Overall certificate status: PASS
+Acceptance status: RESEARCHER_REVIEW_REQUIRED
