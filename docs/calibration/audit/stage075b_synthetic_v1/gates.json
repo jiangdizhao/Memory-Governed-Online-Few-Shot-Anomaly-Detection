@@ -1,0 +1,62 @@
+{
+  "G10_ablation_fairness": {
+    "details": "Shared tape, evidence authority and 0.01 move bound across threshold arms.",
+    "status": "PASS"
+  },
+  "G11_reproducibility": {
+    "details": "Second full matrix digest matches; checkpoint/resume is event-trace identical.",
+    "status": "PASS"
+  },
+  "G12_interpretation": {
+    "details": "Reports label heuristics as noninferential; no Real-IAD or guarantee claim.",
+    "status": "PASS"
+  },
+  "G13_tests_compile": {
+    "details": "compileall=True; tests=132 exit=0",
+    "status": "PASS"
+  },
+  "G14_audit_integrity": {
+    "details": "Artifact file list and SHA-256 verified.",
+    "status": "PASS"
+  },
+  "G15_scope": {
+    "details": "Synthetic score inputs only; no Real-IAD, masks, Stage 0.75-C, Stage 1/2 or confirmation classes.",
+    "status": "PASS"
+  },
+  "G1_repository_source_integrity": {
+    "details": "branch=calibration-stage0-contract-20261029; parent=0afa20967c5ed88f804d87f380089b2ca543a9fb; protected_sources=PASS",
+    "status": "PASS"
+  },
+  "G2_mathematical_specification": {
+    "details": "Frozen synthetic-only contract v2 is present; v1 is preserved as superseded.",
+    "status": "PASS"
+  },
+  "G3_b3_fidelity": {
+    "details": "Actual B3 shadow state matches external B3 on every scenario/seed; S0 trace is exact.",
+    "status": "PASS"
+  },
+  "G4_causal_firewall": {
+    "details": "Prequential engine, queried-only feedback, paired indistinguishable worlds.",
+    "status": "PASS"
+  },
+  "G5_shared_score_invariance": {
+    "details": "All threshold-only controllers share the engine's single score vector.",
+    "status": "PASS"
+  },
+  "G6_memory_version_lso": {
+    "details": "Synthetic three-layer source attribution and current-version evidence.",
+    "status": "PASS"
+  },
+  "G7_numerical_stability": {
+    "details": "Exact ties, saturation, zero IQR floor and nonfinite rejection.",
+    "status": "PASS"
+  },
+  "G8_evidence_accounting": {
+    "details": "Unique source groups counted once; repeated rescoring does not add evidence.",
+    "status": "PASS"
+  },
+  "G9_synthetic_suite": {
+    "details": "All S0-S14 run for each frozen synthetic seed.",
+    "status": "PASS"
+  }
+}

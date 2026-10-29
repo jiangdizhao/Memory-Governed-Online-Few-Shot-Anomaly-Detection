@@ -1,0 +1,119 @@
+{
+  "audit_builder_sha256": "129c00e78c8b560e2fb3c76a93c82ac0b39c4c401368a4b9cc46dec2db796139",
+  "branch": "calibration-stage0-contract-20261029",
+  "expected_parent_sha": "0afa20967c5ed88f804d87f380089b2ca543a9fb",
+  "experiment_source_hashes": {
+    "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v1.md": "f921d9c8c00ce8668c2e12848b5797acca0a2228f89839154e91a82068d69575",
+    "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v2.md": "ccf876bb119fc683a6be4b199ee7171918ed2ee7bf2d8a9f983eb65b3f49ddab",
+    "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v3.md": "e8995a18de1e0979f02073bf5afd25b32e56a3c13a6373818fcb87d297a461d9",
+    "docs/calibration/STAGE075B_SYNTHETIC_PROTOCOL_CANDIDATE_v0_1.md": "acc7d3282d4b3d4e34dee9a1387fe7a51ca70c8f98165ae065296fa9d9f41256",
+    "docs/calibration/STAGE075_B8_ECMSC_RESEARCH_DESIGN_v0_2.md": "c3d78a97d8793602e6c0e1362027ded39c0e99fabc1bb92137bf6ee13b15df02",
+    "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+    "experiments/calibration/engine.py": "bba0ea994bf576c1950f1c53d4945af2c445eea5147c17d519632b43f34c7bfe",
+    "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+    "experiments/calibration/profiles.py": "7ff59b6a3783bf4061ab75c6b0782b23a0f6e456b40457a022e5d0de13d6f7a5",
+    "experiments/calibration/protocol.py": "16b39ead3975bf442047737bc5746814ef9697cd0a9962464ee388bbfc52da60",
+    "experiments/calibration/query_tape.py": "ed6f77c2a4de1bd05969ae3c09f2c98c13a744481ca436f80e4633bd6c412c6d",
+    "experiments/calibration/scdac_g.py": "3bd332f575ce2c9e6ca561c6d6096cf19c5493773616a767da2a2f1b07a705b3",
+    "experiments/calibration/stage075b_controllers.py": "166e5c27eb39bd65c146e300702439371c3be868b50adb6b54735decae5fcfed",
+    "experiments/calibration/stage075b_runner.py": "9a7469f374fba5a15b32d5dbdc739b3c5bd33c1aa84f19a1381cabf56b25e8b6",
+    "experiments/calibration/stage075b_synthetic.py": "5e141ad9529adb69a5e150dbb10ed964357d96436e177e52de06abfc068542fe",
+    "tests/calibration/test_stage075b.py": "002764e4ccf41c9b9440c95ef91eef0f8a999e3ca079684b97c37bdcb1d24f7a"
+  },
+  "method_version": "stage075b-ecmsc-candidate-v3",
+  "parent_sha": "0afa20967c5ed88f804d87f380089b2ca543a9fb",
+  "protected_source_hashes_match_parent": {
+    "docs/calibration/STAGE075A_C64_MEMORY_TRANSPORT_REPORT.md": {
+      "matches_parent": true,
+      "parent_git_blob": "08a986ce4f2cb78c0979b00feabb9088006ad6d0",
+      "working_git_blob": "08a986ce4f2cb78c0979b00feabb9088006ad6d0",
+      "working_sha256": "ffb258fb60c4724171f8dacc6303cc35c79233bda824a69b5439c093418a758e"
+    },
+    "docs/calibration/STAGE075A_EXPERIMENT_PROTOCOL_v1.md": {
+      "matches_parent": true,
+      "parent_git_blob": "65d6070315af5c8044837f97886c13bc6da1dd75",
+      "working_git_blob": "65d6070315af5c8044837f97886c13bc6da1dd75",
+      "working_sha256": "967a6995f2311e2780a1cc14c02b5192b9e0c174df94fe856080c2b1c4b0b3ab"
+    },
+    "docs/calibration/STAGE075A_GREEDY_RANKING_FALSIFICATION_REPORT.md": {
+      "matches_parent": true,
+      "parent_git_blob": "26d870b80d965059eb70c3016650e8c6b74e3a2a",
+      "working_git_blob": "26d870b80d965059eb70c3016650e8c6b74e3a2a",
+      "working_sha256": "68ed7d54b9bb97796598e3011ca7514b6d79d72f4cedcfb934569f99f8ab782f"
+    },
+    "docs/calibration/STAGE075A_RESEARCH_DECISION_CANDIDATE.md": {
+      "matches_parent": true,
+      "parent_git_blob": "a8f910fdd4b0c7514b8c4ad68b3c662abe5a0537",
+      "working_git_blob": "a8f910fdd4b0c7514b8c4ad68b3c662abe5a0537",
+      "working_sha256": "a9168301f24b390a64bddccfcf7d7bd8f927872161e7456464f9a326cacdf6f3"
+    },
+    "experiments/calibration/controllers.py": {
+      "matches_parent": true,
+      "parent_git_blob": "8a72325fa2d61dd5faa78bce3c2d450e135613be",
+      "working_git_blob": "8a72325fa2d61dd5faa78bce3c2d450e135613be",
+      "working_sha256": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d"
+    },
+    "experiments/calibration/scdac_g.py": {
+      "matches_parent": true,
+      "parent_git_blob": "0ffbce18aa1231ed693979aba1916b22cd5c716a",
+      "working_git_blob": "0ffbce18aa1231ed693979aba1916b22cd5c716a",
+      "working_sha256": "3bd332f575ce2c9e6ca561c6d6096cf19c5493773616a767da2a2f1b07a705b3"
+    },
+    "experiments/p0_protocol_audit.py": {
+      "matches_parent": true,
+      "parent_git_blob": "7cea82096615ea8996c30c6bba9ed9a155e3d310",
+      "working_git_blob": "7cea82096615ea8996c30c6bba9ed9a155e3d310",
+      "working_sha256": "b83918ec5aceb3ef63cca942fc9fb0e241559d9672d20bed422b15fcd48135e7"
+    },
+    "experiments/risk_safe/native_bridge.py": {
+      "matches_parent": true,
+      "parent_git_blob": "488e2c5dd256b08001a3d7a293f6763a52a52796",
+      "working_git_blob": "488e2c5dd256b08001a3d7a293f6763a52a52796",
+      "working_sha256": "9575214ea8d14ebe32a537fa15afa332446b41d66c1c8c85f890d2251eaef8f7"
+    },
+    "experiments/risk_safe/p01_falsification_native.py": {
+      "matches_parent": true,
+      "parent_git_blob": "41b2341fc06fa98f13251c34386eba65a0ed6017",
+      "working_git_blob": "41b2341fc06fa98f13251c34386eba65a0ed6017",
+      "working_sha256": "6c9cd2cc6540033d413d67c3805d1c3c2603bbbe011943dfed548c43a7bdc7f2"
+    },
+    "experiments/v02_memory.py": {
+      "matches_parent": true,
+      "parent_git_blob": "9123ae0512206e169684a3f697ab878995fbae12",
+      "working_git_blob": "9123ae0512206e169684a3f697ab878995fbae12",
+      "working_sha256": "3c4e247e3a41dc9acc8147a35aa892cf3f3571aca85beb4169809bd70ad48ae0"
+    },
+    "test_phase3_AIF_simplified_v22.py": {
+      "matches_parent": true,
+      "parent_git_blob": "ad7fc242a4752d8d4057bc9eed50d60708939513",
+      "working_git_blob": "ad7fc242a4752d8d4057bc9eed50d60708939513",
+      "working_sha256": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30"
+    },
+    "vmb_visionad_new.py": {
+      "matches_parent": true,
+      "parent_git_blob": "2987372b43b54eb6d81590d80fdd33471633a86e",
+      "working_git_blob": "2987372b43b54eb6d81590d80fdd33471633a86e",
+      "working_sha256": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a"
+    }
+  },
+  "protected_source_status": {
+    "staged_diff": [],
+    "status": "PASS",
+    "working_diff": []
+  },
+  "python_environment": {
+    "cuda_available": true,
+    "environment_name": "torch",
+    "execution_device": "CPU synthetic only",
+    "expected_torch_environment": true,
+    "numpy": "1.24.1",
+    "python_executable_basename": "python.exe",
+    "python_prefix": "torch",
+    "python_version": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+    "scipy": "1.11.2",
+    "torch": "2.0.1+cu117"
+  },
+  "remote_branch_at_preflight_sha": "0afa20967c5ed88f804d87f380089b2ca543a9fb",
+  "run_completed_utc": "2026-10-29T12:31:45.563042+00:00",
+  "run_started_utc": "2026-10-29T12:23:38.467314+00:00"
+}

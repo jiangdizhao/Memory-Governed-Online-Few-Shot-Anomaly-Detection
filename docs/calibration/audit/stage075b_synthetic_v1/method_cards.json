@@ -1,0 +1,107 @@
+{
+  "arms": [
+    {
+      "fidelity": "EXISTING_IMPLEMENTATION_REUSED",
+      "guarantee": "none claimed for this synthetic protocol",
+      "id": "B3",
+      "inputs": [
+        "shared native/synthetic score",
+        "version-matched protected C64 snapshot"
+      ],
+      "parameters": {
+        "delta": 0.01,
+        "min_normals": 16,
+        "quantile": "higher q90; C64 order index 57"
+      },
+      "prediction_rule": "score >= raw threshold",
+      "source": "experiments/calibration/controllers.py::StateConsistentQuantile",
+      "source_sha256": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+      "version": "existing-Stage0-B3"
+    },
+    {
+      "bound_label": "descriptive fixed-time CP endpoints; no coverage guarantee transferred",
+      "fidelity": "EXISTING_PROVISIONAL_IMPLEMENTATION_REUSED",
+      "id": "B7",
+      "inputs": [
+        "version-matched protected C64",
+        "queried verified anchors with synthetic LSO"
+      ],
+      "parameters": {
+        "confidence_delta": 0.05,
+        "max_threshold_step": 0.01,
+        "min_defects": 8,
+        "min_normals": 16,
+        "support_fnr": 0.2,
+        "support_fpr": 0.2
+      },
+      "source": "experiments/calibration/scdac_g.py::SCDACGController",
+      "source_sha256": "3bd332f575ce2c9e6ca561c6d6096cf19c5493773616a767da2a2f1b07a705b3",
+      "version": "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC"
+    },
+    {
+      "equation": "target = (median(queried_normal_LSO)+median(queried_defect))/2; move clipped by 0.01",
+      "fidelity": "NEW_SYNTHETIC_COMPARATOR",
+      "id": "B3+Offset",
+      "inputs": [
+        "same queried distinct groups as B8-Full"
+      ],
+      "missing_evidence": "hold current threshold",
+      "source": "experiments/calibration/stage075b_controllers.py::Stage075BOffset",
+      "source_sha256": "1317a89bddfb77d088115e07b0ae3388097d16e6be202905780bb8a4dd798d50",
+      "version": "stage075b-b3-raw-median-offset-v1"
+    },
+    {
+      "equation": "transport prior B8 raw displacement by paired C64 median shift; target current B3 plus transported displacement",
+      "fidelity": "SYNTHETIC_ABLATION_ONLY",
+      "id": "B8-M",
+      "inputs": [
+        "current C64 scores only"
+      ],
+      "move_limit": 0.01,
+      "version": "stage075b-ecmsc-candidate-v2-M"
+    },
+    {
+      "equation": "transport standardized residual (theta-q90)/IQR; queried-evidence delta-J selection with standardized regularization",
+      "fidelity": "SYNTHETIC_ABLATION_ONLY",
+      "id": "B8-S",
+      "inputs": [
+        "current C64",
+        "queried current-state normal LSO and defect anchors"
+      ],
+      "move_limit": 0.01,
+      "version": "stage075b-ecmsc-candidate-v2-S"
+    },
+    {
+      "equation": "map queried-defect median through finite C64 CDF and deterministic raw candidate mapping; no full evidence gate",
+      "fidelity": "SYNTHETIC_ABLATION_ONLY",
+      "id": "B8-P",
+      "inputs": [
+        "current C64",
+        "queried defect anchors"
+      ],
+      "move_limit": 0.01,
+      "version": "stage075b-ecmsc-candidate-v2-P"
+    },
+    {
+      "U": "sqrt(log(2K/0.05)/(2nN))+sqrt(log(2K/0.05)/(2nD)); heuristic only, not a confidence bound",
+      "contract": "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v2.md",
+      "contract_sha256": "ccf876bb119fc683a6be4b199ee7171918ed2ee7bf2d8a9f983eb65b3f49ddab",
+      "equation": "maximize empirical DeltaJ - U - 0.05*distance_to_B3/IQR - 0.05*distance_to_previous_B8/IQR over full raw grid, then project executed action by 0.01",
+      "fidelity": "SYNTHETIC_CANDIDATE_ONLY; NO SOURCE OR THEORY PARITY",
+      "guarantee": "none; selective labels, dependence, adaptive memory and candidate selection are not covered",
+      "id": "B8-Full",
+      "inputs": [
+        "actual B3 shadow",
+        "current protected C64 coordinates",
+        "distinct queried normal anchors with all-layer synthetic LSO",
+        "distinct queried defect anchors"
+      ],
+      "missing_evidence": "actual B3 target; after prior deviation rejoin under 0.01 movement limit",
+      "source": "experiments/calibration/stage075b_controllers.py::Stage075BController",
+      "source_sha256": "1317a89bddfb77d088115e07b0ae3388097d16e6be202905780bb8a4dd798d50",
+      "version": "stage075b-ecmsc-candidate-v2-Full"
+    }
+  ],
+  "schema": "stage075b.method_cards.v1",
+  "stage1_registry_modified": false
+}

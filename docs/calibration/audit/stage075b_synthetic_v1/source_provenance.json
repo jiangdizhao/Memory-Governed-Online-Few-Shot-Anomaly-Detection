@@ -1,0 +1,36 @@
+{
+  "branch": "calibration-stage0-contract-20261029",
+  "expected_parent_sha": "0afa20967c5ed88f804d87f380089b2ca543a9fb",
+  "historical_sources_modified": [],
+  "parent_sha": "0afa20967c5ed88f804d87f380089b2ca543a9fb",
+  "primary_method_version": "stage075b-ecmsc-candidate-v2",
+  "real_iad_or_confirmation_accessed": false,
+  "report_hashes_sha256": {
+    "docs/calibration/README.md": "95308afb17ed431dbf1473f32e0f3e7d39160398cd652d23daf290e6e4ed5feb",
+    "docs/calibration/STAGE075B_B8_ABLATION_REPORT.md": "2207e48954d70a36a4b7e2e20e1bb000e02467f3ea100e97e1272ed174080bd2",
+    "docs/calibration/STAGE075B_B8_MATHEMATICAL_FALSIFICATION_REPORT.md": "6b66054db6917c44ea846ad3a5989c56a144f4c113c70d4b8c39fbc91a8caef2",
+    "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v1.md": "f921d9c8c00ce8668c2e12848b5797acca0a2228f89839154e91a82068d69575",
+    "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v2.md": "ccf876bb119fc683a6be4b199ee7171918ed2ee7bf2d8a9f983eb65b3f49ddab",
+    "docs/calibration/STAGE075B_RESEARCH_DECISION_CANDIDATE.md": "ea4ca959dd7e016e2dbbf581d0d482570ecad8b1c30eb7d1bc09df42e4e7d601",
+    "docs/calibration/STAGE075B_SYNTHETIC_RESULTS_REPORT.md": "1ba2e6e273e5f195d419bccd6c7f93032830cff00191fdc531dc7515ae712ec0"
+  },
+  "schema": "stage075b.source_provenance.v1",
+  "source_hashes_sha256": {
+    "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v1.md": "f921d9c8c00ce8668c2e12848b5797acca0a2228f89839154e91a82068d69575",
+    "docs/calibration/STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v2.md": "ccf876bb119fc683a6be4b199ee7171918ed2ee7bf2d8a9f983eb65b3f49ddab",
+    "docs/calibration/STAGE075B_SYNTHETIC_PROTOCOL_CANDIDATE_v0_1.md": "acc7d3282d4b3d4e34dee9a1387fe7a51ca70c8f98165ae065296fa9d9f41256",
+    "docs/calibration/STAGE075_B8_ECMSC_RESEARCH_DESIGN_v0_2.md": "c3d78a97d8793602e6c0e1362027ded39c0e99fabc1bb92137bf6ee13b15df02",
+    "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+    "experiments/calibration/engine.py": "bba0ea994bf576c1950f1c53d4945af2c445eea5147c17d519632b43f34c7bfe",
+    "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+    "experiments/calibration/profiles.py": "7ff59b6a3783bf4061ab75c6b0782b23a0f6e456b40457a022e5d0de13d6f7a5",
+    "experiments/calibration/protocol.py": "16b39ead3975bf442047737bc5746814ef9697cd0a9962464ee388bbfc52da60",
+    "experiments/calibration/query_tape.py": "ed6f77c2a4de1bd05969ae3c09f2c98c13a744481ca436f80e4633bd6c412c6d",
+    "experiments/calibration/scdac_g.py": "3bd332f575ce2c9e6ca561c6d6096cf19c5493773616a767da2a2f1b07a705b3",
+    "experiments/calibration/stage075b_controllers.py": "1317a89bddfb77d088115e07b0ae3388097d16e6be202905780bb8a4dd798d50",
+    "experiments/calibration/stage075b_runner.py": "b986a7bfb288816664bcb0ecb7e679d5aa1b4253a4d930518d8b29cacc5d5087",
+    "experiments/calibration/stage075b_synthetic.py": "2c646827489ad48ca9269c6c283bbfb75aa09e4f644db94f964a87c2c0328839",
+    "tests/calibration/test_stage075b.py": "f2cdb97c836d9111d50789f578f90dcdad2312f47bdecabaf375147d18081375"
+  },
+  "stage075a_sources_or_outputs_modified": false
+}

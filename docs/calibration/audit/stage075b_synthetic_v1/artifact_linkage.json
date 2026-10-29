@@ -1,0 +1,9 @@
+{
+  "expected_file_count": 7,
+  "local_artifact_relative_path": "outputs/calibration/stage075b_synthetic_20261029/",
+  "raw_traces_or_checkpoints_in_package": false,
+  "runner_checksums_sha256": "4c9a68f3d68acb0c49aed6e2fd4c698cf29b1ccb35a1cc941eb18a77580ee457",
+  "runner_results_sha256": "822b90ab52698f971f771dbed6671f1b0d4d3bf6f9291d4a3b15dc82f1bfc9be",
+  "runner_verification": "PASS",
+  "schema": "stage075b.artifact_linkage.v1"
+}

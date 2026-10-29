@@ -1,0 +1,30 @@
+{
+  "B3": {
+    "identity": "actual StateConsistentQuantile",
+    "status": "SOURCE_IMPLEMENTATION_USED"
+  },
+  "B3+Offset": {
+    "identity": "raw class-median midpoint with 0.01 cap",
+    "status": "SYNTHETIC_ADAPTATION"
+  },
+  "B7": {
+    "identity": "actual SCDACGController",
+    "status": "SOURCE_IMPLEMENTATION_USED"
+  },
+  "B8-Full": {
+    "identity": "C64 percentile objective and transported prior percentile residual",
+    "status": "SYNTHETIC_ADAPTATION; NO ACTION IN THIS MATRIX"
+  },
+  "B8-M": {
+    "identity": "C64 median transport ablation",
+    "status": "SYNTHETIC_ADAPTATION"
+  },
+  "B8-P": {
+    "identity": "defect median percentile mapping without Full gate",
+    "status": "SYNTHETIC_ADAPTATION"
+  },
+  "B8-S": {
+    "identity": "standardized q90/IQR residual ablation",
+    "status": "SYNTHETIC_ADAPTATION"
+  }
+}

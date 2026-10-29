@@ -1,0 +1,87 @@
+{
+  "controls": [
+    {
+      "control": "A",
+      "focused_fixture": "control_A_no_gain_fixture",
+      "interpretation": "No-gain class-conditional score-law control; also included in the 48-row matrix.",
+      "result": {
+        "class_conditional_score_laws_identical": true,
+        "measured_as_real_iad_oracle": false,
+        "metric": "independent synthetic trajectory BA/deviation appears in A_no_gain_control rows",
+        "status": "PASS",
+        "threshold_balanced_accuracy_population_target": 0.5
+      },
+      "status": "PASS"
+    },
+    {
+      "control": "B",
+      "focused_fixture": "control_B_same_information",
+      "interpretation": "B3+Offset and Full share the same evidence authority and tape.",
+      "result": {
+        "offset_and_full_evidence_group_policy_equal": true,
+        "shared_tape_and_controller_evidence_authority": true,
+        "status": "PASS"
+      },
+      "status": "PASS"
+    },
+    {
+      "control": "C",
+      "focused_fixture": "S14_missing_label_nonidentifiability_and_control_C",
+      "interpretation": "Paired worlds have the same observable prefix through event 512 and different future defect labels.",
+      "result": {
+        "controller_decisions_identical_at_t": true,
+        "future_defect_worlds_differ": true,
+        "prefix_observations_identical": true,
+        "status": "PASS",
+        "worlds_same_through_t": 512
+      },
+      "status": "PASS"
+    },
+    {
+      "control": "D",
+      "focused_fixture": "control_D_candidate_selection_optimism",
+      "interpretation": "Eight queried sources and six candidates show train/future delta-J divergence.",
+      "result": {
+        "candidate_count": 6,
+        "future_delta_j_vs_zero": -0.28571428571428564,
+        "queried_source_count": 8,
+        "selected_threshold": 0.205,
+        "selection_optimism_observed": true,
+        "status": "PASS",
+        "train_delta_j_vs_zero": 0.5
+      },
+      "status": "PASS"
+    },
+    {
+      "control": "E",
+      "focused_fixture": "control_E_mechanism_removal",
+      "interpretation": "BLOCKED: registered arms are related method comparators, not one-toggle component removals.",
+      "result": {
+        "arms": [
+          "B8-M",
+          "B8-S",
+          "B8-P",
+          "B8-Full"
+        ],
+        "blocking_reason": "The registered arms compare related methods but do not independently disable each Full component. Removing the two-class gate while retaining the paired objective would require inventing a missing-class risk definition.",
+        "component_isolation": {
+          "baseline_regularization": "no one-toggle baseline-regularization-removal arm is implemented",
+          "defect_informed_residual": "no one-toggle residual-removal arm is implemented",
+          "evidence_gate": "BLOCKED: removing the two-class condition leaves DeltaJ undefined when either denominator is missing",
+          "percentile_coordinate": "B8-S is a coordinate-family comparator, not a strict one-toggle Full clone"
+        },
+        "component_removals_registered": [
+          "percentile",
+          "residual",
+          "evidence_gate",
+          "baseline_regularization"
+        ],
+        "full_per_scenario_behavior_comparison": "in scenario_results",
+        "status": "BLOCKED"
+      },
+      "status": "BLOCKED"
+    }
+  ],
+  "meaning": "PASS means the preregistered synthetic control fixture executed and its registered check passed; it is not a positive method result.",
+  "status": "BLOCKED"
+}

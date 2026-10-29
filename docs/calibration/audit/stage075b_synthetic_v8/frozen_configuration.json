@@ -1,0 +1,51 @@
+{
+  "B3": {
+    "delta": 0.01,
+    "implementation": "StateConsistentQuantile",
+    "min_normals": 16,
+    "prediction": "score >= theta"
+  },
+  "B8": {
+    "IQR_floor": 1e-12,
+    "delta_heuristic": 0.05,
+    "lambda_base": 0.05,
+    "lambda_move": 0.05,
+    "move_limit_raw": 0.01,
+    "temporal_decay": false,
+    "weighting": "unweighted distinct source groups"
+  },
+  "contract": "STAGE075B_IMPLEMENTATION_CONTRACT_CANDIDATE_v3.md",
+  "events_per_trajectory": 1024,
+  "memory": {
+    "C64_protected_anchors": 64,
+    "authorized_writes": "queried verified normals only",
+    "capacity_per_layer": 256,
+    "layers": 3
+  },
+  "method_version": "stage075b-ecmsc-candidate-v3",
+  "query_protocol": "Q-A-TS-v1 / 3% / seed 37",
+  "scenario_names": [
+    "S0_exact_b3_fallback",
+    "S1_monotone_coordinates",
+    "S2_sparse_c64_tail",
+    "S3_asymmetric_classes",
+    "S4_delayed_defects",
+    "S5_defect_only",
+    "S6_scarce_correlated",
+    "S7_score_vs_concept_staleness",
+    "S8_c64_mismatch",
+    "S9_rejoin_motion",
+    "S10_numeric_edges",
+    "S11_provenance_lso",
+    "S12_shared_score_invariance",
+    "S13_checkpoint_resume",
+    "S14_nonidentifiability",
+    "A_no_gain_control"
+  ],
+  "seeds": [
+    37,
+    101,
+    2029
+  ],
+  "status": "frozen for this synthetic matrix; independent researcher review required"
+}

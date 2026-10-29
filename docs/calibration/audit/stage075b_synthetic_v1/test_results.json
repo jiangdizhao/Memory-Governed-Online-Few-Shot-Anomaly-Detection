@@ -1,0 +1,50 @@
+{
+  "calibration_unittest": {
+    "command": [
+      "D:\\anaconda3\\envs\\torch\\python.exe",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests/calibration",
+      "-v"
+    ],
+    "log": "unittest.log",
+    "passed": true,
+    "returncode": 0,
+    "tests_run": 132
+  },
+  "checkpoint_resume": {
+    "checkpoint_count": 4,
+    "cut_positions": [
+      1,
+      129,
+      401,
+      733
+    ],
+    "full_resume_identical": true,
+    "status": "PASS"
+  },
+  "compileall": {
+    "command": [
+      "D:\\anaconda3\\envs\\torch\\python.exe",
+      "-m",
+      "compileall",
+      "-q",
+      "experiments/calibration",
+      "tests/calibration"
+    ],
+    "log": "compileall.log",
+    "passed": true,
+    "returncode": 0,
+    "tests_run": null
+  },
+  "full_suite_passed": true,
+  "independent_runner_verify": "PASS",
+  "logs": {
+    "compileall_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unittest_log_sha256": "341f28004cd0ead3e76d8d52d687884a56461972742c6ab83bb2e6d7ade40c3b"
+  },
+  "new_stage075b_tests": 13,
+  "schema": "stage075b.test_results.v1"
+}

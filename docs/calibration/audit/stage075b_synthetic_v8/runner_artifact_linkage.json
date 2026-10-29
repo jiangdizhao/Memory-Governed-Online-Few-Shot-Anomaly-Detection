@@ -1,0 +1,16 @@
+{
+  "contains_images_labels_weights_or_raw_traces": false,
+  "independent_verification": {
+    "extra": [],
+    "files_expected": 7,
+    "mismatched": [],
+    "missing": [],
+    "source_hash_mismatch": [],
+    "status": "PASS"
+  },
+  "path": "outputs/calibration/stage075b_synthetic_v3_blocked_final_20261029",
+  "runner_checksums_json_sha256": "437504017fc6dd88aef060ef851bbafa502244a0e42eb9bdd13fa2998a34f819",
+  "runner_output_committed": false,
+  "stage075b_results_sha256": "14f3fccc6ded68822a8990c17a821dbfca5d0cff24f6d0be431ff0e0da185611",
+  "status": "BLOCKED"
+}

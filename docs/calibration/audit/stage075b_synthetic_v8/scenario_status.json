@@ -1,0 +1,214 @@
+{
+  "meaning": "PASS means complete frozen synthetic trajectories and applicable registered assertions; it is not a desired performance direction.",
+  "scenarios": [
+    {
+      "focused_assertion": null,
+      "focused_assertion_status": null,
+      "interpretation": "Exact B3/Full threshold and prediction parity; one-class BA is null.",
+      "scenario": "S0_exact_b3_fallback",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S1_common_monotone_rank_invariance",
+      "focused_assertion_status": "PASS",
+      "interpretation": "Common strictly increasing transforms preserve finite ranks; no BA-invariance claim.",
+      "scenario": "S1_monotone_coordinates",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S2_zero_median_tail_change",
+      "focused_assertion_status": "PASS",
+      "interpretation": "Zero median shift with a higher-q90 change from 57.0 to 57.5.",
+      "scenario": "S2_sparse_c64_tail",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": null,
+      "focused_assertion_status": null,
+      "interpretation": "Class-specific transformations ran; normal ranks do not identify defect risk.",
+      "scenario": "S3_asymmetric_classes",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": null,
+      "focused_assertion_status": null,
+      "interpretation": "Delayed feedback ran on the frozen label-blind tape.",
+      "scenario": "S4_delayed_defects",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": null,
+      "focused_assertion_status": null,
+      "interpretation": "No verified-normal writes; BA is null for the one-class stream.",
+      "scenario": "S5_defect_only",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S6_distinct_source_ladder",
+      "focused_assertion_status": "PASS",
+      "interpretation": "Distinct source counts 1/2/3/7/8/14/20; rescoring does not add sources.",
+      "scenario": "S6_scarce_correlated",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S7_staleness_separation",
+      "focused_assertion_status": "PASS",
+      "interpretation": "Score freshness and concept age separated; no decay used.",
+      "scenario": "S7_score_vs_concept_staleness",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S8_c64_mismatch_boundary",
+      "focused_assertion_status": "PASS",
+      "interpretation": "C64 is not pooled into queried-stream FPR evidence.",
+      "scenario": "S8_c64_mismatch",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": null,
+      "focused_assertion_status": null,
+      "interpretation": "Frozen matrix ran; direct departure/rejoin unit fixture passed under the 0.01 cap.",
+      "scenario": "S9_rejoin_motion",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S10_numerical_edges",
+      "focused_assertion_status": "PASS",
+      "interpretation": "Tie, saturation, zero-IQR and nonfinite checks passed.",
+      "scenario": "S10_numeric_edges",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S11_lso_fixture",
+      "focused_assertion_status": "PASS",
+      "interpretation": "Synthetic three-layer LSO and duplicate-group checks passed; not native LSO parity.",
+      "scenario": "S11_provenance_lso",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S12_common_score_invariance",
+      "focused_assertion_status": "PASS",
+      "interpretation": "One shared score vector, query plan and memory path.",
+      "scenario": "S12_shared_score_invariance",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": null,
+      "focused_assertion_status": null,
+      "interpretation": "Four event cuts reproduced the full trace and state.",
+      "scenario": "S13_checkpoint_resume",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": "S14_missing_label_nonidentifiability_and_control_C",
+      "focused_assertion_status": "PASS",
+      "interpretation": "Two future-defect worlds were indistinguishable through event 512.",
+      "scenario": "S14_nonidentifiability",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    },
+    {
+      "focused_assertion": null,
+      "focused_assertion_status": null,
+      "interpretation": "Identical synthetic class-conditional laws; outcomes are descriptive around BA 0.5.",
+      "scenario": "A_no_gain_control",
+      "seeds": [
+        37,
+        101,
+        2029
+      ],
+      "status": "PASS",
+      "trajectories": 3
+    }
+  ],
+  "status": "PASS"
+}
