@@ -295,6 +295,8 @@ def run_native_event_replay(dataset_root: str | Path,
             synthetic_labels, values)
         executable_names = [controller.name for controller in build_controllers(
             theta0, c64_scores)]
+        blocked_method_names = [key for key, card in METHOD_CARDS.items()
+                                if card["status"] == "BLOCKED_FIDELITY"]
         method_auc = {name: {"auroc": synthetic_auc, "auprc": synthetic_auprc,
                              "score_vector_sha256": score_vector_sha,
                              "label_fixture": "synthetic_binary_diagnostic_only"}
@@ -335,9 +337,10 @@ def run_native_event_replay(dataset_root: str | Path,
             "initial_c64_current_state_count": len(initial_evidence.normal_anchors),
             "initial_theta_policy": "D2_higher_q90_of_64_additional_C64_native_scores_at_M0",
             "method_names": executable_names,
-            "blocked_method_names": [key for key, card in METHOD_CARDS.items()
-                                     if card["status"] == "BLOCKED_FIDELITY"],
-            "all_controller_matrix_status": "BLOCKED_B6_FIDELITY",
+            "blocked_method_names": blocked_method_names,
+            "all_controller_matrix_status": (
+                "PASS_BOUNDED_NATIVE_DIAGNOSTIC" if not blocked_method_names else
+                "BLOCKED_UNRESOLVED_METHOD_ROWS"),
             "score_vector_sha256": score_vector_sha,
             "score_values_emitted": False,
             "score_state_versions": sorted(set(versions)),

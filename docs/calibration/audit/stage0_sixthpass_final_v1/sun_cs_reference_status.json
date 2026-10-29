@@ -1,0 +1,94 @@
+{
+  "algorithm2_reference_parity": "PASS",
+  "algorithm3_event_trace_parity": "PASS",
+  "author_code_parity": "NOT_CLAIMED_NO_VERIFIED_AUTHOR_IMPLEMENTATION",
+  "author_implementation_search_status": "NO_VERIFIED_AUTHOR_IMPLEMENTATION_LOCATED",
+  "checkpoint_resume": "PASS",
+  "class_scale_synthetic_diagnostic": {
+    "abstention_fraction": 1.0,
+    "binary_coverage": 0.0,
+    "memory_scope": "Python allocations only; native process RSS is not measured",
+    "n_events": 3815,
+    "peak_python_traced_bytes": 1101999,
+    "prediction_counts": {
+      "ABSTAIN_CHANGE_DETECTED": 0,
+      "ABSTAIN_COLD_START": 1,
+      "SUN_CS_ABSTAIN": 3814,
+      "SUN_CS_ANOMALY": 0,
+      "SUN_CS_BENIGN": 0
+    },
+    "reset_count": 0,
+    "runtime_seconds_with_tracemalloc": 1234.221385799814,
+    "segment_history_size": 3815,
+    "status": "PASS_SYNTHETIC_COMPLETED"
+  },
+  "complexity": {
+    "algorithm2_optimized": "O(n log n) time and O(n log n) peak auxiliary storage per invocation.",
+    "algorithm3_recomputes_algorithm2_on_each_history": "O(T^2 log T) cumulative worst-case time and O(T log T) peak auxiliary storage for a segment of length T; no truncation or rolling window.",
+    "class_scale_runtime_claim": "Synthetic no-reset N=3815 completed in 1234.221 seconds with 1101999 peak traced Python bytes; not a Real-IAD timing claim."
+  },
+  "dynamic_memory_guarantee_transfer": false,
+  "full_paper_and_appendices_reviewed": true,
+  "full_pdf": "https://raw.githubusercontent.com/mlresearch/v235/main/assets/sun24h/sun24h.pdf",
+  "implementation_conventions": [
+    "Primary q=0 endpoint selects the sample minimum; q=1 selects maximum.",
+    "Interior midpoint empirical quantiles use the declared one-based floor/ceiling ranks; a zero floor rank extends to the first order statistic.",
+    "Empty historical prefix abstains before the current score is appended.",
+    "At a detected change event: abstain, reset, then append that event as the first event in the new segment.",
+    "A separate conservative extended-real endpoint sensitivity is registered; it is not selected by data outcomes."
+  ],
+  "implementation_scope": "Registered causal Algorithm 3 controller; exact optimized Algorithm 2 checked against an independent small-sequence reference; no author-code trace parity.",
+  "method": "B6 Sun-CS",
+  "physical_defect_guarantee": false,
+  "primary_paper": "https://proceedings.mlr.press/v235/sun24h.html",
+  "reference_test_count": 11,
+  "reference_tests_passed": [
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm2_optimized_matches_independent_reference",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm3_event_trace_matches_independent_reference",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm3_stationary_coverage_and_piecewise_reset_diagnostics",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm_four_unique_intersection_helper",
+    "test_sun_cs_reference.SunCSReferenceTests.test_algorithm_one_strict_anomaly_benign_and_inclusive_abstention",
+    "test_sun_cs_reference.SunCSReferenceTests.test_checkpoint_restore_reproduces_remaining_event_trace",
+    "test_sun_cs_reference.SunCSReferenceTests.test_empirical_quantile_midpoint_and_endpoint_conventions",
+    "test_sun_cs_reference.SunCSReferenceTests.test_engine_event_boundary_checkpoint_resume_is_identical",
+    "test_sun_cs_reference.SunCSReferenceTests.test_equation_one_interior_and_clipped_endpoint_confidence_sets",
+    "test_sun_cs_reference.SunCSReferenceTests.test_radius_matches_paper_equation_without_clamping",
+    "test_sun_cs_reference.SunCSReferenceTests.test_short_stream_sample_size_diagnostic_is_explicit"
+  ],
+  "registered_configuration": {
+    "delta": 0.01,
+    "endpoint_policy": "empirical_extrema",
+    "p": 0.99,
+    "radius": "raw Equation (2), no clamp"
+  },
+  "registered_conventions": "docs/calibration/SUN_CS_A3_DECLARED_CONVENTIONS_v1.md",
+  "source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+  "stage1_or_stage2_run": false,
+  "status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+  "synthetic_reference_sequence_coverage": {
+    "piecewise_stationary_short": {
+      "abstentions_including_cold_start": 40,
+      "anomalies": 20,
+      "benign": 20,
+      "binary_predictions": 40,
+      "change_detection_abstentions": 39,
+      "cold_start_abstentions": 1,
+      "coverage": 0.5,
+      "interval_abstentions": 0,
+      "n": 80,
+      "synthetic_scores_only_no_physical_labels": true
+    },
+    "stationary_short": {
+      "abstentions_including_cold_start": 40,
+      "anomalies": 20,
+      "benign": 20,
+      "binary_predictions": 40,
+      "change_detection_abstentions": 39,
+      "cold_start_abstentions": 1,
+      "coverage": 0.5,
+      "interval_abstentions": 0,
+      "n": 80,
+      "synthetic_scores_only_no_physical_labels": true
+    }
+  }
+}

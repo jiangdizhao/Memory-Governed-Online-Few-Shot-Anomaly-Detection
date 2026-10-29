@@ -5,9 +5,10 @@ from dataclasses import asdict
 from typing import Any
 
 from .controllers import (AdaptedDualACI, BlockedController, FrozenTheta,
-                          OriginalGuardedSidecar, RollingQ90QueriedNormal,
-                          StateConsistentQuantile)
+                          FrozenThresholdFallback, OriginalGuardedSidecar,
+                          RollingQ90QueriedNormal, StateConsistentQuantile)
 from .scdac_g import SCDACGController
+from .sun_cs import (PRIMARY_ENDPOINT_POLICY, SUN_CS_VERSION, SunCSController)
 from .spot_dspot import (DSPOTController, POTConfig, SPOTController,
                          DSPOT_VERSION, SPOT_VERSION)
 
@@ -66,13 +67,26 @@ METHOD_CARDS: dict[str, dict[str, Any]] = {
                             "During residual warm-up, the d raw-score history advances until the first POT threshold is available; initial decisions are explicitly unavailable."],
             "reference_validation": "Shared independent SPOT equation tests plus dSPOT residual initialization, accepted-normal window updates, alarm exclusion, reconstructed threshold and checkpoint tests.",
             "blocker": "No independent author dSPOT implementation was found in the pinned libspot source; verification is against the KDD paper algorithm/equations, not author-code parity."},
-    "B6": {"name": "SunCS", "status": "BLOCKED_FIDELITY",
+    "B6": {"name": "Sun-CS Algorithm 3",
+            "status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+            "version": SUN_CS_VERSION,
             "source": "Sun et al., ICML 2024, https://proceedings.mlr.press/v235/sun24h.html",
-            "information": ["source method uses an unsupervised score stream and emits a tri-state decision"],
-            "reference_implementation": "Paper-equation primitives only in experiments/calibration/sun_cs.py; no B6 controller is registered.",
-            "blocker": "The paper clips Equation (1) quantile levels to 0 or 1 without defining endpoint empirical-quantile behavior, and Algorithm 3 does not define the empty-prefix confidence set or first online decision. No verified author implementation or independent source trace for Algorithm 2/3 reset behavior was located. A B6 controller therefore cannot be source-faithfully initialized or validated. Dynamic native score dependence also prevents automatic transfer of the paper's guarantees.",
-            "source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
-            "no_guarantee": "Paper assumptions do not automatically cover dynamic-memory dependent scores, selectively queried labels, or the calibration protocol."},
+            "information": ["full causal unlabeled scalar-score stream; no physical labels or feedback"],
+            "equation": "ICML 2024 Eq. (1)-(2), Algorithms 1-3: quantile confidence set; forward/backward confidence-set intersection change detector; decision-time abstain/reset; strict upper anomaly, lower benign, interval abstain.",
+            "defaults": {"p": 0.99, "delta": 0.01,
+                         "endpoint_policy": PRIMARY_ENDPOINT_POLICY.name,
+                         "empty_prefix": "ABSTAIN_COLD_START",
+                         "radius": "raw Equation (2), no clamp"},
+            "reference_implementation": "Independent O(n^2 log n) small-sequence reference and exact O(n log n) per-invocation Algorithm 2 implementation. Algorithm 3 rechecks each full past prefix, giving O(T^2 log T) worst-case cumulative time and O(T log T) peak auxiliary space for a length-T no-reset segment; causal and checkpointable.",
+            "implementation_conventions": [
+                "q=0 selects sample minimum in primary; q=1 selects maximum",
+                "interior midpoint ranks with floor rank zero extend to first order statistic",
+                "empty historical prefix abstains before current score is appended",
+                "at change event abstain, reset, then seed new segment with current score",
+                "no verified author code located; no author-code trace parity claim"],
+            "historical_source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+            "source_fidelity_spec": "docs/calibration/SUN_CS_A3_DECLARED_CONVENTIONS_v1.md",
+            "no_guarantee": "Score-quantile target differs from physical defects. Guarantees do not automatically cover dependent scores under dynamic memory or feedback."},
     "B7": {"name": "SCDAC-G", "version": "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC",
             "status": "IMPLEMENTED_PROVISIONAL",
             "source": "docs/Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf; SHA-256 5fe07256384351c1170d67183eae5a80e5aa289a03586ba767671f062f4fb977",
@@ -82,6 +96,19 @@ METHOD_CARDS: dict[str, dict[str, Any]] = {
             "adaptation": "PROVISIONAL_METHOD_SPEC; exact numerical choices are registered in the new method spec because the proposal leaves them open",
             "no_guarantee": "Descriptive only. Selective labels, serial dependence, repeated memory rescoring and threshold selection invalidate automatic transfer of binomial confidence guarantees."},
 }
+
+# Explicit operational adaptations; originals remain separately registered.
+for _source_key in ("B5a", "B5b", "B6"):
+    _fallback = dict(METHOD_CARDS[_source_key])
+    _fallback.update({
+        "name": f"{METHOD_CARDS[_source_key]['name']} + Frozen-Theta fallback",
+        "status": "OPERATIONAL_VARIANT_WITH_EXPLICIT_THETA0_FALLBACK",
+        "source_native_comparator": _source_key,
+        "fallback_policy": "theta0 on source-native startup unavailable or abstention; otherwise source prediction",
+        "adaptations": list(_fallback.get("adaptations", [])) + [
+            "Distinct deployment wrapper; fallback decisions are not attributed to the source algorithm."],
+    })
+    METHOD_CARDS[f"{_source_key}_FROZEN_FALLBACK"] = _fallback
 
 # Keep the method card schema complete even for BLOCKED_FIDELITY families.
 # `None` and explicit blocked text are intentional: the card must expose what
@@ -106,6 +133,8 @@ _CITATIONS = {
            "Internal proposal authorship not recorded in repository metadata",
            "Internal research proposal", None),
 }
+for _key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK", "B6_FROZEN_FALLBACK"):
+    _CITATIONS[_key] = _CITATIONS[_key.split("_")[0]]
 _REFERENCE_TESTS = {
     "B0": ["test_theta0_uses_d2_higher_q90_at_zero_based_rank_57"],
     "B1": ["test_b1_only_queried_verified_normals_enter_buffer"],
@@ -120,15 +149,15 @@ _REFERENCE_TESTS = {
             "test_insufficient_peak_initialization_fails_closed"],
     "B5b": ["test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean",
             "test_spot_checkpoint_roundtrip_is_deterministic"],
-    "B6": ["test_radius_matches_paper_equation_and_time_zero",
-          "test_midpoint_quantile_uses_paper_floor_ceil_ranks",
-          "test_equation_one_matches_hand_computed_interior_confidence_set",
-          "test_algorithm_one_preserves_strict_anomaly_and_abstention_edges",
-          "test_algorithm_two_intersection_change_predicate",
-          "test_algorithm_four_uses_exactly_one_matching_offline_set",
-          "test_undefined_empty_and_clipped_endpoint_cases_fail_closed"],
+    "B6": ["test_radius_matches_paper_equation_without_clamping",
+          "test_primary_and_extended_real_endpoint_conventions",
+          "test_algorithm2_optimized_matches_independent_reference",
+          "test_algorithm3_event_trace_matches_independent_reference",
+          "test_algorithm3_checkpoint_resume_is_deterministic"],
     "B7": ["tests/calibration/test_scdac_g.py"],
 }
+for _key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK", "B6_FROZEN_FALLBACK"):
+    _REFERENCE_TESTS[_key] = ["test_operational_fallback_records_startup_and_abstention_modes"]
 _PAPER_URLS = {
     "B4": "https://papers.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html",
     "B5a": "https://doi.org/10.1145/3097983.3098144",
@@ -143,9 +172,12 @@ _MISSING_DATA = {
     "B4": "Missing class-side evidence is unavailable and never assigned zero risk.",
     "B5a": "Before n_init scores, prediction is explicitly unavailable; fewer than two strict initial peaks fail closed. After warm-up, alarms are excluded from observation/peak updates.",
     "B5b": "First d raw observations and subsequent n_init residual observations have unavailable predictions; during residual warm-up the raw window slides, and runtime alarms update neither POT nor mean window.",
-    "B6": "No registered controller or online decisions; paper-equation reference primitives only. Empty-prefix and endpoint behavior fail closed.",
+    "B6": "Empty historical prefix yields ABSTAIN_COLD_START; primary endpoints use empirical extrema. Physical labels, feedback, and C64 offline matching are not consumed.",
     "B7": "NONE/NORMAL_ONLY/DEFECT_ONLY hold; both-side minimums gate optimization.",
 }
+for _key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK", "B6_FROZEN_FALLBACK"):
+    _MISSING_DATA[_key] = (
+        "Uses theta0 only when the source controller is unavailable or abstains; source state continues to update causally.")
 for _key, _card in METHOD_CARDS.items():
     _title, _authors, _venue, _year = _CITATIONS[_key]
     _card.update({
@@ -190,6 +222,22 @@ for _key, _card in METHOD_CARDS.items():
         _card["faithful_or_adapted"] = (
             "PAPER_EQUATION_IMPLEMENTATION_WITH_DECLARED_NUMERICAL_ADAPTATIONS; "
             "no compiled author-code parity claim")
+    if _key.endswith("_FROZEN_FALLBACK"):
+        _card["faithful_or_adapted"] = "SEPARATE_OPERATIONAL_ADAPTATION; not the source-native algorithm"
+
+METHOD_CARDS["B6"]["complexity_and_runtime"] = (
+    "Optimized A2 O(n log n) time and O(n log n) temporary nodes per check; "
+    "A3 worst-case O(T^2 log T) cumulative time and O(T log T) peak temporary "
+    "nodes. Runtime/memory are reported in the sixth-pass audit.")
+METHOD_CARDS["B6"]["reference_validation"] = (
+    "Simple independent A2/A3 reference, exact optimized trace parity, reset "
+    "boundary tests, stationary/piecewise sequences, and event-boundary resume; "
+    "no verified author-code trace parity.")
+for _key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK", "B6_FROZEN_FALLBACK"):
+    _base = _key.split("_")[0]
+    METHOD_CARDS[_key]["paper_url"] = _PAPER_URLS.get(_base)
+    METHOD_CARDS[_key]["author_code_url"] = METHOD_CARDS[_base].get("author_code_url")
+    METHOD_CARDS[_key]["pinned_source_sha"] = METHOD_CARDS[_base].get("pinned_source_sha")
 
 
 def method_cards() -> dict[str, dict[str, Any]]:
@@ -208,7 +256,18 @@ def build_controllers(theta0: float, c64_scores: list[float], *,
         AdaptedDualACI(float(theta0)),
         SPOTController(POTConfig()),
         DSPOTController(POTConfig(version=DSPOT_VERSION), window=50),
+        SunCSController(p=0.99, delta=0.01,
+                        endpoint_policy=PRIMARY_ENDPOINT_POLICY),
         SCDACGController(float(theta0)),
+        FrozenThresholdFallback(SPOTController(POTConfig()), float(theta0),
+                                name="B5a_FROZEN_FALLBACK"),
+        FrozenThresholdFallback(DSPOTController(
+            POTConfig(version=DSPOT_VERSION), window=50), float(theta0),
+            name="B5b_FROZEN_FALLBACK"),
+        FrozenThresholdFallback(SunCSController(
+            p=0.99, delta=0.01,
+            endpoint_policy=PRIMARY_ENDPOINT_POLICY), float(theta0),
+            name="B6_FROZEN_FALLBACK"),
     ]
     if include_blocked:
         controllers.extend(BlockedController(key, str(card.get("blocker")), theta0)

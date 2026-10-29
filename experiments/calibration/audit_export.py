@@ -14,6 +14,9 @@ PACKAGE_FILES = (
     "native_greedy_parity_matrix.json", "native_event_replay.json",
     "real_iad_metadata_preflight.json", "controller_method_cards.json",
     "controller_activation_matrix.json", "sun_cs_reference_status.json",
+    "b7_engine_activation.json", "stage1_evaluation_protocol_candidate.md",
+    "stage0_gate_amendment_candidate.md", "sun_cs_a3_declared_conventions.md",
+    "sun_cs_class_scale_synthetic_diagnostic.json",
     "protected_source_verification.json",
 )
 DROP_KEYS = {"path", "absolute_path", "dataset_root", "json_root",
@@ -89,10 +92,16 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
 
     output.mkdir(parents=True, exist_ok=False)
     for name in PACKAGE_FILES:
-        payload = json.loads((source / name).read_text(encoding="utf-8"))
-        if name == "test_results.json":
-            payload = _compact_tests(payload)
-        _write_json(output / name, _sanitize(payload))
+        if name.endswith(".json"):
+            payload = json.loads((source / name).read_text(encoding="utf-8"))
+            if name == "test_results.json":
+                payload = _compact_tests(payload)
+            _write_json(output / name, _sanitize(payload))
+        else:
+            text = (source / name).read_text(encoding="utf-8")
+            (output / name).write_text(
+                ABSOLUTE_PATH.sub("<REDACTED_LOCAL_PATH>", text),
+                encoding="utf-8")
     fingerprints = {
         "schema": "calibration.stage0.public_protocol_fingerprints.v1",
         "source_commit": source_hashes.get("source_commit"),
@@ -160,7 +169,7 @@ def export_audit(source_dir: str | Path, output_dir: str | Path) -> dict[str, An
         f"- Exported source fingerprint recomputation: **{'PASS' if fingerprint_matches else 'FAIL'}**.\n"
         f"- Protected historical-source baseline: **{'PASS' if protected_ok else 'BLOCKED'}**.\n"
         f"- G0 protected-source gate agrees with the baseline record: **{'PASS' if g0_consistent else 'FAIL'}**.\n"
-        f"- B6 Sun-CS status retained as `BLOCKED_FIDELITY`: **{'PASS' if sun_status.get('status') == 'BLOCKED_FIDELITY' else 'FAIL'}**.\n"
+        f"- B6 Sun-CS status and declared conventions retained: **{'PASS' if sun_status.get('status') == 'PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS' and sun_status.get('author_code_parity', '').startswith('NOT_CLAIMED') else 'FAIL'}**.\n"
         f"- Source artifact checksum-manifest SHA-256: `{_sha_file(source / 'checksums.json')}`.\n"
         "- Stage 1/2: not run. Confirmation outcomes: not opened.\n",
         encoding="utf-8")
@@ -239,8 +248,13 @@ def verify_audit(package_dir: str | Path, *,
                 "source_fingerprint_verified": fingerprint_matches,
                 "protected_source_integrity_verified": protected_ok}
     sun = json.loads((package / "sun_cs_reference_status.json").read_text(encoding="utf-8"))
-    if sun.get("status") != "BLOCKED_FIDELITY":
-        return {"valid": False, "reason": "Sun-CS blocker status was not preserved as BLOCKED_FIDELITY"}
+    if sun.get("status") not in {"PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+                                  "BLOCKED_FIDELITY"}:
+        return {"valid": False, "reason": "Sun-CS source/implementation status is not an allowed explicit status"}
+    if (sun.get("status") == "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS" and
+            (not sun.get("implementation_conventions") or
+             not str(sun.get("author_code_parity", "")).startswith("NOT_CLAIMED"))):
+        return {"valid": False, "reason": "Sun-CS declared-convention status lacks conventions or author-parity limitation"}
     linked = False
     if source_dir is not None:
         source = Path(source_dir)

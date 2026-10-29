@@ -368,3 +368,85 @@ class BlockedController:
     def finalize_step(self) -> float: return self.theta
     def state_dict(self) -> dict[str, Any]:
         return {"name": self.name, "status": "BLOCKED_FIDELITY", "reason": self.reason}
+
+
+class FrozenThresholdFallback:
+    """Explicit operational wrapper for a source method's unavailable/abstain.
+
+    The source controller continues to receive exactly the same score,
+    feedback, and evidence calls as its unwrapped counterpart. The wrapper
+    changes only the emitted operational prediction and records its provenance
+    in ``Prediction.reason`` and ``Prediction.details``.
+    """
+
+    def __init__(self, source: Controller, theta0: float, *, name: str | None = None):
+        if not math.isfinite(float(theta0)):
+            raise ValueError("Fallback threshold must be finite")
+        self.source = source
+        self.theta0 = float(theta0)
+        self.name = name or f"{source.name}_FROZEN_FALLBACK"
+        if self.name == source.name:
+            raise ValueError("Operational fallback must be a separate method row")
+
+    @property
+    def theta(self) -> float:
+        value = getattr(self.source, "theta", self.theta0)
+        return self.theta0 if value is None else float(value)
+
+    def predict(self, observation: Observation) -> Prediction:
+        native = self.source.predict(observation)
+        if not native.available:
+            reason = "STARTUP_FALLBACK"
+        elif native.label is None:
+            reason = "ABSTENTION_FALLBACK"
+        else:
+            return Prediction(native.label, native.threshold, "ORIGINAL_METHOD",
+                              {"source_method": self.source.name,
+                               "source_reason": native.reason,
+                               "source_details": dict(native.details)}, True)
+        return Prediction(
+            int(observation.score >= self.theta0), self.theta0, reason,
+            {"source_method": self.source.name,
+             "source_label": native.label,
+             "source_available": native.available,
+             "source_threshold": native.threshold,
+             "source_reason": native.reason,
+             "source_details": dict(native.details),
+             "fallback_threshold_source": "theta0_frozen_C64"}, True)
+
+    def observe_score(self, observation: Observation) -> None:
+        self.source.observe_score(observation)
+
+    def observe_feedback(self, observation: Observation, prediction: Prediction,
+                         feedback: Feedback) -> None:
+        # Reconstruct the pure source decision captured during wrapper.predict.
+        # This avoids evaluating an expensive source predictor twice and never
+        # feeds the operational fallback decision back as the source decision.
+        details = prediction.details
+        native = Prediction(
+            details.get("source_label"), details.get("source_threshold"),
+            str(details.get("source_reason", "")),
+            dict(details.get("source_details", {})),
+            bool(details.get("source_available", True)))
+        self.source.observe_feedback(observation, native, feedback)
+
+    def on_memory_change(self, evidence: EvidenceSnapshot) -> None:
+        self.source.on_memory_change(evidence)
+
+    def finalize_step(self) -> float:
+        value = self.source.finalize_step()
+        return self.theta0 if value is None else float(value)
+
+    def state_dict(self) -> dict[str, Any]:
+        return {"name": self.name, "source_name": self.source.name,
+                "theta0": self.theta0, "source": self.source.state_dict(),
+                "fallback_policy": "theta0_on_unavailable_or_abstention"}
+
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        if (state.get("name") != self.name or
+                state.get("source_name") != self.source.name or
+                state.get("theta0") != self.theta0 or
+                state.get("fallback_policy") !=
+                "theta0_on_unavailable_or_abstention"):
+            raise ValueError("Operational fallback checkpoint identity mismatch")
+        self.source.load_state_dict(state["source"])

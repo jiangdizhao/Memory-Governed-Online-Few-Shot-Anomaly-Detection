@@ -8,6 +8,7 @@ not statistical safety guarantees.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 import hashlib
 import json
 import math
@@ -61,6 +62,7 @@ def _digest(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
 
 
+@lru_cache(maxsize=4096)
 def _cp_one_sided_upper(errors: int, n: int, delta: float) -> float:
     """One-sided Clopper-Pearson upper endpoint, used descriptively only.
 

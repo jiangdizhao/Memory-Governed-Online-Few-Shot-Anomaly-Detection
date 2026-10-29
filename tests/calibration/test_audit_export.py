@@ -45,9 +45,17 @@ class AuditExportTests(unittest.TestCase):
                 "real_iad_metadata_preflight.json": {
                     "status": "PASS", "dataset_root": "G:\\dataset\\realiad",
                     "example_shared_samples": ["sample-private"]},
-                "controller_method_cards.json": {"B6": {"status": "BLOCKED_FIDELITY"}},
+                "controller_method_cards.json": {"B6": {"status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS"}},
                 "controller_activation_matrix.json": {"status": "PARTIAL"},
-                "sun_cs_reference_status.json": {"status": "BLOCKED_FIDELITY"},
+                "sun_cs_reference_status.json": {
+                    "status": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+                    "implementation_conventions": ["q=0 sample minimum", "empty-prefix abstention"],
+                    "author_code_parity": "NOT_CLAIMED_NO_VERIFIED_AUTHOR_IMPLEMENTATION"},
+                "b7_engine_activation.json": {"status": "PASS",
+                                              "scope": "synthetic only"},
+                "sun_cs_class_scale_synthetic_diagnostic.json": {
+                    "status": "PASS_SYNTHETIC_COMPLETED", "n_events": 3815,
+                    "real_iad_data_or_outcomes_used": False},
                 "protected_source_verification.json": {
                     "status": "PASS", "shadow_memory_byte_equal_to_baseline": True,
                     "unrecorded_resolved_dependencies": [],
@@ -64,6 +72,11 @@ class AuditExportTests(unittest.TestCase):
             }
             for name, payload in payloads.items():
                 self._json(source / name, payload)
+            for name in ("stage1_evaluation_protocol_candidate.md",
+                         "stage0_gate_amendment_candidate.md",
+                         "sun_cs_a3_declared_conventions.md"):
+                (source / name).write_text("Candidate document; researcher approval required.\n",
+                                           encoding="utf-8")
             checksums = {path.name: audit_export._sha_file(path)
                          for path in source.iterdir() if path.is_file()}
             self._json(source / "checksums.json", checksums)
@@ -80,6 +93,8 @@ class AuditExportTests(unittest.TestCase):
             self.assertTrue((output / "controller_activation_matrix.json").is_file())
             self.assertTrue((output / "protected_source_verification.json").is_file())
             self.assertTrue((output / "sun_cs_reference_status.json").is_file())
+            self.assertTrue((output / "b7_engine_activation.json").is_file())
+            self.assertTrue((output / "stage1_evaluation_protocol_candidate.md").is_file())
             self.assertIn("Source fingerprint recomputation: **PASS**", text)
 
             fingerprints_path = output / "protocol_fingerprints.json"

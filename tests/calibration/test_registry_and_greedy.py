@@ -44,15 +44,20 @@ class RegistryGreedyTests(unittest.TestCase):
         })
         validate_p0_config(p0_config, cpu.scorer)
 
-    def test_spot_families_are_executable_and_sun_cs_remains_blocked(self):
+    def test_external_score_families_are_executable_and_variants_are_separate(self):
         for key in ("B5a", "B5b"):
             self.assertEqual(METHOD_CARDS[key]["status"],
                              "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED")
             self.assertTrue(METHOD_CARDS[key]["independent_unit_test_reference"])
-        self.assertEqual(METHOD_CARDS["B6"]["status"], "BLOCKED_FIDELITY")
-        for key in ("B6",):
-            self.assertEqual(METHOD_CARDS[key]["status"], "BLOCKED_FIDELITY")
-            self.assertTrue(METHOD_CARDS[key]["blocker"])
+        self.assertEqual(METHOD_CARDS["B6"]["status"],
+                         "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS")
+        self.assertEqual(METHOD_CARDS["B6"]["defaults"]["p"], .99)
+        self.assertIn("no author-code trace parity claim",
+                      METHOD_CARDS["B6"]["implementation_conventions"][-1])
+        for key in ("B5a_FROZEN_FALLBACK", "B5b_FROZEN_FALLBACK",
+                    "B6_FROZEN_FALLBACK"):
+            self.assertEqual(METHOD_CARDS[key]["status"],
+                             "OPERATIONAL_VARIANT_WITH_EXPLICIT_THETA0_FALLBACK")
         self.assertEqual(METHOD_CARDS["B7"]["status"], "IMPLEMENTED_PROVISIONAL")
 
     def test_every_method_card_has_auditable_fidelity_schema(self):
@@ -79,6 +84,8 @@ class RegistryGreedyTests(unittest.TestCase):
         self.assertEqual([x.name for x in original], [x.name for x in restored])
         self.assertIn("B5a", [x.name for x in original])
         self.assertIn("B5b", [x.name for x in original])
+        self.assertIn("B6", [x.name for x in original])
+        self.assertIn("B6_FROZEN_FALLBACK", [x.name for x in original])
         for source, target in zip(original, restored):
             state = source.state_dict()
             target.load_state_dict(state)

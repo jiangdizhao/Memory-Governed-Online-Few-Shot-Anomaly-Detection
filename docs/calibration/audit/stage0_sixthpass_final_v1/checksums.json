@@ -1,0 +1,27 @@
+{
+  "files": {
+    "STAGE0_SIXTHPASS_IMPLEMENTATION_REPORT.md": "ed0d2f205c81ca1eded65b8388793209e730f224493bf42e8bc0d6c30b7b0c19",
+    "STAGE0_SIXTHPASS_SOURCE_PROVENANCE.md": "fea2cbf4bb7e2af8d132efa8112788dd571a62effe2381af9cefbb1ad0efd9a0",
+    "audit_manifest.json": "e0b584d2a4da77c9d7a26ccc57f969e2277770f33944acd8d12984f3f54eafee",
+    "b7_engine_activation.json": "2ff6acd0efd368256dbfdf35a81b1f026599a6b0c2e75bba69a5e83fd7b5c527",
+    "controller_activation_matrix.json": "3260c3cdcb64cc3d05b12697bdb028de8a372e72a76f0bfe60bf98630b01fbcf",
+    "controller_method_cards.json": "bf78ac55203a8a3b0b831a34771953e82e941f93597a7e8d8fdef3a9874050a7",
+    "gates.json": "ae2949cef7c216dd9e89a7f263efd3a40c20cb10afa59ffe7c7a1ffafec5abff",
+    "independent_verification_summary.md": "c8152a1f727e399cef2b15261bc88e229061dea5739e8765196bf0bcd551690c",
+    "native_event_replay.json": "fef9859d39129aa6256575e10b2188ed0418da7978e0db7fed82dc21a21d82ae",
+    "native_greedy_parity_matrix.json": "5fd1757de8e5bbc55411d7390bf60975559d948827629ee75155af9acd22e3f0",
+    "native_parity_smoke.json": "8d81d0b4a02c5f437e34bcc434e58b76dc5e8c4dbe7601ef7a5d517b4b4d1d9e",
+    "protected_source_verification.json": "0ee0b5fed84ddf81c31adecd3854656f1bec9388c00267f31a9e5571c3ad3dad",
+    "protocol_fingerprints.json": "9396ba01ee744889a87ffb84c931d5a2d70d45a885f1c3fba9b2374e9621a5ef",
+    "real_iad_metadata_preflight.json": "b21141435d2196631f4f0b6099a108e1ddd76e52ee4e10833fa8e9ae93c8dffa",
+    "scientific_audit_summary.md": "2e765b23223f4f04e6c8adc5fa7d8be733049aee27f7c53f681c987113af75ef",
+    "stage0_gate_amendment_candidate.md": "d19949cd844a2c3cf946401aacaf894058f07c478bd74d8d3231ebb1b01a852c",
+    "stage1_evaluation_protocol_candidate.md": "bd1060f76539c56c72b1b55d9ff4ba67075821a10d90b52cf369afe560eafcaf",
+    "sun_cs_a3_declared_conventions.md": "af26202a6d7f0084dbad9fd50a084eb6c0a0bb712c3c777fa230e24f6a92f646",
+    "sun_cs_class_scale_synthetic_diagnostic.json": "448631e52e0dd5ea67b3b5fc0f750a31e4ef9a2f1cac9f5783319c7145135c8f",
+    "sun_cs_reference_status.json": "bf62c974dbb95ecce4486032ba283d366f8fd2985b0ff2c3ac4c6935c225dc52",
+    "test_results.json": "f4975ba521beda4b5ce0a513247637604ef7a7216660131fc3aa08b8a459cb68"
+  },
+  "schema": "calibration.stage0.audit_checksums.v1",
+  "source_artifact_checksums_sha256": "81c838bc515cb50bc81a7d6b44526dd0cfb11390fd25793fabb7d099553f2c0c"
+}

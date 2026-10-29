@@ -9,7 +9,8 @@ import torch
 from experiments.calibration.anchor_ledger import AnchorLedger, AnchorLedgerError
 from experiments.calibration.controllers import FrozenTheta, RollingQ90QueriedNormal
 from experiments.calibration.engine import PrequentialEngine
-from experiments.calibration.metrics import PrivateOutcomeLedger
+from experiments.calibration.metrics import (PrivateOutcomeLedger,
+    summarize_prediction_modes)
 from experiments.calibration.protocol import (EvidenceAnchor, EvidenceSnapshot,
     ScoreResult, StreamEvent, TapeRecord)
 from experiments.calibration.query_tape import build_qa_ts
@@ -172,6 +173,33 @@ class EngineLedgerTests(unittest.TestCase):
             PrivateOutcomeLedger([0]).evaluate(
                 [0.1], {"bad": [0]},
                 prediction_availability={"bad": [False]})
+
+    def test_common_horizon_and_operational_mode_metric_edges(self):
+        ledger = PrivateOutcomeLedger([0, 1, 0, 1, 0, 1])
+        result = ledger.evaluate_common_horizon(
+            [.1, .9, .2, .8, .3, .7],
+            {"native": [0, 1, 0, None, 0, 1]}, start=2,
+            prediction_reasons={"hybrid": ["ORIGINAL_METHOD", "STARTUP_FALLBACK",
+                                             "ABSTENTION_FALLBACK", "ORIGINAL_METHOD",
+                                             "ORIGINAL_METHOD", "ORIGINAL_METHOD"]})
+        self.assertEqual(result["status"], "DEFINED_HORIZON_EVALUATION")
+        self.assertEqual(result["n"], 4)
+        native = result["metrics"]["methods"]["native"]
+        self.assertIsNone(native["balanced_accuracy"])
+        self.assertEqual(native["abstentions"], 1)
+        modes = result["prediction_modes"]["hybrid"]
+        self.assertEqual(modes["startup_fallback"], 0)
+        self.assertEqual(modes["abstention_fallback"], 1)
+        self.assertEqual(modes["fallback_fraction"], .25)
+        full_modes = result["full_stream_prediction_modes"]["hybrid"]
+        self.assertEqual(full_modes["startup_fallback"], 1)
+        self.assertEqual(full_modes["abstention_fallback"], 1)
+        self.assertEqual(full_modes["fallback_fraction"], 2 / 6)
+        empty = ledger.evaluate_common_horizon(
+            [.1, .9, .2, .8, .3, .7], {"x": [0, 1, 0, 1, 0, 1]},
+            start=6)
+        self.assertEqual(empty["status"], "UNAVAILABLE_EMPTY_HORIZON")
+        self.assertIsNone(summarize_prediction_modes([])["fallback_fraction"])
 
     def test_c64_is_additional_and_disjoint_from_exactly_four_supports(self):
         c64 = [(f"id-{i}", 1, None) for i in range(64)]

@@ -1,0 +1,343 @@
+{
+  "b7_branch_matrix": {
+    "BOTH": {
+      "decision": "BA_OBJECTIVE_WITHIN_DESCRIPTIVE_FEASIBLE_SET",
+      "descriptive_feasible_candidates": 5,
+      "state": "BOTH",
+      "threshold": 0.1285
+    },
+    "BOTH_vs_SCQ": {
+      "b7_differs_from_scq": true,
+      "b7_threshold": 0.1285,
+      "scq_threshold": 0.11850000000000001
+    },
+    "CONFLICT": {
+      "decision": "CONFLICT_MINIMUM_RISK_COMPROMISE",
+      "fallback_logged": true,
+      "reason": "UNIDENTIFIABLE_SCORE_DISTRIBUTIONS",
+      "state": "CONFLICT"
+    },
+    "NORMAL_ONLY": {
+      "decision": "HOLD_NORMAL_ONLY_FNR_UNAVAILABLE",
+      "fnr_unavailable": true,
+      "fpr_available": true,
+      "state": "NORMAL_ONLY"
+    },
+    "checkpoint_equivalence": true,
+    "current_memory_anchor_refresh": {
+      "controller_observed_evidence_revision": 2,
+      "controller_observed_version": 1,
+      "memory_version_advanced": true,
+      "protected_anchor_scores_changed": true,
+      "queried_normal_lso_policy_preserved": true
+    },
+    "prediction": 1,
+    "prediction_available": true,
+    "queried_defect_only": {
+      "eligible_defect_count": 16,
+      "raw_defect_count": 48,
+      "unqueried_policy_rows_excluded": true
+    },
+    "step_clipping": {
+      "executed_feasibility_logged": true,
+      "executed_threshold": 0.94,
+      "proposed_threshold": 0.9,
+      "step_bounded": true
+    },
+    "threshold_independent_memory_policy": true,
+    "threshold_updates": 1
+  },
+  "checkpoint_equivalence_full_vs_resumed": true,
+  "confirmation_outcomes_opened": false,
+  "harness_version": "stage0-controller-activation-v1",
+  "methods": {
+    "B0": {
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "threshold_updates": 0,
+      "version": "IMPLEMENTED"
+    },
+    "B1": {
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "threshold_updates": 2,
+      "version": "IMPLEMENTED"
+    },
+    "B2": {
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [
+        "full",
+        "none"
+      ],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "threshold_updates": 2,
+      "version": "IMPLEMENTED_ADAPTED"
+    },
+    "B3": {
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [
+        "CURRENT_C64_Q90",
+        "NORMAL_EVIDENCE_INSUFFICIENT"
+      ],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "threshold_updates": 18,
+      "version": "IMPLEMENTED_PROPOSED"
+    },
+    "B4": {
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [
+        "BOTH",
+        "NONE",
+        "NORMAL_ONLY"
+      ],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "threshold_updates": 18,
+      "version": "IMPLEMENTED_ADAPTED"
+    },
+    "B5a": {
+      "abstentions": 0,
+      "accepted_normal_updates": 149,
+      "actual_operational_branches_exercised": [
+        "SPOT_STRICT_UPPER_TAIL",
+        "WARMUP_UNAVAILABLE"
+      ],
+      "alarms_excluded": 1,
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "initialization_events": 1000,
+      "initialization_evidence": "first 1000 frozen synthetic score observations",
+      "peak_updates": 62,
+      "predictions_available": 150,
+      "queried_labels_used": false,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "tail_threshold_initialized": true,
+      "threshold_changed_after_initialization": true,
+      "threshold_updates": 42,
+      "version": "SPOT-KDD2017-paper-equations-v1.0.0"
+    },
+    "B5a_FROZEN_FALLBACK": {
+      "abstention_fallback_count": 0,
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [
+        "ORIGINAL_METHOD",
+        "STARTUP_FALLBACK"
+      ],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "fallback_rate": 0.8695652173913043,
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "original_method_count": 150,
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "startup_fallback_count": 1000,
+      "status": "PASS",
+      "threshold_updates": 43,
+      "version": "SPOT-KDD2017-paper-equations-v1.0.0"
+    },
+    "B5b": {
+      "abstentions": 0,
+      "accepted_normal_updates": 99,
+      "actual_operational_branches_exercised": [
+        "DSPOT_STRICT_RESIDUAL_UPPER_TAIL",
+        "WARMUP_UNAVAILABLE"
+      ],
+      "alarms_excluded_from_pot_and_local_mean": 1,
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "final_window_mean": 0.21090876524244792,
+      "initial_window_mean": 0.12119238551838231,
+      "initialization_events": 1050,
+      "initialization_evidence": "50-observation local window plus residual POT warm-up",
+      "local_mean_shifted": true,
+      "local_window_size": 50,
+      "peak_updates": 26,
+      "predictions_available": 100,
+      "queried_labels_used": false,
+      "residual_warmup_events": 1000,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "threshold_updates": 99,
+      "version": "dSPOT-KDD2017-paper-equations-v1.0.0",
+      "window_initialization_events": 50
+    },
+    "B5b_FROZEN_FALLBACK": {
+      "abstention_fallback_count": 0,
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [
+        "ORIGINAL_METHOD",
+        "STARTUP_FALLBACK"
+      ],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "fallback_rate": 0.9130434782608695,
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "original_method_count": 100,
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "startup_fallback_count": 1050,
+      "status": "PASS",
+      "threshold_updates": 100,
+      "version": "dSPOT-KDD2017-paper-equations-v1.0.0"
+    },
+    "B6": {
+      "abstentions": 575,
+      "actual_operational_branches_exercised": [
+        "ABSTAIN_CHANGE_DETECTED",
+        "ABSTAIN_COLD_START",
+        "SUN_CS_ANOMALY",
+        "SUN_CS_BENIGN"
+      ],
+      "author_code_parity": "NOT_CLAIMED; no verified author implementation",
+      "change_detection_abstentions": 574,
+      "checkpoint_equivalence": true,
+      "cold_start_abstentions": 1,
+      "confidence_interval_abstentions": 0,
+      "delta": 0.01,
+      "endpoint_policy": "empirical_extrema",
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "p": 0.99,
+      "predictions_available": 1150,
+      "reset_count": 574,
+      "shared_score_invariance": true,
+      "source_target": "score_quantile_indicator_not_physical_defect",
+      "status": "PASS",
+      "theorem_transfer": "NOT_CLAIMED for physical defects/dynamic-memory scores",
+      "threshold_updates": 857,
+      "version": "B6-SUN-CS-A3-PAPER-EQUATIONS-DECLARED-CONVENTIONS-v1.0.0"
+    },
+    "B6_FROZEN_FALLBACK": {
+      "abstention_fallback_count": 575,
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [
+        "ABSTENTION_FALLBACK",
+        "ORIGINAL_METHOD"
+      ],
+      "checkpoint_equivalence": true,
+      "evidence_source": "frozen synthetic score tape; common label-blind Q-A-TS; synthetic C64 and queried feedback",
+      "fallback_rate": 0.5,
+      "initialization_events": 0,
+      "initialization_evidence": "64 additional protected C64 normals before stream start",
+      "original_method_count": 575,
+      "predictions_available": 1150,
+      "shared_score_invariance": true,
+      "startup_fallback_count": 0,
+      "status": "PASS",
+      "threshold_updates": 857,
+      "version": "B6-SUN-CS-A3-PAPER-EQUATIONS-DECLARED-CONVENTIONS-v1.0.0"
+    },
+    "B7": {
+      "abstentions": 0,
+      "actual_operational_branches_exercised": [
+        "BOTH",
+        "NORMAL_ONLY",
+        "CONFLICT",
+        "feasible_set",
+        "step_clipping",
+        "minimum_risk_fallback",
+        "queried_defect_only"
+      ],
+      "b7_branch_matrix": {
+        "BOTH": {
+          "decision": "BA_OBJECTIVE_WITHIN_DESCRIPTIVE_FEASIBLE_SET",
+          "descriptive_feasible_candidates": 5,
+          "state": "BOTH",
+          "threshold": 0.1285
+        },
+        "BOTH_vs_SCQ": {
+          "b7_differs_from_scq": true,
+          "b7_threshold": 0.1285,
+          "scq_threshold": 0.11850000000000001
+        },
+        "CONFLICT": {
+          "decision": "CONFLICT_MINIMUM_RISK_COMPROMISE",
+          "fallback_logged": true,
+          "reason": "UNIDENTIFIABLE_SCORE_DISTRIBUTIONS",
+          "state": "CONFLICT"
+        },
+        "NORMAL_ONLY": {
+          "decision": "HOLD_NORMAL_ONLY_FNR_UNAVAILABLE",
+          "fnr_unavailable": true,
+          "fpr_available": true,
+          "state": "NORMAL_ONLY"
+        },
+        "checkpoint_equivalence": true,
+        "current_memory_anchor_refresh": {
+          "controller_observed_evidence_revision": 2,
+          "controller_observed_version": 1,
+          "memory_version_advanced": true,
+          "protected_anchor_scores_changed": true,
+          "queried_normal_lso_policy_preserved": true
+        },
+        "prediction": 1,
+        "prediction_available": true,
+        "queried_defect_only": {
+          "eligible_defect_count": 16,
+          "raw_defect_count": 48,
+          "unqueried_policy_rows_excluded": true
+        },
+        "step_clipping": {
+          "executed_feasibility_logged": true,
+          "executed_threshold": 0.94,
+          "proposed_threshold": 0.9,
+          "step_bounded": true
+        },
+        "threshold_independent_memory_policy": true,
+        "threshold_updates": 1
+      },
+      "checkpoint_equivalence": true,
+      "evidence_source": "synthetic protected normal and queried-anchor snapshots with explicit source policy tags",
+      "initialization_events": 1,
+      "predictions_available": 1,
+      "shared_score_invariance": true,
+      "status": "PASS",
+      "threshold_updates": 1,
+      "version": "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC"
+    }
+  },
+  "query_count": 35,
+  "query_tape_sha256": "7b0946a36d2f3efd2c8fea83f9d8da94d9c00f46824f265e01e2844004aa7923",
+  "schema": "calibration.controller_activation_matrix.v1",
+  "scope": "synthetic mechanism testing only; no native image scoring or empirical anomaly results",
+  "score_tape_sha256": "aedf0aaa8fc1b5190641465d075780554d04ed8433f0918771e7daae65b9153d",
+  "shared_score_and_memory_invariance_under_threshold_offset": true,
+  "stage1_or_stage2_run": false,
+  "status": "PASS",
+  "stream_events": 1150
+}

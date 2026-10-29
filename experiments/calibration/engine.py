@@ -232,6 +232,11 @@ class PrequentialEngine:
                 evidence = self._last_evidence
 
             post = {c.name: c.finalize_step() for c in self.controllers}
+            diagnostics = {}
+            for controller in self.controllers:
+                getter = getattr(controller, "diagnostics", None)
+                if callable(getter):
+                    diagnostics[controller.name] = _jsonable(getter())
             self._trace.append({
                 "t": t,
                 "sample_key": event.record.official_sample_key,
@@ -249,7 +254,10 @@ class PrequentialEngine:
                 "prediction_available": {name: p.available
                                          for name, p in current_preds.items()},
                 "prediction_reason": {name: p.reason for name, p in current_preds.items()},
+                "prediction_details": {name: _jsonable(dict(p.details))
+                                       for name, p in current_preds.items()},
                 "theta_post": post,
+                "controller_diagnostics": diagnostics,
                 "evidence_state": evidence.state if evidence else "UNAVAILABLE",
                 "write": _jsonable(write_audit),
             })

@@ -2,10 +2,14 @@ import unittest
 from dataclasses import fields
 
 from experiments.calibration.controllers import (AdaptedDualACI, FrozenTheta,
-    OriginalGuardedSidecar, RollingQ90QueriedNormal, StateConsistentQuantile, higher_quantile,
+    FrozenThresholdFallback, OriginalGuardedSidecar, RollingQ90QueriedNormal,
+    StateConsistentQuantile, higher_quantile,
     theta0_from_c64, _normal_fpr_lower_bound, _defect_fnr_upper_bound)
 from experiments.calibration.protocol import (EvidenceAnchor, EvidenceSnapshot,
     Feedback, Observation, Prediction, ProtocolError)
+from experiments.calibration.spot_dspot import (DSPOTController, POTConfig,
+                                                SPOTController, DSPOT_VERSION)
+from experiments.calibration.sun_cs import SunCSController
 
 
 def obs(t=0, score=0.5, version=0):
@@ -18,6 +22,39 @@ class ControllerTests(unittest.TestCase):
         self.assertFalse(names.intersection({"label", "official_sample_key", "path", "image", "mask"}))
         with self.assertRaises(ProtocolError):
             Feedback(0, False, 1)
+
+    def test_operational_fallback_records_startup_and_abstention_without_changing_source(self):
+        spot = SPOTController(POTConfig(n_init=4, level=.5, risk_q=.01))
+        spot_hybrid = FrozenThresholdFallback(spot, .5, name="SPOT_HYBRID")
+        startup = spot_hybrid.predict(obs(0, .7))
+        self.assertEqual(startup.reason, "STARTUP_FALLBACK")
+        self.assertEqual(startup.label, 1)
+        self.assertEqual(startup.details["fallback_threshold_source"],
+                         "theta0_frozen_C64")
+        self.assertEqual(spot.observations, 0)
+        spot_hybrid.observe_feedback(obs(0, .7), startup, Feedback(0, False))
+        spot_hybrid.observe_score(obs(0, .7))
+        self.assertEqual(spot.observations, 1)
+
+        dspot = DSPOTController(POTConfig(n_init=4, level=.5, risk_q=.01,
+                                          version=DSPOT_VERSION), window=2)
+        dspot_hybrid = FrozenThresholdFallback(dspot, .5, name="DSPOT_HYBRID")
+        dspot_startup = dspot_hybrid.predict(obs(0, .8))
+        self.assertEqual(dspot_startup.reason, "STARTUP_FALLBACK")
+        dspot_hybrid.observe_score(obs(0, .8))
+        self.assertEqual(dspot.observations, 1)
+
+        sun = SunCSController()
+        sun_hybrid = FrozenThresholdFallback(sun, .5, name="SUN_HYBRID")
+        cold = sun_hybrid.predict(obs(0, .5))
+        self.assertEqual(cold.reason, "ABSTENTION_FALLBACK")
+        self.assertEqual(cold.details["source_reason"], "ABSTAIN_COLD_START")
+        sun_hybrid.observe_feedback(obs(0, .5), cold, Feedback(0, False))
+        sun_hybrid.observe_score(obs(0, .5))
+        tied = sun_hybrid.predict(obs(1, .5))
+        self.assertEqual(tied.reason, "ABSTENTION_FALLBACK")
+        self.assertEqual(tied.details["source_reason"], "SUN_CS_ABSTAIN")
+        self.assertEqual(len(sun.history), 1)
 
     def test_b2_uses_historical_sidecar_with_unqueried_fallback_disabled(self):
         values = [i / 100.0 for i in range(64)]

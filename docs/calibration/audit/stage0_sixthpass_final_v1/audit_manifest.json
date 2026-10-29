@@ -1,0 +1,30 @@
+{
+  "overall_status": "BLOCKED_WIP",
+  "protected_source_integrity_verified": true,
+  "redaction_policy": "absolute local paths and example/sample identities removed; score vectors/features omitted",
+  "run_key": "5e5a50eddfcf1dff",
+  "schema": "calibration.stage0.audit_export.v1",
+  "source_artifact_checksums_sha256": "81c838bc515cb50bc81a7d6b44526dd0cfb11390fd25793fabb7d099553f2c0c",
+  "source_artifact_file_sha256": {
+    "b7_engine_activation.json": "2ff6acd0efd368256dbfdf35a81b1f026599a6b0c2e75bba69a5e83fd7b5c527",
+    "checksums.json": "81c838bc515cb50bc81a7d6b44526dd0cfb11390fd25793fabb7d099553f2c0c",
+    "controller_activation_matrix.json": "3260c3cdcb64cc3d05b12697bdb028de8a372e72a76f0bfe60bf98630b01fbcf",
+    "controller_method_cards.json": "642469e13846edc59ba87dc810e2d8a46729c8587ee582915a673f21f54bf4e0",
+    "gates.json": "ae2949cef7c216dd9e89a7f263efd3a40c20cb10afa59ffe7c7a1ffafec5abff",
+    "native_event_replay.json": "d5570449aa8e81ffa2631b8d2a3264113c9421f246f6098a71771f6f48f29339",
+    "native_greedy_parity_matrix.json": "5fd1757de8e5bbc55411d7390bf60975559d948827629ee75155af9acd22e3f0",
+    "native_parity_smoke.json": "61fd0edbe32d25f8d691cb50ea652ebe6b182eb157d062a1fe9c96ab0bfc1569",
+    "protected_source_verification.json": "0ee0b5fed84ddf81c31adecd3854656f1bec9388c00267f31a9e5571c3ad3dad",
+    "protocol_manifest.json": "869d0ed45b4414998fa4e452b8c7cd9ba07ae1acf9d4344d7688e0c582657d4c",
+    "real_iad_metadata_preflight.json": "b21141435d2196631f4f0b6099a108e1ddd76e52ee4e10833fa8e9ae93c8dffa",
+    "run_identity.json": "e2cbd78578ae81c572d3f989d49f69572a07e8c126820d3380a7a38adb215fa4",
+    "source_hashes.json": "e0243a08b57c924ec98cead92551878c37a4f605200086a80d5ec58391c48839",
+    "stage0_gate_amendment_candidate.md": "d19949cd844a2c3cf946401aacaf894058f07c478bd74d8d3231ebb1b01a852c",
+    "stage1_evaluation_protocol_candidate.md": "bd1060f76539c56c72b1b55d9ff4ba67075821a10d90b52cf369afe560eafcaf",
+    "sun_cs_a3_declared_conventions.md": "af26202a6d7f0084dbad9fd50a084eb6c0a0bb712c3c777fa230e24f6a92f646",
+    "sun_cs_class_scale_synthetic_diagnostic.json": "448631e52e0dd5ea67b3b5fc0f750a31e4ef9a2f1cac9f5783319c7145135c8f",
+    "sun_cs_reference_status.json": "e52c40e523f654b13d8deb5a7d40fc1bce140098390657cfd9f96444aa2efe86",
+    "test_results.json": "30c57d1934f9f21cd361a1f826b3d4a99e0f7edf74d603f41077e423cf05537e"
+  },
+  "source_fingerprint_recomputed": true
+}

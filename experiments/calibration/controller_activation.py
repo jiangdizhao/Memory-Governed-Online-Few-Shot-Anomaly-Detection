@@ -17,6 +17,7 @@ from .protocol import (EvidenceAnchor, EvidenceSnapshot, Observation, ScoreResul
 from .query_tape import build_qa_ts
 from .scdac_g import SCDACGController
 from .spot_dspot import DSPOTController, SPOTController
+from .sun_cs import SunCSController
 
 
 HARNESS_VERSION = "stage0-controller-activation-v1"
@@ -403,6 +404,33 @@ def run_controller_activation() -> dict[str, Any]:
             exercised = info["threshold_changed_after_initialization"] \
                 if name == "B5a" else info["local_mean_shifted"]
             info["status"] = "PASS" if activated and exercised and checkpoint_equivalent else "PARTIAL"
+        elif name == "B6":
+            controller = next(c for c in full_engine.controllers if c.name == name)
+            state = controller.state_dict()
+            reasons = [row["prediction_reason"].get(name, "") for row in full["trace"]]
+            info.update({
+                "version": state["version"],
+                "endpoint_policy": state["endpoint_policy"],
+                "p": state["p"], "delta": state["delta"],
+                "reset_count": state["reset_count"],
+                "cold_start_abstentions": reasons.count("ABSTAIN_COLD_START"),
+                "change_detection_abstentions": reasons.count("ABSTAIN_CHANGE_DETECTED"),
+                "confidence_interval_abstentions": reasons.count("SUN_CS_ABSTAIN"),
+                "source_target": state["target"],
+                "author_code_parity": "NOT_CLAIMED; no verified author implementation",
+                "theorem_transfer": "NOT_CLAIMED for physical defects/dynamic-memory scores",
+            })
+            info["status"] = "PASS" if checkpoint_equivalent else "FAIL"
+        elif name.endswith("_FROZEN_FALLBACK"):
+            reasons = [row["prediction_reason"].get(name, "") for row in full["trace"]]
+            info.update({
+                "startup_fallback_count": reasons.count("STARTUP_FALLBACK"),
+                "abstention_fallback_count": reasons.count("ABSTENTION_FALLBACK"),
+                "original_method_count": reasons.count("ORIGINAL_METHOD"),
+                "fallback_rate": sum(x in {"STARTUP_FALLBACK", "ABSTENTION_FALLBACK"}
+                                      for x in reasons) / len(reasons),
+                "status": "PASS" if checkpoint_equivalent else "FAIL",
+            })
         methods[name] = info
 
     # B7's dense risk-grid branches are tested with explicit synthetic,
@@ -437,18 +465,6 @@ def run_controller_activation() -> dict[str, Any]:
         "status": "PASS" if b7_pass and shared_invariant else "PARTIAL",
     }
 
-    methods["B6"] = {
-        "version": "Sun-CS-ICML2024-Algorithm3-no-offline-reference",
-        "evidence_source": "paper-only source review; no online score execution",
-        "initialization_events": 0, "predictions_available": 0,
-        "abstentions": 0, "threshold_updates": 0,
-        "actual_operational_branches_exercised": [
-            "paper-equation primitive reference tests", "undefined startup fails closed"],
-        "checkpoint_equivalence": "NOT_RUN",
-        "shared_score_invariance": "NOT_APPLICABLE",
-        "status": "BLOCKED_FIDELITY",
-        "reason": "No verified author implementation; source omits endpoint empirical quantiles and first empty-prefix behavior required to produce B6 decisions.",
-    }
     for row in methods.values():
         if not row.get("checkpoint_equivalence"):
             row["checkpoint_equivalence"] = "FAIL"

@@ -97,6 +97,68 @@ class PrivateOutcomeLedger:
                 "shared_score_auroc": auc, "shared_score_auprc": auprc,
                 "ranking_status": auc_status}
 
+    def evaluate_common_horizon(
+            self, scores: Sequence[float],
+            predictions: dict[str, Sequence[int | None]], *,
+            start: int = 1050, stop: int | None = None,
+            prediction_availability: dict[str, Sequence[bool]] | None = None,
+            prediction_reasons: dict[str, Sequence[str]] | None = None) -> dict:
+        """Evaluate a predeclared common positional horizon without relabeling.
+
+        The caller supplies the frozen horizon start (Stage 1 candidate: 1050).
+        Empty horizons are explicitly unavailable; no metric is inferred from
+        a missing class or missing prediction.
+        """
+        if not isinstance(start, int) or start < 0 or start > len(self._labels):
+            raise ValueError("Common horizon start is outside the stream")
+        end = len(self._labels) if stop is None else stop
+        if not isinstance(end, int) or not start <= end <= len(self._labels):
+            raise ValueError("Common horizon stop is outside the stream")
+        if len(scores) != len(self._labels):
+            raise ValueError("Score/outcome stream lengths differ")
+        if start == end:
+            return {"status": "UNAVAILABLE_EMPTY_HORIZON", "start": start,
+                    "stop_exclusive": end, "n": 0, "metrics": None,
+                    "prediction_modes": {}}
+        sliced_predictions = {name: list(values[start:end])
+                              for name, values in predictions.items()}
+        sliced_availability = None
+        if prediction_availability is not None:
+            sliced_availability = {name: list(values[start:end])
+                                   for name, values in prediction_availability.items()}
+        metrics = PrivateOutcomeLedger(self._labels[start:end]).evaluate(
+            scores[start:end], sliced_predictions,
+            prediction_availability=sliced_availability)
+        reasons = prediction_reasons or {}
+        modes = {name: summarize_prediction_modes(values[start:end])
+                 for name, values in reasons.items()}
+        full_modes = {name: summarize_prediction_modes(values)
+                      for name, values in reasons.items()}
+        return {"status": "DEFINED_HORIZON_EVALUATION", "start": start,
+                "stop_exclusive": end, "n": end - start,
+                "metrics": metrics, "prediction_modes": modes,
+                "full_stream_prediction_modes": full_modes}
+
+
+def summarize_prediction_modes(reasons: Sequence[str]) -> dict[str, int | float | None]:
+    """Count source-native, startup-fallback, abstention-fallback decisions."""
+    counts = {
+        "original_method": sum(reason == "ORIGINAL_METHOD" for reason in reasons),
+        "startup_fallback": sum(reason == "STARTUP_FALLBACK" for reason in reasons),
+        "abstention_fallback": sum(reason == "ABSTENTION_FALLBACK" for reason in reasons),
+        "native_abstention": sum(reason in ("SUN_CS_ABSTAIN",
+                                             "ABSTAIN_COLD_START",
+                                             "ABSTAIN_CHANGE_DETECTED")
+                                 for reason in reasons),
+        "startup_unavailable": sum(reason == "WARMUP_UNAVAILABLE" for reason in reasons),
+    }
+    n = len(reasons)
+    counts["n"] = n
+    counts["fallback_fraction"] = ((counts["startup_fallback"] +
+                                    counts["abstention_fallback"]) / n
+                                   if n else None)
+    return counts
+
 
 def _window_metrics(labels: Sequence[int], predictions: Sequence[int | None],
                     *, window_size: int,
