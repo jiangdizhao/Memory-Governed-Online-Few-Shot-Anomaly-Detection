@@ -78,3 +78,32 @@ The compact checksummed [final audit package](audit/stage075b_synthetic_v8/READM
 - [B8 simplification research diagnosis](STAGE075A_B8_SIMPLIFICATION_RESEARCH_DIAGNOSIS.md)
 - [B3 headroom decision candidate](STAGE075A_B3_HEADROOM_DECISION_CANDIDATE.md)
 - [Compact audited evidence package](audit/stage075a_b3_headroom_v1/)
+
+## Stage 0.75 queried-anchor identifiability audit
+
+The frozen [queried-anchor protocol candidate v1](QUERIED_ANCHOR_IDENTIFIABILITY_PROTOCOL_CANDIDATE_v1.md)
+registers a measurement-only comparison of legal Q-A-TS feedback against
+current-memory native anchor scores and temporally separated fixed-snapshot
+future cohorts. The [native rescoring report](QUERIED_ANCHOR_NATIVE_RESCORING_REPORT.md),
+[identifiability results](QUERIED_ANCHOR_IDENTIFIABILITY_RESULTS.md),
+[research implications](QUERIED_ANCHOR_B8_RESEARCH_IMPLICATIONS.md), and
+[decision candidate](QUERIED_ANCHOR_IDENTIFIABILITY_DECISION_CANDIDATE.md)
+must be read together with the compact checksummed
+[audit package](audit/queried_anchor_identifiability_v1/). Results are from the
+four previously exposed development categories; they are not independent
+confirmation or population-risk evidence. B8 v4, Stage 0.75-C, Stage 1/2 and
+confirmation-class access remain unauthorized without a separate researcher
+decision.
+
+The corrected native measurement scored all 5,095 eligible queried anchors
+across 120/120 snapshot states (2,450 normal LSO scores and 2,645 unchanged
+memory defect scores). Query feedback yielded 90 identifiable states (75%) and
+actions of 33 LOWER, 26 KEEP, 30 RAISE, and 31 ABSTAIN. The decision candidate
+is `LOCAL_FEEDBACK_UNRELIABLE`: equal-class mean selected-action future ΔBA was
+negative for both registered cohorts. N1's seed-position denominator was
+corrected from three to fifteen in a postmeasurement gate recalculation; the
+action digest and score/evaluation artifacts did not change. All final gates
+pass except G2, which remains `BLOCKED` because the original Actual-B3
+`complete.json` checksum and file count disagree with its current checksum
+manifest. Overall status is `BLOCKED_WIP`; no Stage 0.75-C, Stage 1/2,
+confirmation outcomes, or masks were accessed.

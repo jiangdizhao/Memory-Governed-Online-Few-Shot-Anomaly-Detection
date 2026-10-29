@@ -19,3 +19,9 @@ docs/calibration/README.md text eol=lf
 docs/calibration/audit/stage075a_b3_headroom_v1/*.json text eol=lf
 docs/calibration/audit/stage075a_b3_headroom_v1/README.md text eol=lf
 tests/calibration/test_stage075a_b3_headroom.py text eol=lf
+
+# Queried-anchor audit manifests use canonical LF bytes for portable hashes.
+experiments/calibration/queried_anchor_identifiability*.py text eol=lf
+tests/calibration/test_queried_anchor_identifiability.py text eol=lf
+docs/calibration/QUERIED_ANCHOR_*.md text eol=lf
+docs/calibration/audit/queried_anchor_identifiability_v1/** text eol=lf

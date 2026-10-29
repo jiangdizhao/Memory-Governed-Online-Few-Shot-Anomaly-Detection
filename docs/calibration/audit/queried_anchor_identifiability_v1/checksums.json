@@ -1,0 +1,20 @@
+{
+  "algorithm": "SHA-256",
+  "files": {
+    "README.md": "8ec1e42225930216d03daee352bfcc85c1eb1375b029c1f909a7b15ab315e35f",
+    "configuration.json": "ba6de9d7ba189cf678802225e64aa5da75952829b683d14452d819860c0731cc",
+    "evidence_count_matrix.json": "13a4ba9c74a0304a578f7cf4daf9d7eed1ea8bd8ad9eb275c55c5dc5a7083576",
+    "gate_matrix.json": "bf28c6080bf65ebfab61cbe1c2e5b90196394b663bc1dd605bd39282a8973b6c",
+    "negative_controls.json": "af027a3e688bc28b8a761ee0817302d23b9d85992648881cbd8e91b2551579a8",
+    "postmeasurement_gate_correction.json": "6ab6c9d029e3b99382672cc58f3eff07bf506300de2e97a5f8f3a081e2a02e91",
+    "postmeasurement_gate_fix_tests/test_logs/focused_identifiability_tests.log": "7b60b065fc6ae6ab2d3d20cc090754ec5cfe9368227d36dfe4fd49a7b1720c75",
+    "postmeasurement_gate_fix_tests/test_logs/full_calibration_suite.log": "8b977f8e135a624fd0596c487bb7fab535de9976d34c3ea3d7e8e83d96d489d2",
+    "postmeasurement_gate_fix_tests/test_logs/python_compilation.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol_linkage.json": "3392db835157a984deb5002ae4d81b70bb39be875a7b9ec33ca93b97599fb64e",
+    "provenance.json": "00e92946aaf6cd27be5d8394d6dc63092a892b4130ca3dfa9d5b5a52b9a9faae",
+    "results.json": "18beb58c8316629827f90ef036079b6a04ecf86bead9e312c3c61c52167aa9c1",
+    "runtime_summary.json": "5b88b5005f5a97604bae05515487c3a8c83c910e23ea844a3292229d0ecc6646",
+    "test_results.json": "10400dace8fb559785ea8af43eb5d878d7b1dd1dad8790af150f6833bf23231d"
+  },
+  "schema": "queried_anchor_identifiability.checksums.v1"
+}
