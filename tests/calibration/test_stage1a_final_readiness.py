@@ -139,6 +139,15 @@ class Stage1AFinalReadinessTests(unittest.TestCase):
             (root / "checksums_final.json").write_text(json.dumps({
                 "files": {"STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT_FINAL.md": {
                     "sha256": h("missing original raw bytes")}}}), encoding="utf-8")
+            # The legacy manifest is intentionally rewritten above to contain
+            # an unresolved raw-byte pointer. The v2 inventory must hash those
+            # FINAL fixture bytes, not its earlier placeholder payload.
+            legacy_final_bytes = (root / "checksums_final.json").read_bytes()
+            files["checksums_final.json"] = {
+                "hash_mode": "canonical_lf_text",
+                "sha256": hashlib.sha256(legacy_final_bytes).hexdigest(),
+                "size_bytes": len(legacy_final_bytes),
+            }
             (root / "checksums_final_v2.json").write_text(json.dumps({
                 "schema": "stage1a.p12_low_memory_recovery_audit_checksums.v2",
                 "file_count": 17, "self_excluded_manifest": "checksums_final_v2.json",
