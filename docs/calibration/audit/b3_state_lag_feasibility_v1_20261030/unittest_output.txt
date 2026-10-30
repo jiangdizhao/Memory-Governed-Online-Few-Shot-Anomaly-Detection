@@ -1,0 +1,19 @@
+test_a0_and_historical_a2_parity_from_original_frozen_artifacts (test_b3_mechanism_ablation.TestB3MechanismAblation.test_a0_and_historical_a2_parity_from_original_frozen_artifacts) ... ok
+test_checkpoint_rejects_wrong_arm_or_history (test_b3_mechanism_ablation.TestB3MechanismAblation.test_checkpoint_rejects_wrong_arm_or_history) ... ok
+test_deterministic_checkpoint_restore_matches_uninterrupted_replay (test_b3_mechanism_ablation.TestB3MechanismAblation.test_deterministic_checkpoint_restore_matches_uninterrupted_replay) ... ok
+test_frozen_q90_and_vector_digest_mismatches_fail_closed (test_b3_mechanism_ablation.TestB3MechanismAblation.test_frozen_q90_and_vector_digest_mismatches_fail_closed) ... ok
+test_higher_quantile_ties_and_nonfinite_values (test_b3_mechanism_ablation.TestB3MechanismAblation.test_higher_quantile_ties_and_nonfinite_values) ... ok
+test_historical_b3_source_file_remains_unchanged (test_b3_mechanism_ablation.TestB3MechanismAblation.test_historical_b3_source_file_remains_unchanged) ... ok
+test_initial_theta_has_no_artificial_first_event_update (test_b3_mechanism_ablation.TestB3MechanismAblation.test_initial_theta_has_no_artificial_first_event_update) ... ok
+test_long_no_change_run_and_noop_writes_hold_threshold (test_b3_mechanism_ablation.TestB3MechanismAblation.test_long_no_change_run_and_noop_writes_hold_threshold) ... ok
+test_missing_or_mismatched_history_fails_closed (test_b3_mechanism_ablation.TestB3MechanismAblation.test_missing_or_mismatched_history_fails_closed) ... ok
+test_multiple_changes_clip_to_delta_and_record_reference_state (test_b3_mechanism_ablation.TestB3MechanismAblation.test_multiple_changes_clip_to_delta_and_record_reference_state) ... ok
+test_no_future_version_evidence_access (test_b3_mechanism_ablation.TestB3MechanismAblation.test_no_future_version_evidence_access) ... ok
+test_predict_before_update_and_score_greater_equal_boundary (test_b3_mechanism_ablation.TestB3MechanismAblation.test_predict_before_update_and_score_greater_equal_boundary) ... ok
+test_registered_lag_versions_and_version_zero_clamp (test_b3_mechanism_ablation.TestB3MechanismAblation.test_registered_lag_versions_and_version_zero_clamp) ... ok
+test_replay_matches_independent_reference_recurrence_exactly (test_b3_mechanism_ablation.TestB3MechanismAblation.test_replay_matches_independent_reference_recurrence_exactly) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 34.023s
+
+OK

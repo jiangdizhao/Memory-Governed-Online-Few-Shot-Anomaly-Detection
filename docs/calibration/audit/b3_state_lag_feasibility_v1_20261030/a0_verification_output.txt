@@ -1,0 +1,1 @@
+{"audit_dir": "docs\\calibration\\audit\\b3_state_lag_feasibility_v1_20261030", "events": 76475, "memory_updates": 1190, "post_threshold_mismatches": 0, "pre_threshold_mismatches": 0, "prediction_mismatches": 0, "status": "PASS", "trajectory_count": 20}
