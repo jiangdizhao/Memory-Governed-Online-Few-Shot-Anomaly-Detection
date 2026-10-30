@@ -11,7 +11,7 @@
 
 **Publication objective:** Recover the rejected PR-D-26-11359 work for a new suitable journal **as soon as scientifically defensible**, without another open-ended search for elaborate online-learning machinery. Revise the paper around frozen VisionAD-style / DINOv2 features, **verified Greedy normal memory**, causal calibration, and bounded selectively acquired labels. Journal choice and target claims require a later researcher decision; publication is not guaranteed.
 
-**Default research direction:** Treat B3 (protected-C64 current-state q90 calibration) as an *evaluated comparator*, **not** as an already validated principal novelty. Test **one** low-cost new calibration-information hypothesis before deciding whether a method-focused paper is viable. Test BEA/query novelty only if a specific evidence-acquisition deficiency is established and its cheapest possible falsifier passes. Draft a simplified, honest fallback manuscript **in parallel**.
+**Updated research direction (2026-10-31):** Treat B3 (protected-C64 current-state q90) as an evaluated comparator, **not** validated standalone novelty. Historical queried-anchor identification work **already tested the essential FT-01 hypothesis** and reported weak/negative prospective direction selection; do not rerun it as if untested. First complete a no-experiment evidence/protocol audit (`FT-01-CLOSE` and `FT-C0-PREFLIGHT`), then consider **one** separately authorized matched-tape legacy-correction ON/OFF falsifier if source/history feasibility and locality gates pass. Query/acquisition is a conditional alternative, not a concurrent rescue search. Prepare a simplified fallback manuscript in parallel, but it requires independent, nontrivial evidence.
 
 **Deliberately excluded from active method development:** STM + maturation buffer + LTM hierarchy; risk-safe normal-memory admission; unrestricted B7/B8 variants; elaborate POMDP/Expected Free Energy (EFE) systems; new backbone training; end-to-end resurrection of the original v22. The original signed-correction *score modifier* is also disabled by default. Historical sources and negative results remain archived.
 
@@ -39,16 +39,17 @@ All task statuses below begin `NOT_AUTHORIZED` for **new execution**, regardless
 | ID | Priority / effort cap (planning only) | Task and exact deliverable | Prerequisite | Gate / possible outcome |
 | --- | --- | --- | --- | --- |
 | **FT-00** | **P0**, documentation-first | Freeze publication claim, operating-point priority (default configurations **or** independently defined risk/FPR target), comparator matrix, allowed data, class/group splits, label/compute budget, and stop rules in a signed protocol | Researcher agrees on paper scope | `PROTOCOL_FROZEN` or `HOLD`; **no experiment** |
-| **FT-01** | **P0**, one read-only minimal falsifier | Historical queried-anchor **information-availability audit** under changing Greedy memory: legal anchor IDs, score version, source ownership, current-state rescore availability, two-sided evidence, feasible directional signals | FT-00 approved; read-only sources and optional evaluator label access separately authorized | `INFORMATION_EXISTS`, `IDENTIFIABILITY_LIMIT`, `BLOCKED_INPUT_STATE`, or `NO_GO` |
-| **FT-02** | **P0 conditional**, **one** minimal candidate | Only if FT-01 supports useful prospective signal: one bounded evidence-guided residual threshold, compared to B3, B3 + predeclared simple Offset, B1, and applicable existing controls on **identical Greedy/score/query history** | FT-01 `INFORMATION_EXISTS`; hypothesis + source/compute approved | `PROVISIONAL_GO` only with preregistered meaningful gain and acceptable downside; else `SIMPLER_BASELINE_SUFFICIENT` / `NO_GO` |
-| **FT-Q0** | **P1 conditional**, acquisition-only audit | If calibration is **evidence-limited**: diagnose BEA vs entropy/margin/random/periodic and a simple BEA + random-audit *candidate*, with 3% total-query budget and no online updates in the first diagnostic | FT-01 shows observation deficiency; researcher authorizes exact dev-label evaluation | `QUERY_INFO_GAIN`, `NO_GO`, or `INCONCLUSIVE` due to too few defects |
+| **FT-01-CLOSE** | **P0**, doc/source audit **only** | Reconcile **already completed** native query-anchor rescoring, prospective identifiability results, source-linkage caveats and conditional `LOCAL_FEEDBACK_UNRELIABLE`; issue no-new-run closure memo | Existing committed read-only reports | `EXISTING_DEV_EVIDENCE_NEGATIVE` / `PROVENANCE_HOLD`; new FT-01 trial **not authorized** |
+| **FT-02** | **P2 / PAUSED** | Evidence-guided calibration residual is **not currently a primary innovation route**. Do not implement B8/FT-02 based on old Oracle headroom. New distinct hypothesis would need an independent protocol, theoretical distinction, and explicit reauthorization | Prior local-feedback evidence is adverse | `PAUSED_NEGATIVE_DEVELOPMENT`; no code or experiments |
+| **FT-Q0** | **P1 conditional**, acquisition-only audit | Given evidence-selection concerns (not proof BEA is causal), diagnose original BEA vs entropy/margin/random/periodic and one simple BEA + random-audit candidate at **3% total** queries; initially only a read-only selection/availability comparison | FT-C0 preflight says correction is unlikely or a separately identified feedback-coverage gap; no label scan without approval | `QUERY_INFO_GAIN`, `NO_GO`, or `INCONCLUSIVE` |
 | **FT-Q1** | **P1 conditional**, one closed-loop profile | Only if FT-Q0 passes: matched-budget causal query comparison with the same frozen base scorer, Greedy rule and calibrator; each policy has its **own resulting** memory/score trajectory | Query hypothesis, seeds, permissions, resource budget frozen and explicitly authorized | Future decision risk + FPR/FNR + query utility versus simple policies; otherwise stop |
-| **FT-C0** | **P2 optional**, read-only or isolated ablation | One fixed-query, matched-memory test of **legacy signed score correction ON/OFF** only if it addresses a defined reviewer gap with available lawful receipts; otherwise leave as historical evidence | Explicit reviewer rationale, identical query IDs / budget, mathematical correction definition repaired **before** claim | `KEEP_DIAGNOSTIC_ONLY` / `NO_GO`; **never** silently reinstate original formula |
+| **FT-C0-PREFLIGHT** | **P0, NEXT CODEX TASK; document/read-only** | Inventory whether legacy local correction ON/OFF can be compared on *identical frozen Greedy memory, exact support/C64, query IDs, causal anchor timing, feature scores and calibration access* without recomputing or mixing original v22 trajectories. Specify locality failure tests, confound ledger, independent baseline and exact required artifacts | FT-00 draft scope + FT-01-CLOSE evidence; no GPU/labels/untracked edits | `READY_FOR_PROTOCOL_REVIEW`, `BLOCKED_INPUT`, or `NOT_CAUSALLY_IDENTIFIABLE`; **not experiment approval** |
+| **FT-C0** | **P1 conditional, one falsifier only** | After independent preflight, separately authorize a matched-tape signed correction ON/OFF experiment; evaluate genuine score-ranking effect (AUROC/AP), calibration-operating effects and off-neighborhood leakage against simple controls | Researcher approves exact correction formula/source exclusion/metrics/permissions; FT-C0-PREFLIGHT pass | `PROVISIONAL_GO` / `NO_GO` / `SIMPLER_BASELINE_SUFFICIENT`; no default resurrection |
 | **FT-H0** | **P0 protocol; execution HOLD** | Design independent holdout / Mint-PCB confirmation with no leakage; choose default-point or precommitted matched-risk comparison; confirm strong baseline coverage | Frozen method(s), FT-00; separate **researcher holdout authorization** for any run | `PROTOCOL_READY` then (only if authorized) `CONFIRMATION_PASS/FAIL` |
 | **FT-M0** | **P0 parallel** | Restructure manuscript, methods, tables, claims, reviewer-repair matrix, limitations, source/provenance appendix | Verified old evidence and FT-00 claim scope | Submission-readiness audit; **no claim** from unexecuted new mechanisms |
 | **FT-P0** | **final**, no automatic submission | Independent source/experiment/claim audit, venue fit, signed paper GO/HOLD/NO-GO decision, submission package | FT-H0 outcome if independent claims are used; FT-M0 | Researcher decides whether to submit, downgrade, or stop |
 
-**Scheduling constraint:** Only FT-00 and no-data manuscript outlining may start now. FT-01 is the first *candidate* experiment, not a permission granted by this file. No parallel candidate-search runs, new GPU inference, protected label reads, or fresh query schedules without named approval. Time/compute limits and meaningful effect thresholds must be signed in FT-00/each hypothesis contract **before** outcomes are inspected; do not retroactively invent a universal 5% FPR ceiling or a convenient BA target.
+**Scheduling constraint (revised 2026-10-31):** Start `FT-01-CLOSE + FT-C0-PREFLIGHT` as **documentation/read-only source inventory only**; the next Codex task is this combined, narrow preflight. FT-C0 is **not authorized to run**. FT-02 is paused. No parallel candidate-search runs, new GPU inference, protected label reads, or fresh query schedules without named approval. Time/compute limits and meaningful effect thresholds must be signed in FT-00/each hypothesis contract **before** outcomes are inspected; do not retroactively invent a universal 5% FPR ceiling or a convenient BA target.
 
 ## 3. Architecture to retain versus remove
 
@@ -59,7 +60,7 @@ All task statuses below begin `NOT_AUTHORIZED` for **new execution**, regardless
 | B0/B1/B3/B4/B5 + Offset | Transparent frozen, queried-normal, C64, adapted ACI, SPOT/dSPOT and strong simple comparators; respect startup/fallback coverage | KEEP / COMPARE where applicable |
 | Original STM / buffer / LTM | Not a current mechanism or required baseline unless the reviewer repair explicitly demands a historic comparison | ARCHIVE / EXCLUDE |
 | Risk-safe admission proposals | No renewed development | ARCHIVE / EXCLUDE |
-| **Original signed Local Correction score modifier** | **OFF** in new main system; original normalized-RBF kernel's claimed locality is not established | ARCHIVE / OPTIONAL FT-C0 ONLY |
+| **Original signed Local Correction score modifier** | **OFF** in new main system; original normalized-RBF locality not established. Next: FT-C0-PREFLIGHT source/evidence feasibility, not a new score modifier | ARCHIVE / PREFLIGHT ONLY; experiment on separate authorization |
 | **Verified Evidence Ledger** | **Read-only logical abstraction** of already legally queried normal/defect anchors, label timing, source IDs, provenance and memory versions; can inform FT-01 | SPECIFY / AUDIT; **not** a new score modifier |
 | Original BEA | Historical query policy / optional candidate after evidence audit, *not* automatically the default closed-loop policy | RETAIN CODE, TEST CONDITIONALLY |
 | Simplified query policy / sentinel random audit | Explicit optional alternative under *total* 3% budget, not a free additional label channel | FT-Q0 / FT-Q1 CONDITIONAL |
@@ -77,31 +78,36 @@ For each **actually queried** image, store or reconstruct from immutable legitim
 - Similarity/defect-anchor evidence is **not** automatically an unbiased estimate of stream FNR. Deterministic BEA has zero-propensity regions; IPW is not justified without legal, positive-probability sampling and sufficient data.
 - First implementation may be read-only views of existing sources rather than a new persistent bank. Do not mutate legacy correction anchors or add gradient training.
 
-## 4. Task contract: FT-01 — read-only calibration-information falsifier
+## 4. Task contract: FT-01-CLOSE — historical queried-anchor evidence reconciliation (no new experiment)
 
-**Scientific hypothesis H-FT01 (proposed, NOT preregistered until researcher signs):** Given the *same* frozen Greedy memory/score path, C64 anchors, update boundaries and lawful past queried labels, historical **defect plus normal anchor evidence** reveals a reproducible direction for improving subsequent decisions that is not already supplied by B3 q90 or a simple predeclared Offset.
+**Correction to earlier plan:** The previous FT-01 description assumed no native queried-anchor rescoring or prospective local-direction measurement existed. That assumption was **outdated**. The following committed documents already cover essential portions of this question:
 
-**First test is information availability, not an optimized controller.**
+1. [STAGE075A_B8_SIMPLIFICATION_RESEARCH_DIAGNOSIS.md](STAGE075A_B8_SIMPLIFICATION_RESEARCH_DIAGNOSIS.md): retrospective q90 headroom is **Oracle in-sample** and does not imply an online direction rule; early query-state report noted missing version-rescored anchors.
+2. [QUERIED_ANCHOR_NATIVE_RESCORING_REPORT.md](QUERIED_ANCHOR_NATIVE_RESCORING_REPORT.md): subsequent native scorer measurement across 20 trajectories, 120 snapshots, 2,450 primary normal LSO anchor scores, 2,645 defect current-memory scores, and 15,445 total native score calls; reported C64 parity checks. Its Actual-B3 package linkage explicitly remained **BLOCKED** by checksum/file-count inconsistency; prior WIP attempts and source limitations must not be concealed.
+3. [QUERIED_ANCHOR_IDENTIFIABILITY_RESULTS.md](QUERIED_ANCHOR_IDENTIFIABILITY_RESULTS.md): 120 temporally ordered development snapshot rows, primary version-matched source-excluded normals and unchanged-memory defect scores, actions sealed before separate future evaluator; **not** independent test evidence.
+4. [QUERIED_ANCHOR_IDENTIFIABILITY_DECISION_CANDIDATE.md](QUERIED_ANCHOR_IDENTIFIABILITY_DECISION_CANDIDATE.md) and [QUERIED_ANCHOR_B8_RESEARCH_IMPLICATIONS.md](QUERIED_ANCHOR_B8_RESEARCH_IMPLICATIONS.md): developer candidate conclusion `LOCAL_FEEDBACK_UNRELIABLE` **pending researcher approval**, not a globally proven impossibility of sparse-feedback calibration.
 
-1. **Preflight:** Read-only enumerate required cached score/memory-version receipts and queried-label provenance on the four approved development classes; verify each class × seed, official group disjointness, file hashes, historical memory states, source prototype identity, legal reveal times and comparator data. Report feasibility and missing rows; do not launch an expensive recomputation merely to hide absent history.
-2. **Evidence-state table at each eligible decision boundary:** `BOTH / NORMAL_ONLY / DEFECT_ONLY / NEITHER`; counts, age, current-state rescoring availability, self-source exclusions and version mismatches. Missing defect labels mean `FNR_UNAVAILABLE`, **not** zero FNR.
-3. **Read-only feature/score check (if authorized/feasible):** Compare *current-memory* signed anchor positions with B3 thresholds and identical-history offset references. No new threshold or query action in this phase, no modification to Greedy, B3, or frozen receipts.
-4. **Prospective diagnostic:** Predeclare a simple signal definition and an evaluation horizon using **later** held-out-in-time development events. Do not select a signal from the later outcomes. Seal signal/prediction artifacts before authorized evaluator-only dev truth access. Evaluate incremental directional information beyond B3 + Offset, with per-class and per-seed results and negative controls (time-permuted/label-shuffled past anchors where scientifically valid).
-5. **Feasibility vs effect:** If legal evidence is almost exclusively normal-side or source-excluded rescoring is impossible, report `IDENTIFIABILITY_LIMIT` or `BLOCKED_INPUT_STATE`. If no extra directional information survives a simple comparator, stop FT-02 and archive the negative result.
+### 4.1 Exact historical findings and interpretation
 
-**Required output bundle (new, non-overwriting namespace; path finalized in approval):**
+| Development-only audit | Recorded result | Constraint |
+| --- | --- | --- |
+| Query evidence with both normal and defect anchors | **90/120** snapshot states (75.0%) | Availability is not unbiased representation of stream risk |
+| Local query-directed actions across 120 snapshots | LOWER **33**, KEEP **26**, RAISE **30**, ABSTAIN **31** | Query policy + limited label support constrain actions |
+| Mean selected-action future ΔBA, Next-256 (equal class macro) | **−0.00435525** | Correlated snapshots, not an online closed-loop trial |
+| Future unique-best direction agreement, Next-256 | **0.3625** equal-class mean | Not convincing prospective direction identification |
+| False-activation rate, Next-256 | **0.585317** equal-class mean | Harmful actions frequently observed |
+| Mean selected-action future ΔBA, all remaining | **−0.00392950** equal-class mean | Retrospective evaluation, overlapping cohorts |
+| Future Next-256 ΔBA by class | audiojack **−0.006556**, regulator **−0.007044**, switch **−0.001979**, rolled_strip_base **−0.000735** | All four category means nonpositive |
+| Primary LSO vs full-memory normal anchor scoring | Action changed **36/90** comparable states | Source self-match seriously affects action estimates |
+| Current-state vs arrival-time scoring sensitivity | Action changed **31/90** states | Sensitivity; provenance and comparability documented in original report |
 
-- `experiment_contract.yaml` and source/permissions manifest, approved parent SHA and resource limit.
-- `anchor_eligibility_audit.json`, `evidence_state_by_event.csv`, `version_source_audit.json`, missingness/coverage table.
-- If approved: immutable prospective-score receipt, per-class/seed future-direction diagnostic, simple-offset/null controls; **do not commit raw labels**.
-- `tests/...` parity/leakage/source-identity checks, integrity hashes, `failure_report.md`, `decision_record.md`.
-- Independent auditor statement distinguishing `PASS_ENGINEERING` from `PASS_EMPIRICAL`; human scientific GO/HOLD/NO-GO.
+**Research status:** These measurements strongly disfavor the **particular** query-anchor local-threshold direction rule tested. The candidate disposition is `LOCAL_FEEDBACK_UNRELIABLE`, **not yet independently ratified by the researcher**, and not a proof that all future feedback calibration is impossible. In particular, do not claim that its future ΔBA is a registered prospective online-controller gain or that these dependent states are independent samples.
 
-**Kill criteria:** information unavailable; current/future label leak; missing source-exclusion evidence; no action-relevant signal beyond an inexpensive simple comparator; effect only visible with future/test labels or post hoc operating-point tuning. Do **not** rescue FT-01 with several new B8 variants.
+**FT-01-CLOSE deliverable:** A small *read-only* reconciliation/claim-ledger memo that checks the named files, registers exact evidence and native manifest limitation, links immutable existing artifacts, recommends `PAUSE_FT-02`, and asks researcher to accept/reject the candidate historical decision. **Do not repeat queried-anchor encoding, native rescore, label read, or B8 tuning.** No method or new experiment is automatically approved.
 
 ## 5. Task contract: FT-02 — optional minimal evidence-guided calibration
 
-Enter **only** after FT-01 is independently audited and its signal has a precommitted prospective definition.
+**Status: PAUSED / NOT AUTHORIZED.** The previously proposed B3 + query-anchor residual is not justified by the historical identifiability test. Enter only on a **new, distinct**, separately preregistered falsifiable hypothesis with explicit researcher authorization. Do not reinterpret the earlier Oracle headroom as positive prospective evidence.
 
 - Candidate family is deliberately small, e.g. `theta_t = theta_B3,t + clip(delta_t, -Delta, Delta)` where `delta_t` is a **single frozen, causal rule** using historical legally queried evidence. The formula here is a *family placeholder*, **not** an authorized equation; parameter `Delta`, step policy, update cadence, missing-evidence fallback, operating priority and one minimal negative control require prior registration.
 - Keep B3's **protected-C64-only** semantics unchanged. Declare additional queried-anchor information, memory/source exclusion and CPU/GPU overhead. Do not claim the candidate is pure state-consistent C64 recalibration.
@@ -112,7 +118,7 @@ Enter **only** after FT-01 is independently audited and its signal has a precomm
 
 ## 6. Task contract: FT-Q0 / FT-Q1 — conditional BEA revival
 
-**Activation condition:** FT-01 must identify a specific lack of informative queried labels that prevents a lawful calibration decision. Query experiments are **not** automatically triggered merely because B3 is weak.
+**Activation condition:** A separate query-policy scientific gate must identify a plausible, measurable evidence-acquisition deficit (historical selective-label bias motivates, but does not prove it). Prefer correction preflight first. Query experiments are **not** automatically triggered by B3 weakness or `LOCAL_FEEDBACK_UNRELIABLE` alone.
 
 **FT-Q0: acquisition-only / cheap falsifier**
 
@@ -128,13 +134,21 @@ Enter **only** after FT-01 is independently audited and its signal has a precomm
 - Do not revive the original BEA utility dependencies on STM/buffer/LTM or on the signed correction modifier unless explicitly rederived and tested. Label a simplified policy as a new variant, never as the unchanged v22 BEA.
 - Reject claims of full Active Inference or long-horizon optimal control; the old controller was one-step heuristic acquisition with a confidence surrogate.
 
-## 7. Task contract: FT-C0 — legacy Local Correction is not the default path
+## 7. Task contract: FT-C0-PREFLIGHT → optional FT-C0 — local correction's independent ranking mechanism
 
-- **Do not** move the normalized-RBF signed correction from v22 into the new main scorer by default. Its effective distance locality was disputed; normalized weights can cancel the intended radial attenuation.
-- The *historical* M2→M3 gains are suggestive only because query IDs/rates and downstream states changed simultaneously.
-- If a reviewer-repair need justifies **one** isolated re-evaluation, freeze the same Greedy memory and query tape, compare corrected vs uncorrected score fields with **no additional labels**, report AUROC (score ranking), BA/FPR/FNR under a stated shared legal calibration rule, anchor activation, off-neighborhood interference and source contamination.
-- Locality must be defined/tested quantitatively before claiming a local score effect. If an actual source-corrected kernel or global attenuation is newly introduced, treat it as a **new algorithm needing its own pre-registered controls**, not as a faithful v22 reproduction.
-- Whether or not FT-C0 is run, the archived anchor labels may serve as **read-only verified evidence**, subject to legal source/time checks.
+**New first-priority method candidate (conditional):** The original four-class M2→M3 stage reported image AUROC 0.8885 → 0.9005, with concurrent reduction of FPR and FNR. But queries changed (0.0832 vs 0.0511), and each run altered future writer/threshold state. These historical numbers **do not identify** the score correction's independent causal effect. An ON/OFF correction could in principle alter anomaly **ranking** (unlike threshold-only controllers), but that mechanism is **unproven**.
+
+**FT-C0-PREFLIGHT is the *next Codex task*** and is **read-only / documentation-only**:
+
+1. Inventory **only directly relevant** existing source interfaces/manifests/receipts for raw frozen DINO features, original v22 correction-anchor writes, original Greedy trajectories, scorer/patch aggregation, source identities, existing queried-label timing, support/C64 partitions and score replay. Avoid exhaustive repository scans or raw output ingestion. Use authoritative existing docs first; only inspect narrowly selected source functions when needed.
+2. Identify whether a **causal and methodologically meaningful fixed-memory fixed-query** comparison is implementable. The two arms must use the same support, Greedy memory state `M_t`, query IDs/known labels, stream order, frozen sensor and time-ordered correction-anchor evidence; **score** alone changes by correction ON/OFF. Query policy and memory writer must **not** be allowed to respond differently during this score-isolated contrast. If v22 correction writes cannot be replayed from the Greedy trajectory without new information, mark `NOT_CAUSALLY_IDENTIFIABLE`; do not claim a faithful historical replay.
+3. State the self-match and score-field locality problem *mathematically*: the original normalized Gaussian weight does not imply a sufficiently local residual. Pre-register what evidence would count as neighborhood-local, what happens to distant patches and patch/image ranking, and a **strong simpler comparator** (e.g. no correction, fixed label-conditioned nearest-prototype residual, and calibration-only controls where comparable). Do **not** modify the correction formula at this stage.
+4. Specify the least expensive **single** future FT-C0 falsifier with exact per-stream score/label-access permissions, method identity vs adapted algorithm, AUROC/AP **primary**, FPR/FNR/BA and spatial spillover **secondary**, fixed-query provenance, source-exclusion, memory/CPU-GPU cost, negative controls, stop rules. The task should explicitly prioritize proof of **ranking** gain over moving the threshold.
+5. Deliver `docs/calibration/audit/ft_c0_preflight_20261031/FT_C0_PREFLIGHT_REPORT.md` and optionally a small manifest/contract, with no changed original source/tests/outputs. Document any unavailable artifact with `BLOCKED_INPUT`. If no existing lawful evidence supports an isolated comparison, recommend **no experiment**, not a GPU recomputation by default.
+
+**FT-C0 experiment remains HOLD:** Even a `READY_FOR_PROTOCOL_REVIEW` result merely enables ChatGPT/researcher review and **separate permission** to run one narrow matched-tape ON/OFF study. No new GPU, image inference, label reveal, corrections bank modification, or additional classes are authorized by this plan. A mathematically revised attenuation/kernel is **a different new algorithm**, not a faithful v22 ablation.
+
+**Stop:** lack of source/tape parity, inability to attribute effect beyond query/Greedy trajectory, negligible/nontransferable score AUROC/AP gain, adverse far-field interference, or simple baselines sufficient. Negative results must be logged.
 
 ## 8. FT-H0 — independent confirmation: PROTOCOL FIRST, RUN HOLD
 
@@ -179,7 +193,7 @@ Enter **only** after FT-01 is independently audited and its signal has a precomm
 ### 10.1 Minimum handoff template (copy per approved task)
 
 ```text
-TASK: <FT-00 / FT-01 / FT-02 / FT-Q0 / FT-Q1 / FT-C0 / FT-H0 / FT-M0 / FT-P0>
+TASK: <FT-00 / FT-01-CLOSE / FT-C0-PREFLIGHT / FT-C0 / FT-Q0 / FT-Q1 / FT-02 / FT-H0 / FT-M0 / FT-P0>
 AUTHORIZATION: <EXPLICIT RESEARCHER MESSAGE / NOT AUTHORIZED>
 REPO: E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection
 BRANCH: calibration-stage0-contract-20261029
@@ -196,12 +210,12 @@ REVIEW: code/source integrity != causal/empirical support != publishable contrib
 NEXT ACTION: return for independent audit; DO NOT autonomously proceed to the next FT task
 ```
 
-## 11. Current actionable order and registration note
+## 11. Current actionable order and registration note — revised 2026-10-31
 
-1. **Now, document-only:** FT-00 researcher/reviewer discussion to freeze intended paper claim and default-vs-matched-risk operating-point protocol; FT-M0 manuscript outline can proceed with old results explicitly marked historical.
-2. **First new scientific task, after permission:** FT-01 read-only evidence feasibility and prospective information falsifier.
-3. **Conditional and limited:** FT-02 single minimal calibration residual **or** (if evidence-starved) FT-Q0 acquisition diagnostic; FT-Q1 only after FT-Q0.
-4. **Only after method/claims frozen and researcher approves:** FT-H0 independent confirmation.
-5. FT-P0 independent audit and publication decision. A candidate failure is a valid result; do not reopen STM/Buffer/LTM or risk-safe admission as a fallback.
+1. **Next Codex assignment, documentation/read-only only:** combine `FT-01-CLOSE` historical evidence reconciliation with `FT-C0-PREFLIGHT` feasibility and draft causal experiment contract. The researcher requested planning and this prompt; **no new experiment** is authorized.
+2. **Researcher and ChatGPT review:** decide whether existing source/tape/anchor evidence makes a clean correction ON/OFF score-ranking test possible; fix the manuscript operating-point priority and support-budget disclosures. Report `READY_FOR_PROTOCOL_REVIEW / BLOCKED_INPUT / NOT_CAUSALLY_IDENTIFIABLE`; retain existing B0/B1/B3/Offset comparators.
+3. **Conditional, separately approved:** at most **one** actual FT-C0 score-isolated falsifier if preflight passes. Otherwise explore whether query evidence acquisition (FT-Q0) offers an independently testable advantage; no speculative B8 revival.
+4. **Manuscript FT-M0:** proceed in parallel with old results clearly marked historical and revised reviewer repair; do not claim a new correction mechanism until it is validated.
+5. **Independent FT-H0/FT-P0:** only after method/protocol/parameter freeze and explicit researcher confirmation-label/data authorization. Mint/PCB and Probe B remain sealed.
 
-**Registration is a documentation edit only. No new hypothesis has passed a gate, no dataset or oracle was accessed, and no new experiments or manuscript submission have been authorized by this plan.**
+**This revision is a documentation-only scientific reprioritization. It does not ratify the historical `LOCAL_FEEDBACK_UNRELIABLE` candidate on the researcher's behalf, authorize FT-C0 implementation, or permit labels/GPU/new datasets.**
