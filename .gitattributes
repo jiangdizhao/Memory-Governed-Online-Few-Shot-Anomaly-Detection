@@ -27,3 +27,8 @@ experiments/calibration/queried_anchor_identifiability*.py text eol=lf
 tests/calibration/test_queried_anchor_identifiability.py text eol=lf
 docs/calibration/QUERIED_ANCHOR_*.md text eol=lf
 docs/calibration/audit/queried_anchor_identifiability_v1/** text eol=lf
+
+# Stage 1-A P1 replay source and compact audit hashes use canonical LF bytes.
+experiments/calibration/stage1a_p1_reconstruction.py text eol=lf
+tests/calibration/test_stage1a_p1_*.py text eol=lf
+docs/calibration/audit/stage1a_p1_reconstruction_v1_20261030/** text eol=lf

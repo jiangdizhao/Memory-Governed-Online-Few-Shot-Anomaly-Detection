@@ -1,0 +1,42 @@
+{
+  "schema": "calibration.stage1a_p1_anchor_evidence_manifest.v1",
+  "status": "BLOCKED_BEFORE_FEATURE_OR_LABEL_ACCESS",
+  "native_anchor_score_calls": 0,
+  "feature_encoding_calls": 0,
+  "queried_label_disclosures": 0,
+  "query_anchor_scores_written": 0,
+  "raw_labels_or_scores_in_manifest": false,
+  "cache_key_fields": [
+    "memory content version",
+    "memory content SHA-256",
+    "source-map SHA-256",
+    "anchor identity SHA-256",
+    "official source-group SHA-256",
+    "Native Scorer configuration SHA-256",
+    "Native Scorer/source-code fingerprint SHA-256",
+    "source-exclusion semantics"
+  ],
+  "feature_key_fields": [
+    "image content SHA-256",
+    "encoder fingerprint SHA-256 (model checkpoint plus DINOv2 source tree)",
+    "preprocessing fingerprint SHA-256"
+  ],
+  "anchor_rules": {
+    "protected_c64": "Reuse stored 64-score current-memory vector only when its memory SHA-256 matches; verify exact higher q90 at index 57 and transport digest. No new C64 scorer call unless an identity/parity failure first blocks reuse.",
+    "queried_normal": "Score current memory with the official source group excluded from every layer; adapter proof must report zero remaining source rows in every layer.",
+    "queried_defect": "Score against current memory; defects are never written; verify no source-group prototype is present.",
+    "group_deduplication": "Reject any second queried anchor from an official sample group; reject support/C64 overlap.",
+    "label_firewall": "The provider exposes only precommitted queried positions and has no unqueried-label API. A separate approved feedback-access record is mandatory.",
+    "same_memory_new_anchor": "Reuse all cached anchor scores with exact matching keys; score only the new anchor.",
+    "memory_revision": "Memory/source-map SHA changes produce new score keys and invalidate old-version scores for the current evidence snapshot."
+  },
+  "existing_snapshot_scores": {
+    "available_in_prior_audit": true,
+    "states_per_trajectory": 6,
+    "states_total": 120,
+    "query_measurement_payload_is_label_bearing": true,
+    "payload_opened_or_used": false,
+    "reuse_decision": "NOT_USED; do not open this payload in P1 without a separate approval covering that artifact."
+  },
+  "private_cache_policy": "Feature tensors, images, labels, and per-anchor score values stay in private runtime/checkpoint storage. This package contains no entries from a real query cache."
+}

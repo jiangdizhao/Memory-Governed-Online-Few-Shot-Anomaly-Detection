@@ -1,0 +1,11 @@
+{
+  "schema": "calibration.stage1a_p1_compact_package_checksums.v1",
+  "files": {
+    "exact_native_replay_parity.json": "d8aad6c28b079743852087639cbdd5c3fe3f1e4a4eb1d49430e1558f15976741",
+    "anchor_evidence_manifest.json": "6547113fb16eecd4f7d14047372bddbbfc02db722c508d36d4e283b6a73b0a0b",
+    "feature_cache_provenance.json": "18388bcda7ba0c276381d57db9e4003e71fe2050a99b7f26d1fd5de01d5f28f2",
+    "compute_accounting.json": "537c59ac694df85a1c6a2282a631e9983c1536baa29ef79a436cc537967109c2",
+    "p1_gate_matrix.json": "c779dda3e821e88b54e3c11e85242997a5d80f885e927090a7e80ae84878254f",
+    "STAGE1A_P1_RECONSTRUCTION_REPORT.md": "0951c700bc3f3c89acfd6bb7f0102d78b581bc09287824292acf370a27f59cb7"
+  }
+}

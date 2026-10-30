@@ -1,0 +1,30 @@
+{
+  "schema": "calibration.stage1a_p1_gate_matrix.v1",
+  "decision": "P1_IMPLEMENTATION_PREPARED; DATA_REPLAY_BLOCKED_PENDING_TWO_APPROVALS",
+  "stage1a_performance_evaluation_executed": false,
+  "gates": [
+    {"id": "P1-01", "name": "Requested branch/base identity", "status": "PASS", "evidence": "Branch calibration-stage0-contract-20261029 at requested base fd29a31d49613ed87530ad71c71fa1bfa483f4c8 at task start."},
+    {"id": "P1-02", "name": "P0 artifacts read", "status": "PASS", "evidence": "All six committed P0 report/addendum/matrix/test artifacts were read before P1 inspection."},
+    {"id": "P1-03", "name": "Bounded Native Scorer/data approval", "status": "BLOCKED_NOT_RECORDED", "evidence": "No explicit bounded P1 native-scorer/data approval record found in docs/calibration. GPU, image loading and native inference were not run."},
+    {"id": "P1-04", "name": "Separate queried-feedback access approval", "status": "BLOCKED_NOT_RECORDED", "evidence": "No separately recorded approval for queried-label access found. No query label or response digest was read/created."},
+    {"id": "P1-05", "name": "Query-only memory reconstructibility", "status": "SUPPORTED_NOT_EXECUTED", "evidence": "The shared writer changes memory only for accepted queried verified normals. Static/dynamic scalar tapes, fixed query schedule, writer code/config, and C64 transport are available; queried features and M0 maps are absent."},
+    {"id": "P1-06", "name": "Exact original memory/writer/C64 parity", "status": "NOT_RUN_NO_AUTHORIZATION", "evidence": "The callback-driven fail-closed runner is implemented and has synthetic exact/mutation tests. No real trajectory state was replayed."},
+    {"id": "P1-07", "name": "Version-addressed anchor evidence cache", "status": "IMPLEMENTED_SYNTHETIC_TESTED_NOT_RUN_ON_REAL_DATA", "evidence": "Exact cache keys, all-layer LSO proof, group dedupe, C64 reuse, and new-anchor reuse are tested on synthetic fixtures only."},
+    {"id": "P1-08", "name": "Query feature cache provenance", "status": "SOURCE_FINGERPRINTS_RECORDED; CACHE_NOT_BUILT", "evidence": "Seventeen allowlisted current source files are fingerprinted; no image features or real cache entries were created."},
+    {"id": "P1-09", "name": "Checkpoint/resume and mutation handling", "status": "PASS_SYNTHETIC_TESTS", "evidence": "Synthetic one-shot versus pause/resume replay parity; checkpoint source mutation rejection; memory/writer/C64 one-field mutation rejection; cache-key mutation tests."},
+    {"id": "P1-10", "name": "Controller event timing", "status": "SOURCE_REVIEW_PASS", "evidence": "Prequential engine order and registered controller update interfaces were inspected; no scientific method replay was run."},
+    {"id": "P1-11", "name": "Stage075BOffset identity", "status": "SOURCE_REVIEW_AND_UNIT_TEST_PASS", "evidence": "Verified queried-only two-class raw-median target; one-sided evidence holds its own theta. It is not a continuously updated B3 plus additive offset and does not consume C64."},
+    {"id": "P1-12", "name": "Original/independent G2 statuses", "status": "ORIGINAL_BLOCKED_CERTIFICATE_PASS_REVIEW_REQUIRED", "evidence": "No historical executed-source hash or label-response digest was recovered."},
+    {"id": "P1-13", "name": "Stage 1-A performance run", "status": "NOT_AUTHORIZED_AND_NOT_RUN", "evidence": "Stop after P1 reconstruction. A separate Stage 1 execution go and approved protocol remain required."}
+  ],
+  "required_before_real_p1_replay": [
+    "Researcher-approved bounded native-scoring/data authorization for the four dev classes, Q-A-TS-v1 positions, feature/map/anchor call caps, and no confirmation/masks",
+    "Separate researcher-approved queried-feedback access record for only the precommitted queried positions",
+    "Five-seed private support/C64/tape identity preflight and an immutable no-overwrite output path",
+    "Production adapter binding this tested replay interface to the frozen Native Scorer and SharedNativeGreedyWriter"
+  ],
+  "historical_g2_status": "BLOCKED",
+  "independent_g2_certificate_status": "PASS; RESEARCHER_REVIEW_REQUIRED",
+  "stage1a_protocol_design_status": "PRESERVED; FOCUSED ADDENDUM REMAINS CANDIDATE",
+  "confirmation_or_mask_accessed": false
+}

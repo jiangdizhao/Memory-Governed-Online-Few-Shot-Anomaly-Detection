@@ -1,0 +1,56 @@
+{
+  "schema": "calibration.stage1a_p1_exact_native_replay_parity.v1",
+  "package_status": "BLOCKED_BEFORE_DATA_OR_GPU_EXECUTION",
+  "repository_branch": "calibration-stage0-contract-20261029",
+  "base_commit": "fd29a31d49613ed87530ad71c71fa1bfa483f4c8",
+  "bounded_p1_native_compute_authorization_recorded": false,
+  "separate_queried_feedback_access_decision_recorded": false,
+  "gpu_execution_performed": false,
+  "native_scorer_calls_performed": 0,
+  "dino_feature_encodings_performed": 0,
+  "queried_labels_accessed": 0,
+  "historical_g2_status": "BLOCKED",
+  "independent_g2_certificate_status": "PASS; RESEARCHER_REVIEW_REQUIRED",
+  "historical_executed_source_hash_recovered": false,
+  "historical_query_response_digest_recovered": false,
+  "structural_reconstructibility": {
+    "status": "SUPPORTED_NOT_EXECUTED",
+    "query_positions_only_can_reproduce_writer_memory_in_principle": true,
+    "reason": "The shared writer is queried-verified-normal-only; nonquery, queried defect, writer-rejected and no-content-change events do not add prototype content. Iterate event metadata for exact before/after checks, but regenerate features/maps only for queried positions required by the original writer/anchor protocol.",
+    "full_stream_backbone_rerun_required_by_current_evidence": false,
+    "query_only_parity_attempted": false,
+    "full_stream_rerun_rule": "Do not rerun the backbone unless a separately authorized query-only replay first has an exact-parity failure that demonstrates missing nonquery feature computation is necessary. Stop the affected trajectory on any mismatch."
+  },
+  "recorded_identity": {
+    "stage075a_source_head": "4d715a9b27027ee0c52dab4552d7296153ca8633",
+    "protocol_sha256": "6f1d8cf40e5e7b2d98dcfabe5836b49c6cd57069d3c8377122dba64e3fc2da1c",
+    "native_scorer_config_sha256": "1b8e9d96b121e3f1f6c1bbee13ab9f0063facee8fb08ad696dc5f9cb43dbd452",
+    "stage05_score_manifest_sha256": "c884694c7f63adb0984d1f96e386ab8ec1dd4a85d5bac4b62bb9b4509fb34e39",
+    "trajectory_count": 20,
+    "queried_positions_across_four_class_tapes": 459,
+    "support_seed_count": 5
+  },
+  "required_exact_comparisons": [
+    "memory content version before and after every event",
+    "memory SHA-256 before and after every event",
+    "source-map digest/revision and writer source attribution where recorded",
+    "writer eligibility/action/reason/keep/appended/replaced/skipped result",
+    "legacy Greedy version where recorded",
+    "stored C64 q90 and transport identity before and after every event",
+    "regenerated queried-event M0 scalar score equals the saved static score tape"
+  ],
+  "component_results": {
+    "pre_event_memory_identity": "NOT_RUN_NO_AUTHORIZATION",
+    "post_event_memory_identity": "NOT_RUN_NO_AUTHORIZATION",
+    "writer_action_and_source_parity": "NOT_RUN_NO_AUTHORIZATION",
+    "c64_q90_transport_parity": "NOT_RUN_NO_AUTHORIZATION",
+    "query_event_static_map_scalar_parity": "NOT_RUN_NO_AUTHORIZATION",
+    "runner_synthetic_mutation_tests": "PASS; 14 CPU-only tests"
+  },
+  "replay_implementation": {
+    "source": "experiments/calibration/stage1a_p1_reconstruction.py",
+    "mode": "callback-driven; lazy providers; fail closed",
+    "input_access_order": "authorization validation, event metadata, queried image feature, queried-event static map and scalar parity, queried label disclosure, writer, post-state/C64 comparison",
+    "failure_behavior": "Raise exact mismatch at the affected position and stop; no correction, approximation, retry, or artifact overwrite."
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "calibration.stage1a_p1_compute_accounting.v1",
+  "status": "NO_DATA_OR_GPU_EXECUTION",
+  "actual_p1_counts": {
+    "full_stream_static_score_calls": 0,
+    "full_stream_dynamic_score_calls": 0,
+    "queried_event_static_map_calls": 0,
+    "query_anchor_native_score_calls": 0,
+    "c64_rescore_calls": 0,
+    "dino_feature_encoding_calls": 0,
+    "queried_label_reads": 0,
+    "gpu_calls": 0
+  },
+  "reused_from_verified_tapes_if_authorized": {
+    "static_scalar_values": 76475,
+    "dynamic_scalar_values": 76475,
+    "post_write_c64_scores": 76160,
+    "c64_memory_updates": 1190,
+    "query_positions_across_class_tapes": 459,
+    "class_seed_trajectories": 20
+  },
+  "bounded_minimum_additional_work_plan": {
+    "unique_query_feature_encodings_max": 459,
+    "queried_label_reads_max_once_per_class_position": 459,
+    "static_score_map_calls_max_without_identical_static_bank_reuse": 2295,
+    "query_anchor_score_calls_conservative_upper_bound": 75406,
+    "physical_native_scorer_calls_max": 77701,
+    "full_stream_backbone_calls": 0,
+    "c64_new_calls": 0,
+    "counts_are_estimates": false,
+    "actual_anchor_call_count": "UNKNOWN_UNTIL_QUERIED_LABELS_AND_MEMORY_PARITY_ARE_AUTHORIZED"
+  },
+  "separation": {
+    "dino_feature_encoding_calls_are_not_native_score_calls": true,
+    "physical_native_scorer_calls": "queried static-map calls plus current-memory query-anchor score calls; C64 calls are zero when exact transport reuse is verified",
+    "saved_event_scores": "used by threshold controllers and audit checks; never recomputed during query-only memory reconstruction"
+  },
+  "prior_snapshot_measurement_context": {
+    "native_score_calls": 15445,
+    "elapsed_seconds": 811.418,
+    "peak_cuda_allocated_bytes": 2433839616,
+    "scope": "Historical six-snapshot audit only; its label-bearing measurements were not opened or reused. Not a P1 runtime estimate."
+  },
+  "unknown": {
+    "p1_runtime_seconds": true,
+    "p1_peak_cuda_bytes": true,
+    "p1_peak_cpu_ram_bytes": true,
+    "private_feature_cache_bytes": true,
+    "p1_output_storage_bytes": true
+  }
+}
