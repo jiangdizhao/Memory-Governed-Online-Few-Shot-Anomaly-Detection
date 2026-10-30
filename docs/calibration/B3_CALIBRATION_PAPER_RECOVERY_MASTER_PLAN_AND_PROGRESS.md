@@ -48,7 +48,7 @@ The registered primary B3 is **protected-C64-only**, not a queried-normal-LSO po
 - `HOLD`: scientific decision deferred until a specified issue is resolved.
 - `GO_TO_MANUSCRIPT` / `NO_GO_METHOD_CLAIM`: researcher-level publication decisions, not automatic CI statuses.
 
-**Current overall state: `PLANNED`. No new mechanism-ablation or expanded external-baseline run is recorded here as completed.**
+**Current overall state: `A0_REPORTED_PASS_PENDING_INDEPENDENT_AUDIT; A1_BLOCKED_UNRELATED_UNTRACKED_WORKTREE`.** Codex's read-only Gate A0 findings were relayed by the researcher on 2026-10-30, but the A0 probe/report was not committed, and ChatGPT cannot independently certify its local raw-file hashes or exact-match counts from the report alone. No new mechanism-ablation implementation or empirical run has been committed.
 
 ## 1. Verified inherited evidence (do not silently modify)
 
@@ -101,7 +101,7 @@ B3 exceeds B1 in BA by about **0.0550**, on **19/20** paired trajectories, but a
 
 **Task ID:** `A-B3-STATE-CONSISTENCY`  
 **Priority:** P0; conduct **before** new large external-baseline runs.  
-**Current status:** `PLANNED`.  
+**Current status:** `A0_REPORTED_PASS_PENDING_INDEPENDENT_AUDIT; A1_BLOCKED_WORKTREE` (as of 2026-10-30; report-only evidence).  
 **Research hypothesis H1:** conditional on the **same fixed C64 anchors, Greedy score/memory stream, threshold update boundaries, quantile estimator and movement policy**, using reference scores from the current memory version yields an empirically meaningful improvement over using deliberately lagged scores.
 
 ### 2.1 Primary causal isolation
@@ -235,8 +235,8 @@ Current B3 FPR is **0.1042**: do not conceal this behind BA. There is currently 
 | Milestone | Owner | Status | Deliverable / next action | Audit and evidence |
 |---|---|---|---|---|
 | P00: register single master plan | ChatGPT | COMPLETE | This Markdown file; no experiment run | Source branch and Stage 1-A docs inspected 2026-10-30 |
-| A0: historical-C64-version evidence inventory | Codex, then ChatGPT | PLANNED | Verify all 20 lag-compatible receipts and identities, no private data leakage | Not submitted |
-| A1: independent A3/A4 implementation and unit tests | Codex, then ChatGPT | PLANNED | Separate source, exact lag semantics, deterministic parity | Not submitted |
+| A0: historical-C64-version evidence inventory | Codex, then ChatGPT | REPORTED_PASS_PENDING_AUDIT | Read-only Codex probe claims all 20 C64 q90 histories complete and exact B3 recurrence over 76,475 events | Researcher-supplied text 2026-10-30; **no committed audit/manifest; raw-file hash audit not independently verified** |
+| A1: independent A3/A4 implementation and unit tests | Codex, then ChatGPT | BLOCKED_WORKTREE | Use isolated Git worktree or other non-destructive clean task workspace; preserve original untracked outputs | Codex reports it stopped before editing; no branch/commit/PR or A1 tests |
 | A2: 20-trajectory mechanism results | Codex, then ChatGPT | PLANNED | Paired results, FPR/FNR, worst windows, version lags | Not submitted |
 | A3: mechanism GO/HOLD/NO-GO decision | Researcher with ChatGPT | PLANNED | Signed scientific interpretation | Not decided |
 | B0: external implementation/fidelity inventory | ChatGPT / Codex | PLANNED | Method-cards reconciled with source versions and existing coverage | Existing baselines partially reviewed |
@@ -262,6 +262,17 @@ For each new commit or experiment, append a dated entry; **do not overwrite olde
 - **Code change:** this Markdown plan only. **No experiment executed.**
 - **Known risks:** four development classes only; B3 FPR 0.1042; additional C64 is not strict four-shot; A3/A4 history availability unverified; B5 startup missingness; B6 different target; old historical G2 block.
 - **Next:** researcher will request a Codex prompt for the narrowly scoped Experiment A feasibility gate and implementation.
+
+### 2026-10-30 — A0 CODEX READ-ONLY REPORT / A1 WORKTREE BLOCKER
+
+- **Report source:** Researcher pasted Codex's local terminal findings into ChatGPT; the local probe generated no persistent `feasibility_matrix.json`, manifest, commit or PR. This is **reported evidence**, not a ChatGPT-independent verification of full local JSONL or SHA-256 values.
+- **Reported environment:** Windows `E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection`; Python `D:\anaconda3\envs\torch\python.exe` 3.11.14; Torch 2.0.1+cu117; NumPy 1.24.0; dataset `G:\dataset\realiad`, JSON metadata and DINO cache found; original planning branch HEAD `b291b5a399d72d38ed608730008e5b54995720e0`.
+- **Claimed A0:** all 20 trajectories have complete versioned protected-C64 q90 histories, **20 initial + 1,190 post-write** vectors, with 1,190 content changes in total. Exact recurrence comparison reportedly found **zero pre/post threshold and prediction mismatches** across **76,475** events. Each trajectory has a source-evidence SHA in the researcher-provided report, but **there is no separately committed manifest here**. Original historical G2 source-byte parity remains blocked.
+- **Reported access:** read-only receipts/C64 JSONL and historical prediction rows, **0 new image reads, 0 new label-provider reads, 0 new GPU calls**, no confirmation or masks opened. ChatGPT has not independently re-executed the local probe.
+- **A1 outcome:** `BLOCKED_WORKTREE` because the existing checkout has unrelated untracked experimental `outputs/` and `docs/calibration/audit/` directories. Codex made **no changes**, ran no A1 implementation tests and created no task branch/commit/PR. This is a workspace hygiene blocker, **not an evidence-feasibility failure**.
+- **Corrective path:** do **not delete/move/clean** existing outputs. Prefer a separate `git worktree add -b <task-branch> <new-directory> <verified-base-commit>` for A1. Historical data may be untracked and physically present only under the original checkout; Codex must explicitly identify required read-only sources and use narrowly scoped references or directory junctions without writing into those targets. Keep all new code, tests and reports in the isolated worktree, not in linked historical directories. If source-path/hashes cannot be preserved, stop and report instead of weakening invariants.
+- **Next:** researcher provides an A1 continuation prompt, Codex creates a separate task workspace, repeats A0 hash/parity verification with a small committed manifest and conditionally implements A1 tests. **No 20-trajectory outcome evaluation** before separate authorization.
+- **Audit designation:** `A0_REPORTED_PASS_PENDING_INDEPENDENT_AUDIT`; `A1_BLOCKED_WORKTREE`; `H1_NOT_TESTED`; no paper GO decision.
 
 ### Template — append a new entry for every Codex delivery and audit
 
