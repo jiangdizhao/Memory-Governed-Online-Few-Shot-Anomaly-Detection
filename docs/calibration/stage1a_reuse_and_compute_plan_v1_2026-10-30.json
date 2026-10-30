@@ -1,0 +1,79 @@
+{
+  "schema": "calibration.stage1a_reuse_and_compute_plan.v1",
+  "decision": "REUSABLE_SHARED_TRAJECTORY; FULL_ANCHOR_REPLAY_BLOCKED",
+  "source_artifact": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/",
+  "query_measurement_payload_opened": false,
+  "private_checkpoints_deserialized": false,
+  "trajectory_inventory": {
+    "classes": {
+      "audiojack": {"observations_per_seed": 3815, "queried_positions": 114},
+      "regulator": {"observations_per_seed": 3855, "queried_positions": 116},
+      "switch": {"observations_per_seed": 3820, "queried_positions": 115},
+      "rolled_strip_base": {"observations_per_seed": 3805, "queried_positions": 114}
+    },
+    "support_seeds": [0, 1, 2, 3, 4],
+    "trajectory_count": 20,
+    "unique_stream_observations_across_classes": 15295,
+    "class_seed_score_rows": 76475,
+    "static_score_values": 76475,
+    "dynamic_score_values": 76475,
+    "unique_query_positions_across_class_tapes": 459,
+    "class_seed_query_feedback_events": 2295,
+    "query_protocol": {"name": "Q-A-TS-v1", "fraction": 0.03, "seed": 37, "bins": 16, "max_queries_per_official_sample_group": 1}
+  },
+  "inputs": [
+    {"controller_input": "Event static/dynamic scalar scores and pre-event memory version/digest", "classification": "REUSABLE", "evidence_or_limit": "All 20 score/state tracks passed recorded parity comparisons; exact shared native trajectory can be fed to every controller."},
+    {"controller_input": "Query positions and event order", "classification": "REUSABLE", "evidence_or_limit": "Four tape position sets match ordered event traces and the frozen 3% Q-A-TS protocol."},
+    {"controller_input": "Controller-independent verified-normal writer transitions", "classification": "REUSABLE", "evidence_or_limit": "Recorded writer outcomes link to memory version/digest chains; this does not reveal a separate independently verifiable historical query-label digest."},
+    {"controller_input": "C64 scores at initial state and after memory updates", "classification": "REUSABLE", "evidence_or_limit": "64 scores per each of 1,190 updates = 76,160 post-write values, plus initial per-seed scores; all recorded C64 pair sets/digests matched."},
+    {"controller_input": "B3 historical threshold/prediction replay", "classification": "REUSABLE", "evidence_or_limit": "20/20 replay tracks matched; replay states labels_supplied_to_replay=false."},
+    {"controller_input": "Queried-label values for B1/B2/B4/B7/Stage075BOffset feedback", "classification": "UNAVAILABLE_BLOCKER_FOR_HISTORICAL_RECONSTRUCTION", "evidence_or_limit": "No separately verifiable label-response digest in the trajectory package. Requires private label linkage under a future explicit execution authorization."},
+    {"controller_input": "Score-only B5a/B5b online states", "classification": "CPU_RECONSTRUCTABLE", "evidence_or_limit": "Causal SPOT/dSPOT state recurrences consume the reusable dynamic score stream only; preserve native unavailable startup and alarm exclusion."},
+    {"controller_input": "B0 and B3 threshold states", "classification": "CPU_RECONSTRUCTABLE", "evidence_or_limit": "B0 uses recorded initial C64-derived theta0; B3 uses the stored current-memory C64 q90 and memory version transition."},
+    {"controller_input": "B2 source initialization", "classification": "CPU_RECONSTRUCTABLE", "evidence_or_limit": "C64 scalar scores suffice for the source NumPy quantile initialization, which is distinct from D2 theta0; subsequent B2 state still requires queried labels."},
+    {"controller_input": "Six fixed queried-anchor snapshot states", "classification": "REUSABLE_WITH_SCOPE_LIMIT", "evidence_or_limit": "120 memory snapshots exist; earlier audit reports 386 queried images newly encoded and only six fixed snapshots per trajectory, ending at t=3200."},
+    {"controller_input": "B4/B7/Stage075BOffset anchor scores at all memory revisions", "classification": "NEEDS_NATIVE_SCORE_CALLS", "evidence_or_limit": "Not stored. Current-memory normal anchors require all-layer leave-source-out; defect anchors use unchanged current memory. One exact private anchor ledger/evidence sequence can be shared across these methods."},
+    {"controller_input": "Query-image feature encodings for dense replay", "classification": "NEEDS_NATIVE_SCORE_CALLS", "evidence_or_limit": "Stage075A runner deletes event features after scoring. No portable feature cache was found. Earlier snapshot audit encoded 386 unique query images transiently; 73 unique tape positions at/after t=3200 were outside that snapshot range."},
+    {"controller_input": "Intermediate Greedy prototype tensors/memory states", "classification": "UNAVAILABLE_FROM_PUBLIC_TRAJECTORY_ARTIFACTS", "evidence_or_limit": "Only six fixed snapshot memory states and final writers are retained in private checkpoint containers; intermediate state tensors are not in event traces. Do not deserialize or publish private checkpoints."}
+  ],
+  "anchor_work_estimate": {
+    "query_anchor_scoring_upper_bound": 75406,
+    "status": "METADATA_ONLY_CONSERVATIVE_UPPER_BOUND_NOT_OBSERVED_WORKLOAD",
+    "assumption": "Count each of the 459 queried positions in each of five support-seed contexts as eligible, score it on arrival/current state, and rescore each eligible prior anchor at every later recorded memory-content update across the 20 trajectories.",
+    "actual_count": "UNKNOWN; depends on privately queried labels, source-group eligibility, and anchor retention/evidence policy.",
+    "c64_postwrite_values_reusable": 76160,
+    "memory_content_updates": 1190
+  },
+  "prior_snapshot_audit_measurements": {
+    "snapshot_states": 120,
+    "unique_query_images_newly_encoded": 386,
+    "normal_current_memory_lso_scores": 2525,
+    "defect_current_memory_scores": 2645,
+    "normal_full_memory_sensitivity_scores": 2450,
+    "total_native_score_calls_including_c64_parity": 15445,
+    "elapsed_seconds": 811.418,
+    "peak_cuda_allocated_bytes": 2433839616,
+    "scope_warning": "Historical six-snapshot measurement only. Not a full-event runtime or memory estimate."
+  },
+  "storage_observed": {
+    "trajectory_files_bytes": 8536638,
+    "private_checkpoint_files_count": 12,
+    "private_checkpoint_files_bytes": 567274759,
+    "prior_label_bearing_query_measurement_compressed_bytes": 595552,
+    "include_private_checkpoints_or_measurements_in_commit": false,
+    "stage1a_output_storage_bytes": "UNKNOWN",
+    "dense_feature_cache_bytes": "UNKNOWN",
+    "full_event_cpu_ram_peak": "UNKNOWN",
+    "full_event_cuda_peak": "UNKNOWN",
+    "full_event_runtime": "UNKNOWN"
+  },
+  "proposed_replay_order": [
+    "After separate researcher approval, freeze exact code/config/scorer/support/C64/tape identities and the private label linkage.",
+    "Reuse score arrays, memory transition chains, tape positions, and exact C64 transport for the common trajectory.",
+    "Use a verified private feature cache only if its exact provenance and full queried-image coverage are proven; otherwise encode each unique query image once.",
+    "At each required memory/evidence revision, score eligible queried anchors under current memory; exclude a normal anchor's source group from every Greedy layer.",
+    "Share version-addressed evidence with B4, B7, and Stage075BOffset. No controller may change the query tape, writer, or event scores.",
+    "Run score-only B5 rows on CPU from the shared scalar stream; retain native startup missingness and separate fallback rows.",
+    "Keep labels, features, and checkpoints private; emit immutable checksummed method outputs and measured resource usage."
+  ]
+}

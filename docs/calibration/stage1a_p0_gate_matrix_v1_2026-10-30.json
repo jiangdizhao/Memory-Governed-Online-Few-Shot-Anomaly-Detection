@@ -1,0 +1,105 @@
+{
+  "schema": "calibration.stage1a_p0_gate_matrix.v1",
+  "decision": "P0_PREPARATION_PARTIAL; EXECUTION_BLOCKED",
+  "execution_authorized": false,
+  "scientific_evaluation_executed": false,
+  "branch": "calibration-stage0-contract-20261029",
+  "base_commit": "9da175ad3695cbd3d0e0583e2e8d3703c1fb6e2a",
+  "recorded_stage075a_identity": {
+    "source_head": "4d715a9b27027ee0c52dab4552d7296153ca8633",
+    "protocol_sha256": "6f1d8cf40e5e7b2d98dcfabe5836b49c6cd57069d3c8377122dba64e3fc2da1c",
+    "native_scorer_config_sha256": "1b8e9d96b121e3f1f6c1bbee13ab9f0063facee8fb08ad696dc5f9cb43dbd452",
+    "stage05_run_manifest_sha256": "a92808cb90ff629bc04a1e1a7ecaa93a04187a39db2fb3cdeaa468dbf0a9250a",
+    "stage05_score_manifest_sha256": "c884694c7f63adb0984d1f96e386ab8ec1dd4a85d5bac4b62bb9b4509fb34e39",
+    "stage075a_source_files_matching_recorded_sha256": "17/17",
+    "stage05_native_source_files_matching_recorded_sha256": "11/11"
+  },
+  "gates": [
+    {
+      "id": "P0-01",
+      "name": "Approved execution authority",
+      "status": "BLOCKED",
+      "evidence": "Stage 0 research decision and approved v3 retain an explicit Stage 1 execution hold; no STAGE1_EXECUTION_GO is recorded."
+    },
+    {
+      "id": "P0-02",
+      "name": "Stage 0.75-A common trajectory integrity",
+      "status": "PASS",
+      "evidence": "Recorded 43-entry root checksum audit had zero mismatches; 20/20 score/state/B3 replay tracks, four query tapes, four ordered traces, four memory chains, and 20 C64 pair sets/digests matched in the prior read-only audit."
+    },
+    {
+      "id": "P0-03",
+      "name": "Source and scorer provenance linkage",
+      "status": "PASS_WITH_SCOPE_LIMIT",
+      "evidence": "17/17 Stage 0.75-A source hashes and 11/11 native source hashes matched their recorded manifests. This establishes recorded on-disk linkage, not the exact bytes executed for the historical run."
+    },
+    {
+      "id": "P0-04",
+      "name": "Support/C64 and query tape protocol checks",
+      "status": "PASS",
+      "evidence": "Four classes × five support seeds; four supports plus additional C64=64; group/image disjointness; Q-A-TS-v1, 3%, seed 37, 16 bins, one queried view per official sample group."
+    },
+    {
+      "id": "P0-05",
+      "name": "Causal event order and shared writer",
+      "status": "PASS_FOR_RECORDED_TRAJECTORY",
+      "evidence": "Sequential event traces, tape-position equality, pre-event memory identity chains, controller-independent writer outcomes, and C64 transport transitions passed recorded comparisons. No new run was made."
+    },
+    {
+      "id": "P0-06",
+      "name": "Historical B3 replay parity",
+      "status": "PASS_FOR_HISTORICAL_REPLAY",
+      "evidence": "The stored label-free replay declares labels_supplied_to_replay=false and matches all 20 historical B3 replay tracks. This is not Stage 1 evaluation evidence."
+    },
+    {
+      "id": "P0-07",
+      "name": "Original G2 executed-source closure",
+      "status": "BLOCKED",
+      "evidence": "Independent G2 certificate is package-integrity PASS with RESEARCHER_REVIEW_REQUIRED, but exact executed runner bytes are not established; original G2 remains BLOCKED. Historical query label-response digest is absent."
+    },
+    {
+      "id": "P0-08",
+      "name": "Full-event B4/B7/Stage075BOffset anchors",
+      "status": "BLOCKED",
+      "evidence": "Only six fixed snapshot states per trajectory have queried-anchor scores. All-layer leave-source-out current-memory anchor scores at every eligible event/update are not stored; portable query feature encodings were not found."
+    },
+    {
+      "id": "P0-09",
+      "name": "Causal queried-feedback linkage",
+      "status": "BLOCKED_FOR_HISTORICAL_RECONSTRUCTION",
+      "evidence": "Event traces do not carry a separately verifiable label-response digest. The label-bearing prior measurement payload was not opened. Any future evaluation requires a private, versioned label linkage under a separate authorization."
+    },
+    {
+      "id": "P0-10",
+      "name": "Focused protocol candidate approval",
+      "status": "RESEARCHER_APPROVAL_REQUIRED",
+      "evidence": "B6 applicability-only scope and Stage075BOffset inclusion alter the approved v3 comparison scope; this addendum is a candidate only."
+    },
+    {
+      "id": "P0-11",
+      "name": "Five-seed implementation/data preflight",
+      "status": "NOT_RUN",
+      "evidence": "No new calibration namespace preflight was executed in this readiness-only task."
+    },
+    {
+      "id": "P0-12",
+      "name": "Full-event resource budget",
+      "status": "PARTIAL_UNKNOWN",
+      "evidence": "Prior snapshot audit measured 811.418 seconds and 2,433,839,616 peak CUDA bytes. Dense full-event replay runtime, CPU RAM peak, CUDA peak, and storage are unknown; snapshot timing was not extrapolated."
+    }
+  ],
+  "original_g2_status": "BLOCKED",
+  "independent_g2_integrity_certificate": "PASS; RESEARCHER_REVIEW_REQUIRED",
+  "required_before_execution": [
+    "Separate STAGE1_EXECUTION_GO",
+    "Researcher approval of focused protocol registry and B6/Stage075BOffset scope",
+    "Review/closure decision for original G2 source-execution provenance limitation",
+    "Private causal queried-label linkage",
+    "Full-event version-addressed current-memory query-anchor native scoring and cache plan",
+    "Measured full-event resource budget",
+    "Five-seed support/C64/source preflight"
+  ],
+  "confirmation_accessed": false,
+  "new_labels_or_masks_accessed": false,
+  "stage1_or_stage2_executed": false
+}
