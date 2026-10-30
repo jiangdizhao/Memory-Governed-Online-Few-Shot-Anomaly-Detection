@@ -1,0 +1,1023 @@
+{
+  "schema": "b0-baseline-fidelity-matrix-v1",
+  "audit_date": "2026-10-30",
+  "repository": {
+    "branch": "calibration-stage0-contract-20261029",
+    "source_head": "896ee9b426c27fd8332e34773094e41d4442a11c",
+    "working_tree_tracked_changes_before_b0": [],
+    "pre_existing_untracked_status_entries_preserved": 76,
+    "audit_tests_run": false,
+    "new_experiment_run": false
+  },
+  "classification_note": "Internal controls/proposals use NOT_APPLICABLE_INTERNAL_*; the publication-fidelity classes apply to literature methods. No external author-code parity is inferred from equation tests.",
+  "source_files_sha256_at_b0": {
+    "experiments/calibration/method_registry.py": "3fac503281d3c7ee18504e84cf2c9260ab28566aa4d365a251e25e3fd8a8f0bb",
+    "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+    "experiments/calibration/spot_dspot.py": "540c7b2ba68db6deca16687ae7c208918462b8dce72ee9ef968cec0289023414",
+    "experiments/calibration/sun_cs.py": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35",
+    "experiments/calibration/scdac_g.py": "3bd332f575ce2c9e6ca561c6d6096cf19c5493773616a767da2a2f1b07a705b3",
+    "experiments/calibration/stage075b_controllers.py": "166e5c27eb39bd65c146e300702439371c3be868b50adb6b54735decae5fcfed",
+    "experiments/calibration/stage075b_runner.py": "9a7469f374fba5a15b32d5dbdc739b3c5bd33c1aa84f19a1381cabf56b25e8b6",
+    "experiments/calibration/stage1a_formal_comparison.py": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+    "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "tests/calibration/test_controllers.py": "b3c3240e85411cfe11aebdf2212b11ca501d8fe67de8c868aecec6ce7ea3a1ef",
+    "tests/calibration/test_spot_dspot.py": "99d37fceec001c31cc4f2f5fb28f65ec6588de1b3a2fd1119a2e7b5c466b79b9",
+    "tests/calibration/test_sun_cs_reference.py": "88d4a252b1f1b09185ac046ce1fafb8f09ce8891098f0a9a2e3565496087de9b",
+    "tests/calibration/test_sun_cs_diagnostics.py": "55502f7e4daabcff680b0267ae5a4613b0366e72a98723b39435c4710ce0a29a",
+    "tests/calibration/test_scdac_g.py": "82b910910987e929df169ded411b1a6984a655f4dc5fe04bb5e66d2730bbf90e",
+    "tests/calibration/test_stage075b.py": "002764e4ccf41c9b9440c95ef91eef0f8a999e3ca079684b97c37bdcb1d24f7a",
+    "docs/calibration/BASELINE_FIDELITY_AND_REFERENCES.md": "9ed226a3f97c8d56ec41d0ca0b275930b3b1ba6264cec8e4ccbea032edc95740",
+    "docs/calibration/SPOT_DSPOT_IMPLEMENTATION.md": "652211533b509fc9541a8e3409d1475e1752f59daeec67fa8ae7b4b53cbc0fff",
+    "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md": "ad92bf79ece095d9d5053ae3e20fa811df8277f6a42e9660117a200aef3049cb",
+    "docs/calibration/SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md": "66cdb43aa555291ce63e54db29717957582532b4a36b298ba821854715ba7a78",
+    "docs/calibration/SCDAC_G_V0_METHOD_SPEC.md": "ca1cd5f23d57545dce37622c9bf75ce939d38a00e3fe49d67ea944f33b77aef6",
+    "docs/calibration/stage1a_method_matrix_v1_2026-10-30.json": "34080b22e3289b1c01b4a324845eada81e2750e16dd5b217b4af8e2ecc7109f3",
+    "docs/calibration/audit/b3_state_lag_formal_v1_20261030/FORMAL_B3_MECHANISM_RESULTS.md": "e98ac209560ad17753bed24e44eae7c2916bc6861f43cab37e7c48330c7c53c5"
+  },
+  "stage1a_run_artifacts": {
+    "preflight.json": "c502584126a23afebb53427da2c1f644c343eb6ecc92c51bb85e41945f430734",
+    "prediction_receipts.json": "6e1d4233857ee40996f37b52c6296d85ffe9685c846cda857195b33c7b29eef2",
+    "formal_comparison_audit.json": "1f93c881873736573152c28bdf0ec91e9ab33c9cb6e9d11bf4ac9d3957cf33d8",
+    "per_method_metrics.json": "fdd69b8ec38d34c3f95fbdc3fe6c8ad0950d27948eae5ca75e31b3c0d11703e2",
+    "paired_results.json": "f9177ad0d68bd9fade9bc38cf79e0cda06c9f20e8ad320bfa254c3a95117174f",
+    "run_manifest.json": "763a17f756f9e1ffcf25790346bda74d23995a166c753384f8f3317597ed957c",
+    "checksums.json": "5e635545d414275f5b8e8339d0ef90110e342f55cd70ef53890c434015f73754"
+  },
+  "stage1a_run_manifest": {
+    "actual_head": "5546f037834b780eb71019a70655396499bb7800",
+    "branch": "calibration-stage0-contract-20261029",
+    "controller_rows": [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5a",
+      "B5a-Frozen",
+      "B5b",
+      "B5b-Frozen",
+      "B7",
+      "Stage075BOffset"
+    ],
+    "created_utc_date": "2026-10-30",
+    "event_count": 76475,
+    "formal_comparison_audit_sha256": "1f93c881873736573152c28bdf0ec91e9ab33c9cb6e9d11bf4ac9d3957cf33d8",
+    "mask_or_confirmation_accessed": false,
+    "outcome_label_vectors_saved": false,
+    "paired_results_sha256": "f9177ad0d68bd9fade9bc38cf79e0cda06c9f20e8ad320bfa254c3a95117174f",
+    "per_method_metrics_sha256": "fdd69b8ec38d34c3f95fbdc3fe6c8ad0950d27948eae5ca75e31b3c0d11703e2",
+    "prediction_phase_complete_sha256": "f3e98fc3e8fdbceeb1304fc23fc52db4669e714290845449d502fb3af2e4db3e",
+    "prediction_receipts_sha256": "6e1d4233857ee40996f37b52c6296d85ffe9685c846cda857195b33c7b29eef2",
+    "preflight_sha256": "c502584126a23afebb53427da2c1f644c343eb6ecc92c51bb85e41945f430734",
+    "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+    "requested_head": "89e2cf4992408cbc5e86facb621749aa7210642b",
+    "runner_source_sha256": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+    "schema": "stage1a.formal_comparison.run_manifest.v1",
+    "status": "COMPLETE",
+    "trajectory_count": 20
+  },
+  "a2_run_artifacts": {
+    "per_method_metrics.json": "4054a4eadb31afb36146ed17e85fab82ca2a023bf64f37fbaff8f2644ac864e2",
+    "paired_results.json": "7acc9a31e85c4d34ce863049d0d32603a00a554d7f93e4295632cb3cc7dfdc9b",
+    "mechanism_diagnostics.json": "e7cf2306306ea0ee3f812579e82462017f1ac263a3da0d2e8f810c8253038434",
+    "formal_ablation_audit.json": "db8531ae50603dcfde79fcf2402bfdd66ebafa882228914c2705ee8787ed93c5",
+    "run_manifest.json": "31184c69286fdc02e103a6c0ddca0869ae0a802342c1ebe10e0a3bdf00073257",
+    "checksums.json": "bd2cabe11aaf6e0096dca1a4c028d0a01171e88f9ffbeafe4fb14556c6a2abf4",
+    "prediction_phase_complete.json": "8e1b4a78cbc4037386ff1bda83341b26695448a1d6f75bea9d8ddbad6953ff92"
+  },
+  "literature_references_accessed_2026_10_30": [
+    {
+      "title": "Adaptive Conformal Inference Under Distribution Shift",
+      "url": "https://papers.neurips.cc/paper_files/paper/2021/file/0d441de75945e5acbc865406fc9a2559-Paper.pdf",
+      "what_verified": "Original single-alpha realized-error update and sequential prediction-set coverage objective."
+    },
+    {
+      "title": "Anomaly Detection in Streams with Extreme Value Theory",
+      "url": "https://doi.org/10.1145/3097983.3098144",
+      "paper_pdf": "https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf",
+      "what_verified": "SPOT and dSPOT POT/GPD equations, startup, alarm handling, and score-stream assumptions."
+    },
+    {
+      "title": "Online Adaptive Anomaly Thresholding with Confidence Sequences",
+      "url": "https://proceedings.mlr.press/v235/sun24h.html",
+      "what_verified": "Confidence-sequence score-quantile target, abstention/change-detection method and paper assumptions; repository implementation checked against its local detailed source spec and reference tests."
+    }
+  ],
+  "methods": [
+    {
+      "method_id": "B0",
+      "registered_name": "Frozen-Theta",
+      "original_reference": null,
+      "original_objective": "Stable operating-point reference for the shared native score stream.",
+      "required_observations_and_supervision": [
+        "Common current scalar score; theta0 from 64 additional protected C64 training-normal scores under M0. Shared native scoring bank begins from four deployed supports."
+      ],
+      "update_equations_and_state": "theta_t = theta0; predict defect iff score_t >= theta_t.",
+      "initialization_and_warmup": "D2 higher q90 on 64 C64 normals; zero-based order index 57 (58th order statistic).",
+      "distributional_assumptions": "No external statistical assumption; score calibration is descriptive.",
+      "supported_prediction_output": "Binary decision after theta0 is initialized.",
+      "implementation_files": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/stage1a_formal_comparison.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "implementation_status": "IMPLEMENTED_AND_EVALUATED_INTERNAL_REFERENCE",
+      "fidelity_status": "NOT_APPLICABLE_INTERNAL_CONTROL",
+      "adaptations": [
+        "Fixed threshold control; no adaptation after initialization."
+      ],
+      "required_online_inputs": [
+        "Common current scalar score; theta0 from 64 additional protected C64 training-normal scores under M0. Shared native scoring bank begins from four deployed supports."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Uses four deployed supports plus additional 64 C64 normals; not strict four-shot-total.",
+        "Threshold is not recalibrated for memory changes."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/STAGE1_EVALUATION_PROTOCOL_APPROVED_DESIGN_v3.md"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_controllers.py"
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "M0 theta0 only",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B1",
+      "registered_name": "RollingQ90QueriedNormal",
+      "original_reference": null,
+      "original_objective": "Simple adaptive threshold from selectively queried verified-normal observations.",
+      "required_observations_and_supervision": [
+        "Common current score; queried verified-normal labels and their stale-at-arrival scalar scores; theta0/C64 initialization."
+      ],
+      "update_equations_and_state": "After n_min, theta is higher_q90 of the most recent W queried verified-normal arrival scores; otherwise hold theta0.",
+      "initialization_and_warmup": "theta0 from C64; W=256; n_min=16; q=0.90; hold at theta0 before minimum evidence.",
+      "distributional_assumptions": "No published theorem claimed; arrival scores can be stale under the changing memory.",
+      "supported_prediction_output": "Binary decision.",
+      "implementation_files": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/stage1a_formal_comparison.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "implementation_status": "IMPLEMENTED_AND_EVALUATED_INTERNAL_STRONG_SIMPLE_CONTROL",
+      "fidelity_status": "NOT_APPLICABLE_INTERNAL_CONTROL",
+      "adaptations": [
+        "Rolling quantile is a project comparator, not a named published external algorithm.",
+        "Only queried verified-normal arrival scores enter the window; defect feedback and the complete unlabeled score history are excluded."
+      ],
+      "required_online_inputs": [
+        "Common current score; queried verified-normal labels and their stale-at-arrival scalar scores; theta0/C64 initialization."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Different calibration-reference source and memory-state treatment from B3.",
+        "20 class/support-seed paths are development replications, not independent classes."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/stage1a_method_matrix_v1_2026-10-30.json"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_controllers.py"
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "M0 theta0 only",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": true,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B2",
+      "registered_name": "OriginalGuardedDualAnchorSidecar",
+      "original_reference": null,
+      "original_objective": "Historical threshold sidecar with guarded normal/defect-anchor updates; not a newly published external algorithm.",
+      "required_observations_and_supervision": [
+        "Common current score; queried labels; additional C64 scalar scores at M0."
+      ],
+      "update_equations_and_state": "Historical v22 state and update rules through OriginalGuardedSidecar; no current-memory anchor-rescoring parity claim.",
+      "initialization_and_warmup": "C64 M0 initialization; later behavior follows historical source defaults with the listed fallback changes.",
+      "distributional_assumptions": "No external theorem claimed.",
+      "supported_prediction_output": "Binary threshold decision.",
+      "implementation_files": [
+        "experiments/calibration/controllers.py",
+        "test_phase3_AIF_simplified_v22.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "implementation_status": "IMPLEMENTED_ADAPTED_AND_EVALUATED",
+      "fidelity_status": "ADAPTED_METHOD",
+      "adaptations": [
+        "Wraps historical v22 Guarded Dual Anchor controller.",
+        "Disables source normal-only unlabeled fallback because unqueried labels are unavailable.",
+        "Initializes from source NumPy quantile over additional C64 M0 scores, distinct from D2 higher-q90 theta0.",
+        "Source balanced-rescue and fast-rescue defaults remain disabled."
+      ],
+      "required_online_inputs": [
+        "Common current score; queried labels; additional C64 scalar scores at M0."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "No native full-loop scorer/memory parity claim.",
+        "Unqueried labels are not supplied.",
+        "Historical source remains read-only."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/controllers.py",
+        "test_phase3_AIF_simplified_v22.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_controllers.py"
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "M0 initialization",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": true,
+        "queried_defect_feedback": true,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B3",
+      "registered_name": "StateConsistentQuantile / protected-C64 SCQ",
+      "original_reference": null,
+      "original_objective": "State-version consistency for a normal-reference quantile under evolving memory.",
+      "required_observations_and_supervision": [
+        "Common current score; protected 64 C64 training normals rescored under current memory version."
+      ],
+      "update_equations_and_state": "On M change, raw = higher_q90(C64 rescored at M); theta moves toward raw by at most Delta=0.01; otherwise hold.",
+      "initialization_and_warmup": "C64 under M0 initializes; q=0.90; minimum normal evidence 16; maximum movement Delta=0.01 per content-version update.",
+      "distributional_assumptions": "No external guarantee claimed.",
+      "supported_prediction_output": "Binary threshold decision.",
+      "implementation_files": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/stage1a_formal_comparison.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "implementation_status": "IMPLEMENTED_PROPOSED_AND_EVALUATED",
+      "fidelity_status": "NOT_APPLICABLE_INTERNAL_PROPOSAL",
+      "adaptations": [
+        "At a memory content-version change, rescoring the same protected C64 normals at current M refreshes the q90 reference.",
+        "Queried-normal LSO is excluded from registered primary B3."
+      ],
+      "required_online_inputs": [
+        "Common current score; protected 64 C64 training normals rescored under current memory version."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Four deployed supports plus C64; not strict four-shot-total.",
+        "B1 comparison changes both calibration-reference source and memory-state treatment.",
+        "State-lag A2/A3/A4 found a small, mixed descriptive effect with increased FPR."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/audit/b3_state_lag_formal_v1_20261030/FORMAL_B3_MECHANISM_RESULTS.md"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_controllers.py",
+        "tests/calibration/test_b3_mechanism_formal.py"
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "protected C64 rescored under current M",
+        "current_memory_rescored_C64_anchors": true,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B4",
+      "registered_name": "Adapted Dual-ACI",
+      "original_reference": {
+        "title": "Adaptive Conformal Inference Under Distribution Shift",
+        "authors": [
+          "Isaac Gibbs",
+          "Emmanuel Candès"
+        ],
+        "venue": "Advances in Neural Information Processing Systems (NeurIPS 34)",
+        "year": 2021,
+        "doi": null,
+        "url": "https://papers.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html",
+        "paper_pdf": "https://papers.neurips.cc/paper_files/paper/2021/file/0d441de75945e5acbc865406fc9a2559-Paper.pdf"
+      },
+      "original_objective": "Original ACI adapts a prediction-set miscoverage level under sequential feedback. B4 is a sparse-feedback dual-threshold adaptation.",
+      "required_observations_and_supervision": [
+        "Common current score; selectively queried labels; current-memory normal and defect anchor scores."
+      ],
+      "update_equations_and_state": "Original: one alpha state and realized error each step. B4: on queried y=0, aN += gammaN*(alpha-1[pred=defect]); on queried y=1, aD += gammaD*(beta-1[pred=normal]); missing side is not zero risk; empirical anchors set exact count bounds.",
+      "initialization_and_warmup": "B4 alpha=beta=0.10; gamma_N=gamma_D=0.005; class side moves only on queried feedback; current-memory anchor bounds.",
+      "distributional_assumptions": "ACI paper theorem concerns sequential prediction-set coverage under its update/feedback setup. Sparse selectively queried labels, classwise physical defect metrics, serial dependence and dynamic memory are outside this implementation mapping.",
+      "supported_prediction_output": "Repository controller returns binary defect/normal decisions; original ACI is a set-valued prediction method.",
+      "implementation_files": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/stage1a_formal_comparison.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "implementation_status": "IMPLEMENTED_ADAPTED_AND_EVALUATED",
+      "fidelity_status": "ADAPTED_METHOD",
+      "adaptations": [
+        "Original ACI uses a per-time realized miscoverage/error update alpha_(t+1)=alpha_t+gamma*(alpha-err_t) after observing each outcome and targets long-run prediction-set coverage.",
+        "Repository B4 uses separate normal/defect sides and updates only when a queried label is disclosed.",
+        "B4 applies class-conditional anchor threshold bounds for physical defect FPR/FNR; it is not the original ACI objective or update law."
+      ],
+      "required_online_inputs": [
+        "Common current score; selectively queried labels; current-memory normal and defect anchor scores."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "No original ACI feedback at every step.",
+        "No original single-alpha recursion.",
+        "No ACI finite-time/anytime guarantee transfers.",
+        "Not source-equivalent despite literature inspiration."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/BASELINE_FIDELITY_AND_REFERENCES.md"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_controllers.py"
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "current-memory normal/defect anchors",
+        "current_memory_rescored_C64_anchors": true,
+        "queried_verified_normal_labels": true,
+        "queried_defect_feedback": true,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B5a",
+      "registered_name": "SPOT",
+      "original_reference": {
+        "title": "Anomaly Detection in Streams with Extreme Value Theory",
+        "authors": [
+          "Alban Siffer",
+          "Pierre-Alain Fouque",
+          "Alexandre Termier",
+          "Christine Largouet"
+        ],
+        "venue": "Proceedings of the 23rd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining",
+        "year": 2017,
+        "pages": "1067–1075",
+        "doi": "10.1145/3097983.3098144",
+        "url": "https://doi.org/10.1145/3097983.3098144",
+        "paper_pdf": "https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf"
+      },
+      "original_objective": "POT/GPD tail threshold for rare high score alarms at registered risk q=0.001.",
+      "required_observations_and_supervision": [
+        "Every past and current causal unlabeled scalar score; no physical labels or query feedback."
+      ],
+      "update_equations_and_state": "At high empirical u, fit GPD to strict exceedances with Grimshaw MLE; threshold zq = u + (sigma/xi)*((q*n/Nu)^(-xi)-1), with exponential limit at xi=0; an alarm is score > zq and excluded from count/peak updates.",
+      "initialization_and_warmup": "n_init=1000; initial level=0.98; q=0.001; Grimshaw starts=10; root tolerance=1e-6. Predictions are explicitly unavailable during initialization.",
+      "distributional_assumptions": "The paper’s univariate stream/POT tail conditions require a sufficiently high threshold and stable tail behavior; memory-dependent scores can be serially dependent and nonstationary.",
+      "supported_prediction_output": "Binary alarm after warm-up; no prediction during startup.",
+      "implementation_files": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/method_registry.py",
+        "tests/calibration/test_spot_dspot.py"
+      ],
+      "implementation_status": "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED_AND_EVALUATED",
+      "fidelity_status": "PAPER_EQUATION_IMPLEMENTATION_NOT_AUTHOR_CODE_PARITY; ADAPTED_METHOD",
+      "adaptations": [
+        "Python implementation follows Siffer et al. paper equations and has independent equation/state tests; no compiled author-C trace parity.",
+        "Input is a changing-memory image-level scalar score, not the paper’s assumed stationary/IID stream setting.",
+        "Uses a strict score > threshold alarm rule; common controller thresholds may use >=, so exact ties can differ.",
+        "Initial empirical 98th percentile uses NumPy linear interpolation, a convention not specified by the paper.",
+        "Grimshaw root recovery includes deterministic sign-bracket roots in addition to the paper-style multistart bounded optimization.",
+        "Pinned libspot C source was not compiled for parity; pinned commit d57e921a08930b960d07adcbec3a839bd228fe94, source blob fdebc8c216fffeea93afcc51efab83a2d6013351."
+      ],
+      "required_online_inputs": [
+        "Every past and current causal unlabeled scalar score; no physical labels or query feedback."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Python implementation follows Siffer et al. paper equations and has independent equation/state tests; no compiled author-C trace parity.",
+        "Input is a changing-memory image-level scalar score, not the paper’s assumed stationary/IID stream setting.",
+        "Uses a strict score > threshold alarm rule; common controller thresholds may use >=, so exact ties can differ.",
+        "No finite-time guarantee for the repository score stream is claimed."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/SPOT_DSPOT_IMPLEMENTATION.md",
+        "tests/calibration/test_spot_dspot.py"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_spot_dspot.py",
+        "Grimshaw vs SciPy GPD fit; POT equation/zero-shape; warm-up; alarm exclusion; peak update; checkpoint tests recorded in the test module."
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "none",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": true,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B5b",
+      "registered_name": "dSPOT",
+      "original_reference": {
+        "title": "Anomaly Detection in Streams with Extreme Value Theory",
+        "authors": [
+          "Alban Siffer",
+          "Pierre-Alain Fouque",
+          "Alexandre Termier",
+          "Christine Largouet"
+        ],
+        "venue": "Proceedings of the 23rd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining",
+        "year": 2017,
+        "pages": "1067–1075",
+        "doi": "10.1145/3097983.3098144",
+        "url": "https://doi.org/10.1145/3097983.3098144",
+        "paper_pdf": "https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf"
+      },
+      "original_objective": "Remove local mean/trend from the score stream, then apply POT to the residual stream.",
+      "required_observations_and_supervision": [
+        "Every past and current causal unlabeled scalar score; no physical labels or query feedback."
+      ],
+      "update_equations_and_state": "r_t = x_t - mean(last d accepted normal raw observations); run SPOT on r_t; reconstruct threshold as mean(window)+zq. Alarms update neither POT nor the moving mean window.",
+      "initialization_and_warmup": "d=50 raw-score window, then 1000 residual initialization observations; level=0.98; q=0.001; predictions unavailable through 1050 startup observations.",
+      "distributional_assumptions": "Stationarity of detrended residuals is required by the paper formulation; memory-dependent drift may persist after local-mean removal.",
+      "supported_prediction_output": "Binary alarm after warm-up; no prediction during the first 1050 observations.",
+      "implementation_files": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/method_registry.py",
+        "tests/calibration/test_spot_dspot.py"
+      ],
+      "implementation_status": "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED_AND_EVALUATED",
+      "fidelity_status": "PAPER_EQUATION_IMPLEMENTATION_NOT_AUTHOR_CODE_PARITY; ADAPTED_METHOD",
+      "adaptations": [
+        "Python implementation follows Siffer et al. paper equations and has independent equation/state tests; no compiled author-C trace parity.",
+        "Input is a changing-memory image-level scalar score, not the paper’s assumed stationary/IID stream setting.",
+        "Uses a strict score > threshold alarm rule; common controller thresholds may use >=, so exact ties can differ.",
+        "Paper Algorithm 3 is implemented independently; the pinned libspot C source contains no dSPOT implementation.",
+        "During residual warm-up, the d raw-score history advances until the first POT threshold is available."
+      ],
+      "required_online_inputs": [
+        "Every past and current causal unlabeled scalar score; no physical labels or query feedback."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Python implementation follows Siffer et al. paper equations and has independent equation/state tests; no compiled author-C trace parity.",
+        "Input is a changing-memory image-level scalar score, not the paper’s assumed stationary/IID stream setting.",
+        "Uses a strict score > threshold alarm rule; common controller thresholds may use >=, so exact ties can differ.",
+        "No author dSPOT implementation/code parity was located.",
+        "No finite-time guarantee for the repository score stream is claimed."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/SPOT_DSPOT_IMPLEMENTATION.md",
+        "tests/calibration/test_spot_dspot.py"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_spot_dspot.py",
+        "Residual initialization/window updates, alarm exclusion, reconstructed threshold and checkpoint tests recorded in the test module."
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "none",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": true,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B5a_FROZEN_FALLBACK",
+      "registered_name": "B5a-Frozen",
+      "original_reference": {
+        "title": "Anomaly Detection in Streams with Extreme Value Theory",
+        "authors": [
+          "Alban Siffer",
+          "Pierre-Alain Fouque",
+          "Alexandre Termier",
+          "Christine Largouet"
+        ],
+        "venue": "Proceedings of the 23rd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining",
+        "year": 2017,
+        "pages": "1067–1075",
+        "doi": "10.1145/3097983.3098144",
+        "url": "https://doi.org/10.1145/3097983.3098144",
+        "paper_pdf": "https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf"
+      },
+      "original_objective": "Operational binary fallback around a source-native POT controller.",
+      "required_observations_and_supervision": [
+        "Same causal score history as B5a; theta0 from C64 only while the source method cannot decide."
+      ],
+      "update_equations_and_state": "When native output is unavailable, use frozen theta0; otherwise use native alarm.",
+      "initialization_and_warmup": "1000 startup decisions fall back to theta0; source state remains causal.",
+      "distributional_assumptions": "The paper’s univariate stream/POT tail conditions require a sufficiently high threshold and stable tail behavior; memory-dependent scores can be serially dependent and nonstationary.",
+      "supported_prediction_output": "Binary decision throughout the full stream.",
+      "implementation_files": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "experiments/calibration/stage1a_formal_comparison.py"
+      ],
+      "implementation_status": "IMPLEMENTED_AND_EVALUATED_OPERATIONAL_HYBRID",
+      "fidelity_status": "OPERATIONAL_HYBRID",
+      "adaptations": [
+        "Uses theta0 for the source method’s 1000-event startup interval; after source availability, uses the source decision.",
+        "Fallback decisions are not attributed to native SPOT/dSPOT."
+      ],
+      "required_online_inputs": [
+        "Same causal score history as B5a; theta0 from C64 only while the source method cannot decide."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Must be reported as a distinct hybrid row.",
+        "Native and fallback decision fractions must be reported separately.",
+        "Theoretical source-method claims do not transfer to the wrapper."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "tests/calibration/test_spot_dspot.py"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_stage1a_formal_comparison.py",
+        "Fallback test referenced in method registry; not run by B0."
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "M0 theta0 for startup fallback",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": true,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B5b_FROZEN_FALLBACK",
+      "registered_name": "B5b-Frozen",
+      "original_reference": {
+        "title": "Anomaly Detection in Streams with Extreme Value Theory",
+        "authors": [
+          "Alban Siffer",
+          "Pierre-Alain Fouque",
+          "Alexandre Termier",
+          "Christine Largouet"
+        ],
+        "venue": "Proceedings of the 23rd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining",
+        "year": 2017,
+        "pages": "1067–1075",
+        "doi": "10.1145/3097983.3098144",
+        "url": "https://doi.org/10.1145/3097983.3098144",
+        "paper_pdf": "https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf"
+      },
+      "original_objective": "Operational binary fallback around a source-native POT controller.",
+      "required_observations_and_supervision": [
+        "Same causal score history as B5b; theta0 from C64 only while the source method cannot decide."
+      ],
+      "update_equations_and_state": "When native output is unavailable, use frozen theta0; otherwise use native alarm.",
+      "initialization_and_warmup": "1050 startup decisions fall back to theta0; source state remains causal.",
+      "distributional_assumptions": "Stationarity of detrended residuals is required by the paper formulation; memory-dependent drift may persist after local-mean removal.",
+      "supported_prediction_output": "Binary decision throughout the full stream.",
+      "implementation_files": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "experiments/calibration/stage1a_formal_comparison.py"
+      ],
+      "implementation_status": "IMPLEMENTED_AND_EVALUATED_OPERATIONAL_HYBRID",
+      "fidelity_status": "OPERATIONAL_HYBRID",
+      "adaptations": [
+        "Uses theta0 for the source method’s 1050-event startup interval; after source availability, uses the source decision.",
+        "Fallback decisions are not attributed to native SPOT/dSPOT."
+      ],
+      "required_online_inputs": [
+        "Same causal score history as B5b; theta0 from C64 only while the source method cannot decide."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Must be reported as a distinct hybrid row.",
+        "Native and fallback decision fractions must be reported separately.",
+        "Theoretical source-method claims do not transfer to the wrapper."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py",
+        "tests/calibration/test_spot_dspot.py"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_stage1a_formal_comparison.py",
+        "Fallback test referenced in method registry; not run by B0."
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "M0 theta0 for startup fallback",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": true,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B6",
+      "registered_name": "Sun-CS Algorithm 3",
+      "original_reference": {
+        "title": "Online Adaptive Anomaly Thresholding with Confidence Sequences",
+        "authors": [
+          "Sophia Huiwen Sun",
+          "Abishek Sankararaman",
+          "Balakrishnan Murali Narayanaswamy"
+        ],
+        "venue": "Proceedings of the 41st International Conference on Machine Learning, PMLR 235, pp. 47105–47132",
+        "year": 2024,
+        "doi": null,
+        "url": "https://proceedings.mlr.press/v235/sun24h.html"
+      },
+      "original_objective": "Confidence sequence for a score-stream p-quantile, with change detection; output is benign/anomaly/abstain relative to confidence bounds, not a physical image-defect label.",
+      "required_observations_and_supervision": [
+        "Full causal scalar score history; no physical defect labels, query feedback, or C64 matching."
+      ],
+      "update_equations_and_state": "Algorithm 1: score above upper bound => anomaly, below lower bound => benign, otherwise abstain. Algorithm 2 checks forward/backward confidence-set intersections. Algorithm 3 abstains/resets on detected change. Empty prefix is ABSTAIN_COLD_START.",
+      "initialization_and_warmup": "Primary p=0.99, delta=0.01; clipped q=0 endpoint -infinity, q=1 endpoint +infinity; separate empirical-extrema sensitivity policy.",
+      "distributional_assumptions": "Paper assumptions concern IID or piecewise-stationary scalar score segments, continuity/no atoms and change-point spacing. Dynamic-memory scores and physical defects are different target/assumption regimes.",
+      "supported_prediction_output": "Three-way benign/anomaly/abstain quantile-label output.",
+      "implementation_files": [
+        "experiments/calibration/sun_cs.py",
+        "experiments/calibration/method_registry.py",
+        "tests/calibration/test_sun_cs_reference.py",
+        "tests/calibration/test_sun_cs_diagnostics.py"
+      ],
+      "implementation_status": "IMPLEMENTED_PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS; APPLICABILITY_ONLY_IN_STAGE1A",
+      "fidelity_status": "PAPER_EQUATION_IMPLEMENTATION_NOT_AUTHOR_CODE_PARITY; DIFFERENT_TARGET_OR_NOT_DIRECTLY_APPLICABLE",
+      "adaptations": [
+        "Paper Algorithms 1–3 and Eqs. (1)–(2) are implemented with explicit endpoint/cold-start conventions and independent reference-trace tests.",
+        "No verified author code was located and no author trace parity is claimed.",
+        "Stage 1-A did not include B6 in the physical defect binary leaderboard."
+      ],
+      "required_online_inputs": [
+        "Full causal scalar score history; no physical defect labels, query feedback, or C64 matching."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "At p=.99, delta=.01, the primary upper endpoint remains clipped to 1 through n=353017; at Real-IAD stream lengths near 3815 it cannot label a score as anomaly under this endpoint policy.",
+        "Confidence-sequence quantile labels are not physical defect labels.",
+        "No legitimate full binary BA/FPR/FNR ranking against this B6 implementation.",
+        "Implementation complexity is O(T^2 log T) worst-case cumulative Algorithm 3 without resets and O(T log T) peak auxiliary space; no method runtime/memory benchmark in Stage 1-A."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/sun_cs.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+        "docs/calibration/SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md",
+        "docs/calibration/stage1a_method_matrix_v1_2026-10-30.json"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_sun_cs_reference.py",
+        "tests/calibration/test_sun_cs_diagnostics.py",
+        "Independent O(n^2 log n) reference and optimized trace parity tests recorded; not run by B0."
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": null,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "none",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": true,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "not in Stage 1-A"
+      }
+    },
+    {
+      "method_id": "B6_FROZEN_FALLBACK",
+      "registered_name": "B6-Frozen fallback sensitivity variant",
+      "original_reference": {
+        "title": "Online Adaptive Anomaly Thresholding with Confidence Sequences",
+        "authors": [
+          "Sophia Huiwen Sun",
+          "Abishek Sankararaman",
+          "Balakrishnan Murali Narayanaswamy"
+        ],
+        "venue": "Proceedings of the 41st International Conference on Machine Learning, PMLR 235, pp. 47105–47132",
+        "year": 2024,
+        "doi": null,
+        "url": "https://proceedings.mlr.press/v235/sun24h.html"
+      },
+      "original_objective": "Operational conversion from abstaining quantile classifier to binary decisions.",
+      "required_observations_and_supervision": [
+        "Full causal scalar score history; C64 theta0 for fallback only; no labels."
+      ],
+      "update_equations_and_state": "Use theta0 on source abstention/unavailability; otherwise source decision.",
+      "initialization_and_warmup": "B6 primary cold start abstains; wrapper uses theta0 where configured.",
+      "distributional_assumptions": "Same target mismatch and score assumptions as B6; fallback does not repair them.",
+      "supported_prediction_output": "Binary wrapper, but not a legitimate direct B6-vs-defect comparison.",
+      "implementation_files": [
+        "experiments/calibration/sun_cs.py",
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "implementation_status": "IMPLEMENTED_IN_REGISTRY; NOT_IN_STAGE1A_FORMAL_ROWS",
+      "fidelity_status": "OPERATIONAL_HYBRID; DIFFERENT_TARGET_OR_NOT_DIRECTLY_APPLICABLE",
+      "adaptations": [
+        "Frozen theta0 can replace B6 cold-start/abstain outputs as a separately named operational variant.",
+        "No Stage 1-A physical-defect numerical output was recorded for this row."
+      ],
+      "required_online_inputs": [
+        "Full causal scalar score history; C64 theta0 for fallback only; no labels."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Not evaluated in Stage 1-A.",
+        "Fallback does not convert the original confidence-sequence target into physical defect truth."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/sun_cs.py",
+        "experiments/calibration/controllers.py",
+        "experiments/calibration/method_registry.py"
+      ],
+      "test_evidence_present_not_run_by_b0": [],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": null,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "M0 theta0 for fallback",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": true,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "not in Stage 1-A"
+      }
+    },
+    {
+      "method_id": "B7",
+      "registered_name": "SCDAC-G",
+      "original_reference": null,
+      "original_objective": "Internal candidate selector balancing descriptive upper bounds for normal/defect error and movement.",
+      "required_observations_and_supervision": [
+        "Common current score; protected C64 normals rescored at current memory; queried verified-normal and queried-defect anchors."
+      ],
+      "update_equations_and_state": "One-sided Clopper–Pearson upper endpoints used descriptively; primary score minimizes balanced upper-risk plus lambda_move*movement over feasible two-sided candidates; conflict minimizes compromise; one-sided/missing side holds.",
+      "initialization_and_warmup": "Minimum normal support=16; minimum defects=8; per-side delta=.05; support FPR/FNR=.20; lambda_move=.05; max movement=.01; diagnostic FPR targets .05/.10/.20.",
+      "distributional_assumptions": "No valid binomial/online risk guarantee under selective labels, dependent scores, repeated current-memory rescoring, and postselection.",
+      "supported_prediction_output": "Binary threshold decision.",
+      "implementation_files": [
+        "experiments/calibration/scdac_g.py",
+        "experiments/calibration/method_registry.py",
+        "tests/calibration/test_scdac_g.py"
+      ],
+      "implementation_status": "IMPLEMENTED_PROVISIONAL_INTERNAL_COMPARATOR_AND_EVALUATED",
+      "fidelity_status": "NOT_APPLICABLE_INTERNAL_EXPLORATORY_METHOD",
+      "adaptations": [
+        "Internal provisional method; registered implementation choices resolve parameters that the original proposal left open.",
+        "Current-state C64 and queried anchor scores; no full unlabeled score-history buffer."
+      ],
+      "required_online_inputs": [
+        "Common current score; protected C64 normals rescored at current memory; queried verified-normal and queried-defect anchors."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Internal exploratory baseline; not a published external method.",
+        "Confidence endpoints are descriptive and do not establish population risk control."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/scdac_g.py",
+        "experiments/calibration/method_registry.py",
+        "docs/calibration/SCDAC_G_V0_METHOD_SPEC.md",
+        "tests/calibration/test_scdac_g.py"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_scdac_g.py"
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "protected C64 rescored under current M",
+        "current_memory_rescored_C64_anchors": true,
+        "queried_verified_normal_labels": true,
+        "queried_defect_feedback": true,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "Stage075BOffset",
+      "registered_name": "Stage075BOffset (raw-median offset)",
+      "original_reference": null,
+      "original_objective": "Internal anchor-offset alternative to SCQ.",
+      "required_observations_and_supervision": [
+        "Common score; protected C64 and queried normal/defect anchors rescored under current memory."
+      ],
+      "update_equations_and_state": "Raw threshold target is midpoint(median(normal anchors), median(defect anchors)); clip movement to .01; hold when one side is missing.",
+      "initialization_and_warmup": "Current-memory source-aware anchors; maximum step .01.",
+      "distributional_assumptions": "No external guarantee claimed.",
+      "supported_prediction_output": "Binary threshold decision.",
+      "implementation_files": [
+        "experiments/calibration/stage075b_controllers.py",
+        "experiments/calibration/stage075b_runner.py",
+        "experiments/calibration/stage1a_formal_comparison.py",
+        "tests/calibration/test_stage075b.py"
+      ],
+      "implementation_status": "IMPLEMENTED_AND_EVALUATED_INTERNAL_CANDIDATE",
+      "fidelity_status": "NOT_APPLICABLE_INTERNAL_CANDIDATE",
+      "adaptations": [
+        "Separate internal candidate; midpoint of medians of eligible current-memory normal/defect anchors; maximum threshold movement .01; holds its own threshold when a side is missing.",
+        "Not B8-Full and not a published method."
+      ],
+      "required_online_inputs": [
+        "Common score; protected C64 and queried normal/defect anchors rescored under current memory."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Higher full-stream BA than B3 but substantially higher FPR and lower mean worst-window BA.",
+        "Method-matrix readiness entry predates the later formal output row."
+      ],
+      "evidence_paths": [
+        "experiments/calibration/stage075b_controllers.py",
+        "experiments/calibration/stage075b_runner.py",
+        "tests/calibration/test_stage075b.py",
+        "docs/calibration/stage1a_method_matrix_v1_2026-10-30.json"
+      ],
+      "test_evidence_present_not_run_by_b0": [
+        "tests/calibration/test_stage075b.py"
+      ],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": true,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "current-memory C64 and queried anchors",
+        "current_memory_rescored_C64_anchors": true,
+        "queried_verified_normal_labels": true,
+        "queried_defect_feedback": true,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "after seal"
+      }
+    },
+    {
+      "method_id": "B8",
+      "registered_name": "Historical B8-Full synthetic negative control",
+      "original_reference": null,
+      "original_objective": "Historical ablation negative control.",
+      "required_observations_and_supervision": [
+        "Existing Stage 0.75-B synthetic records only."
+      ],
+      "update_equations_and_state": "Not applicable to the existing Stage 1-A comparison.",
+      "initialization_and_warmup": "No Stage 1-A initialization or numerical result.",
+      "distributional_assumptions": "Synthetic historical context only.",
+      "supported_prediction_output": "No physical defect result.",
+      "implementation_files": [
+        "docs/calibration/stage1a_method_matrix_v1_2026-10-30.json"
+      ],
+      "implementation_status": "SYNTHETIC_HISTORICAL_ONLY; NOT_IN_STAGE1A",
+      "fidelity_status": "BLOCKED_OR_INCOMPLETE",
+      "adaptations": [
+        "Historical synthetic negative-control record only; no new variant or Real-IAD row."
+      ],
+      "required_online_inputs": [
+        "Existing Stage 0.75-B synthetic records only."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Not in the current formal comparison.",
+        "Historical B8-Full matched B3 in its registered synthetic suite; this does not establish Real-IAD performance."
+      ],
+      "evidence_paths": [
+        "docs/calibration/stage1a_method_matrix_v1_2026-10-30.json"
+      ],
+      "test_evidence_present_not_run_by_b0": [],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": null,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "not applicable",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "no physical evaluation"
+      }
+    },
+    {
+      "method_id": "B-EWQ",
+      "registered_name": "Causal EWMA/weighted-quantile candidate",
+      "original_reference": null,
+      "original_objective": "Unspecified candidate baseline.",
+      "required_observations_and_supervision": [
+        "Would use a causal score history if separately specified."
+      ],
+      "update_equations_and_state": "UNVERIFIED: no frozen equation, memory horizon, weighting, or update policy.",
+      "initialization_and_warmup": "Not registered.",
+      "distributional_assumptions": "UNVERIFIED.",
+      "supported_prediction_output": "Not implemented.",
+      "implementation_files": [],
+      "implementation_status": "NOT_IMPLEMENTED_AND_NOT_AUTHORIZED_FOR_B0",
+      "fidelity_status": "BLOCKED_OR_INCOMPLETE",
+      "adaptations": [
+        "Candidate discussed in planning only; no implementation or performance result."
+      ],
+      "required_online_inputs": [
+        "Would use a causal score history if separately specified."
+      ],
+      "guarantees_transfer": false,
+      "known_limitations": [
+        "Do not invent equations or compare a guessed variant."
+      ],
+      "evidence_paths": [
+        "docs/calibration/B3_CALIBRATION_PAPER_RECOVERY_MASTER_PLAN_AND_PROGRESS.md"
+      ],
+      "test_evidence_present_not_run_by_b0": [],
+      "information_access_matrix": {
+        "fixed_initial_normal_supports_in_common_scoring_pipeline": null,
+        "direct_access_to_support_images_by_threshold_controller": false,
+        "additional_protected_C64_normals": "not implemented",
+        "current_memory_rescored_C64_anchors": false,
+        "queried_verified_normal_labels": false,
+        "queried_defect_feedback": false,
+        "unlabeled_causal_score_history": false,
+        "future_scores": false,
+        "unqueried_test_labels": false,
+        "test_defect_masks": false,
+        "offline_evaluation_labels": "not evaluated"
+      }
+    }
+  ],
+  "known_registry_discrepancies": [
+    "Stage075BOffset is an evaluated row in the later Stage 1-A output but is not a method_registry.py card.",
+    "B6 and B6_FROZEN_FALLBACK are in the registry but neither appears as a numeric row in the formal physical-defect comparison; B6 is applicability-only.",
+    "B8 is a historical synthetic negative control, not a current Stage 1-A controller.",
+    "B-EWQ is discussed but not implemented and was not authorized for implementation in B0.",
+    "The dated Stage 1-A readiness matrix says execution_authorized=false and calls Stage075BOffset synthetic-only; it is a pre-run readiness snapshot, not the later completed output."
+  ]
+}
