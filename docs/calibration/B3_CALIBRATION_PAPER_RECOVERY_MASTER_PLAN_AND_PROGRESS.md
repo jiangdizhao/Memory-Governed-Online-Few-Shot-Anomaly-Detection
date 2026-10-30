@@ -48,7 +48,7 @@ The registered primary B3 is **protected-C64-only**, not a queried-normal-LSO po
 - `HOLD`: scientific decision deferred until a specified issue is resolved.
 - `GO_TO_MANUSCRIPT` / `NO_GO_METHOD_CLAIM`: researcher-level publication decisions, not automatic CI statuses.
 
-**Current overall state: `A0_REPORTED_PASS_PENDING_INDEPENDENT_AUDIT; A1_BLOCKED_UNRELATED_UNTRACKED_WORKTREE`.** Codex's read-only Gate A0 findings were relayed by the researcher on 2026-10-30, but the A0 probe/report was not committed, and ChatGPT cannot independently certify its local raw-file hashes or exact-match counts from the report alone. No new mechanism-ablation implementation or empirical run has been committed.
+**Current overall state: `A0/A1_PASS_ENGINEERING_REVIEWED_WITH_LOCAL_VERIFICATION_LIMITS; A2_PLANNED_NOT_AUTHORIZED`.** PR #1 has submitted the standalone state-lag implementation and committed A0 manifests; ChatGPT statically audited source, tests and records at `a32b9c80fd422dc121963ee9a2a9d6bd097256f1` on 2026-10-30. The original Windows frozen data and logged unit tests could not be executed independently here. PR #1 remains unmerged. No formal A2–A4 empirical performance or new outcome-label access has been authorized.
 
 ## 1. Verified inherited evidence (do not silently modify)
 
@@ -101,7 +101,7 @@ B3 exceeds B1 in BA by about **0.0550**, on **19/20** paired trajectories, but a
 
 **Task ID:** `A-B3-STATE-CONSISTENCY`  
 **Priority:** P0; conduct **before** new large external-baseline runs.  
-**Current status:** `A0_REPORTED_PASS_PENDING_INDEPENDENT_AUDIT; A1_BLOCKED_WORKTREE` (as of 2026-10-30; report-only evidence).  
+**Current status:** `A0/A1_PASS_ENGINEERING_REVIEWED_WITH_LOCAL_VERIFICATION_LIMITS` (2026-10-30, PR #1 open and unmerged); `A2_PLANNED_NOT_AUTHORIZED`.  
 **Research hypothesis H1:** conditional on the **same fixed C64 anchors, Greedy score/memory stream, threshold update boundaries, quantile estimator and movement policy**, using reference scores from the current memory version yields an empirically meaningful improvement over using deliberately lagged scores.
 
 ### 2.1 Primary causal isolation
@@ -235,9 +235,9 @@ Current B3 FPR is **0.1042**: do not conceal this behind BA. There is currently 
 | Milestone | Owner | Status | Deliverable / next action | Audit and evidence |
 |---|---|---|---|---|
 | P00: register single master plan | ChatGPT | COMPLETE | This Markdown file; no experiment run | Source branch and Stage 1-A docs inspected 2026-10-30 |
-| A0: historical-C64-version evidence inventory | Codex, then ChatGPT | REPORTED_PASS_PENDING_AUDIT | Read-only Codex probe claims all 20 C64 q90 histories complete and exact B3 recurrence over 76,475 events | Researcher-supplied text 2026-10-30; **no committed audit/manifest; raw-file hash audit not independently verified** |
-| A1: independent A3/A4 implementation and unit tests | Codex, then ChatGPT | BLOCKED_WORKTREE | Use isolated Git worktree or other non-destructive clean task workspace; preserve original untracked outputs | Codex reports it stopped before editing; no branch/commit/PR or A1 tests |
-| A2: 20-trajectory mechanism results | Codex, then ChatGPT | PLANNED | Paired results, FPR/FNR, worst windows, version lags | Not submitted |
+| A0: historical-C64-version evidence inventory | Codex, then ChatGPT | PASS_ENGINEERING_REVIEWED_WITH_LIMITS | 20/20 complete C64 histories, 1,190 writes, 76,475 matched event/parity records | PR [#1](https://github.com/jiangdizhao/Memory-Governed-Online-Few-Shot-Anomaly-Detection/pull/1): committed manifest, 110 hashed artifacts and reported zero mismatches; local raw bytes not independently replayed by ChatGPT |
+| A1: independent A3/A4 implementation and unit tests | Codex, then ChatGPT | PASS_ENGINEERING_REVIEWED_WITH_LIMITS | Dedicated worktree, version-checked A2/A3/A4 recurrence and tests; **PR unmerged** | [PR #1](https://github.com/jiangdizhao/Memory-Governed-Online-Few-Shot-Anomaly-Detection/pull/1) head `a32b9c80`; recorded unittest 14/14; review ID 5711331107; no CI; raw local test replay unavailable |
+| A2: 20-trajectory mechanism results | Codex, then ChatGPT | PLANNED_NOT_AUTHORIZED | Build a separate prediction-only sealed replay then permission-gated offline evaluation; retain fixed `t>=1050` and raw negative evidence | Not run; no code implementing full outcome-stage evaluator in PR #1 |
 | A3: mechanism GO/HOLD/NO-GO decision | Researcher with ChatGPT | PLANNED | Signed scientific interpretation | Not decided |
 | B0: external implementation/fidelity inventory | ChatGPT / Codex | PLANNED | Method-cards reconciled with source versions and existing coverage | Existing baselines partially reviewed |
 | B1: baseline comparison reporting and minimal missing baseline | Codex, then ChatGPT | PLANNED | Correct SPOT/dSPOT, adaptation labels; optional EWMA row | Not submitted |
@@ -273,6 +273,18 @@ For each new commit or experiment, append a dated entry; **do not overwrite olde
 - **Corrective path:** do **not delete/move/clean** existing outputs. Prefer a separate `git worktree add -b <task-branch> <new-directory> <verified-base-commit>` for A1. Historical data may be untracked and physically present only under the original checkout; Codex must explicitly identify required read-only sources and use narrowly scoped references or directory junctions without writing into those targets. Keep all new code, tests and reports in the isolated worktree, not in linked historical directories. If source-path/hashes cannot be preserved, stop and report instead of weakening invariants.
 - **Next:** researcher provides an A1 continuation prompt, Codex creates a separate task workspace, repeats A0 hash/parity verification with a small committed manifest and conditionally implements A1 tests. **No 20-trajectory outcome evaluation** before separate authorization.
 - **Audit designation:** `A0_REPORTED_PASS_PENDING_INDEPENDENT_AUDIT`; `A1_BLOCKED_WORKTREE`; `H1_NOT_TESTED`; no paper GO decision.
+
+### 2026-10-30 — A1 PR #1 INDEPENDENT GITHUB REVIEW
+
+- **Submitted implementation:** [PR #1](https://github.com/jiangdizhao/Memory-Governed-Online-Few-Shot-Anomaly-Detection/pull/1), dedicated branch `calibration-b3-state-lag-a1-20261030`, reviewed head `a32b9c80fd422dc121963ee9a2a9d6bd097256f1`, based on `cfaf0f925a71963333627687a04d8baac7414f0e`. Open/unmerged as of review.
+- **Change scope:** exactly 9 added files: one 1,098-line standalone ablation module, one 255-line test module, seven scoped audit/runbook/result files. **No changed historical controller, scorer, query tape, original B3, memory writer, or frozen results.**
+- **Reviewed mechanism:** registered `ARMS={A2:0,A3:1,A4:5}`; q90 higher of fixed C64; fixed `Delta=0.01`; exact M0 theta, post-prediction content change; current-v vs v-1 vs v-5 reference lookups; memory digest and history checks; deterministic checkpoint roundtrip. Existing A2 replay comparisons use stored formal predictions and threshold traces, not outcomes.
+- **Reviewed tests/audit:** `unittest_output.txt` records 14/14 OK (including real-data parity when `B3_A0_FROZEN_ROOT` is set), compilation PASS; 20-row matrix sums to 76,475 events/1,190 content writes; 1,210 C64 versioned scores; zero recorded threshold/prediction/event mismatches; 110 input artifact hashes. [Recorded PR review](https://github.com/jiangdizhao/Memory-Governed-Online-Few-Shot-Anomaly-Detection/pull/1) comment ID `5711331107`.
+- **Independent verification boundary:** ChatGPT has audited GitHub source code, source/manifest organization, test logic and committed reports, but cannot independently access the researcher's Windows E: drive to reproduce those read-only data checks. GitHub combined CI status has no checks on the reviewed commit. This is **`PASS_ENGINEERING` with explicit local-execution limitations**, not `PASS_EMPIRICAL`.
+- **Minor environment discrepancy:** report in chat said NumPy 1.24.0; committed manifest says 1.24.1. Verify local installed version before formal A2; it is not itself evidence of incorrect q90 calculation.
+- **Historical limitation:** original Stage 0.75-A/G2 source-byte parity remains `BLOCKED_UNCHANGED`. This PR does not solve it.
+- **Go/No-Go:** Source-review **GO for researcher-controlled merge of A1**; **NO new experiment execution yet**. H1 novelty/benefit remains untested. Before A2 formal outcome evaluation, construct sealed prediction-only replay with preflight/hash checks, and separately authorize offline test-label scoring. No Mint/PCB access.
+- **Next handoff:** researcher decides on PR #1 merge; then an A2 Codex prompt may be issued for tightly scoped 20-trajectory *development-only* evaluation, with immutable artifacts and full metric/coverage reporting.
 
 ### Template — append a new entry for every Codex delivery and audit
 
