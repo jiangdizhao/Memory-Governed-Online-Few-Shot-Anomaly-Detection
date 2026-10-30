@@ -1,0 +1,15 @@
+{
+  "files": {
+    "STAGE1A_P12_NATIVE_REPLAY_REPORT.md": "04f7331e489e6b4740f1bd310780a856c69cd81f69413909760715f37285148c",
+    "approval_template_bounded_native_replay.json": "cb5530c3a3d998d56fe6a694e81e283228fef53e1fef6211a9073f8f09b80c42",
+    "approval_template_queried_feedback_access.json": "fb2e52532f333a537bd6dc6c88444302ea26f695ce2373312318c58795f812f0",
+    "checkpoint_resume_verification.json": "74f95da735cdbaf01f8a589b8f2ba65e082e7fb23d6281b64f8707e47018fab6",
+    "compute_accounting.json": "0f72c5be2787f4f3b66662ccb8b92effbf48e981a7b5fd94f0f24f183c91cbc2",
+    "dense_anchor_evidence_manifest.json": "993e3cb6220a969ed7a2aa3de1f2a466272389fac939099dcc8d13450b03018d",
+    "exact_native_memory_parity.json": "fe98abd4407a48e7afd7b7f7f1db43def5161d86ee74fd155bd27ccaa77dad35",
+    "native_scorer_identity.json": "255de60d9ae196073bd70ab2af9fb7d12501c3b4a214b6825e3da4ca1ebe2dba",
+    "p12_gate_matrix.json": "78e4c96f824899a0bace2c732395c26730dd02ea398b9405cf6db7a6f22ed8e9",
+    "queried_feedback_provenance.json": "b3499956afca35c9d36763f8857d8ff24670ac0cc5bdd76709eb55ea2fe941a2"
+  },
+  "schema": "stage1a.p12_preflight_audit_checksums.v1"
+}

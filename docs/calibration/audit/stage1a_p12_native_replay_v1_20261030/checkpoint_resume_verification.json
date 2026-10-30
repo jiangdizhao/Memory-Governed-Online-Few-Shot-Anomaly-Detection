@@ -1,0 +1,12 @@
+{
+  "event_memory_response_evidence_digests_compared": false,
+  "evidence_cache_state_saved": false,
+  "feature_cache_state_saved": false,
+  "private_checkpoint_created": false,
+  "process_reconstructed_resume": false,
+  "queried_label_state_saved": false,
+  "reason": "Approval gate blocked before real replay; do not create synthetic substitute for required real resume evidence.",
+  "schema": "stage1a.p12_checkpoint_resume_verification.v1",
+  "status": "NOT_RUN_NO_REAL_CHECKPOINT",
+  "writer_state_saved": false
+}

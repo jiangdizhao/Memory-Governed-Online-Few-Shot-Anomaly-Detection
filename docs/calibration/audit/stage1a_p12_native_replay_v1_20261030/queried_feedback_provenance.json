@@ -1,0 +1,17 @@
+{
+  "authorization_record_present": false,
+  "per_class_query_counts": {
+    "audiojack": 114,
+    "regulator": 116,
+    "rolled_strip_base": 114,
+    "switch": 115
+  },
+  "permitted_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+  "private_label_cache_created": false,
+  "queried_label_reads": 0,
+  "query_response_digest_created": false,
+  "raw_labels_in_audit": false,
+  "schema": "stage1a.p12_queried_feedback_provenance.v1",
+  "status": "BLOCKED_NO_FEEDBACK_ACCESS",
+  "unqueried_label_reads": 0
+}

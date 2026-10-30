@@ -1,0 +1,18 @@
+{
+  "C64_score_vectors_used_in_P12": 0,
+  "cache_policy": "Use P1.1 versioned exact identity cache; same-memory new-anchor arrival reuses valid prior scores; memory/source change invalidates affected score keys.",
+  "evidence_revisions_written": 0,
+  "exact_memory_parity_dependency": "NOT_ESTABLISHED",
+  "feature_encodings": 0,
+  "query_anchor_native_score_calls": 0,
+  "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+  "required_content": [
+    "64 current-memory protected C64 scores",
+    "queried-normal all-layer LSO scores",
+    "queried-defect current-memory scores",
+    "memory/source/evidence revisions and digests",
+    "anchor provenance"
+  ],
+  "schema": "stage1a.p12_dense_anchor_evidence_manifest.v1",
+  "status": "BLOCKED_NOT_RUN_NO_AUTHORIZATION"
+}

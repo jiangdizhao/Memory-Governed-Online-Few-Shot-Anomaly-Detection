@@ -1,0 +1,20 @@
+{
+  "GPU_inference": false,
+  "NativeScoreService_initialized": false,
+  "Native_score_calls": 0,
+  "dinov2_source_tree_sha256_from_p0_protocol": "1de67887ca330bdfaad8ccd45128d2b9313d63aa707bbe8e4f38310e52005b24",
+  "identity_provenance": "P0/P1 frozen manifests plus current checked-out source hashes; weight bytes and model runtime were not accessed.",
+  "model_checkpoint_sha256_from_p0_protocol": "36e4deffbaef061a2576705b0c36f93621e2ae20bf6274694821b0b492551b51",
+  "native_scorer_config_sha256": "1b8e9d96b121e3f1f6c1bbee13ab9f0063facee8fb08ad696dc5f9cb43dbd452",
+  "recorded_source_sha256": {
+    "experiments/calibration/native.py": "3a347d65aaf4bfd6b41eff2ea7339d878065bb2e08ed64795f57b0458135dd45",
+    "experiments/calibration/stage1a_p11_production.py": "8091ea377266fdba4eb2cf6b6c735079e28f2bae98cb172ff2859de27e9b8f45",
+    "experiments/calibration/stage1a_p1_reconstruction.py": "cd8ceb5366b0d2344d1faec93534c55e78383660ca13d00d178be7e3d6c31ef0",
+    "experiments/risk_safe/native_bridge.py": "313b94e7a3df82a4996b0c8a97a1e2464380f0e4cded09ae2e1647866859dfb4",
+    "test_phase3_AIF_simplified_v22.py": "a79b6a78ccf918c9314025ab0acef2d9e8d84cf44600615a4085cd82802bda4f",
+    "vmb_visionad_new.py": "0430959e86ba75b029341aef003655e6a3ac7d08df22f3f48a04e0b2d7fc39c9"
+  },
+  "schema": "stage1a.p12_native_scorer_identity.v1",
+  "source_fingerprint_aggregate_sha256": "a89e2327c7ce5a549a77a3def0d4bd6ec815705f623aa9f70e7da1a3209de09d",
+  "status": "RECORDED_IDENTITY_NOT_INITIALIZED"
+}

@@ -1,0 +1,27 @@
+{
+  "actual": {
+    "GPU_calls": 0,
+    "independent_C64_rescore_calls": 0,
+    "memory_updates": 0,
+    "private_checkpoint_bytes": 0,
+    "queried_label_reads": 0,
+    "queried_static_map_native_calls": 0,
+    "query_anchor_native_score_calls": 0,
+    "query_image_feature_encodings": 0,
+    "replay_events_validated": 0
+  },
+  "independent_C64_rescoring": "Separate explicit approval/quota required; not authorized or performed.",
+  "metadata_only_tape_preflight": "PASS",
+  "peak_CPU_RAM_bytes": null,
+  "peak_GPU_memory_bytes": null,
+  "private_artifact_bytes": 0,
+  "runtime_seconds": null,
+  "schema": "stage1a.p12_compute_accounting.v1",
+  "status": "BLOCKED_BEFORE_RESTRICTED_EXECUTION",
+  "strict_global_ceilings": {
+    "queried_label_reads": 459,
+    "queried_static_map_native_calls": 2295,
+    "query_anchor_native_score_calls": 75406,
+    "query_image_feature_encodings": 459
+  }
+}

@@ -37,3 +37,5 @@ docs/calibration/audit/stage1a_p1_reconstruction_v1_20261030/** text eol=lf
 experiments/calibration/stage1a_p11_production.py text eol=lf
 tests/calibration/test_stage1a_p11_production.py text eol=lf
 docs/calibration/audit/stage1a_p11_production_adapter_v1_20261030/** text eol=lf
+docs/calibration/audit/stage1a_p12_native_replay_v1_20261030/** text eol=lf
+outputs/calibration/stage1a_p12_native_replay_v1_20261030/** text eol=lf

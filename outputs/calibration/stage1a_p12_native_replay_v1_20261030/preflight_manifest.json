@@ -1,0 +1,21 @@
+{
+  "GPU_inference_performed": false,
+  "INCOMPLETE_marker_sha256": "1032b832052bb2dce7522c45c912c54cad16ea4ad725efecb1308f3c97005be4",
+  "approvals": {
+    "STAGE1A_P1_BOUNDED_NATIVE_REPLAY_GO": false,
+    "STAGE1A_P1_QUERIED_FEEDBACK_ACCESS_GO": false
+  },
+  "base_commit_sha": "a674b7633d1049af3cc34156314a812a0319b864",
+  "branch": "calibration-stage0-contract-20261029",
+  "class_query_counts": {
+    "audiojack": 114,
+    "regulator": 116,
+    "rolled_strip_base": 114,
+    "switch": 115
+  },
+  "output_contains_private_payload": false,
+  "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+  "restricted_access_performed": false,
+  "schema": "stage1a.p12_blocked_preflight.v1",
+  "status": "P12_BLOCKED"
+}

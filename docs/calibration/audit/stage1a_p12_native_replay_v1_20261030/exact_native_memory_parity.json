@@ -1,0 +1,21 @@
+{
+  "attempted_trajectories": 0,
+  "expected_actual_field_diffs": [],
+  "expected_trajectories": 20,
+  "first_mismatch": null,
+  "memory_writer_c64_parity_claimed": false,
+  "phase_a_audiojack_seed0": "NOT_RUN_NO_AUTHORIZATION",
+  "phase_b_all_20_trajectories": "NOT_STARTED_PHASE_A_BLOCKED",
+  "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+  "required_fields": [
+    "pre/post memory version and SHA-256",
+    "writer eligibility/action/keep/append/replace/skip",
+    "legacy Greedy version",
+    "source revision/map SHA-256",
+    "prototype counts and resident-source statistics",
+    "C64 transport identity and q90"
+  ],
+  "schema": "stage1a.p12_exact_native_memory_parity.v1",
+  "status": "BLOCKED_NOT_RUN_NO_AUTHORIZATION",
+  "validated_events": 0
+}
