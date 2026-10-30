@@ -1,0 +1,155 @@
+{
+  "controller_snapshot_compatibility": {
+    "rolled_strip_base/seed1/Q-A-TS-v1-3pct-seed37": {
+      "B4": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "B7": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "Stage075BOffset": "PASS_SYNTHETIC_EVIDENCE_INPUT"
+    },
+    "rolled_strip_base/seed2/Q-A-TS-v1-3pct-seed37": {
+      "B4": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "B7": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "Stage075BOffset": "PASS_SYNTHETIC_EVIDENCE_INPUT"
+    },
+    "rolled_strip_base/seed3/Q-A-TS-v1-3pct-seed37": {
+      "B4": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "B7": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "Stage075BOffset": "PASS_SYNTHETIC_EVIDENCE_INPUT"
+    },
+    "rolled_strip_base/seed4/Q-A-TS-v1-3pct-seed37": {
+      "B4": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "B7": "PASS_SYNTHETIC_EVIDENCE_INPUT",
+      "Stage075BOffset": "PASS_SYNTHETIC_EVIDENCE_INPUT"
+    }
+  },
+  "evidence_file_linkage": [
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed0.jsonl",
+      "sha256": "2395014d8e3bc7acf46bf9522ed59bd3892dbb5bacf5b37d9eca443a6d361456",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "audiojack/seed0/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed1.jsonl",
+      "sha256": "c55e10c20646d302e6bb8c7690232981ea6e7b02f0b03e0d7d686c72676fe88b",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "audiojack/seed1/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed2.jsonl",
+      "sha256": "66db8745a9cdf33b2e0be48f2c10cd9913c2e05ccae615954bcd2cabc16c9c7a",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "audiojack/seed2/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed3.jsonl",
+      "sha256": "8149b8aed858be78b44731714cbe89f7f6ab21a8cd8137da6dd80117e935c8f7",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "audiojack/seed3/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed4.jsonl",
+      "sha256": "d0905d2b2503f6030b838dd7bc0137de488dd1eae14f78379dc9486739bf7e48",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "audiojack/seed4/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed0.jsonl",
+      "sha256": "3d493b7f1823e79aba58c641950bc697221674e6870987e9d2edcf8c05ae6016",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "regulator/seed0/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed1.jsonl",
+      "sha256": "730614a1da84baf96df9eba3fff8401519c43aeea9969227ee8c4f4fc6507992",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "regulator/seed1/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed2.jsonl",
+      "sha256": "998ddab119c40b4f50a04f5a3b736fa7c18ef1f273191e173000ec9ed6529e51",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "regulator/seed2/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed3.jsonl",
+      "sha256": "632e28da102fa5a53bdf53e9c2fb4976c01fda0b352386011f586e6921f991e2",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "regulator/seed3/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed4.jsonl",
+      "sha256": "4d51b719613ae52e2c9a3a8ad519c7d17e3c54149a558b844800dea909417cc2",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "regulator/seed4/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed0.jsonl",
+      "sha256": "bc0a8d3410b413909f10fd2e8aded8abd95efc265129e0cd02ff238a0fed6be4",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "switch/seed0/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed1.jsonl",
+      "sha256": "4a8366e848dc9f05915e43c28c9bbf4e2a9f7c720c5cdaa9a2eb927d0e220fa9",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "switch/seed1/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed2.jsonl",
+      "sha256": "04d13a3754cc62c69e4bc9f0830e5046bc18f499857f7c76e5de75ca87ac66be",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "switch/seed2/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed3.jsonl",
+      "sha256": "9b9b43e10ae2345e1f1d948e5fb05ca4e20f4fd215490f8c5dd5735a1427a521",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "switch/seed3/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed4.jsonl",
+      "sha256": "e2b1e534c817c8b18fff648699722b74fc4cdd6742b7651ceeca676b4a6e250f",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "switch/seed4/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/rolled_strip_base_seed0.jsonl",
+      "sha256": "33954a05edc44251453ead1a0be1813579247a7c5715643f56373eb0c53ea59a",
+      "source": "reused_verified_artifact",
+      "trajectory_id": "rolled_strip_base/seed0/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed1.jsonl",
+      "sha256": "30cf2d7ce11121c8a93c1d8a27910e6095140425fdc1287ae64f1ff8eccfa903",
+      "source": "recomputed_native",
+      "trajectory_id": "rolled_strip_base/seed1/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed2.jsonl",
+      "sha256": "02ff8ae00b98a2870f230692363395b4803599c81c079230be8fa47eb45a24d4",
+      "source": "recomputed_native",
+      "trajectory_id": "rolled_strip_base/seed2/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed3.jsonl",
+      "sha256": "2d18a72762fddc625784ba303f651c803a44bfad6d02abc186b56aa4cf947cbb",
+      "source": "recomputed_native",
+      "trajectory_id": "rolled_strip_base/seed3/Q-A-TS-v1-3pct-seed37"
+    },
+    {
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed4.jsonl",
+      "sha256": "f29c466a7faa2d422b397bb3441767c3613d55e14ef8153723a515cb7799338b",
+      "source": "recomputed_native",
+      "trajectory_id": "rolled_strip_base/seed4/Q-A-TS-v1-3pct-seed37"
+    }
+  ],
+  "evidence_revisions": 2315,
+  "native_evidence_shards_recomputed": 4,
+  "prior_evidence_shards_reused": 16,
+  "protected_C64_scores_per_revision": 64,
+  "queried_anchor_arrivals": 2295,
+  "queried_defect_policy": "current-memory score; never written",
+  "queried_normal_policy": "Native all-layer source-aware LSO",
+  "status": "PASS_DENSE_CAUSAL_EVIDENCE_ALL_20_TRAJECTORIES",
+  "unique_queried_anchor_identities": 459
+}

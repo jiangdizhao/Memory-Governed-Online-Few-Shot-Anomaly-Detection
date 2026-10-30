@@ -1,0 +1,54 @@
+{
+  "algorithm": "SHA-256",
+  "files": {
+    "STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT.md": {
+      "sha256": "aef3d4aa2e0f7a26de074705ce0d7eca0b1782f14730ed53d223c4d9b51fd12d",
+      "size_bytes": 359
+    },
+    "STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT_FINAL.md": {
+      "sha256": "295e8011652b2d0c7f67ffa2357cfd0df95de7c308693def4a5448fde824e0b8",
+      "size_bytes": 1727
+    },
+    "anchor_evidence_reconciliation_final.json": {
+      "sha256": "d2302ddf642aafd87209d059bd7a2e0aaa585fb696faa790d0fe01810d4b88e2",
+      "size_bytes": 8162
+    },
+    "checksums.json": {
+      "sha256": "2622d6ca0e7d0ff006d957a44f5353f9648b5be149f30fbf9abd0c7a1de63a64",
+      "size_bytes": 377
+    },
+    "compute_accounting_final.json": {
+      "sha256": "dc9cf253723ba7e305a321e4bc3ab02067297e746ce77bb31fbf042600661afc",
+      "size_bytes": 4048
+    },
+    "exact_native_memory_parity_final.json": {
+      "sha256": "4e72dc16a3b3b03158abd18b0e74d3dd03637c3b3063b12c30b57df630009dd2",
+      "size_bytes": 22805
+    },
+    "finalization_provenance.json": {
+      "sha256": "8e66b9862d77070e4c725c3f12eb2575d0a95b9df05749afbe5390dce7522245",
+      "size_bytes": 874
+    },
+    "memory_measurements_final.json": {
+      "sha256": "6b34c97ea2cd8fc2434f205931b27b64afb6f5fb7d81314d7ec9ffc291f2424a",
+      "size_bytes": 47709
+    },
+    "p12_low_memory_recovery_gate_matrix.json": {
+      "sha256": "ed25a816c1f184ae67c8f07cfb673dcff71faf5ef0818da8c83ae0c36f3baabb",
+      "size_bytes": 2151
+    },
+    "p12_low_memory_recovery_gate_matrix_final.json": {
+      "sha256": "3c9885038f79219d2d3d69f94c10b5223c33f701cbf7b3009572cc18e27d9d84",
+      "size_bytes": 7597
+    },
+    "source_provenance.json": {
+      "sha256": "81f3bea368094670a99ca8db688e0b1f51f78ec869c1f190fb7499caa4ef9823",
+      "size_bytes": 4680
+    },
+    "trajectory_receipts_final.json": {
+      "sha256": "278afcdc9d8bbaaba1830c26905481aeb7699078198b135eb1e2399fa5a4af02",
+      "size_bytes": 55529
+    }
+  },
+  "source_output_inventory_sha256": "2513b15284761bcc82bbf1ad72689c468b140831b8a84780c648b6665c83cc59"
+}

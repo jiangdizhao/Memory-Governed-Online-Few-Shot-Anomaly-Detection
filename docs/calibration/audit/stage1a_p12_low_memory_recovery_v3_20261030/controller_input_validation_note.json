@@ -1,0 +1,18 @@
+{
+  "schema": "stage1a.p12_controller_input_validation_note.v1",
+  "status": "PASS_ACTUAL_RECOMPUTED_SNAPSHOT_CONSUMPTION_SMOKE",
+  "implementation": "experiments/calibration/stage1a_p11_production.py::verify_controller_snapshot_compatibility",
+  "implementation_behavior": "Creates fresh unchanged B4, B7, and Stage075BOffset controllers, calls on_memory_change(snapshot), verifies a fresh nonzero evidence revision was consumed, and calls finalize_step(). It does not produce stream predictions, select/tune thresholds, or calculate performance metrics.",
+  "compatibility_status_string_caveat": "The helper returns PASS_SYNTHETIC_EVIDENCE_INPUT as a legacy generic status label. For the four listed recovery trajectories, the supplied EvidenceSnapshot was the final snapshot from that trajectory's recomputed Native evidence adapter, not a synthetic fixture. The status wording is therefore not a description of the data origin.",
+  "verified_trajectories": {
+    "rolled_strip_base/seed1/Q-A-TS-v1-3pct-seed37": {"evidence_source": "recomputed_native", "B4": "PASS", "B7": "PASS", "Stage075BOffset": "PASS"},
+    "rolled_strip_base/seed2/Q-A-TS-v1-3pct-seed37": {"evidence_source": "recomputed_native", "B4": "PASS", "B7": "PASS", "Stage075BOffset": "PASS"},
+    "rolled_strip_base/seed3/Q-A-TS-v1-3pct-seed37": {"evidence_source": "recomputed_native", "B4": "PASS", "B7": "PASS", "Stage075BOffset": "PASS"},
+    "rolled_strip_base/seed4/Q-A-TS-v1-3pct-seed37": {"evidence_source": "recomputed_native", "B4": "PASS", "B7": "PASS", "Stage075BOffset": "PASS"}
+  },
+  "not_established": [
+    "This smoke does not establish full event-by-event controller input parity for the other 16 trajectories.",
+    "This smoke does not run the Stage 1-A performance comparison or validate controller predictions/metrics."
+  ],
+  "source_record": "anchor_evidence_reconciliation_final.json:controller_snapshot_compatibility"
+}

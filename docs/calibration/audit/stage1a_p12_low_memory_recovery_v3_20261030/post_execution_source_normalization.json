@@ -1,0 +1,21 @@
+{
+  "schema": "stage1a.p12_post_execution_source_normalization.v1",
+  "purpose": "Disclose formatting-only cleanup performed after successful trajectory execution so the final committed source fingerprint remains distinguishable from the executed source fingerprint.",
+  "recovery_runner": {
+    "path": "experiments/calibration/stage1a_p12_sharded_recovery.py",
+    "raw_sha256_at_execution": "dfb8eaf5d60587c85c57fc726c340774b8a3f1e251a1f65c1c565b7e60a5e8d7",
+    "final_committed_blob_sha256": "80d1482028bf887f308e461c05b968221b46e6a3ebe931badd1f774a130c1e11",
+    "post_execution_changes": [
+      "Removed trailing spaces and a terminal blank line to satisfy git diff --check.",
+      "Replaced a replacement-character punctuation mark in a generated report heading with an em dash."
+    ],
+    "behavioral_logic_changed_after_execution": false
+  },
+  "p12_runner": {
+    "path": "experiments/calibration/stage1a_p12_runner.py",
+    "execution_canonical_source_sha256": "0bcbc24b7bd0e041bcf0afc7551b2ca4556d34328e5a94a6155c79ec08f8b5b6",
+    "final_committed_blob_sha256": "0bcbc24b7bd0e041bcf0afc7551b2ca4556d34328e5a94a6155c79ec08f8b5b6",
+    "normalization": "Canonical LF source fingerprint, matching the repository's source_fingerprints convention."
+  },
+  "execution_fingerprint_note": "The v3 execution hash remains preserved as historical provenance; exact v3 runner source bytes were not archived. This record does not claim byte-for-byte recovery of those execution bytes."
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "stage1a.p12_checkpoint_resume_verification.v1",
+  "status": "PASS_CPU_DETERMINISTIC_FIXTURES",
+  "environment": "D:\\anaconda3\\envs\\torch\\python.exe",
+  "tests": [
+    {
+      "test": "tests.calibration.test_stage1a_p11_production.Stage1AP11ProductionTests.test_private_checkpoint_reconstructs_writer_caches_budget_and_response_chain",
+      "result": "PASS",
+      "details": "A deterministic CPU fixture serialized a private checkpoint, reconstructed it in a child process, and matched one-shot event-chain digest, query-response digest, writer-state digest, queried-label count, feature-encoding count, and completion state."
+    },
+    {
+      "test": "tests.calibration.test_stage1a_p11_production.Stage1AP11ProductionTests.test_private_checkpoint_rejects_label_cache_chain_mutation",
+      "result": "PASS",
+      "details": "A deliberately modified queried-label cache was rejected because it no longer matched the recorded response-chain digest."
+    },
+    {
+      "test": "tests.calibration.test_stage1a_p1_reconstruction.Stage1AP1ReconstructionTests.test_query_only_exact_replay_and_checkpoint_resume",
+      "result": "PASS",
+      "details": "Deterministic query-only replay matched one-shot event and response chains, final writer memory, exact queried-label count, and feature/map budget accounting after checkpoint resume."
+    }
+  ],
+  "summary": {"passed": 3, "failed": 0},
+  "large_historical_checkpoint_deserialized": false,
+  "large_historical_checkpoint_sha256_only": "29b7470db9d2aac385b3e2fade506fa750a15937e42e25c1544f8c06bec0e375",
+  "phase_a_checkpoint_sha256": "a137c513240d180259e0193aa6a7c607ade7af3ed7aa9c13d48b02ed15ce4b73",
+  "scope_note": "Checkpoint/resume behavior is verified on deterministic CPU fixtures. The 7,359,652,922-byte prior private checkpoint hash is linked from the v3 recovery preflight manifest and it was not deserialized. The 4,939-byte phase-A checkpoint self-commitment was checked separately; neither was used as a recovery checkpoint."
+}

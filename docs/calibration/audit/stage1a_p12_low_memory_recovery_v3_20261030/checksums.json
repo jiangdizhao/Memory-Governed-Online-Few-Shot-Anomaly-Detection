@@ -1,0 +1,8 @@
+{
+  "algorithm": "SHA-256",
+  "files": {
+    "STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT.md": "aef3d4aa2e0f7a26de074705ce0d7eca0b1782f14730ed53d223c4d9b51fd12d",
+    "p12_low_memory_recovery_gate_matrix.json": "ed25a816c1f184ae67c8f07cfb673dcff71faf5ef0818da8c83ae0c36f3baabb",
+    "source_provenance.json": "81f3bea368094670a99ca8db688e0b1f51f78ec869c1f190fb7499caa4ef9823"
+  }
+}

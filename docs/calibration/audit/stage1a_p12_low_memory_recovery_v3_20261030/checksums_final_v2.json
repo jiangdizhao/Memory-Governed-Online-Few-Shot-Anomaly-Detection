@@ -1,0 +1,75 @@
+{
+  "file_count": 17,
+  "files": {
+    "STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT.md": {
+      "sha256": "aef3d4aa2e0f7a26de074705ce0d7eca0b1782f14730ed53d223c4d9b51fd12d",
+      "size_bytes": 359
+    },
+    "STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT_FINAL.md": {
+      "sha256": "1ed4b889b6c9f7372fdea746f8cf0c4f05aec3431892458f6638b67930f0b48a",
+      "size_bytes": 1721
+    },
+    "anchor_evidence_reconciliation_final.json": {
+      "sha256": "d2302ddf642aafd87209d059bd7a2e0aaa585fb696faa790d0fe01810d4b88e2",
+      "size_bytes": 8162
+    },
+    "checkpoint_resume_tests.log": {
+      "sha256": "0954e12f16dd680b2047e7742328376f5a74dc33d2861e7ff0abcd216f83225b",
+      "size_bytes": 584
+    },
+    "checkpoint_resume_verification.json": {
+      "sha256": "943b0e41e399d612311c31c4063805c63b4baa5d83297a0839b94631b9d5cbb9",
+      "size_bytes": 2014
+    },
+    "checksums.json": {
+      "sha256": "2622d6ca0e7d0ff006d957a44f5353f9648b5be149f30fbf9abd0c7a1de63a64",
+      "size_bytes": 377
+    },
+    "checksums_final.json": {
+      "sha256": "963d8480ac46896bd284c3881172972015442ecd9aac7a8f9572c0084eaaa8ab",
+      "size_bytes": 2067
+    },
+    "compute_accounting_final.json": {
+      "sha256": "dc9cf253723ba7e305a321e4bc3ab02067297e746ce77bb31fbf042600661afc",
+      "size_bytes": 4048
+    },
+    "controller_input_validation_note.json": {
+      "sha256": "a8ee8a6a8a6ad9542614c90a38dade6e0a62d416faa79b7267be212ee8b6de51",
+      "size_bytes": 1917
+    },
+    "exact_native_memory_parity_final.json": {
+      "sha256": "4e72dc16a3b3b03158abd18b0e74d3dd03637c3b3063b12c30b57df630009dd2",
+      "size_bytes": 22805
+    },
+    "finalization_provenance.json": {
+      "sha256": "8e66b9862d77070e4c725c3f12eb2575d0a95b9df05749afbe5390dce7522245",
+      "size_bytes": 874
+    },
+    "memory_measurements_final.json": {
+      "sha256": "6b34c97ea2cd8fc2434f205931b27b64afb6f5fb7d81314d7ec9ffc291f2424a",
+      "size_bytes": 47709
+    },
+    "p12_low_memory_recovery_gate_matrix.json": {
+      "sha256": "ed25a816c1f184ae67c8f07cfb673dcff71faf5ef0818da8c83ae0c36f3baabb",
+      "size_bytes": 2151
+    },
+    "p12_low_memory_recovery_gate_matrix_final.json": {
+      "sha256": "3c9885038f79219d2d3d69f94c10b5223c33f701cbf7b3009572cc18e27d9d84",
+      "size_bytes": 7597
+    },
+    "post_execution_source_normalization.json": {
+      "sha256": "dd753b9930c74e081cf6afb65b011bd8d28eb8803d2680bfb940075761eb2636",
+      "size_bytes": 1492
+    },
+    "source_provenance.json": {
+      "sha256": "81f3bea368094670a99ca8db688e0b1f51f78ec869c1f190fb7499caa4ef9823",
+      "size_bytes": 4680
+    },
+    "trajectory_receipts_final.json": {
+      "sha256": "278afcdc9d8bbaaba1830c26905481aeb7699078198b135eb1e2399fa5a4af02",
+      "size_bytes": 55529
+    }
+  },
+  "schema": "stage1a.p12_low_memory_recovery_audit_checksums.v2",
+  "self_excluded_manifest": "checksums_final_v2.json"
+}

@@ -1,0 +1,73 @@
+{
+  "class_shards": [
+    {
+      "category": "audiojack",
+      "log_path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/logs/audiojack.log",
+      "old_partial_namespace_unchanged_after_shard": true,
+      "post_process_memory": {
+        "process_rss_bytes": 322940928,
+        "system_available_bytes": 44211134464
+      },
+      "return_code": 0,
+      "status": "PASS"
+    },
+    {
+      "category": "regulator",
+      "log_path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/logs/regulator.log",
+      "old_partial_namespace_unchanged_after_shard": true,
+      "post_process_memory": {
+        "process_rss_bytes": 322891776,
+        "system_available_bytes": 44146221056
+      },
+      "return_code": 0,
+      "status": "PASS"
+    },
+    {
+      "category": "switch",
+      "log_path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/logs/switch.log",
+      "old_partial_namespace_unchanged_after_shard": true,
+      "post_process_memory": {
+        "process_rss_bytes": 322895872,
+        "system_available_bytes": 44184260608
+      },
+      "return_code": 0,
+      "status": "PASS"
+    },
+    {
+      "category": "rolled_strip_base",
+      "log_path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/logs/rolled_strip_base.log",
+      "old_partial_namespace_unchanged_after_shard": true,
+      "post_process_memory": {
+        "process_rss_bytes": 322895872,
+        "system_available_bytes": 43960172544
+      },
+      "return_code": 0,
+      "status": "PASS"
+    }
+  ],
+  "decision": "P12_RECOVERY_BLOCKED",
+  "gates": [
+    {
+      "id": "P12-CPU-TESTS",
+      "status": "PASS_BEFORE_REAL_REPLAY"
+    },
+    {
+      "evidence": "Prior evidence reuse linkage differs for audiojack/seed0",
+      "id": "P12-CLASS-SHARDS",
+      "status": "BLOCKED"
+    },
+    {
+      "id": "P12-OLD-OUTPUT-IMMUTABILITY",
+      "status": "PASS"
+    },
+    {
+      "id": "P12-STAGE1A-PERFORMANCE",
+      "status": "NOT_RUN_PROHIBITED"
+    },
+    {
+      "id": "P12-CONFIRMATION-ISOLATION",
+      "status": "NO_ACCESS"
+    }
+  ],
+  "schema": "stage1a.p12_low_memory_recovery_gate.v1"
+}

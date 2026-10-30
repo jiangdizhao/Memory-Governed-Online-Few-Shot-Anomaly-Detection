@@ -1,0 +1,57 @@
+{
+  "base_commit": "9a60222b70f8e9353b2937c5c128d41d967b72a2",
+  "execution_source_fingerprint_sha256": "b8c58a3516ed0efde27e714d7d5d059c81ba37b8b576b2539403bba5f14c0fa2",
+  "head_at_recovery_start": "9a60222b70f8e9353b2937c5c128d41d967b72a2",
+  "historical_G2_status": "BLOCKED_UNCHANGED",
+  "historical_sources_unchanged": true,
+  "p12_source_identity": {
+    "native_source_files": {
+      "experiments/calibration/memory_state.py": "785708d21dac5e4e11a22238943aab122c054cd6b32f09c5ba0b970d044dc1c0",
+      "experiments/calibration/native.py": "3a347d65aaf4bfd6b41eff2ea7339d878065bb2e08ed64795f57b0458135dd45",
+      "experiments/calibration/profiles.py": "7ff59b6a3783bf4061ab75c6b0782b23a0f6e456b40457a022e5d0de13d6f7a5",
+      "experiments/p0_protocol_audit.py": "b83918ec5aceb3ef63cca942fc9fb0e241559d9672d20bed422b15fcd48135e7",
+      "experiments/risk_safe/native_bridge.py": "9575214ea8d14ebe32a537fa15afa332446b41d66c1c8c85f890d2251eaef8f7",
+      "experiments/risk_safe/shadow_memory.py": "70c2ba3d29b225f241d9ad147f5be168ee2e0613f452e1428cc585bbce3339b5",
+      "experiments/v02_memory.py": "3c4e247e3a41dc9acc8147a35aa892cf3f3571aca85beb4169809bd70ad48ae0",
+      "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+      "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a"
+    },
+    "p11": {
+      "aggregate_sha256": "64bade7637a282184af9cca86e3cdd8d92ca47596fef262ed66bfdac65786c3f",
+      "files": {
+        "experiments/calibration/anchor_ledger.py": "92a1ec948162ef900bd2fcdf7f76a756a993e65061322c1e8eefa6fb40555ee6",
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+        "experiments/calibration/engine.py": "bba0ea994bf576c1950f1c53d4945af2c445eea5147c17d519632b43f34c7bfe",
+        "experiments/calibration/memory_state.py": "785708d21dac5e4e11a22238943aab122c054cd6b32f09c5ba0b970d044dc1c0",
+        "experiments/calibration/native.py": "3a347d65aaf4bfd6b41eff2ea7339d878065bb2e08ed64795f57b0458135dd45",
+        "experiments/calibration/profiles.py": "7ff59b6a3783bf4061ab75c6b0782b23a0f6e456b40457a022e5d0de13d6f7a5",
+        "experiments/calibration/protocol.py": "16b39ead3975bf442047737bc5746814ef9697cd0a9962464ee388bbfc52da60",
+        "experiments/calibration/query_tape.py": "ed6f77c2a4de1bd05969ae3c09f2c98c13a744481ca436f80e4633bd6c412c6d",
+        "experiments/calibration/scdac_g.py": "3bd332f575ce2c9e6ca561c6d6096cf19c5493773616a767da2a2f1b07a705b3",
+        "experiments/calibration/stage05.py": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+        "experiments/calibration/stage05_runner.py": "1d110e1ca813a064767ebeab597b609b3d863f8afd4c8085b06948ad88347e14",
+        "experiments/calibration/stage075a_runner.py": "b931630a45901836aa8883b73e9360219b9afcc277a7ade04fa8387cce26b6f4",
+        "experiments/calibration/stage075b_controllers.py": "166e5c27eb39bd65c146e300702439371c3be868b50adb6b54735decae5fcfed",
+        "experiments/calibration/stage1a_p11_production.py": "77e84fa11c83eca683b0b95c4849b175053c0b24298e78dfe6482c91bdf6ea7d",
+        "experiments/calibration/stage1a_p1_reconstruction.py": "b8a5b0a86b5d8afa4dbd57a3a9a381ecd42d821961c22506da5ce8947ea26455",
+        "experiments/risk_safe/native_bridge.py": "313b94e7a3df82a4996b0c8a97a1e2464380f0e4cded09ae2e1647866859dfb4",
+        "experiments/risk_safe/shadow_memory.py": "70c2ba3d29b225f241d9ad147f5be168ee2e0613f452e1428cc585bbce3339b5",
+        "experiments/v02_memory.py": "d4cf38e75fad9c3cef317e07370c283d660ae495da11a6d759c1f0be8b789d68",
+        "test_phase3_AIF_simplified_v22.py": "a79b6a78ccf918c9314025ab0acef2d9e8d84cf44600615a4085cd82802bda4f",
+        "vmb_visionad_new.py": "0430959e86ba75b029341aef003655e6a3ac7d08df22f3f48a04e0b2d7fc39c9"
+      }
+    },
+    "p12": {
+      "aggregate_sha256": "f99724c17cc68fff3c52bc71cb6ad94fc0ce1dfe5a76c1611e709ec3e4c8935a",
+      "files": {
+        "experiments/calibration/stage1a_p12_label_provider.py": "4e51255ae894c2d6ffcc7142e8fd59d9714df94b18ed26ac996528adb163ceaf",
+        "experiments/calibration/stage1a_p12_runner.py": "0bcbc24b7bd0e041bcf0afc7551b2ca4556d34328e5a94a6155c79ec08f8b5b6"
+      }
+    }
+  },
+  "recovery_runner_sha256": "dfb8eaf5d60587c85c57fc726c340774b8a3f1e251a1f65c1c565b7e60a5e8d7",
+  "recovery_runner_sha256_scope": "raw source bytes at execution",
+  "schema": "stage1a.p12_low_memory_source_provenance.v1",
+  "scorer_config_sha256": "1b8e9d96b121e3f1f6c1bbee13ab9f0063facee8fb08ad696dc5f9cb43dbd452",
+  "scorer_source_sha256": "3d954f546a8a73b154ad585e31365f1faec8b94d77b0d71714d9600b9a7232d2"
+}

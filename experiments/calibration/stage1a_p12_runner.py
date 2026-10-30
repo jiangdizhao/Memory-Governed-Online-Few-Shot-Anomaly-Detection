@@ -815,9 +815,11 @@ def _first_changed_position(category: str, seed: int = 0) -> int:
 class PersistingEvidenceAdapter(CausalEvidenceRevisionAdapter):
     """Persist private full EvidenceSnapshot payloads for independent audit."""
 
-    def __init__(self, *, private_path: Path, **kwargs: Any):
+    def __init__(self, *, private_path: Path,
+                 memory_probe: Any = None, **kwargs: Any):
         super().__init__(**kwargs)
         self.private_path = private_path
+        self.memory_probe = memory_probe
         self._written: set[tuple[int, str]] = set()
         if private_path.is_file():
             with private_path.open("r", encoding="utf-8") as source:
@@ -854,14 +856,23 @@ class PersistingEvidenceAdapter(CausalEvidenceRevisionAdapter):
         self._written.add(key)
 
     def initialize(self, memory: MemoryIdentity):
+        if self.memory_probe is not None:
+            self.memory_probe("evidence_refresh_before")
         result = super().initialize(memory)
         self._persist(result, None)
+        if self.memory_probe is not None:
+            self.memory_probe("evidence_refresh_after")
         return result
 
     def after_event(self, **kwargs: Any):
+        queried = bool(kwargs.get("queried"))
+        if queried and self.memory_probe is not None:
+            self.memory_probe("evidence_refresh_before")
         result = super().after_event(**kwargs)
         if result is not None:
             self._persist(result, int(kwargs["event"].position))
+            if queried and self.memory_probe is not None:
+                self.memory_probe("evidence_refresh_after")
         return result
 
 
@@ -1077,7 +1088,8 @@ def _trajectory_callbacks(*, writer: SharedNativeGreedyWriter,
                           encoder_fingerprint: str, preprocessing_fingerprint: str,
                           c64_states: Mapping[str, Any], private_evidence_path: Path,
                           scorer_config_sha256: str, scorer_source_sha256: str,
-                          budget: Any):
+                          budget: Any, memory_probe: Any = None,
+                          evidence_adapter_override: Any = None):
     from .stage1a_p1_reconstruction import shared_writer_memory_identity
     info = frozen["classes"][category]
     support_groups = info["supports"]
@@ -1111,14 +1123,17 @@ def _trajectory_callbacks(*, writer: SharedNativeGreedyWriter,
             raise P12IntegrityError("Current memory has no linked historical C64 vector") from exc
         return state
 
-    evidence = PersistingEvidenceAdapter(
-        writer=writer, cache=evidence_cache, scorer=lso,
-        anchor_factory=anchor_factory, protected_c64_state_fn=protected_c64,
-        scorer_config_sha256=scorer_config_sha256,
-        scorer_source_sha256=scorer_source_sha256,
-        protected_group_sha256s=protected_group_sha,
-        deployed_support_group_sha256s=support_group_sha,
-        private_path=private_evidence_path)
+    evidence = evidence_adapter_override
+    if evidence is None:
+        evidence = PersistingEvidenceAdapter(
+            writer=writer, cache=evidence_cache, scorer=lso,
+            anchor_factory=anchor_factory, protected_c64_state_fn=protected_c64,
+            scorer_config_sha256=scorer_config_sha256,
+            scorer_source_sha256=scorer_source_sha256,
+            protected_group_sha256s=protected_group_sha,
+            deployed_support_group_sha256s=support_group_sha,
+            private_path=private_evidence_path,
+            memory_probe=memory_probe)
 
     def feature_key(event: ReplayEvent) -> FeatureKey:
         return FeatureKey(event.image_sha256, encoder_fingerprint,
@@ -1248,7 +1263,10 @@ def _run_one_trajectory(*, category: str, seed: int, events: list[dict[str, Any]
                         scorer_config_sha256: str, scorer_source_sha256: str,
                         encoder_fingerprint: str, preprocessing_fingerprint: str,
                         output: Path, chunk_size: int, start_checkpoint: Any = None,
-                        stop_at: int | None = None):
+                        stop_at: int | None = None,
+                        memory_probe: Any = None,
+                        evidence_adapter_override: Any = None,
+                        private_evidence_path: Path | None = None):
     info = frozen["classes"][category]
     expected_fixed = _read_json(STAGE05 / "score_tape_manifest.json")["classes"][category][
         "score_tapes"][str(seed)]["fixed_support_sha256"]
@@ -1259,7 +1277,8 @@ def _run_one_trajectory(*, category: str, seed: int, events: list[dict[str, Any]
     native_service = _make_static_service(impl, native_bank, fixed_sha, p0_config)
     reusable_service = P12ReusableNativeScoreService(native_service)
     trajectory_id = f"{category}/seed{seed}/Q-A-TS-v1-3pct-seed37"
-    evidence_path = output / "private" / "evidence" / f"{category}_seed{seed}.jsonl"
+    evidence_path = private_evidence_path or (
+        output / "private" / "evidence" / f"{category}_seed{seed}.jsonl")
     callbacks = _trajectory_callbacks(
         writer=writer, native_service=native_service,
         reusable_service=reusable_service, impl=impl, backbone=backbone,
@@ -1272,7 +1291,9 @@ def _run_one_trajectory(*, category: str, seed: int, events: list[dict[str, Any]
         c64_states=c64_states, private_evidence_path=evidence_path,
         scorer_config_sha256=scorer_config_sha256,
         scorer_source_sha256=scorer_source_sha256,
-        budget=production_runner.runner.budget)
+        budget=production_runner.runner.budget,
+        memory_probe=memory_probe,
+        evidence_adapter_override=evidence_adapter_override)
     factory = _event_factory(events, tapes, category, dataset_root,
                              frozen, image_digest_cache, fixed_sha)
     kwargs = {
@@ -1293,6 +1314,16 @@ def _run_one_trajectory(*, category: str, seed: int, events: list[dict[str, Any]
         "writer_fn": callbacks["writer_fn"],
         "evidence_revision_adapter": callbacks["evidence_adapter"],
     }
+    if memory_probe is not None:
+        original_encode = kwargs["encode_feature_fn"]
+
+        def measured_encode(event: ReplayEvent):
+            memory_probe("feature_encoding_before")
+            bundle = original_encode(event)
+            memory_probe("feature_encoding_after")
+            return bundle
+
+        kwargs["encode_feature_fn"] = measured_encode
     stop = len(events) if stop_at is None else int(stop_at)
     result = _run_to(
         target_position=stop, category=category,

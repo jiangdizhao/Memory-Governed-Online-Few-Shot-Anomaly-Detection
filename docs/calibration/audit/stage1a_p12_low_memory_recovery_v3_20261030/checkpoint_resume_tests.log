@@ -1,0 +1,9 @@
+Command:
+D:\anaconda3\envs\torch\python.exe -m unittest tests.calibration.test_stage1a_p11_production.Stage1AP11ProductionTests.test_private_checkpoint_reconstructs_writer_caches_budget_and_response_chain tests.calibration.test_stage1a_p11_production.Stage1AP11ProductionTests.test_private_checkpoint_rejects_label_cache_chain_mutation tests.calibration.test_stage1a_p1_reconstruction.Stage1AP1ReconstructionTests.test_query_only_exact_replay_and_checkpoint_resume
+
+Observed result:
+...
+----------------------------------------------------------------------
+Ran 3 tests in 4.618s
+
+OK

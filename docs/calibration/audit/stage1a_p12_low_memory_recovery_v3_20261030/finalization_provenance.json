@@ -1,0 +1,14 @@
+{
+  "class_workers_rerun": false,
+  "correction": "Manifest paths are normalized to forward slashes before exact identity comparison",
+  "finalizer_source_sha256": "f7dae295c67a1a7c8b8e2c741e25ea6fe69d93a2394f53cacf32bf90e1601025",
+  "image_or_label_access_during_finalization": false,
+  "interim_blocker": "Windows path separators in old evidence manifest did not match portable receipt path",
+  "native_inference_during_finalization": false,
+  "prior_G2_status": "BLOCKED_UNCHANGED",
+  "recovery_source_bytes_retained_at_execution": false,
+  "recovery_source_sha256_recorded_at_execution": "dfb8eaf5d60587c85c57fc726c340774b8a3f1e251a1f65c1c565b7e60a5e8d7",
+  "schema": "stage1a.p12_append_only_finalization.v1",
+  "source_output_namespace": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030",
+  "source_recovery_interim_decision": "P12_RECOVERY_BLOCKED"
+}
