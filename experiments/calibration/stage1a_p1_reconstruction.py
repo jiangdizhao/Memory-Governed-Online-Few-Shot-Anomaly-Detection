@@ -128,6 +128,9 @@ class BoundedAuthorization:
                                 "query_protocol_sha256"), max_labels, **checked)
 
 
+_P12_STANDING_CONTEXT_TOKEN = object()
+
+
 @dataclass
 class ComputeBudget:
     authorization: BoundedAuthorization
@@ -509,13 +512,43 @@ class P1NativeReplayRunner:
 
     def __init__(self, authorization_record: Mapping[str, Any] | None,
                  query_feedback_authorization_record: Mapping[str, Any] | None, *,
+                 authorization: BoundedAuthorization | None = None,
+                 _standing_p12_context_token: object | None = None,
                  budget: ComputeBudget | None = None,
                  feature_cache: FeatureCache | None = None,
                  static_map_cache: StaticMapCache | None = None):
         # This is deliberately the first validation. Callers must supply lazy
         # event/image/label providers so no restricted input is opened earlier.
-        self.authorization = BoundedAuthorization.from_records(
-            authorization_record, query_feedback_authorization_record)
+        if authorization is None:
+            if _standing_p12_context_token is not None:
+                raise P1Blocked("Standing P1.2 context token was supplied without a bounded context")
+            self.authorization = BoundedAuthorization.from_records(
+                authorization_record, query_feedback_authorization_record)
+        else:
+            # P1.2 can also receive a bounded authorization context established
+            # by the active standing researcher instruction. This is an
+            # in-memory scope/budget object, not an approval record. The
+            # P1.1 production wrapper must bind it to all four verified tapes
+            # before constructing this runner.
+            if authorization_record is not None or query_feedback_authorization_record is not None:
+                raise P1Blocked("Use either recorded approvals or a standing authorization context, not both")
+            maxima = {
+                "max_queried_label_reads": MAX_QUERY_FEATURE_ENCODINGS,
+                "max_feature_encodings": MAX_QUERY_FEATURE_ENCODINGS,
+                "max_static_map_calls": MAX_STATIC_MAP_CALLS,
+                "max_anchor_score_calls": MAX_ANCHOR_SCORE_CALLS,
+            }
+            if (_standing_p12_context_token is not _P12_STANDING_CONTEXT_TOKEN or
+                    authorization.allowed_classes != P1_CLASSES or
+                    authorization.query_protocol_sha256 != P1_PROTOCOL_SHA256 or
+                    not authorization.authorization_id or
+                    not authorization.query_feedback_authorization_id or
+                    any(isinstance(getattr(authorization, field), bool) or
+                        not isinstance(getattr(authorization, field), int) or
+                        not 0 <= getattr(authorization, field) <= maximum
+                        for field, maximum in maxima.items())):
+                raise P1Blocked("Standing authorization context is outside the immutable P1 scope or quotas")
+            self.authorization = authorization
         self.budget = budget or ComputeBudget(self.authorization)
         if self.budget.authorization != self.authorization:
             raise P1Blocked("Compute budget belongs to a different authorization")

@@ -30,6 +30,7 @@ from experiments.calibration.stage1a_p1_reconstruction import (
 from experiments.calibration.stage1a_p11_production import (
     CausalEvidenceRevisionAdapter, NativeAllLayerLSOAdapter,
     P11IntegrityError, P11ProductionReplayRunner,
+    StandingP12Authorization,
     P11PrivateCheckpoint, P11_AUTHORIZATION_SCHEMA,
     P11_FEEDBACK_AUTHORIZATION_SCHEMA, P11_CLASSES,
     apply_historical_shared_writer, expected_historical_replay_signature,
@@ -278,6 +279,37 @@ class Stage1AP11ProductionTests(unittest.TestCase):
         altered["query_tape_bindings"][0]["tape_sha256"] = sha("substituted-tape")
         with self.assertRaises(P1Blocked):
             P11ProductionReplayRunner(altered, feedback, tapes)
+
+    def test_standing_authorization_binds_tapes_without_approval_records(self):
+        tapes = synthetic_tape_set()
+        context = StandingP12Authorization.for_active_user_instruction(tapes)
+        runner = P11ProductionReplayRunner(
+            None, None, tapes, standing_authorization=context)
+        self.assertEqual(runner.authorization_mode, "standing_user_instruction")
+        self.assertEqual(runner.authorization.query_protocol_sha256,
+                         tapes.bindings[0]["query_protocol_sha256"])
+        self.assertEqual(runner.authorization.max_queried_label_reads, 459)
+        self.assertEqual(runner.authorization.max_feature_encodings, 459)
+        self.assertEqual(runner.authorization.max_static_map_calls, 2295)
+        self.assertEqual(runner.authorization.max_anchor_score_calls, 75406)
+        self.assertNotIn("APPROVED", context.authorization_basis)
+        bad_context = replace(
+            context, query_tape_binding_sha256=sha("substituted-tape-set"))
+        with self.assertRaises(P1Blocked):
+            P11ProductionReplayRunner(
+                None, None, tapes, standing_authorization=bad_context)
+
+    def test_standing_authorization_rejects_record_mixing_and_quota_changes(self):
+        tapes = synthetic_tape_set()
+        context = StandingP12Authorization.for_active_user_instruction(tapes)
+        native, feedback = approved_records(tapes)
+        with self.assertRaises(P1Blocked):
+            P11ProductionReplayRunner(
+                native, feedback, tapes, standing_authorization=context)
+        with self.assertRaises(P1Blocked):
+            P11ProductionReplayRunner(
+                None, None, tapes,
+                standing_authorization=replace(context, max_static_map_calls=2294))
 
     def test_query_group_substitution_stops_before_feature_or_label_access(self):
         tapes = synthetic_tape_set()

@@ -21,6 +21,8 @@ from typing import Any, Callable, Mapping, Sequence
 
 from .stage1a_p1_reconstruction import (
     AUTHORIZATION_SCHEMA, QUERY_FEEDBACK_AUTHORIZATION_SCHEMA,
+    MAX_ANCHOR_SCORE_CALLS, MAX_QUERY_FEATURE_ENCODINGS, MAX_STATIC_MAP_CALLS,
+    _P12_STANDING_CONTEXT_TOKEN,
     BoundedAuthorization, C64Identity, ComputeBudget, MemoryIdentity,
     NativeAnchorScoreProof, P1Blocked, P1NativeReplayRunner,
     P1ParityMismatch, QueryAnchor, QueriedLabelCache, ReplayResult,
@@ -114,6 +116,75 @@ class VerifiedQATapes:
     @property
     def binding_sha256(self) -> str:
         return _p11_digest(self.authorization_bindings())
+
+
+@dataclass(frozen=True)
+class StandingP12Authorization:
+    """Runtime scope for the researcher's explicit standing P1.2 instruction.
+
+    This deliberately is not an approval record: it has no decision,
+    approver, timestamp, signature, or approval reference. The active user
+    instruction is the authorization source. The object only prevents that
+    instruction from widening beyond the already verified tapes and fixed P1
+    compute ceilings.
+    """
+
+    schema: str
+    authorization_basis: str
+    query_tape_binding_sha256: str
+    allowed_classes: tuple[str, ...]
+    query_protocol_sha256: str
+    max_queried_label_reads: int
+    max_feature_encodings: int
+    max_static_map_calls: int
+    max_anchor_score_calls: int
+    unqueried_labels: bool = False
+    confirmation_classes: bool = False
+    masks: bool = False
+    independent_c64_rescoring: bool = False
+
+    @classmethod
+    def for_active_user_instruction(cls, verified_tapes: VerifiedQATapes
+                                    ) -> "StandingP12Authorization":
+        return cls(
+            schema="calibration.stage1a_p12_standing_authorization_context.v1",
+            authorization_basis="explicit_user_instruction_active_task",
+            query_tape_binding_sha256=verified_tapes.binding_sha256,
+            allowed_classes=P11_CLASSES,
+            query_protocol_sha256=verified_tapes.bindings[0]["query_protocol_sha256"],
+            max_queried_label_reads=MAX_QUERY_FEATURE_ENCODINGS,
+            max_feature_encodings=MAX_QUERY_FEATURE_ENCODINGS,
+            max_static_map_calls=MAX_STATIC_MAP_CALLS,
+            max_anchor_score_calls=MAX_ANCHOR_SCORE_CALLS)
+
+    def bind(self, verified_tapes: VerifiedQATapes) -> BoundedAuthorization:
+        limits = {
+            "max_queried_label_reads": MAX_QUERY_FEATURE_ENCODINGS,
+            "max_feature_encodings": MAX_QUERY_FEATURE_ENCODINGS,
+            "max_static_map_calls": MAX_STATIC_MAP_CALLS,
+            "max_anchor_score_calls": MAX_ANCHOR_SCORE_CALLS,
+        }
+        if (self.schema != "calibration.stage1a_p12_standing_authorization_context.v1" or
+                self.authorization_basis != "explicit_user_instruction_active_task" or
+                self.query_tape_binding_sha256 != verified_tapes.binding_sha256 or
+                self.allowed_classes != P11_CLASSES or
+                self.query_protocol_sha256 != verified_tapes.bindings[0]["query_protocol_sha256"] or
+                self.query_protocol_sha256 != "6f1d8cf40e5e7b2d98dcfabe5836b49c6cd57069d3c8377122dba64e3fc2da1c" or
+                self.unqueried_labels or self.confirmation_classes or self.masks or
+                self.independent_c64_rescoring):
+            raise P1Blocked("Standing P1.2 authorization is not bound to the verified frozen scope")
+        for field, maximum in limits.items():
+            value = getattr(self, field)
+            if isinstance(value, bool) or not isinstance(value, int) or value != maximum:
+                raise P1Blocked(f"Standing P1.2 authorization changed the frozen quota: {field}")
+        # These identifiers are internal budget labels only. No JSON approval
+        # artifact is constructed or persisted as an approval record.
+        context_id = "standing-user-instruction:p12:" + self.query_tape_binding_sha256
+        return BoundedAuthorization(
+            context_id, context_id + ":queried-feedback", self.allowed_classes,
+            self.query_protocol_sha256, self.max_queried_label_reads,
+            self.max_feature_encodings, self.max_static_map_calls,
+            self.max_anchor_score_calls)
 
 
 def verify_qats_objects(frozen: Mapping[str, Any], tape_archive: Mapping[str, Any], *,
@@ -325,20 +396,35 @@ def make_p11_authorization_templates(*, authorization_id: str,
 
 
 class P11ProductionReplayRunner:
-    """Authorization/tape-gated front door to the P1 exact event runner."""
+    """Tape-gated front door to P1 using records or standing P1.2 authority."""
 
     def __init__(self, native_authorization: Mapping[str, Any] | None,
                  feedback_authorization: Mapping[str, Any] | None,
-                 verified_tapes: VerifiedQATapes, **runner_kwargs: Any):
+                 verified_tapes: VerifiedQATapes, *,
+                 standing_authorization: StandingP12Authorization | None = None,
+                 **runner_kwargs: Any):
         self.verified_tapes = verified_tapes
-        self.authorization = validate_p11_authorizations(
-            native_authorization, feedback_authorization, verified_tapes)
-        native_legacy = dict(native_authorization or {})
-        native_legacy["schema"] = AUTHORIZATION_SCHEMA
-        feedback_legacy = dict(feedback_authorization or {})
-        feedback_legacy["schema"] = QUERY_FEEDBACK_AUTHORIZATION_SCHEMA
-        self.runner = P1NativeReplayRunner(native_legacy, feedback_legacy,
-                                           **runner_kwargs)
+        if "authorization" in runner_kwargs:
+            raise P1Blocked("P1 authorization must be established by this tape-bound production wrapper")
+        if standing_authorization is not None:
+            if native_authorization is not None or feedback_authorization is not None:
+                raise P1Blocked("Standing P1.2 authorization cannot be mixed with approval records")
+            self.authorization = standing_authorization.bind(verified_tapes)
+            self.runner = P1NativeReplayRunner(
+                None, None, authorization=self.authorization,
+                _standing_p12_context_token=_P12_STANDING_CONTEXT_TOKEN,
+                **runner_kwargs)
+            self.authorization_mode = "standing_user_instruction"
+        else:
+            self.authorization = validate_p11_authorizations(
+                native_authorization, feedback_authorization, verified_tapes)
+            native_legacy = dict(native_authorization or {})
+            native_legacy["schema"] = AUTHORIZATION_SCHEMA
+            feedback_legacy = dict(feedback_authorization or {})
+            feedback_legacy["schema"] = QUERY_FEEDBACK_AUTHORIZATION_SCHEMA
+            self.runner = P1NativeReplayRunner(native_legacy, feedback_legacy,
+                                               **runner_kwargs)
+            self.authorization_mode = "two_record"
         self.queried_labels = QueriedLabelCache(
             self.runner.budget,
             {name: verified_tapes.positions(name) for name in P11_CLASSES})

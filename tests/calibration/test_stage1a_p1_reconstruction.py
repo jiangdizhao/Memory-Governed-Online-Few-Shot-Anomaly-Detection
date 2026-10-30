@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from experiments.calibration.stage1a_p1_reconstruction import (
-    AUTHORIZATION_SCHEMA, BoundedAuthorization, C64Identity, ComputeBudget,
+    AUTHORIZATION_SCHEMA, P1_CLASSES, P1_PROTOCOL_SHA256,
+    BoundedAuthorization, C64Identity, ComputeBudget,
     FeatureCache, FeatureKey, MemoryIdentity, P1Blocked, P1ComputeLimitExceeded,
     P1NativeReplayRunner, P1ParityMismatch, QueryAnchor, QueriedLabelCache,
     NativeAnchorScoreProof, ReplayEvent, StaticMapKey, VersionedAnchorEvidenceCache,
@@ -130,6 +131,11 @@ class Stage1AP1ReconstructionTests(unittest.TestCase):
         with self.assertRaises(P1Blocked):
             BoundedAuthorization.from_records({"schema": AUTHORIZATION_SCHEMA,
                                                "decision": "PENDING_RESEARCHER_DECISION"}, None)
+        bounded = BoundedAuthorization(
+            "standing-context", "standing-context:feedback", P1_CLASSES,
+            P1_PROTOCOL_SHA256, 459, 459, 2295, 75406)
+        with self.assertRaises(P1Blocked):
+            P1NativeReplayRunner(None, None, authorization=bounded)
         self.assertEqual(touched, [])
 
     def test_query_only_exact_replay_and_checkpoint_resume(self) -> None:
