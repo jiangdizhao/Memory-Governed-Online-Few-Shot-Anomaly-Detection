@@ -4,7 +4,10 @@ from __future__ import annotations
 import copy
 import hashlib
 import math
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from experiments.calibration.protocol import EvidenceAnchor, EvidenceSnapshot, Observation, Prediction
 from experiments.calibration.profiles import canonical_json
@@ -12,6 +15,7 @@ from experiments.calibration.stage1a_final_readiness import (
     ControllerOnlyReplay, MemoryIdentity, ReadinessError, ReplayEvent,
     _method_registry, build_controller_suite, p12_row_to_evidence_snapshot,
     synthetic_metric_contract, verify_recorded_writer_transition,
+    P12_V2_REQUIRED_AUDIT_FILES, verify_p12_canonical_audit_linkage,
 )
 
 
@@ -114,6 +118,56 @@ def event(t: int, *, queried=False, label=None, before=None, after=None,
 
 
 class Stage1AFinalReadinessTests(unittest.TestCase):
+    def test_p12_v2_complete_canonical_lf_inventory_and_legacy_raw_caveat(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            files = {}
+            for name in P12_V2_REQUIRED_AUDIT_FILES:
+                # A canonical LF manifest also accepts a CRLF checkout.
+                text = "# verified audit\\n" if name.endswith(".md") else "verified\\n"
+                if name in ("STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT.md",
+                            "STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT_FINAL.md"):
+                    text = text.replace("\\n", "\n")
+                    (root / name).write_bytes(text.replace("\n", "\r\n").encode("utf-8"))
+                else:
+                    text = text.replace("\\n", "\n")
+                    (root / name).write_bytes(text.encode("utf-8"))
+                payload = text.encode("utf-8")
+                files[name] = {"hash_mode": "canonical_lf_text", "sha256":
+                               hashlib.sha256(payload).hexdigest(),
+                               "size_bytes": len(payload)}
+            (root / "checksums_final.json").write_text(json.dumps({
+                "files": {"STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT_FINAL.md": {
+                    "sha256": h("missing original raw bytes")}}}), encoding="utf-8")
+            (root / "checksums_final_v2.json").write_text(json.dumps({
+                "schema": "stage1a.p12_low_memory_recovery_audit_checksums.v2",
+                "file_count": 17, "self_excluded_manifest": "checksums_final_v2.json",
+                "normalization": "Decode as UTF-8; replace CRLF and bare CR with LF.",
+                "files": files}), encoding="utf-8")
+            complete = {"final_audit_report_sha256": h("unrecovered raw report")}
+            passed = verify_p12_canonical_audit_linkage(root, complete)
+            self.assertEqual(passed["status"], "PASS_CANONICAL_LF_V2_COMPLETE")
+            self.assertEqual(passed["verified_file_count"], 17)
+            self.assertTrue(passed["legacy_raw_byte_discrepancies"])
+            self.assertEqual(passed["historical_g2_status"], "BLOCKED_UNCHANGED")
+            # Real semantic modification must fail closed, unlike newline changes.
+            report = root / "STAGE1A_P12_LOW_MEMORY_RECOVERY_REPORT_FINAL.md"
+            report.write_text("tampered content\\n", encoding="utf-8")
+            with self.assertRaisesRegex(ReadinessError, "checksum differs"):
+                verify_p12_canonical_audit_linkage(root, complete)
+            # Deleting an inventory entry may not produce a false PASS.
+            v2 = root / "checksums_final_v2.json"
+            broken = json.loads(v2.read_text(encoding="utf-8"))
+            broken["files"].pop("source_provenance.json")
+            v2.write_text(json.dumps(broken), encoding="utf-8")
+            with self.assertRaisesRegex(ReadinessError, "schema/inventory differs"):
+                verify_p12_canonical_audit_linkage(root, complete)
+            broken["files"] = files
+            broken["schema"] = "unknown.v3"
+            v2.write_text(json.dumps(broken), encoding="utf-8")
+            with self.assertRaisesRegex(ReadinessError, "schema/inventory differs"):
+                verify_p12_canonical_audit_linkage(root, complete)
+
     def test_historical_writer_record_schema_and_transition_are_checked(self):
         mem = memory()
         record = {

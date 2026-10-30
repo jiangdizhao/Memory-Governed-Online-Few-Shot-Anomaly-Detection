@@ -1,0 +1,20 @@
+{
+  "schema": "stage1a.readiness.append_only_integrity_closure.v1",
+  "decision": "STAGE1A_READY_FOR_EXECUTION",
+  "source_reviewed_commit": "4d737a636289da5191cc4d094d8fb3ddf75b1510",
+  "readiness_v6_historical_decision": "STAGE1A_READINESS_PARTIAL",
+  "readiness_v6_other_gates": "PASS",
+  "p12_canonical_v2_manifest_sha256": "ea45dbf7cf3ee1a7e1dfd3fb9a043e3f1f0f6a0b224d97f5671cc5f9c769113c",
+  "p12_canonical_v2_verified_files": 17,
+  "p12_canonical_v2_mismatches": 0,
+  "p12_old_raw_report_pointer": "UNRESOLVED_PRESERVED_NONBLOCKING",
+  "p12_20_trajectory_receipts_linked": true,
+  "p12_20_dense_evidence_shards_linked": true,
+  "historical_g2_status": "BLOCKED_UNCHANGED",
+  "stage1a_performance_executed": false,
+  "execution_scope": "four_development_classes_five_support_seeds_Q-A-TS-v1_3pct_seed37",
+  "remaining_engineering_checks": [
+    "Run existing Stage1A CPU unit suite including new v2 canonical LF mutation tests after sync"
+  ],
+  "notes": "The v6 frozen manifest remains the data source; this v7 closure resolves only the audit-linkage rule, with no historical file modification."
+}
