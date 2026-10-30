@@ -1,0 +1,11 @@
+{
+  "command": "python -m unittest discover -s tests/calibration -p \"test_stage1a*.py\"",
+  "errors": 0,
+  "failures": 0,
+  "git_diff_check": "PASS",
+  "py_compile": "PASS",
+  "python": "D:\\anaconda3\\envs\\torch\\python.exe",
+  "result": "PASS",
+  "status": "Checks completed before P1.2 real Native replay",
+  "tests_run": 50
+}

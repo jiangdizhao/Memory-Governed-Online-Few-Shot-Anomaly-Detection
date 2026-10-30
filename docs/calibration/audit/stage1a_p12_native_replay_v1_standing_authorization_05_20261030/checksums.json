@@ -1,0 +1,15 @@
+{
+  "algorithm": "SHA-256",
+  "files": {
+    "STAGE1A_P12_NATIVE_REPLAY_REPORT.md": "865e8b674e7490d099c84bcb154dc50a101f1235ebe8e740644bae9c724aa850",
+    "checkpoint_resume_verification.json": "e5e882088aef06fa02781d7ad1d528741191ec9b54c1233601d9482a82485bff",
+    "compute_accounting.json": "3b59071d89417d618225021a098c32a9ac621286cc60b16c47ecc5d9a897ac9a",
+    "dense_anchor_evidence_manifest.json": "92867811a41417baa7f6cca3c6f5739d49852ecea67fdce116ee9c2b370f3675",
+    "exact_native_memory_parity.json": "29457e46651465b8114c0064c31100059fc5b2269953e2e3de1f59d5730498fc",
+    "p12_gate_matrix.json": "b0a0840b0ac9592a20edba0ec9636d67a34e183d2a4c328821a924aad5b4fec9",
+    "query_feedback_provenance.json": "6d65faddac36420770396acacc3f13669b514da69d1102f7f806d61273a9b595",
+    "source_provenance.json": "0517348faab639b6096045721b514b3302b2d40d07b7d21e538776466ad0a635",
+    "test_results.json": "bc49403ae8ac9342a0d7e29bf43a7480df0a11840b7925a8e609b229e6195053"
+  },
+  "schema": "stage1a.p12_partial_checksums.v1"
+}

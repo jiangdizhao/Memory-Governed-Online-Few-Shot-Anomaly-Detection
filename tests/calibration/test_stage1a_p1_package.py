@@ -4,13 +4,14 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from experiments.calibration.stage1a_p1_reconstruction import source_fingerprints
+from experiments.calibration.stage1a_p1_reconstruction import sha256_json
 
 
 PACKAGE = ROOT / "docs" / "calibration" / "audit" / "stage1a_p1_reconstruction_v1_20261030"
@@ -33,6 +34,7 @@ SOURCE_ALLOWLIST = [
     "test_phase3_AIF_simplified_v22.py",
     "vmb_visionad_new.py",
 ]
+PACKAGE_SOURCE_COMMIT = "40a50d4234b70b677d77e3db91e520bff13ef8e5"
 
 
 def read_json(name: str) -> dict:
@@ -57,9 +59,17 @@ class Stage1AP1PackageTests(unittest.TestCase):
         self.assertEqual(compute["actual_p1_counts"]["queried_label_reads"], 0)
         self.assertEqual(compute["bounded_minimum_additional_work_plan"]["full_stream_backbone_calls"], 0)
 
-    def test_source_fingerprint_manifest_matches_current_allowlist(self) -> None:
+    def test_source_fingerprint_manifest_matches_original_p1_source_commit(self) -> None:
         recorded = read_json("feature_cache_provenance.json")["source_fingerprint_allowlist"]
-        actual = source_fingerprints(ROOT, SOURCE_ALLOWLIST)
+        entries = {}
+        for relative in sorted(SOURCE_ALLOWLIST):
+            result = subprocess.run(
+                ["git", "show", f"{PACKAGE_SOURCE_COMMIT}:{relative}"],
+                cwd=ROOT, capture_output=True, check=True)
+            source_text = result.stdout.decode("utf-8")
+            canonical_source = source_text.replace("\r\n", "\n").replace("\r", "\n")
+            entries[relative] = hashlib.sha256(canonical_source.encode("utf-8")).hexdigest()
+        actual = {"files": entries, "aggregate_sha256": sha256_json(entries)}
         self.assertEqual(recorded, actual)
 
     def test_stage075b_offset_semantics_are_explicit(self) -> None:

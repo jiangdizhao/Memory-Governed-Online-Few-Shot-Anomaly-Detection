@@ -1,0 +1,33 @@
+{
+  "confirmation_classes_or_masks_accessed": false,
+  "final_query_allowlist_and_compute_ceiling_reconciliation": "NOT_COMPLETED",
+  "frozen_ceilings": {
+    "anchor_score_calls": 75406,
+    "feature_encodings": 459,
+    "queried_label_reads": 459,
+    "static_map_calls": 2295
+  },
+  "last_durable_counters": {
+    "anchor_score_calls": 60631,
+    "authorization": {
+      "allowed_classes": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "authorization_id": "standing-user-instruction:p12:dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+      "max_anchor_score_calls": 75406,
+      "max_feature_encodings": 459,
+      "max_queried_label_reads": 459,
+      "max_static_map_calls": 2295,
+      "query_feedback_authorization_id": "standing-user-instruction:p12:dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183:queried-feedback",
+      "query_protocol_sha256": "6f1d8cf40e5e7b2d98dcfabe5836b49c6cd57069d3c8377122dba64e3fc2da1c"
+    },
+    "feature_encodings": 345,
+    "queried_label_reads": 345,
+    "static_map_calls": 1725
+  },
+  "persisted_counters_are_final": false,
+  "status": "PARTIAL_LAST_DURABLE_SNAPSHOT_ONLY"
+}

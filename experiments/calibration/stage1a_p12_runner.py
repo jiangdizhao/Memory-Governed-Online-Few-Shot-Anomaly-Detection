@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import pickle
+import re
 import subprocess
 import sys
 import tempfile
@@ -256,7 +257,7 @@ def _assess_scoped_source_reconstruction(source_linkage: Mapping[str, Any]) -> d
         return {"execution_allowed": False, "status": "BLOCKED_INVALID_SOURCE_INVENTORY",
                 "historical_source_bytes_recovered": False, "exception_files": []}
     exceptions: list[dict[str, str]] = []
-    failed: list[str] = []
+    failed: list[str] = sorted(set(P12_MISSING_HISTORICAL_STAGE05_SOURCE) - set(entries))
     for name, row in sorted(entries.items()):
         if not isinstance(row, Mapping):
             failed.append(name)
@@ -290,6 +291,18 @@ def _assess_scoped_source_reconstruction(source_linkage: Mapping[str, Any]) -> d
         "required_validation": (
             "Existing exact event M0 score, writer, pre/post memory SHA, "
             "all-layer LSO, and C64 transport parity remain mandatory."),
+    }
+
+
+def _locked_native_config_identity() -> dict[str, Any]:
+    """Bind the historical scientific-profile digest and its scorer sub-config."""
+    if DEFAULT_PROFILE.scientific_sha256 != SCORER_CONFIG_SHA256:
+        raise P12RunnerError("Current frozen scientific Native Scorer identity changed")
+    return {
+        "scorer_config_sha256": SCORER_CONFIG_SHA256,
+        "scientific_profile_sha256": DEFAULT_PROFILE.scientific_sha256,
+        "native_scorer_dataclass_sha256": DEFAULT_PROFILE.scorer.sha256,
+        "scorer_config": asdict(DEFAULT_PROFILE.scorer),
     }
 
 
@@ -330,11 +343,9 @@ def _verify_native_source_identity(protocol: Mapping[str, Any], stage05_scores: 
             + canonical_json({"historical_linkage": source_linkage,
                               "execution_assessment": scoped_reconstruction}))
     current, _aggregate, scorer_sha = _current_source_identity()
-    if DEFAULT_PROFILE.scorer.sha256 != SCORER_CONFIG_SHA256:
-        raise P12RunnerError("Current immutable Native Scorer configuration digest changed")
+    locked_config = _locked_native_config_identity()
     return {"source_fingerprints": current,
-            "scorer_config": asdict(DEFAULT_PROFILE.scorer),
-            "scorer_config_sha256": DEFAULT_PROFILE.scorer.sha256,
+            **locked_config,
             "scorer_source_sha256": scorer_sha,
             "frozen_native_source_sha256": dict(frozen_native),
             "stage05_native_source_sha256": dict(score_native),
@@ -439,7 +450,7 @@ def _write_blocked_audit(output: Path, audit: Path, error: Exception,
     })
     _atomic_json(audit / "native_scorer_identity.json", {
         "status": "BLOCKED_SOURCE_PROVENANCE",
-        "scorer_config_sha256": DEFAULT_PROFILE.scorer.sha256,
+        **_locked_native_config_identity(),
         "historical_native_source_linkage": source_linkage,
         "historical_c64_artifact_linkage": c64_linkage,
         "native_scorer_initialized": False,
@@ -1014,6 +1025,7 @@ class P12ReusableNativeScoreService:
         score, score_map = self._bridge.native_score(
             self._service.impl, self._bank, image, features, self._service.p0_config)
         state = {"memory": memory.sha256(), "scorer": self._service.config.sha256,
+                 "scientific_profile": SCORER_CONFIG_SHA256,
                  "fixed_support": self._service.fixed_support_sha256,
                  "kind": "raw_native_score_bank"}
         self.calls += 1
@@ -1344,6 +1356,30 @@ def _verify_environment(dataset_root: Path, json_root: Path,
             "dinov2_source_tree_sha256": tree_sha}
 
 
+def _verify_stage05_label_isolation(frozen: Mapping[str, Any],
+                                   run_manifest: Mapping[str, Any],
+                                   score_manifest: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate score-tape isolation without opening offline outcome artifacts."""
+    if (frozen.get("test_labels_accessed") is not False or
+            frozen.get("test_masks_accessed") is not False or
+            run_manifest.get("stage1_or_stage2_run") is not False or
+            run_manifest.get("test_masks_opened") is not False or
+            score_manifest.get("controller_or_test_label_access") is not False):
+        raise P12RunnerError(
+            "Stage 0.5 frozen/score metadata does not establish label-free score tapes "
+            "and test-mask isolation")
+    return {
+        "frozen_test_labels_accessed": frozen["test_labels_accessed"],
+        "frozen_test_masks_accessed": frozen["test_masks_accessed"],
+        "score_tape_controller_or_test_label_access":
+            score_manifest["controller_or_test_label_access"],
+        "stage05_run_manifest_test_labels_exposed": run_manifest.get("test_labels_exposed"),
+        "stage05_run_manifest_test_masks_opened": run_manifest["test_masks_opened"],
+        "prior_offline_outcome_artifacts_opened_by_p12": False,
+        "p12_label_access_policy": "only current verified Q-A-TS positions, disclosed causally",
+    }
+
+
 def _run_all(output: Path, audit: Path, dataset_root: Path,
              json_root: Path, chunk_size: int) -> dict[str, Any]:
     """Execute Phase A, then the 20 bounded parity/evidence trajectories."""
@@ -1367,10 +1403,8 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
             frozen["classes"][category]["stream_images"] != stage05.EXPECTED_STREAM_LENGTHS[category]
             for category in P11_CLASSES):
         raise P12RunnerError("Frozen development class registry or stream lengths changed")
-    if (frozen.get("test_labels_accessed") is not False or
-            frozen.get("test_masks_accessed") is not False or
-            stage05_run.get("test_masks_accessed") is not False):
-        raise P12RunnerError("Stage 0.5 frozen metadata does not prove test-label/mask isolation")
+    stage05_label_isolation = _verify_stage05_label_isolation(
+        frozen, stage05_run, stage05_scores)
 
     output.mkdir(parents=True, exist_ok=False)
     audit.mkdir(parents=True, exist_ok=False)
@@ -1387,6 +1421,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
         "historical_replay_artifacts": historical,
         "historical_c64_linkage": c64_linkage,
         "native_execution_provenance": native_identity,
+        "stage05_label_isolation": stage05_label_isolation,
         "environment": environment,
         "standing_authorization_context": "explicit_user_instruction_active_task",
         "approval_record_created": False,
@@ -1491,7 +1526,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
         tapes=tapes, frozen=frozen, dataset_root=dataset_root,
         label_reader=label_reader(first_category), image_digest_cache=image_digest_cache,
         source_fingerprint=source_fingerprint,
-        scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+        scorer_config_sha256=SCORER_CONFIG_SHA256,
         scorer_source_sha256=scorer_source,
         encoder_fingerprint=encoder_fingerprint,
         preprocessing_fingerprint=preprocessing_fingerprint,
@@ -1499,7 +1534,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
     first_private = _capture_checkpoint(
         result=partial_result, production_runner=production_runner,
         writer=writer, trajectory_id=trajectory_id, category=first_category,
-        scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+        scorer_config_sha256=SCORER_CONFIG_SHA256,
         scorer_source_sha256=scorer_source,
         evidence_adapter=callbacks["evidence_adapter"],
         evidence_cache=callbacks["evidence_cache"])
@@ -1530,12 +1565,12 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
         preprocessing_fingerprint=preprocessing_fingerprint,
         c64_states=c64_states,
         private_evidence_path=output / "private" / "evidence" / "audiojack_seed0.jsonl",
-        scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+        scorer_config_sha256=SCORER_CONFIG_SHA256,
         scorer_source_sha256=scorer_source,
         budget=production_runner.runner.budget)
     restored.restore(
         production_runner=production_runner, writer=resumed_writer,
-        scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+        scorer_config_sha256=SCORER_CONFIG_SHA256,
         scorer_source_sha256=scorer_source,
         evidence_cache=resumed_callbacks["evidence_cache"],
         causal_evidence_adapter=resumed_callbacks["evidence_adapter"])
@@ -1580,7 +1615,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
     phase_a_final_checkpoint = _capture_checkpoint(
         result=phase_a_result, production_runner=production_runner,
         writer=resumed_writer, trajectory_id=trajectory_id, category=first_category,
-        scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+        scorer_config_sha256=SCORER_CONFIG_SHA256,
         scorer_source_sha256=scorer_source,
         evidence_adapter=resumed_callbacks["evidence_adapter"],
         evidence_cache=resumed_callbacks["evidence_cache"])
@@ -1618,7 +1653,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
     final_checkpoint = _capture_checkpoint(
         result=full_result, production_runner=production_runner,
         writer=resumed_writer, trajectory_id=trajectory_id, category=first_category,
-        scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+        scorer_config_sha256=SCORER_CONFIG_SHA256,
         scorer_source_sha256=scorer_source,
         evidence_adapter=resumed_callbacks["evidence_adapter"],
         evidence_cache=resumed_callbacks["evidence_cache"])
@@ -1646,7 +1681,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
                 label_reader=label_reader(category),
                 image_digest_cache=image_digest_cache,
                 source_fingerprint=source_fingerprint,
-                scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+                scorer_config_sha256=SCORER_CONFIG_SHA256,
                 scorer_source_sha256=scorer_source,
                 encoder_fingerprint=encoder_fingerprint,
                 preprocessing_fingerprint=preprocessing_fingerprint,
@@ -1673,7 +1708,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
             final_checkpoint = _capture_checkpoint(
                 result=result, production_runner=production_runner,
                 writer=writer, trajectory_id=trajectory_id, category=category,
-                scorer_config_sha256=DEFAULT_PROFILE.scorer.sha256,
+                scorer_config_sha256=SCORER_CONFIG_SHA256,
                 scorer_source_sha256=scorer_source,
                 evidence_adapter=callbacks["evidence_adapter"],
                 evidence_cache=callbacks["evidence_cache"])
@@ -1810,7 +1845,8 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
         "anchor_score_path": "P1.2 reusable exact Native clone -> native_bridge.native_score",
         "native_scorer_initialized": True,
         "greedy_writer_source": "unchanged SharedNativeGreedyWriter",
-        "config_sha256": DEFAULT_PROFILE.scorer.sha256,
+        "config_sha256": SCORER_CONFIG_SHA256,
+        "native_scorer_dataclass_sha256": DEFAULT_PROFILE.scorer.sha256,
     }
     audit_payloads = {
         "exact_native_memory_parity.json": exact_parity,

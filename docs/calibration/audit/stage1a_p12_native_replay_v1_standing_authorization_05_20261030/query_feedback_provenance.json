@@ -1,0 +1,12 @@
+{
+  "allowed_positions_total": 459,
+  "authorization_basis": "explicit standing authorization in active user instruction",
+  "final_queried_label_read_count": "UNVERIFIED_AFTER_RUNTIME_STOP",
+  "frozen_query_rate": 0.03,
+  "last_durable_queried_label_counter": 345,
+  "mint_pcb_masks_confirmation_access": false,
+  "query_seed": 37,
+  "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+  "query_tape_verification": "PASS",
+  "unqueried_labels_permitted": false
+}

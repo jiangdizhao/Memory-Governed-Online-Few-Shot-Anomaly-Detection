@@ -9,6 +9,13 @@ from experiments.calibration import stage1a_p12_runner as p12
 
 
 class Stage1AP12SourceBindingTests(unittest.TestCase):
+    def test_locked_native_config_uses_frozen_scientific_profile_digest(self):
+        identity = p12._locked_native_config_identity()
+        self.assertEqual(identity["scorer_config_sha256"], p12.SCORER_CONFIG_SHA256)
+        self.assertEqual(identity["scientific_profile_sha256"], p12.SCORER_CONFIG_SHA256)
+        self.assertEqual(identity["native_scorer_dataclass_sha256"],
+                         p12.DEFAULT_PROFILE.scorer.sha256)
+
     def test_source_binding_requires_protocol_score_manifest_and_current_match(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -72,6 +79,8 @@ class Stage1AP12SourceBindingTests(unittest.TestCase):
             ("experiments/calibration/stage05.py",
              "current_source_sha256", same),
             ("experiments/calibration/stage05_runner.py",
+             "current_source_sha256", same),
+            ("experiments/calibration/stage05_runner.py",
              "stage075a_protocol_sha256", same),
             ("experiments/calibration/stage05.py",
              "stage05_score_manifest_sha256", same),
@@ -94,16 +103,31 @@ class Stage1AP12SourceBindingTests(unittest.TestCase):
         self.assertFalse(denied["execution_allowed"])
         self.assertIn("new_source.py", denied["unapproved_mismatch_files"])
 
+        missing = {name: dict(row) for name, row in rows.items()}
+        del missing["experiments/calibration/stage05_runner.py"]
+        missing_result = p12._assess_scoped_source_reconstruction(
+            {"status": "BLOCKED_SOURCE_LINKAGE_MISMATCH", "files": missing})
+        self.assertFalse(missing_result["execution_allowed"])
+        self.assertIn("experiments/calibration/stage05_runner.py",
+                      missing_result["unapproved_mismatch_files"])
+
     def test_exact_sources_remain_exact_without_exception(self):
         value = hashlib.sha256(b"unchanged").hexdigest()
-        assessed = p12._assess_scoped_source_reconstruction({
-            "status": "PASS_EXACT_SOURCE_LINKAGE",
-            "all_sources_match": True,
-            "files": {"native.py": {
+        rows = {"native.py": {
+            "stage075a_protocol_sha256": value,
+            "stage05_score_manifest_sha256": value,
+            "current_source_sha256": value,
+        }}
+        for name in p12.P12_MISSING_HISTORICAL_STAGE05_SOURCE:
+            rows[name] = {
                 "stage075a_protocol_sha256": value,
                 "stage05_score_manifest_sha256": value,
                 "current_source_sha256": value,
-            }},
+            }
+        assessed = p12._assess_scoped_source_reconstruction({
+            "status": "PASS_EXACT_SOURCE_LINKAGE",
+            "all_sources_match": True,
+            "files": rows,
         })
         self.assertEqual(assessed["status"], "PASS_EXACT_SOURCE_LINKAGE")
         self.assertTrue(assessed["historical_source_bytes_recovered"])
@@ -115,6 +139,45 @@ class Stage1AP12SourceBindingTests(unittest.TestCase):
                 {"missing.py": "a" * 64}, {"missing.py": "a" * 64}, Path(temporary))
             self.assertEqual(report["status"], "BLOCKED_SOURCE_LINKAGE_MISMATCH")
             self.assertIsNone(report["files"]["missing.py"]["current_source_sha256"])
+
+
+class Stage1AP12LabelIsolationTests(unittest.TestCase):
+    def setUp(self):
+        self.frozen = {"test_labels_accessed": False, "test_masks_accessed": False}
+        self.run_manifest = {
+            "stage1_or_stage2_run": False,
+            "test_labels_exposed": True,
+            "test_masks_opened": False,
+        }
+        self.score_manifest = {"controller_or_test_label_access": False}
+
+    def test_offline_stage05_outcome_exposure_does_not_invalidate_score_tapes(self):
+        evidence = p12._verify_stage05_label_isolation(
+            self.frozen, self.run_manifest, self.score_manifest)
+        self.assertTrue(evidence["stage05_run_manifest_test_labels_exposed"])
+        self.assertFalse(evidence["prior_offline_outcome_artifacts_opened_by_p12"])
+        self.assertEqual(
+            evidence["p12_label_access_policy"],
+            "only current verified Q-A-TS positions, disclosed causally")
+
+    def test_test_masks_opened_fails_closed(self):
+        manifest = dict(self.run_manifest, test_masks_opened=True)
+        with self.assertRaisesRegex(p12.P12RunnerError, "test-mask isolation"):
+            p12._verify_stage05_label_isolation(
+                self.frozen, manifest, self.score_manifest)
+
+    def test_score_tape_controller_label_access_fails_closed(self):
+        score_manifest = {"controller_or_test_label_access": True}
+        with self.assertRaisesRegex(p12.P12RunnerError, "label-free score tapes"):
+            p12._verify_stage05_label_isolation(
+                self.frozen, self.run_manifest, score_manifest)
+
+    def test_missing_isolation_evidence_fails_closed(self):
+        frozen = dict(self.frozen)
+        del frozen["test_labels_accessed"]
+        with self.assertRaises(p12.P12RunnerError):
+            p12._verify_stage05_label_isolation(
+                frozen, self.run_manifest, self.score_manifest)
 
 
 if __name__ == "__main__":

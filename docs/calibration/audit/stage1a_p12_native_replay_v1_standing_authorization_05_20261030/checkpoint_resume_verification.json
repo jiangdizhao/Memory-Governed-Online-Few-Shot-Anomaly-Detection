@@ -1,0 +1,11 @@
+{
+  "audiojack_seed0_phase_a_smoke_checkpoint_resume": "PASS_AND_CONTINUED",
+  "latest_durable_checkpoint": {
+    "bytes": 7359652922,
+    "present": true,
+    "private_not_committed": true
+  },
+  "private_checkpoint_included_in_git": false,
+  "remaining_checkpoint_resume_checks": "NOT_COMPLETED",
+  "status": "PARTIAL_NOT_FINALIZED"
+}

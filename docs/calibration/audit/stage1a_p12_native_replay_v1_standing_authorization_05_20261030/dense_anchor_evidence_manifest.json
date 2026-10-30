@@ -1,0 +1,24 @@
+{
+  "aggregate_snapshot_count": null,
+  "private_evidence_artifact_count": 16,
+  "private_evidence_artifact_names_only": [
+    "audiojack_seed0.jsonl",
+    "audiojack_seed1.jsonl",
+    "audiojack_seed2.jsonl",
+    "audiojack_seed3.jsonl",
+    "audiojack_seed4.jsonl",
+    "regulator_seed0.jsonl",
+    "regulator_seed1.jsonl",
+    "regulator_seed2.jsonl",
+    "regulator_seed3.jsonl",
+    "regulator_seed4.jsonl",
+    "rolled_strip_base_seed0.jsonl",
+    "switch_seed0.jsonl",
+    "switch_seed1.jsonl",
+    "switch_seed2.jsonl",
+    "switch_seed3.jsonl",
+    "switch_seed4.jsonl"
+  ],
+  "reason": "The run stopped before all 20 trajectories and final evidence/completeness checks.",
+  "status": "PARTIAL_NOT_FINALIZED"
+}

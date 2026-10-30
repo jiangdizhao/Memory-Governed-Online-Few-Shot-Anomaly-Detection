@@ -1,0 +1,22 @@
+{
+  "additional_cli_observed_exact_pass": {
+    "durable_checkpoint_and_progress_update": false,
+    "events": 3805,
+    "evidence_basis": "runner CLI output observed during this execution",
+    "reported_status": "PASS_EXACT_PARITY",
+    "trajectory_id": "rolled_strip_base/seed0/Q-A-TS-v1-3pct-seed37"
+  },
+  "durable_private_trace_artifact_count": 0,
+  "durably_completed_trajectories": 15,
+  "exact_event_parity_all_20": "NOT_ESTABLISHED",
+  "four_remaining_trajectories_not_started": [
+    "rolled_strip_base/seed1",
+    "rolled_strip_base/seed2",
+    "rolled_strip_base/seed3",
+    "rolled_strip_base/seed4"
+  ],
+  "last_durable_trajectory": "switch/seed4/Q-A-TS-v1-3pct-seed37",
+  "private_trace_artifact_names_only": [],
+  "status": "PARTIAL_EXACT_PARITY",
+  "total_trajectories": 20
+}

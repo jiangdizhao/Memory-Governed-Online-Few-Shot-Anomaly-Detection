@@ -1,0 +1,95 @@
+{
+  "branch": "calibration-stage0-contract-20261029",
+  "decision": "P12_PARTIAL_RECONSTRUCTION",
+  "gates": [
+    {
+      "evidence": "preflight_manifest.json",
+      "id": "P12-PREFLIGHT",
+      "status": "PASS"
+    },
+    {
+      "evidence": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+      "id": "P12-QUERY-TAPE",
+      "status": "PASS_QA_TS_V1_3PCT_SEED37"
+    },
+    {
+      "historical_source_byte_parity": "UNRESOLVED; no historical source bytes recovered",
+      "id": "P12-SOURCE-PROVENANCE",
+      "status": "PASS_SCOPED_CURRENT_SOURCE_RECONSTRUCTION"
+    },
+    {
+      "id": "P12-HISTORICAL-C64-LINKAGE",
+      "independent_native_rescoring": "NOT_PERFORMED",
+      "status": "PASS_HISTORICAL_ARTIFACT_LINKAGE_ONLY"
+    },
+    {
+      "id": "P12-PHASE-A-SMOKE",
+      "status": "PASS_EXACT_PARITY",
+      "trajectory": "audiojack/seed0"
+    },
+    {
+      "additional_cli_observed_exact_pass": {
+        "durable_checkpoint_and_progress_update": false,
+        "events": 3805,
+        "evidence_basis": "runner CLI output observed during this execution",
+        "reported_status": "PASS_EXACT_PARITY",
+        "trajectory_id": "rolled_strip_base/seed0/Q-A-TS-v1-3pct-seed37"
+      },
+      "durably_completed_trajectories": 15,
+      "id": "P12-EXACT-NATIVE-REPLAY",
+      "remaining_trajectories_not_started": 4,
+      "status": "PARTIAL_EXACT_PARITY"
+    },
+    {
+      "id": "P12-DENSE-ANCHOR-EVIDENCE",
+      "private_artifact_count": 16,
+      "status": "PARTIAL_NOT_FINALIZED"
+    },
+    {
+      "all_trajectory_resume_audit": "NOT_COMPLETED",
+      "audiojack_seed0_smoke_resume": "PASS",
+      "id": "P12-CHECKPOINT-RESUME",
+      "status": "PARTIAL_NOT_FINALIZED"
+    },
+    {
+      "id": "P12-COMPUTE-ACCOUNTING",
+      "last_durable_snapshot_only": {
+        "anchor_score_calls": 60631,
+        "authorization": {
+          "allowed_classes": [
+            "audiojack",
+            "regulator",
+            "switch",
+            "rolled_strip_base"
+          ],
+          "authorization_id": "standing-user-instruction:p12:dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+          "max_anchor_score_calls": 75406,
+          "max_feature_encodings": 459,
+          "max_queried_label_reads": 459,
+          "max_static_map_calls": 2295,
+          "query_feedback_authorization_id": "standing-user-instruction:p12:dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183:queried-feedback",
+          "query_protocol_sha256": "6f1d8cf40e5e7b2d98dcfabe5836b49c6cd57069d3c8377122dba64e3fc2da1c"
+        },
+        "feature_encodings": 345,
+        "queried_label_reads": 345,
+        "static_map_calls": 1725
+      },
+      "status": "BLOCKED_FINAL_RECONCILIATION"
+    },
+    {
+      "id": "P12-STAGE1A-PERFORMANCE",
+      "status": "NOT_RUN_PROHIBITED"
+    },
+    {
+      "id": "P12-CONFIRMATION-AND-MASK-ISOLATION",
+      "status": "PASS_NO_ACCESS"
+    },
+    {
+      "id": "P12-HISTORICAL-G2",
+      "status": "BLOCKED_UNCHANGED"
+    }
+  ],
+  "head": "7ffcb9c30d7822d420e0d9e9d16a88a46247af12",
+  "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+  "schema": "stage1a.p12_gate_matrix.partial.v1"
+}
