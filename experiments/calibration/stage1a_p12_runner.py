@@ -230,6 +230,69 @@ def _source_binding_report(protocol_sources: Mapping[str, str],
             "all_sources_match": all_match, "files": entries}
 
 
+# Exact, immutable exception for TWO missing pre-Git Stage 0.5 source snapshots.
+# This is not a claim that the historical executed bytes were recovered.
+# A third mismatch or a change to either pinned current file must fail closed.
+P12_MISSING_HISTORICAL_STAGE05_SOURCE = {
+    "experiments/calibration/stage05.py": {
+        "frozen_sha256": "af1ef435addfe2f08cb2e40a1d141b617fb15c852ed469c8aa7062663ccf8626",
+        "current_sha256": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+    },
+    "experiments/calibration/stage05_runner.py": {
+        "frozen_sha256": "1e40d9c5e48c252eef3d96686d2a315c4a87f1f325130a6c2961f7cc41cafaea",
+        "current_sha256": "1d110e1ca813a064767ebeab597b609b3d863f8afd4c8085b06948ad88347e14",
+    },
+}
+
+
+def _assess_scoped_source_reconstruction(source_linkage: Mapping[str, Any]) -> dict[str, Any]:
+    """Separately assess executable reconstruction, NEVER historical byte parity.
+
+    Only the exact two pre-Git Stage 0.5 file identities are excepted.
+    All other files still require the full three-way source hash match.
+    """
+    entries = source_linkage.get("files", {})
+    if not isinstance(entries, Mapping) or not entries:
+        return {"execution_allowed": False, "status": "BLOCKED_INVALID_SOURCE_INVENTORY",
+                "historical_source_bytes_recovered": False, "exception_files": []}
+    exceptions: list[dict[str, str]] = []
+    failed: list[str] = []
+    for name, row in sorted(entries.items()):
+        if not isinstance(row, Mapping):
+            failed.append(name)
+            continue
+        old = row.get("stage075a_protocol_sha256")
+        manifest = row.get("stage05_score_manifest_sha256")
+        current = row.get("current_source_sha256")
+        if (isinstance(old, str) and old == manifest == current and
+                bool(re.fullmatch(r"[0-9a-f]{64}", old))):
+            continue
+        pinned = P12_MISSING_HISTORICAL_STAGE05_SOURCE.get(name)
+        if (pinned is None or old != pinned["frozen_sha256"] or
+                manifest != pinned["frozen_sha256"] or
+                current != pinned["current_sha256"]):
+            failed.append(name)
+            continue
+        exceptions.append({"path": name, "historical_sha256": old,
+                           "new_execution_sha256": current,
+                           "historical_byte_identity": "UNRESOLVED"})
+    all_exact = not exceptions and not failed
+    allowed = not failed
+    return {
+        "execution_allowed": allowed,
+        "status": ("PASS_EXACT_SOURCE_LINKAGE" if all_exact else
+                   "PASS_SCOPED_CURRENT_SOURCE_RECONSTRUCTION" if allowed else
+                   "BLOCKED_UNAPPROVED_SOURCE_MISMATCH"),
+        "historical_source_bytes_recovered": all_exact,
+        "original_historical_linkage_status": source_linkage.get("status"),
+        "exception_files": exceptions,
+        "unapproved_mismatch_files": failed,
+        "required_validation": (
+            "Existing exact event M0 score, writer, pre/post memory SHA, "
+            "all-layer LSO, and C64 transport parity remain mandatory."),
+    }
+
+
 def _search_reachable_source_history(source_linkage: Mapping[str, Any]) -> dict[str, Any]:
     """Check whether frozen source bytes exist in any currently reachable commit."""
     results: dict[str, Any] = {}
@@ -259,10 +322,13 @@ def _verify_native_source_identity(protocol: Mapping[str, Any], stage05_scores: 
     frozen_native = protocol.get("native_source_sha256", {})
     score_native = stage05_scores.get("scoring_source_hashes", {})
     source_linkage = _source_binding_report(frozen_native, score_native)
-    if not source_linkage["all_sources_match"]:
+    scoped_reconstruction = _assess_scoped_source_reconstruction(source_linkage)
+    if not scoped_reconstruction["execution_allowed"]:
         raise P12RunnerError(
-            "Frozen Stage 0.75-A / Stage 0.5 / current Native source identity linkage failed: "
-            + canonical_json(source_linkage))
+            "Unexpected Native source change outside the two exact pinned "
+            "historical Stage 0.5 exceptions: "
+            + canonical_json({"historical_linkage": source_linkage,
+                              "execution_assessment": scoped_reconstruction}))
     current, _aggregate, scorer_sha = _current_source_identity()
     if DEFAULT_PROFILE.scorer.sha256 != SCORER_CONFIG_SHA256:
         raise P12RunnerError("Current immutable Native Scorer configuration digest changed")
@@ -272,7 +338,10 @@ def _verify_native_source_identity(protocol: Mapping[str, Any], stage05_scores: 
             "scorer_source_sha256": scorer_sha,
             "frozen_native_source_sha256": dict(frozen_native),
             "stage05_native_source_sha256": dict(score_native),
-            "source_binding": source_linkage}
+            "source_binding": source_linkage,
+            "current_execution_source_assessment": scoped_reconstruction,
+            "historical_source_byte_parity": source_linkage["all_sources_match"],
+            "historical_source_exception_used": bool(scoped_reconstruction["exception_files"])}
 
 
 def _write_blocked_audit(output: Path, audit: Path, error: Exception,
@@ -1317,6 +1386,7 @@ def _run_all(output: Path, audit: Path, dataset_root: Path,
         "query_rate": 0.03, "query_seed": 37,
         "historical_replay_artifacts": historical,
         "historical_c64_linkage": c64_linkage,
+        "native_execution_provenance": native_identity,
         "environment": environment,
         "standing_authorization_context": "explicit_user_instruction_active_task",
         "approval_record_created": False,
