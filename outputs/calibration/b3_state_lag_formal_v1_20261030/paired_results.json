@@ -1,0 +1,3726 @@
+{
+  "interpretation": "Raw difference is left arm minus right arm; positive FPR/FNR is a cost.",
+  "scope_results": {
+    "common_horizon_t_ge_1050": {
+      "equal_class_macro": {
+        "A2-A3": {
+          "balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": 0.0003087995528998189,
+              "regulator": 0.0005676535356007095,
+              "rolled_strip_base": 0.007115847669051378,
+              "switch": 0.0031299436395498593
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0027805610992754416
+          },
+          "coverage": {
+            "class_mean_effects": {
+              "audiojack": 0.0,
+              "regulator": 0.0,
+              "rolled_strip_base": 0.0,
+              "switch": 0.0
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0
+          },
+          "defect_recall": {
+            "class_mean_effects": {
+              "audiojack": 0.0029320987654321007,
+              "regulator": 0.0017910447761193993,
+              "rolled_strip_base": 0.02178217821782178,
+              "switch": 0.007182761372705526
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.008422020783019702
+          },
+          "fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.0029320987654321007,
+              "regulator": -0.0017910447761194104,
+              "rolled_strip_base": -0.021782178217821795,
+              "switch": -0.007182761372705504
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.008422020783019702
+          },
+          "fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.0023144996596324075,
+              "regulator": 0.0006557377049180357,
+              "rolled_strip_base": 0.0075504828797190535,
+              "switch": 0.0009228740936058022
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0028608985844688246
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": 0.0009646351150703447,
+              "regulator": 0.0016467097392237617,
+              "rolled_strip_base": -0.000403974232994897,
+              "switch": 0.0030120481927710997
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0013048547035175774
+          },
+          "worst_complete_256.fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.00714285714285714,
+              "regulator": 0.0,
+              "rolled_strip_base": -0.015501305605086196,
+              "switch": -0.010843373493975905
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.00837188406047981
+          },
+          "worst_complete_256.fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.001470479230569055,
+              "regulator": 0.0,
+              "rolled_strip_base": 0.015515988372093021,
+              "switch": 0.0
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.004246616900665519
+          }
+        },
+        "A2-A4": {
+          "balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": 0.004489648202775043,
+              "regulator": 0.0020095074976405948,
+              "rolled_strip_base": 0.046676561861629565,
+              "switch": 0.018783817979893723
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.017989883885484732
+          },
+          "coverage": {
+            "class_mean_effects": {
+              "audiojack": 0.0,
+              "regulator": 0.0,
+              "rolled_strip_base": 0.0,
+              "switch": 0.0
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0
+          },
+          "defect_recall": {
+            "class_mean_effects": {
+              "audiojack": 0.019598765432098774,
+              "regulator": 0.011044776119402955,
+              "rolled_strip_base": 0.12425742574257423,
+              "switch": 0.052992817238627296
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.05197344613317581
+          },
+          "fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.019598765432098774,
+              "regulator": -0.011044776119402966,
+              "rolled_strip_base": -0.12425742574257428,
+              "switch": -0.052992817238627296
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.05197344613317583
+          },
+          "fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.010619469026548678,
+              "regulator": 0.007025761124121779,
+              "rolled_strip_base": 0.03090430201931519,
+              "switch": 0.015425181278839817
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.015993678362206366
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": 0.004683854960398115,
+              "regulator": 0.0022347066167291096,
+              "rolled_strip_base": 0.031934472959694024,
+              "switch": 0.011153765014060735
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.012501699887720496
+          },
+          "worst_complete_256.fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.01897321428571428,
+              "regulator": -0.004469413233458208,
+              "rolled_strip_base": -0.1417459713234361,
+              "switch": -0.05579696367514021
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.0552463906294372
+          },
+          "worst_complete_256.fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.003332411681391767,
+              "regulator": 0.0023137236206597217,
+              "rolled_strip_base": 0.05260820413436693,
+              "switch": 0.03352267447357403
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.022944253477498112
+          }
+        }
+      },
+      "per_class": {
+        "A2-A3": {
+          "audiojack": {
+            "balanced_accuracy": {
+              "max": 0.002019882089941083,
+              "mean": 0.0003087995528998189,
+              "median": 0.00031804410491720336,
+              "min": -0.002087640454159545,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 3,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0016607336506495704,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.005401234567901203,
+              "mean": 0.0029320987654321007,
+              "median": 0.005401234567901203,
+              "min": -0.0007716049382715529,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 3,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0033810034413898683,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": 0.0007716049382715529,
+              "mean": -0.0029320987654321007,
+              "median": -0.005401234567901203,
+              "min": -0.005401234567901203,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 2,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0033810034413898683,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.004765146358066713,
+              "mean": 0.0023144996596324075,
+              "median": 0.002042205582028611,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 4,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.001839245212539998,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.008955406980310388,
+              "mean": 0.0009646351150703447,
+              "median": 0.0,
+              "min": -0.004132231404958664,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 1,
+                "tied": 3,
+                "undefined": 0
+              },
+              "sample_sd": 0.004812017405438824,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.00714285714285714,
+              "median": 0.0,
+              "min": -0.0357142857142857,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 0,
+                "tied": 4,
+                "undefined": 0
+              },
+              "sample_sd": 0.01597191412499849,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.0078125,
+              "mean": 0.001470479230569055,
+              "median": 0.0,
+              "min": -0.003820711678832106,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 2,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.004362199363377968,
+              "status": "DEFINED"
+            }
+          },
+          "regulator": {
+            "balanced_accuracy": {
+              "max": 0.002516690551924272,
+              "mean": 0.0005676535356007095,
+              "median": 0.000980460694187224,
+              "min": -0.0014488447691286543,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 3,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0018218734360017715,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.005970149253731294,
+              "mean": 0.0017910447761193993,
+              "median": 0.0014925373134329067,
+              "min": -0.0014925373134329067,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 3,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0034035087316392067,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": 0.0014925373134329067,
+              "mean": -0.0017910447761194104,
+              "median": -0.0014925373134329067,
+              "min": -0.005970149253731349,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 2,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0034035087316392236,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.0014051522248243603,
+              "mean": 0.0006557377049180357,
+              "median": 0.0009367681498829022,
+              "min": -0.00046838407494145806,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 4,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0007103396200516717,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.005555555555555536,
+              "mean": 0.0016467097392237617,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 2,
+                "tied": 3,
+                "undefined": 0
+              },
+              "sample_sd": 0.002473741092227316,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            }
+          },
+          "rolled_strip_base": {
+            "balanced_accuracy": {
+              "max": 0.014433692052260527,
+              "mean": 0.007115847669051378,
+              "median": 0.004662277575430918,
+              "min": 0.0024171150653257145,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.005206594085590054,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.03589108910891081,
+              "mean": 0.02178217821782178,
+              "median": 0.015470297029702929,
+              "min": 0.011138613861386149,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.011621478240501991,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.011138613861386149,
+              "mean": -0.021782178217821795,
+              "median": -0.015470297029702984,
+              "min": -0.035891089108910895,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.011621478240501998,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.011413520632133453,
+              "mean": 0.0075504828797190535,
+              "median": 0.007023705004389813,
+              "min": 0.00438981562774364,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.002677427687792256,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.004804017905884805,
+              "mean": -0.000403974232994897,
+              "median": 0.0,
+              "min": -0.00682388907085929,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 1,
+                "tied": 3,
+                "undefined": 0
+              },
+              "sample_sd": 0.004148134345306201,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.015501305605086196,
+              "median": -0.01801801801801803,
+              "min": -0.037929330368173975,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 0,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.016020525310373717,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.046511627906976744,
+              "mean": 0.015515988372093021,
+              "median": 0.0078125,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 3,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.019757720602537204,
+              "status": "DEFINED"
+            }
+          },
+          "switch": {
+            "balanced_accuracy": {
+              "max": 0.0060032586262317444,
+              "mean": 0.0031299436395498593,
+              "median": 0.002463698198811981,
+              "min": 0.0007980845969672856,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0019633550908799823,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.015961691939345712,
+              "mean": 0.007182761372705526,
+              "median": 0.005586592178770888,
+              "min": 0.0015961691939345712,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.005412873091081671,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.0015961691939345712,
+              "mean": -0.007182761372705504,
+              "median": -0.005586592178770944,
+              "min": -0.0159616919393456,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.005412873091081628,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.0039551746868820015,
+              "mean": 0.0009228740936058022,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 2,
+                "tied": 3,
+                "undefined": 0
+              },
+              "sample_sd": 0.0017189722887811848,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.009036144578313254,
+              "mean": 0.0030120481927710997,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 2,
+                "tied": 3,
+                "undefined": 0
+              },
+              "sample_sd": 0.004259679404738252,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.010843373493975905,
+              "median": -0.012048192771084376,
+              "min": -0.02409638554216864,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 0,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.010776231216866447,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            }
+          }
+        },
+        "A2-A4": {
+          "audiojack": {
+            "balanced_accuracy": {
+              "max": 0.010190280193967505,
+              "mean": 0.004489648202775043,
+              "median": 0.0030656720369108825,
+              "min": -0.00022638647269912493,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 4,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.004222817937940397,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.03472222222222221,
+              "mean": 0.019598765432098774,
+              "median": 0.021604938271604923,
+              "min": 0.005401234567901203,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.012802597859990751,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.005401234567901203,
+              "mean": -0.019598765432098774,
+              "median": -0.021604938271604923,
+              "min": -0.03472222222222221,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.012802597859990751,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.02859087814840028,
+              "mean": 0.010619469026548678,
+              "median": 0.008168822328114361,
+              "min": 0.0013614703880190648,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.010431031346155455,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.010869565217391242,
+              "mean": 0.004683854960398115,
+              "median": 0.004560759106213674,
+              "min": 0.0004901960784313708,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.003951460658978355,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.01897321428571428,
+              "median": 0.0,
+              "min": -0.0714285714285714,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 0,
+                "tied": 3,
+                "undefined": 0
+              },
+              "sample_sd": 0.031029997264414817,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.01694915254237289,
+              "mean": 0.003332411681391767,
+              "median": 0.001195570098162596,
+              "min": -0.018419251824817517,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 3,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.014656868344863799,
+              "status": "DEFINED"
+            }
+          },
+          "regulator": {
+            "balanced_accuracy": {
+              "max": 0.003013037855220335,
+              "mean": 0.0020095074976405948,
+              "median": 0.002032577161033222,
+              "min": 0.0009647313782376044,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0007563989871075552,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.01492537313432829,
+              "mean": 0.011044776119402955,
+              "median": 0.010447761194029903,
+              "min": 0.00746268656716409,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0030949912467653313,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.007462686567164145,
+              "mean": -0.011044776119402966,
+              "median": -0.010447761194029903,
+              "min": -0.01492537313432829,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0030949912467653153,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.009367681498829036,
+              "mean": 0.007025761124121779,
+              "median": 0.007025761124121774,
+              "min": 0.0028103044496487206,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0025867356012148116,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.005617977528089901,
+              "mean": 0.0022347066167291096,
+              "median": 0.00046854082998670776,
+              "min": -0.00046854082998659674,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 3,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.003077960434340082,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.011111111111111072,
+              "mean": -0.004469413233458208,
+              "median": -0.011111111111111127,
+              "min": -0.011235955056179803,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 1,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.009959151358647573,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.007576317540099048,
+              "mean": 0.0023137236206597217,
+              "median": 0.00602409638554216,
+              "min": -0.008055892207884788,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 3,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.006482878918622541,
+              "status": "DEFINED"
+            }
+          },
+          "rolled_strip_base": {
+            "balanced_accuracy": {
+              "max": 0.07342727249019898,
+              "mean": 0.046676561861629565,
+              "median": 0.05120817722685356,
+              "min": 0.01148251897182706,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.024001346741912764,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.18811881188118806,
+              "mean": 0.12425742574257423,
+              "median": 0.1349009900990099,
+              "min": 0.04579207920792083,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.05395280228609171,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.04579207920792083,
+              "mean": -0.12425742574257428,
+              "median": -0.1349009900990099,
+              "min": -0.18811881188118812,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.05395280228609173,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.04126426690079017,
+              "mean": 0.03090430201931519,
+              "median": 0.028972783143108,
+              "min": 0.022827041264266906,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0067551831647660555,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.056665574844415256,
+              "mean": 0.031934472959694024,
+              "median": 0.05186155693853034,
+              "min": -0.006933071295992965,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 4,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.030415008466690263,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": -0.051087225105016065,
+              "mean": -0.1417459713234361,
+              "median": -0.138217164532954,
+              "min": -0.25225225225225223,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.07255859064890746,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.12596899224806202,
+              "mean": 0.05260820413436693,
+              "median": 0.046511627906976744,
+              "min": 0.009982638888888895,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.043637394811584976,
+              "status": "DEFINED"
+            }
+          },
+          "switch": {
+            "balanced_accuracy": {
+              "max": 0.028489568345134497,
+              "mean": 0.018783817979893723,
+              "median": 0.01804502417664977,
+              "min": 0.00989004109320224,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0076264743682315575,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.07741420590582604,
+              "mean": 0.052992817238627296,
+              "median": 0.05586592178770944,
+              "min": 0.03032721468475663,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.021404444396038034,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.030327214684756576,
+              "mean": -0.052992817238627296,
+              "median": -0.055865921787709494,
+              "min": -0.07741420590582604,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.021404444396038027,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.021094264996704026,
+              "mean": 0.015425181278839817,
+              "median": 0.01977587343441002,
+              "min": 0.005273566249176007,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.00712419569471657,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.025754586051476513,
+              "mean": 0.011153765014060735,
+              "median": 0.015528781793841984,
+              "min": -0.016221179351152748,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 4,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.01600068988067671,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": -0.026858816481395265,
+              "mean": -0.05579696367514021,
+              "median": -0.04858996425261486,
+              "min": -0.09036144578313249,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.025005515159645504,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.08313748531139836,
+              "mean": 0.03352267447357403,
+              "median": 0.029425287356321855,
+              "min": 0.00390625,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.031282203338357226,
+              "status": "DEFINED"
+            }
+          }
+        }
+      },
+      "per_trajectory": {
+        "A2-A3": {
+          "balanced_accuracy": {
+            "counts": {
+              "negative": 4,
+              "positive": 16,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0016795144929362404,
+              "audiojack/seed1": -0.002087640454159545,
+              "audiojack/seed2": -0.00038580246913588745,
+              "audiojack/seed3": 0.00031804410491720336,
+              "audiojack/seed4": 0.002019882089941083,
+              "regulator/seed0": -0.0012146527316578837,
+              "regulator/seed1": 0.000980460694187224,
+              "regulator/seed2": 0.0020046139326785894,
+              "regulator/seed3": -0.0014488447691286543,
+              "regulator/seed4": 0.002516690551924272,
+              "rolled_strip_base/seed0": 0.0033743991168212473,
+              "rolled_strip_base/seed1": 0.014433692052260527,
+              "rolled_strip_base/seed2": 0.010691754535418485,
+              "rolled_strip_base/seed3": 0.004662277575430918,
+              "rolled_strip_base/seed4": 0.0024171150653257145,
+              "switch/seed0": 0.002394253790901857,
+              "switch/seed1": 0.0060032586262317444,
+              "switch/seed2": 0.0007980845969672856,
+              "switch/seed3": 0.003990422984836428,
+              "switch/seed4": 0.002463698198811981
+            },
+            "summary": {
+              "max": 0.014433692052260527,
+              "mean": 0.0027805610992754416,
+              "median": 0.00220706794042147,
+              "min": -0.002087640454159545,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.003958862749950513,
+              "status": "DEFINED"
+            }
+          },
+          "coverage": {
+            "counts": {
+              "negative": 0,
+              "positive": 0,
+              "tied": 20,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": 0.0,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.0,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": 0.0,
+              "rolled_strip_base/seed4": 0.0,
+              "switch/seed0": 0.0,
+              "switch/seed1": 0.0,
+              "switch/seed2": 0.0,
+              "switch/seed3": 0.0,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            }
+          },
+          "defect_recall": {
+            "counts": {
+              "negative": 4,
+              "positive": 16,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.005401234567901203,
+              "audiojack/seed1": -0.0007716049382715529,
+              "audiojack/seed2": -0.0007716049382715529,
+              "audiojack/seed3": 0.005401234567901203,
+              "audiojack/seed4": 0.005401234567901203,
+              "regulator/seed0": -0.0014925373134327957,
+              "regulator/seed1": 0.0014925373134329067,
+              "regulator/seed2": 0.004477611940298498,
+              "regulator/seed3": -0.0014925373134329067,
+              "regulator/seed4": 0.005970149253731294,
+              "rolled_strip_base/seed0": 0.011138613861386149,
+              "rolled_strip_base/seed1": 0.03589108910891081,
+              "rolled_strip_base/seed2": 0.03279702970297038,
+              "rolled_strip_base/seed3": 0.015470297029702929,
+              "rolled_strip_base/seed4": 0.013613861386138626,
+              "switch/seed0": 0.004788507581803714,
+              "switch/seed1": 0.015961691939345712,
+              "switch/seed2": 0.0015961691939345712,
+              "switch/seed3": 0.007980845969672745,
+              "switch/seed4": 0.005586592178770888
+            },
+            "summary": {
+              "max": 0.03589108910891081,
+              "mean": 0.008422020783019702,
+              "median": 0.005401234567901203,
+              "min": -0.0014925373134329067,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.010311427783791906,
+              "status": "DEFINED"
+            }
+          },
+          "fnr": {
+            "counts": {
+              "negative": 16,
+              "positive": 4,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": -0.005401234567901203,
+              "audiojack/seed1": 0.0007716049382715529,
+              "audiojack/seed2": 0.0007716049382715529,
+              "audiojack/seed3": -0.005401234567901203,
+              "audiojack/seed4": -0.005401234567901203,
+              "regulator/seed0": 0.0014925373134327957,
+              "regulator/seed1": -0.0014925373134329067,
+              "regulator/seed2": -0.004477611940298498,
+              "regulator/seed3": 0.0014925373134329067,
+              "regulator/seed4": -0.005970149253731349,
+              "rolled_strip_base/seed0": -0.011138613861386149,
+              "rolled_strip_base/seed1": -0.035891089108910895,
+              "rolled_strip_base/seed2": -0.032797029702970326,
+              "rolled_strip_base/seed3": -0.015470297029702984,
+              "rolled_strip_base/seed4": -0.013613861386138612,
+              "switch/seed0": -0.004788507581803658,
+              "switch/seed1": -0.0159616919393456,
+              "switch/seed2": -0.0015961691939345712,
+              "switch/seed3": -0.007980845969672745,
+              "switch/seed4": -0.005586592178770944
+            },
+            "summary": {
+              "max": 0.0014925373134329067,
+              "mean": -0.008422020783019702,
+              "median": -0.005401234567901203,
+              "min": -0.035891089108910895,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.010311427783791908,
+              "status": "DEFINED"
+            }
+          },
+          "fpr": {
+            "counts": {
+              "negative": 1,
+              "positive": 15,
+              "tied": 4,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.002042205582028611,
+              "audiojack/seed1": 0.003403675970047648,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": 0.004765146358066713,
+              "audiojack/seed4": 0.0013614703880190648,
+              "regulator/seed0": 0.0009367681498829022,
+              "regulator/seed1": -0.00046838407494145806,
+              "regulator/seed2": 0.00046838407494145806,
+              "regulator/seed3": 0.0014051522248243603,
+              "regulator/seed4": 0.0009367681498829161,
+              "rolled_strip_base/seed0": 0.00438981562774364,
+              "rolled_strip_base/seed1": 0.007023705004389813,
+              "rolled_strip_base/seed2": 0.011413520632133453,
+              "rolled_strip_base/seed3": 0.006145741878841093,
+              "rolled_strip_base/seed4": 0.008779631255487266,
+              "switch/seed0": 0.0,
+              "switch/seed1": 0.0039551746868820015,
+              "switch/seed2": 0.0,
+              "switch/seed3": 0.0,
+              "switch/seed4": 0.0006591957811470095
+            },
+            "summary": {
+              "max": 0.011413520632133453,
+              "mean": 0.0028608985844688246,
+              "median": 0.0013833113064217126,
+              "min": -0.00046838407494145806,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.0033292222160937624,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "counts": {
+              "negative": 2,
+              "positive": 6,
+              "tied": 12,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.008955406980310388,
+              "audiojack/seed2": -0.004132231404958664,
+              "audiojack/seed3": 0.0,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0,
+              "regulator/seed1": 0.002677993140563273,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.005555555555555536,
+              "rolled_strip_base/seed0": 0.0,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": -0.00682388907085929,
+              "rolled_strip_base/seed4": 0.004804017905884805,
+              "switch/seed0": 0.009036144578313254,
+              "switch/seed1": 0.0,
+              "switch/seed2": 0.0,
+              "switch/seed3": 0.006024096385542244,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.009036144578313254,
+              "mean": 0.0013048547035175774,
+              "median": 0.0,
+              "min": -0.00682388907085929,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.003899009831165543,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fnr": {
+            "counts": {
+              "negative": 7,
+              "positive": 0,
+              "tied": 13,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": -0.0357142857142857,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.0,
+              "rolled_strip_base/seed1": -0.02155917963923898,
+              "rolled_strip_base/seed2": -0.037929330368173975,
+              "rolled_strip_base/seed3": -0.01801801801801803,
+              "rolled_strip_base/seed4": 0.0,
+              "switch/seed0": -0.01807228915662651,
+              "switch/seed1": -0.02409638554216864,
+              "switch/seed2": 0.0,
+              "switch/seed3": -0.012048192771084376,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.0,
+              "mean": -0.00837188406047981,
+              "median": 0.0,
+              "min": -0.037929330368173975,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.01288455834759447,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fpr": {
+            "counts": {
+              "negative": 1,
+              "positive": 5,
+              "tied": 14,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0033606078316773813,
+              "audiojack/seed1": 0.0078125,
+              "audiojack/seed2": -0.003820711678832106,
+              "audiojack/seed3": 0.0,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.0,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0078125,
+              "rolled_strip_base/seed3": 0.046511627906976744,
+              "rolled_strip_base/seed4": 0.023255813953488358,
+              "switch/seed0": 0.0,
+              "switch/seed1": 0.0,
+              "switch/seed2": 0.0,
+              "switch/seed3": 0.0,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.046511627906976744,
+              "mean": 0.004246616900665519,
+              "median": 0.0,
+              "min": -0.003820711678832106,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.01145115748322564,
+              "status": "DEFINED"
+            }
+          }
+        },
+        "A2-A4": {
+          "balanced_accuracy": {
+            "counts": {
+              "negative": 1,
+              "positive": 19,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.010190280193967505,
+              "audiojack/seed1": -0.00022638647269912493,
+              "audiojack/seed2": 0.002019882089941083,
+              "audiojack/seed3": 0.0030656720369108825,
+              "audiojack/seed4": 0.007398793165754869,
+              "regulator/seed0": 0.0009647313782376044,
+              "regulator/seed1": 0.0017110000349540577,
+              "regulator/seed2": 0.002032577161033222,
+              "regulator/seed3": 0.003013037855220335,
+              "regulator/seed4": 0.002326191058757754,
+              "rolled_strip_base/seed0": 0.061318063873990525,
+              "rolled_strip_base/seed1": 0.05120817722685356,
+              "rolled_strip_base/seed2": 0.01148251897182706,
+              "rolled_strip_base/seed3": 0.07342727249019898,
+              "rolled_strip_base/seed4": 0.035946776745277687,
+              "switch/seed0": 0.00989004109320224,
+              "switch/seed1": 0.02416954746972455,
+              "switch/seed2": 0.013324908814757563,
+              "switch/seed3": 0.028489568345134497,
+              "switch/seed4": 0.01804502417664977
+            },
+            "summary": {
+              "max": 0.07342727249019898,
+              "mean": 0.017989883885484732,
+              "median": 0.010040160643584872,
+              "min": -0.00022638647269912493,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.02166303113129527,
+              "status": "DEFINED"
+            }
+          },
+          "coverage": {
+            "counts": {
+              "negative": 0,
+              "positive": 0,
+              "tied": 20,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": 0.0,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.0,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": 0.0,
+              "rolled_strip_base/seed4": 0.0,
+              "switch/seed0": 0.0,
+              "switch/seed1": 0.0,
+              "switch/seed2": 0.0,
+              "switch/seed3": 0.0,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            }
+          },
+          "defect_recall": {
+            "counts": {
+              "negative": 0,
+              "positive": 20,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.028549382716049454,
+              "audiojack/seed1": 0.007716049382716084,
+              "audiojack/seed2": 0.005401234567901203,
+              "audiojack/seed3": 0.03472222222222221,
+              "audiojack/seed4": 0.021604938271604923,
+              "regulator/seed0": 0.008955223880596996,
+              "regulator/seed1": 0.010447761194029903,
+              "regulator/seed2": 0.013432835820895495,
+              "regulator/seed3": 0.01492537313432829,
+              "regulator/seed4": 0.00746268656716409,
+              "rolled_strip_base/seed0": 0.15160891089108908,
+              "rolled_strip_base/seed1": 0.1349009900990099,
+              "rolled_strip_base/seed2": 0.04579207920792083,
+              "rolled_strip_base/seed3": 0.18811881188118806,
+              "rolled_strip_base/seed4": 0.10086633663366329,
+              "switch/seed0": 0.03032721468475663,
+              "switch/seed1": 0.0694333599361533,
+              "switch/seed2": 0.03192338387869109,
+              "switch/seed3": 0.07741420590582604,
+              "switch/seed4": 0.05586592178770944
+            },
+            "summary": {
+              "max": 0.18811881188118806,
+              "mean": 0.05197344613317582,
+              "median": 0.03112529928172386,
+              "min": 0.005401234567901203,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.05327021801251037,
+              "status": "DEFINED"
+            }
+          },
+          "fnr": {
+            "counts": {
+              "negative": 20,
+              "positive": 0,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": -0.028549382716049454,
+              "audiojack/seed1": -0.007716049382716084,
+              "audiojack/seed2": -0.005401234567901203,
+              "audiojack/seed3": -0.03472222222222221,
+              "audiojack/seed4": -0.021604938271604923,
+              "regulator/seed0": -0.008955223880596996,
+              "regulator/seed1": -0.010447761194029903,
+              "regulator/seed2": -0.013432835820895495,
+              "regulator/seed3": -0.01492537313432829,
+              "regulator/seed4": -0.007462686567164145,
+              "rolled_strip_base/seed0": -0.15160891089108913,
+              "rolled_strip_base/seed1": -0.1349009900990099,
+              "rolled_strip_base/seed2": -0.04579207920792083,
+              "rolled_strip_base/seed3": -0.18811881188118812,
+              "rolled_strip_base/seed4": -0.10086633663366336,
+              "switch/seed0": -0.030327214684756576,
+              "switch/seed1": -0.06943335993615324,
+              "switch/seed2": -0.03192338387869115,
+              "switch/seed3": -0.07741420590582604,
+              "switch/seed4": -0.055865921787709494
+            },
+            "summary": {
+              "max": -0.005401234567901203,
+              "mean": -0.051973446133175824,
+              "median": -0.03112529928172386,
+              "min": -0.18811881188118812,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.05327021801251038,
+              "status": "DEFINED"
+            }
+          },
+          "fpr": {
+            "counts": {
+              "negative": 0,
+              "positive": 20,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.008168822328114389,
+              "audiojack/seed1": 0.008168822328114361,
+              "audiojack/seed2": 0.0013614703880190648,
+              "audiojack/seed3": 0.02859087814840028,
+              "audiojack/seed4": 0.006807351940095296,
+              "regulator/seed0": 0.007025761124121774,
+              "regulator/seed1": 0.007025761124121774,
+              "regulator/seed2": 0.009367681498829036,
+              "regulator/seed3": 0.008899297423887592,
+              "regulator/seed4": 0.0028103044496487206,
+              "rolled_strip_base/seed0": 0.028972783143108,
+              "rolled_strip_base/seed1": 0.03248463564530289,
+              "rolled_strip_base/seed2": 0.022827041264266906,
+              "rolled_strip_base/seed3": 0.04126426690079017,
+              "rolled_strip_base/seed4": 0.028972783143107986,
+              "switch/seed0": 0.010547132498352013,
+              "switch/seed1": 0.021094264996704026,
+              "switch/seed2": 0.005273566249176007,
+              "switch/seed3": 0.020435069215557017,
+              "switch/seed4": 0.01977587343441002
+            },
+            "summary": {
+              "max": 0.04126426690079017,
+              "mean": 0.015993678362206366,
+              "median": 0.009957406998590525,
+              "min": 0.0013614703880190648,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.011487555924740062,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "counts": {
+              "negative": 3,
+              "positive": 16,
+              "tied": 1,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.002192982456140302,
+              "audiojack/seed1": 0.005305771943813986,
+              "audiojack/seed2": 0.004560759106213674,
+              "audiojack/seed3": 0.0004901960784313708,
+              "audiojack/seed4": 0.010869565217391242,
+              "regulator/seed0": 0.00046854082998670776,
+              "regulator/seed1": 0.005617977528089901,
+              "regulator/seed2": -0.00046854082998659674,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.005555555555555536,
+              "rolled_strip_base/seed0": 0.056665574844415256,
+              "rolled_strip_base/seed1": 0.004913200131018702,
+              "rolled_strip_base/seed2": -0.006933071295992965,
+              "rolled_strip_base/seed3": 0.0531651041804988,
+              "rolled_strip_base/seed4": 0.05186155693853034,
+              "switch/seed0": 0.015528781793841984,
+              "switch/seed1": 0.025754586051476513,
+              "switch/seed2": 0.013468711506887554,
+              "switch/seed3": 0.01723792506925037,
+              "switch/seed4": -0.016221179351152748
+            },
+            "summary": {
+              "max": 0.056665574844415256,
+              "mean": 0.012501699887720496,
+              "median": 0.005430663749684761,
+              "min": -0.016221179351152748,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.019940210674292812,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fnr": {
+            "counts": {
+              "negative": 15,
+              "positive": 1,
+              "tied": 4,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": -0.0234375,
+              "audiojack/seed3": -0.0714285714285714,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.011111111111111072,
+              "regulator/seed1": -0.011235955056179803,
+              "regulator/seed2": -0.011111111111111183,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": -0.011111111111111127,
+              "rolled_strip_base/seed0": -0.14912280701754388,
+              "rolled_strip_base/seed1": -0.11805040770941438,
+              "rolled_strip_base/seed2": -0.051087225105016065,
+              "rolled_strip_base/seed3": -0.25225225225225223,
+              "rolled_strip_base/seed4": -0.138217164532954,
+              "switch/seed0": -0.04216867469879515,
+              "switch/seed1": -0.09036144578313249,
+              "switch/seed2": -0.026858816481395265,
+              "switch/seed3": -0.04858996425261486,
+              "switch/seed4": -0.07100591715976329
+            },
+            "summary": {
+              "max": 0.011111111111111072,
+              "mean": -0.0552463906294372,
+              "median": -0.03451374559009521,
+              "min": -0.25225225225225223,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.06676388398785459,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fpr": {
+            "counts": {
+              "negative": 2,
+              "positive": 16,
+              "tied": 2,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.001195570098162596,
+              "audiojack/seed1": 0.016936587591240865,
+              "audiojack/seed2": -0.018419251824817517,
+              "audiojack/seed3": 0.01694915254237289,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": -0.008055892207884788,
+              "regulator/seed1": 0.007576317540099048,
+              "regulator/seed2": 0.006024096385542188,
+              "regulator/seed3": 0.00602409638554216,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.03406613372093023,
+              "rolled_strip_base/seed1": 0.046511627906976744,
+              "rolled_strip_base/seed2": 0.009982638888888895,
+              "rolled_strip_base/seed3": 0.12596899224806202,
+              "rolled_strip_base/seed4": 0.046511627906976744,
+              "switch/seed0": 0.00390625,
+              "switch/seed1": 0.04027478448275862,
+              "switch/seed2": 0.010869565217391311,
+              "switch/seed3": 0.029425287356321855,
+              "switch/seed4": 0.08313748531139836
+            },
+            "summary": {
+              "max": 0.12596899224806202,
+              "mean": 0.022944253477498112,
+              "median": 0.010426102053140103,
+              "min": -0.018419251824817517,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.033692948053632286,
+              "status": "DEFINED"
+            }
+          }
+        }
+      }
+    },
+    "full_stream": {
+      "equal_class_macro": {
+        "A2-A3": {
+          "balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": -0.0002012789221668365,
+              "regulator": 0.002071571571571562,
+              "rolled_strip_base": 0.008067141089108887,
+              "switch": 0.004917545627023445
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0037137448413842645
+          },
+          "coverage": {
+            "class_mean_effects": {
+              "audiojack": 0.0,
+              "regulator": 0.0,
+              "rolled_strip_base": 0.0,
+              "switch": 0.0
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0
+          },
+          "defect_recall": {
+            "class_mean_effects": {
+              "audiojack": 0.0029320987654321007,
+              "regulator": 0.00796296296296295,
+              "rolled_strip_base": 0.025821782178217824,
+              "switch": 0.01334002006018049
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.01251421599169834
+          },
+          "fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.0029320987654321007,
+              "regulator": -0.007962962962962939,
+              "rolled_strip_base": -0.025821782178217824,
+              "switch": -0.013340020060180546
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.012514215991698352
+          },
+          "fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.003334656609765785,
+              "regulator": 0.0038198198198198226,
+              "rolled_strip_base": 0.009687499999999998,
+              "switch": 0.003504928806133625
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.005086726308929808
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": 0.003915274616493681,
+              "regulator": 0.0007511550888325891,
+              "rolled_strip_base": 0.004640256695051237,
+              "switch": 0.0061232973965995585
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0038574959492442664
+          },
+          "worst_complete_256.fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.011111111111111094,
+              "regulator": -0.03298969072164948,
+              "rolled_strip_base": -0.0341431783988755,
+              "switch": -0.02481639885409497
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.02576509477143276
+          },
+          "worst_complete_256.fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.003828240825606943,
+              "regulator": 0.0025316455696202554,
+              "rolled_strip_base": 0.012202380952380954,
+              "switch": 0.010437908496732023
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.007250043961085044
+          }
+        },
+        "A2-A4": {
+          "balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": 0.001780327535422188,
+              "regulator": 0.012591091091091088,
+              "rolled_strip_base": 0.04010968440594056,
+              "switch": 0.025451106880334296
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.01998305247819703
+          },
+          "coverage": {
+            "class_mean_effects": {
+              "audiojack": 0.0,
+              "regulator": 0.0,
+              "rolled_strip_base": 0.0,
+              "switch": 0.0
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.0
+          },
+          "defect_recall": {
+            "class_mean_effects": {
+              "audiojack": 0.019598765432098774,
+              "regulator": 0.04240740740740738,
+              "rolled_strip_base": 0.11318811881188122,
+              "switch": 0.07412236710130389
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.06232916468817282
+          },
+          "fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.019598765432098774,
+              "regulator": -0.04240740740740738,
+              "rolled_strip_base": -0.11318811881188118,
+              "switch": -0.07412236710130392
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.06232916468817281
+          },
+          "fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.016038110361254465,
+              "regulator": 0.017225225225225228,
+              "rolled_strip_base": 0.03296875,
+              "switch": 0.02322015334063527
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.02236305973177874
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "class_mean_effects": {
+              "audiojack": 0.0018144342803592338,
+              "regulator": 0.024892874516431428,
+              "rolled_strip_base": 0.017448951228236864,
+              "switch": 0.005063602895432173
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.012304965730114924
+          },
+          "worst_complete_256.fnr": {
+            "class_mean_effects": {
+              "audiojack": -0.011111111111111094,
+              "regulator": -0.10927835051546393,
+              "rolled_strip_base": -0.09823010859125328,
+              "switch": -0.0914955079744135
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": -0.07752876954806046
+          },
+          "worst_complete_256.fpr": {
+            "class_mean_effects": {
+              "audiojack": 0.007997190455649917,
+              "regulator": 0.009109164686492605,
+              "rolled_strip_base": 0.038149987545148825,
+              "switch": 0.04417740429505134
+            },
+            "classes_defined": 4,
+            "equal_class_macro_mean": 0.02485843674558567
+          }
+        }
+      },
+      "per_class": {
+        "A2-A3": {
+          "audiojack": {
+            "balanced_accuracy": {
+              "max": 0.0015096684947484285,
+              "mean": -0.0002012789221668365,
+              "median": 0.0009141941001475917,
+              "min": -0.0031646829772739027,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 3,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.002069591256458824,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.005401234567901203,
+              "mean": 0.0029320987654321007,
+              "median": 0.005401234567901203,
+              "min": -0.0007716049382715529,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 3,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0033810034413898683,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": 0.0007716049382715529,
+              "mean": -0.0029320987654321007,
+              "median": -0.005401234567901203,
+              "min": -0.005401234567901203,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 2,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0033810034413898683,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.005557761016276308,
+              "mean": 0.003334656609765785,
+              "median": 0.002778880508138154,
+              "min": 0.002381897578404124,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0013344768808234728,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.023576097105508897,
+              "mean": 0.003915274616493681,
+              "median": 0.0,
+              "min": -0.0021008403361344463,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 1,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.011036357726735684,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.011111111111111094,
+              "median": 0.0,
+              "min": -0.05555555555555547,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 0,
+                "tied": 4,
+                "undefined": 0
+              },
+              "sample_sd": 0.024845199749997625,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.016806722689075626,
+              "mean": 0.003828240825606943,
+              "median": 0.0,
+              "min": -0.00512820512820511,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 2,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.008531983460631429,
+              "status": "DEFINED"
+            }
+          },
+          "regulator": {
+            "balanced_accuracy": {
+              "max": 0.0067867867867867915,
+              "mean": 0.002071571571571562,
+              "median": 0.001413913913913989,
+              "min": -0.0008508508508509038,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 4,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0029118363584111997,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.022222222222222254,
+              "mean": 0.00796296296296295,
+              "median": 0.004629629629629539,
+              "min": 0.002777777777777768,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.008087951037749088,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.002777777777777768,
+              "mean": -0.007962962962962939,
+              "median": -0.004629629629629539,
+              "min": -0.0222222222222222,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.008087951037749062,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.008648648648648657,
+              "mean": 0.0038198198198198226,
+              "median": 0.0018018018018018112,
+              "min": 0.0014414414414414406,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0031477431065834198,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.01468585878233808,
+              "mean": 0.0007511550888325891,
+              "median": 0.0,
+              "min": -0.012837969266679572,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 2,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.010183055102742923,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.03298969072164948,
+              "median": -0.010309278350515427,
+              "min": -0.12371134020618557,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 0,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.05226305919850135,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.012658227848101278,
+              "mean": 0.0025316455696202554,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 1,
+                "tied": 4,
+                "undefined": 0
+              },
+              "sample_sd": 0.005660931588607068,
+              "status": "DEFINED"
+            }
+          },
+          "rolled_strip_base": {
+            "balanced_accuracy": {
+              "max": 0.012765315594059357,
+              "mean": 0.008067141089108887,
+              "median": 0.00954826732673264,
+              "min": 0.002034344059405946,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.004299809434647449,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.038811881188118735,
+              "mean": 0.025821782178217824,
+              "median": 0.02534653465346537,
+              "min": 0.011881188118811892,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.010317572805519514,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.011881188118811892,
+              "mean": -0.025821782178217824,
+              "median": -0.02534653465346534,
+              "min": -0.03881188118811879,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.010317572805519528,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.013281249999999994,
+              "mean": 0.009687499999999998,
+              "median": 0.010156249999999992,
+              "min": 0.0062500000000000056,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0027399496744922123,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.0182648401826484,
+              "mean": 0.004640256695051237,
+              "median": 0.0,
+              "min": -0.0041959767987165275,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 2,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.009040904185113897,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.0341431783988755,
+              "median": -0.037925567423231,
+              "min": -0.06886338393187708,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 4,
+                "positive": 0,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.026317118763478795,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.023809523809523808,
+              "mean": 0.012202380952380954,
+              "median": 0.01339285714285715,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 3,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.011923348585720315,
+              "status": "DEFINED"
+            }
+          },
+          "switch": {
+            "balanced_accuracy": {
+              "max": 0.007701087929725681,
+              "mean": 0.004917545627023445,
+              "median": 0.006334996226357026,
+              "min": 0.0019829477479536006,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0026349398943639793,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.02306920762286857,
+              "mean": 0.01334002006018049,
+              "median": 0.016549648946840412,
+              "min": 0.004513540621865486,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.008028772444847596,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.004513540621865597,
+              "mean": -0.013340020060180546,
+              "median": -0.016549648946840523,
+              "min": -0.023069207622868626,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.008028772444847595,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.007667031763417306,
+              "mean": 0.003504928806133625,
+              "median": 0.00383351588170866,
+              "min": 0.000547645125958382,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.0028614130290499752,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.0174750601995185,
+              "mean": 0.0061232973965995585,
+              "median": 0.0065707133917396465,
+              "min": -0.0014080100125156703,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 3,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.007528623177150712,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.02481639885409497,
+              "median": -0.01807228915662651,
+              "min": -0.04749906681597604,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 4,
+                "positive": 0,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.019804765448613457,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.02941176470588233,
+              "mean": 0.010437908496732023,
+              "median": 0.00888888888888889,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 3,
+                "tied": 2,
+                "undefined": 0
+              },
+              "sample_sd": 0.01216774233814912,
+              "status": "DEFINED"
+            }
+          }
+        },
+        "A2-A4": {
+          "audiojack": {
+            "balanced_accuracy": {
+              "max": 0.006533524228211407,
+              "mean": 0.001780327535422188,
+              "median": 0.005244708119526154,
+              "min": -0.005471074157391453,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 2,
+                "positive": 3,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.005929256408142829,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.03472222222222221,
+              "mean": 0.019598765432098774,
+              "median": 0.021604938271604923,
+              "min": 0.005401234567901203,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.012802597859990751,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.005401234567901203,
+              "mean": -0.019598765432098774,
+              "median": -0.021604938271604923,
+              "min": -0.03472222222222221,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.012802597859990751,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.02183406113537119,
+              "mean": 0.016038110361254465,
+              "median": 0.015482334259626834,
+              "min": 0.011115522032552588,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.004290355247671716,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.01727357609710556,
+              "mean": 0.0018144342803592338,
+              "median": -0.00189888368690605,
+              "min": -0.004201680672268893,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 3,
+                "positive": 2,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.009017248786513908,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.011111111111111094,
+              "median": 0.0,
+              "min": -0.05555555555555547,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 0,
+                "tied": 4,
+                "undefined": 0
+              },
+              "sample_sd": 0.024845199749997625,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.02985074626865672,
+              "mean": 0.007997190455649917,
+              "median": 0.013362722138035549,
+              "min": -0.019620958751393525,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 3,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.018732198904361477,
+              "status": "DEFINED"
+            }
+          },
+          "regulator": {
+            "balanced_accuracy": {
+              "max": 0.021261261261261266,
+              "mean": 0.012591091091091088,
+              "median": 0.008993993993994032,
+              "min": 0.008328328328328305,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.005772575090349542,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.06666666666666665,
+              "mean": 0.04240740740740738,
+              "median": 0.03888888888888886,
+              "min": 0.02962962962962956,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.014935848186243878,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.02962962962962956,
+              "mean": -0.04240740740740738,
+              "median": -0.03888888888888886,
+              "min": -0.06666666666666665,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.014935848186243878,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.024144144144144147,
+              "mean": 0.017225225225225228,
+              "median": 0.01441441441441442,
+              "min": 0.012972972972972965,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.004995899625404938,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.051229593356325376,
+              "mean": 0.024892874516431428,
+              "median": 0.019840497957595904,
+              "min": 0.005154639175257825,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.01863094700771974,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": -0.010309278350515538,
+              "mean": -0.10927835051546393,
+              "median": -0.134020618556701,
+              "min": -0.21649484536082475,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.08674508852768092,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.02348690153568203,
+              "mean": 0.009109164686492605,
+              "median": 0.00658775452687943,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 4,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.009099388296092022,
+              "status": "DEFINED"
+            }
+          },
+          "rolled_strip_base": {
+            "balanced_accuracy": {
+              "max": 0.07477490717821778,
+              "mean": 0.04010968440594056,
+              "median": 0.03546410891089102,
+              "min": 0.005300123762376319,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.026845233813796516,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.1956435643564357,
+              "mean": 0.11318811881188122,
+              "median": 0.10217821782178227,
+              "min": 0.032475247524752504,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.06227047453507679,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.032475247524752504,
+              "mean": -0.11318811881188118,
+              "median": -0.10217821782178216,
+              "min": -0.19564356435643565,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.06227047453507676,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.046093749999999996,
+              "mean": 0.03296875,
+              "median": 0.03125,
+              "min": 0.02187499999999999,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.008793835509534506,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.03904197739814175,
+              "mean": 0.017448951228236864,
+              "median": 0.0182648401826484,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 4,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.014592991354747883,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": -0.05131842456608815,
+              "mean": -0.09823010859125328,
+              "median": -0.11160714285714285,
+              "min": -0.136986301369863,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.035122720395598245,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.11751152073732718,
+              "mean": 0.038149987545148825,
+              "median": 0.023809523809523808,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 4,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.04567894728206202,
+              "status": "DEFINED"
+            }
+          },
+          "switch": {
+            "balanced_accuracy": {
+              "max": 0.044572655535060735,
+              "mean": 0.025451106880334296,
+              "median": 0.023630859720453867,
+              "min": 0.009839485598086783,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.014572346328984423,
+              "status": "DEFINED"
+            },
+            "coverage": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 0,
+                "tied": 5,
+                "undefined": 0
+              },
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            },
+            "defect_recall": {
+              "max": 0.12036108324974926,
+              "mean": 0.07412236710130389,
+              "median": 0.06369107321965894,
+              "min": 0.03610832497492478,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.036696288449344194,
+              "status": "DEFINED"
+            },
+            "fnr": {
+              "max": -0.03610832497492478,
+              "mean": -0.07412236710130392,
+              "median": -0.063691073219659,
+              "min": -0.12036108324974926,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 5,
+                "positive": 0,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.03669628844934417,
+              "status": "DEFINED"
+            },
+            "fpr": {
+              "max": 0.03340635268346112,
+              "mean": 0.02322015334063527,
+              "median": 0.018619934282584877,
+              "min": 0.01642935377875137,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.008382727933549583,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.balanced_accuracy": {
+              "max": 0.012502836147523566,
+              "mean": 0.005063602895432173,
+              "median": 0.008531131750946108,
+              "min": -0.006092593812440983,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 1,
+                "positive": 3,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.007837332365686477,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fnr": {
+              "max": 0.0,
+              "mean": -0.0914955079744135,
+              "median": -0.09428269254697019,
+              "min": -0.14265273111857657,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 4,
+                "positive": 0,
+                "tied": 1,
+                "undefined": 0
+              },
+              "sample_sd": 0.05624711116476044,
+              "status": "DEFINED"
+            },
+            "worst_complete_256.fpr": {
+              "max": 0.08643790849673202,
+              "mean": 0.04417740429505134,
+              "median": 0.052287581699346386,
+              "min": 0.00888888888888889,
+              "n_defined": 5,
+              "n_total": 5,
+              "paired_sign_counts": {
+                "negative": 0,
+                "positive": 5,
+                "tied": 0,
+                "undefined": 0
+              },
+              "sample_sd": 0.03334641988900295,
+              "status": "DEFINED"
+            }
+          }
+        }
+      },
+      "per_trajectory": {
+        "A2-A3": {
+          "balanced_accuracy": {
+            "counts": {
+              "negative": 3,
+              "positive": 17,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0009141941001475917,
+              "audiojack/seed1": -0.0031646829772739027,
+              "audiojack/seed2": -0.001576751258337783,
+              "audiojack/seed3": 0.0013111770298814829,
+              "audiojack/seed4": 0.0015096684947484285,
+              "regulator/seed0": -0.0008508508508509038,
+              "regulator/seed1": 0.002520020020019942,
+              "regulator/seed2": 0.00048798798798799226,
+              "regulator/seed3": 0.001413913913913989,
+              "regulator/seed4": 0.0067867867867867915,
+              "rolled_strip_base/seed0": 0.01057085396039592,
+              "rolled_strip_base/seed1": 0.00954826732673264,
+              "rolled_strip_base/seed2": 0.005416924504950571,
+              "rolled_strip_base/seed3": 0.012765315594059357,
+              "rolled_strip_base/seed4": 0.002034344059405946,
+              "switch/seed0": 0.002210629698514932,
+              "switch/seed1": 0.007701087929725681,
+              "switch/seed2": 0.006358066532565987,
+              "switch/seed3": 0.006334996226357026,
+              "switch/seed4": 0.0019829477479536006
+            },
+            "summary": {
+              "max": 0.012765315594059357,
+              "mean": 0.0037137448413842645,
+              "median": 0.002122486878960439,
+              "min": -0.0031646829772739027,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.0042605891003907985,
+              "status": "DEFINED"
+            }
+          },
+          "coverage": {
+            "counts": {
+              "negative": 0,
+              "positive": 0,
+              "tied": 20,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": 0.0,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.0,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": 0.0,
+              "rolled_strip_base/seed4": 0.0,
+              "switch/seed0": 0.0,
+              "switch/seed1": 0.0,
+              "switch/seed2": 0.0,
+              "switch/seed3": 0.0,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            }
+          },
+          "defect_recall": {
+            "counts": {
+              "negative": 2,
+              "positive": 18,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.005401234567901203,
+              "audiojack/seed1": -0.0007716049382715529,
+              "audiojack/seed2": -0.0007716049382715529,
+              "audiojack/seed3": 0.005401234567901203,
+              "audiojack/seed4": 0.005401234567901203,
+              "regulator/seed0": 0.0037037037037036535,
+              "regulator/seed1": 0.0064814814814815325,
+              "regulator/seed2": 0.002777777777777768,
+              "regulator/seed3": 0.004629629629629539,
+              "regulator/seed4": 0.022222222222222254,
+              "rolled_strip_base/seed0": 0.03207920792079211,
+              "rolled_strip_base/seed1": 0.02534653465346537,
+              "rolled_strip_base/seed2": 0.02099009900990101,
+              "rolled_strip_base/seed3": 0.038811881188118735,
+              "rolled_strip_base/seed4": 0.011881188118811892,
+              "switch/seed0": 0.005516549648946878,
+              "switch/seed1": 0.02306920762286857,
+              "switch/seed2": 0.016549648946840412,
+              "switch/seed3": 0.017051153460381108,
+              "switch/seed4": 0.004513540621865486
+            },
+            "summary": {
+              "max": 0.038811881188118735,
+              "mean": 0.01251421599169834,
+              "median": 0.005999015565214205,
+              "min": -0.0007716049382715529,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.011338242812665425,
+              "status": "DEFINED"
+            }
+          },
+          "fnr": {
+            "counts": {
+              "negative": 18,
+              "positive": 2,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": -0.005401234567901203,
+              "audiojack/seed1": 0.0007716049382715529,
+              "audiojack/seed2": 0.0007716049382715529,
+              "audiojack/seed3": -0.005401234567901203,
+              "audiojack/seed4": -0.005401234567901203,
+              "regulator/seed0": -0.0037037037037036535,
+              "regulator/seed1": -0.0064814814814815325,
+              "regulator/seed2": -0.002777777777777768,
+              "regulator/seed3": -0.004629629629629539,
+              "regulator/seed4": -0.0222222222222222,
+              "rolled_strip_base/seed0": -0.03207920792079208,
+              "rolled_strip_base/seed1": -0.02534653465346534,
+              "rolled_strip_base/seed2": -0.02099009900990101,
+              "rolled_strip_base/seed3": -0.03881188118811879,
+              "rolled_strip_base/seed4": -0.011881188118811892,
+              "switch/seed0": -0.005516549648946878,
+              "switch/seed1": -0.023069207622868626,
+              "switch/seed2": -0.016549648946840523,
+              "switch/seed3": -0.017051153460381108,
+              "switch/seed4": -0.004513540621865597
+            },
+            "summary": {
+              "max": 0.0007716049382715529,
+              "mean": -0.012514215991698352,
+              "median": -0.005999015565214205,
+              "min": -0.03881188118811879,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.011338242812665426,
+              "status": "DEFINED"
+            }
+          },
+          "fpr": {
+            "counts": {
+              "negative": 0,
+              "positive": 20,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0035728463676062,
+              "audiojack/seed1": 0.005557761016276308,
+              "audiojack/seed2": 0.002381897578404138,
+              "audiojack/seed3": 0.002778880508138154,
+              "audiojack/seed4": 0.002381897578404124,
+              "regulator/seed0": 0.005405405405405406,
+              "regulator/seed1": 0.0014414414414414406,
+              "regulator/seed2": 0.0018018018018017973,
+              "regulator/seed3": 0.0018018018018018112,
+              "regulator/seed4": 0.008648648648648657,
+              "rolled_strip_base/seed0": 0.010937500000000003,
+              "rolled_strip_base/seed1": 0.0062500000000000056,
+              "rolled_strip_base/seed2": 0.010156249999999992,
+              "rolled_strip_base/seed3": 0.013281249999999994,
+              "rolled_strip_base/seed4": 0.0078125,
+              "switch/seed0": 0.0010952902519167501,
+              "switch/seed1": 0.007667031763417306,
+              "switch/seed2": 0.00383351588170866,
+              "switch/seed3": 0.004381161007667028,
+              "switch/seed4": 0.000547645125958382
+            },
+            "summary": {
+              "max": 0.013281249999999994,
+              "mean": 0.005086726308929808,
+              "median": 0.004107338444687844,
+              "min": 0.000547645125958382,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.003636485483078109,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "counts": {
+              "negative": 6,
+              "positive": 8,
+              "tied": 6,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": -0.00189888368690605,
+              "audiojack/seed2": -0.0021008403361344463,
+              "audiojack/seed3": 0.023576097105508897,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": -0.012837969266679572,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": -0.0032467532467532756,
+              "regulator/seed3": 0.005154639175257714,
+              "regulator/seed4": 0.01468585878233808,
+              "rolled_strip_base/seed0": 0.0182648401826484,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": -0.0041959767987165275,
+              "rolled_strip_base/seed4": 0.009132420091324311,
+              "switch/seed0": -0.0014080100125156703,
+              "switch/seed1": 0.007978723404255317,
+              "switch/seed2": 0.0174750601995185,
+              "switch/seed3": 0.0065707133917396465,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.023576097105508897,
+              "mean": 0.0038574959492442664,
+              "median": 0.0,
+              "min": -0.012837969266679572,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.008981419377338509,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fnr": {
+            "counts": {
+              "negative": 12,
+              "positive": 0,
+              "tied": 8,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": -0.05555555555555547,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": -0.030927835051546393,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": -0.010309278350515427,
+              "regulator/seed4": -0.12371134020618557,
+              "rolled_strip_base/seed0": -0.06886338393187708,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": -0.037925567423231,
+              "rolled_strip_base/seed3": -0.045662100456621,
+              "rolled_strip_base/seed4": -0.0182648401826484,
+              "switch/seed0": -0.01807228915662651,
+              "switch/seed1": -0.015957446808510634,
+              "switch/seed2": -0.04749906681597604,
+              "switch/seed3": -0.04255319148936165,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.0,
+              "mean": -0.02576509477143276,
+              "median": -0.01701486798256857,
+              "min": -0.12371134020618557,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.03197388308606047,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fpr": {
+            "counts": {
+              "negative": 1,
+              "positive": 9,
+              "tied": 10,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.016806722689075626,
+              "audiojack/seed1": 0.007462686567164201,
+              "audiojack/seed2": -0.00512820512820511,
+              "audiojack/seed3": 0.0,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.012658227848101278,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.01339285714285715,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": 0.023809523809523808,
+              "rolled_strip_base/seed4": 0.023809523809523808,
+              "switch/seed0": 0.02941176470588233,
+              "switch/seed1": 0.013888888888888895,
+              "switch/seed2": 0.00888888888888889,
+              "switch/seed3": 0.0,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.02941176470588233,
+              "mean": 0.007250043961085044,
+              "median": 0.0,
+              "min": -0.00512820512820511,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.010061769865156207,
+              "status": "DEFINED"
+            }
+          }
+        },
+        "A2-A4": {
+          "balanced_accuracy": {
+            "counts": {
+              "negative": 2,
+              "positive": 18,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.006533524228211407,
+              "audiojack/seed1": -0.005471074157391453,
+              "audiojack/seed2": -0.0038496010566606564,
+              "audiojack/seed3": 0.00644408054342549,
+              "audiojack/seed4": 0.005244708119526154,
+              "regulator/seed0": 0.008993993993994032,
+              "regulator/seed1": 0.015838338338338254,
+              "regulator/seed2": 0.008328328328328305,
+              "regulator/seed3": 0.008533533533533588,
+              "regulator/seed4": 0.021261261261261266,
+              "rolled_strip_base/seed0": 0.05727336014851481,
+              "rolled_strip_base/seed1": 0.03546410891089102,
+              "rolled_strip_base/seed2": 0.005300123762376319,
+              "rolled_strip_base/seed3": 0.07477490717821778,
+              "rolled_strip_base/seed4": 0.027735922029702875,
+              "switch/seed0": 0.013759240481576063,
+              "switch/seed1": 0.03545329306649403,
+              "switch/seed2": 0.023630859720453867,
+              "switch/seed3": 0.044572655535060735,
+              "switch/seed4": 0.009839485598086783
+            },
+            "summary": {
+              "max": 0.07477490717821778,
+              "mean": 0.01998305247819703,
+              "median": 0.011799363039831423,
+              "min": -0.005471074157391453,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.02066117684534513,
+              "status": "DEFINED"
+            }
+          },
+          "coverage": {
+            "counts": {
+              "negative": 0,
+              "positive": 0,
+              "tied": 20,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": 0.0,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0,
+              "regulator/seed1": 0.0,
+              "regulator/seed2": 0.0,
+              "regulator/seed3": 0.0,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.0,
+              "rolled_strip_base/seed1": 0.0,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": 0.0,
+              "rolled_strip_base/seed4": 0.0,
+              "switch/seed0": 0.0,
+              "switch/seed1": 0.0,
+              "switch/seed2": 0.0,
+              "switch/seed3": 0.0,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "min": 0.0,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.0,
+              "status": "DEFINED"
+            }
+          },
+          "defect_recall": {
+            "counts": {
+              "negative": 0,
+              "positive": 20,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.028549382716049454,
+              "audiojack/seed1": 0.007716049382716084,
+              "audiojack/seed2": 0.005401234567901203,
+              "audiojack/seed3": 0.03472222222222221,
+              "audiojack/seed4": 0.021604938271604923,
+              "regulator/seed0": 0.03888888888888886,
+              "regulator/seed1": 0.045370370370370394,
+              "regulator/seed2": 0.02962962962962956,
+              "regulator/seed3": 0.031481481481481444,
+              "regulator/seed4": 0.06666666666666665,
+              "rolled_strip_base/seed0": 0.14970297029702972,
+              "rolled_strip_base/seed1": 0.10217821782178227,
+              "rolled_strip_base/seed2": 0.032475247524752504,
+              "rolled_strip_base/seed3": 0.1956435643564357,
+              "rolled_strip_base/seed4": 0.0859405940594059,
+              "switch/seed0": 0.04613841524573714,
+              "switch/seed1": 0.10431293881644932,
+              "switch/seed2": 0.06369107321965894,
+              "switch/seed3": 0.12036108324974926,
+              "switch/seed4": 0.03610832497492478
+            },
+            "summary": {
+              "max": 0.1956435643564357,
+              "mean": 0.062329164688172824,
+              "median": 0.04212962962962963,
+              "min": 0.005401234567901203,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.04983511971777377,
+              "status": "DEFINED"
+            }
+          },
+          "fnr": {
+            "counts": {
+              "negative": 20,
+              "positive": 0,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": -0.028549382716049454,
+              "audiojack/seed1": -0.007716049382716084,
+              "audiojack/seed2": -0.005401234567901203,
+              "audiojack/seed3": -0.03472222222222221,
+              "audiojack/seed4": -0.021604938271604923,
+              "regulator/seed0": -0.03888888888888886,
+              "regulator/seed1": -0.045370370370370394,
+              "regulator/seed2": -0.02962962962962956,
+              "regulator/seed3": -0.031481481481481444,
+              "regulator/seed4": -0.06666666666666665,
+              "rolled_strip_base/seed0": -0.14970297029702967,
+              "rolled_strip_base/seed1": -0.10217821782178216,
+              "rolled_strip_base/seed2": -0.032475247524752504,
+              "rolled_strip_base/seed3": -0.19564356435643565,
+              "rolled_strip_base/seed4": -0.08594059405940595,
+              "switch/seed0": -0.04613841524573725,
+              "switch/seed1": -0.10431293881644932,
+              "switch/seed2": -0.063691073219659,
+              "switch/seed3": -0.12036108324974926,
+              "switch/seed4": -0.03610832497492478
+            },
+            "summary": {
+              "max": -0.005401234567901203,
+              "mean": -0.06232916468817281,
+              "median": -0.04212962962962963,
+              "min": -0.19564356435643565,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.04983511971777375,
+              "status": "DEFINED"
+            }
+          },
+          "fpr": {
+            "counts": {
+              "negative": 0,
+              "positive": 20,
+              "tied": 0,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.015482334259626834,
+              "audiojack/seed1": 0.018658197697499004,
+              "audiojack/seed2": 0.01310043668122271,
+              "audiojack/seed3": 0.02183406113537119,
+              "audiojack/seed4": 0.011115522032552588,
+              "regulator/seed0": 0.02090090090090091,
+              "regulator/seed1": 0.0136936936936937,
+              "regulator/seed2": 0.012972972972972965,
+              "regulator/seed3": 0.01441441441441442,
+              "regulator/seed4": 0.024144144144144147,
+              "rolled_strip_base/seed0": 0.03515625,
+              "rolled_strip_base/seed1": 0.03125,
+              "rolled_strip_base/seed2": 0.02187499999999999,
+              "rolled_strip_base/seed3": 0.046093749999999996,
+              "rolled_strip_base/seed4": 0.030468750000000003,
+              "switch/seed0": 0.018619934282584877,
+              "switch/seed1": 0.03340635268346112,
+              "switch/seed2": 0.01642935377875137,
+              "switch/seed3": 0.031215772179627593,
+              "switch/seed4": 0.016429353778751377
+            },
+            "summary": {
+              "max": 0.046093749999999996,
+              "mean": 0.02236305973177874,
+              "median": 0.019779549299199957,
+              "min": 0.011115522032552588,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.00935262233015875,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.balanced_accuracy": {
+            "counts": {
+              "negative": 4,
+              "positive": 14,
+              "tied": 2,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0021008403361344463,
+              "audiojack/seed1": -0.00189888368690605,
+              "audiojack/seed2": -0.004201680672268893,
+              "audiojack/seed3": 0.01727357609710556,
+              "audiojack/seed4": -0.004201680672268893,
+              "regulator/seed0": 0.019840497957595904,
+              "regulator/seed1": 0.005154639175257825,
+              "regulator/seed2": 0.051229593356325376,
+              "regulator/seed3": 0.012319263437722938,
+              "regulator/seed4": 0.0359203786552551,
+              "rolled_strip_base/seed0": 0.0182648401826484,
+              "rolled_strip_base/seed1": 0.02080551846906986,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": 0.03904197739814175,
+              "rolled_strip_base/seed4": 0.009132420091324311,
+              "switch/seed0": -0.006092593812440983,
+              "switch/seed1": 0.010376640391132175,
+              "switch/seed2": 0.008531131750946108,
+              "switch/seed3": 0.012502836147523566,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.051229593356325376,
+              "mean": 0.012304965730114924,
+              "median": 0.009754530241228243,
+              "min": -0.006092593812440983,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.015471929846943495,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fnr": {
+            "counts": {
+              "negative": 15,
+              "positive": 0,
+              "tied": 5,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.0,
+              "audiojack/seed1": 0.0,
+              "audiojack/seed2": 0.0,
+              "audiojack/seed3": -0.05555555555555547,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": -0.134020618556701,
+              "regulator/seed1": -0.010309278350515538,
+              "regulator/seed2": -0.15463917525773196,
+              "regulator/seed3": -0.030927835051546393,
+              "regulator/seed4": -0.21649484536082475,
+              "rolled_strip_base/seed0": -0.11841293348142662,
+              "rolled_strip_base/seed1": -0.11160714285714285,
+              "rolled_strip_base/seed2": -0.05131842456608815,
+              "rolled_strip_base/seed3": -0.136986301369863,
+              "rolled_strip_base/seed4": -0.0728257406817458,
+              "switch/seed0": -0.13210737687592478,
+              "switch/seed1": -0.09428269254697019,
+              "switch/seed2": -0.08843473933059598,
+              "switch/seed3": -0.14265273111857657,
+              "switch/seed4": 0.0
+            },
+            "summary": {
+              "max": 0.0,
+              "mean": -0.07752876954806046,
+              "median": -0.08063024000617089,
+              "min": -0.21649484536082475,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.06503931267365386,
+              "status": "DEFINED"
+            }
+          },
+          "worst_complete_256.fpr": {
+            "counts": {
+              "negative": 1,
+              "positive": 16,
+              "tied": 3,
+              "undefined": 0
+            },
+            "differences": {
+              "audiojack/seed0": 0.013362722138035549,
+              "audiojack/seed1": 0.02985074626865672,
+              "audiojack/seed2": -0.019620958751393525,
+              "audiojack/seed3": 0.016393442622950838,
+              "audiojack/seed4": 0.0,
+              "regulator/seed0": 0.0037752609371530244,
+              "regulator/seed1": 0.02348690153568203,
+              "regulator/seed2": 0.011695906432748537,
+              "regulator/seed3": 0.00658775452687943,
+              "regulator/seed4": 0.0,
+              "rolled_strip_base/seed0": 0.021114864864864857,
+              "rolled_strip_base/seed1": 0.023809523809523808,
+              "rolled_strip_base/seed2": 0.0,
+              "rolled_strip_base/seed3": 0.11751152073732718,
+              "rolled_strip_base/seed4": 0.028314028314028294,
+              "switch/seed0": 0.052287581699346386,
+              "switch/seed1": 0.08643790849673202,
+              "switch/seed2": 0.00888888888888889,
+              "switch/seed3": 0.011764705882352927,
+              "switch/seed4": 0.061507936507936484
+            },
+            "summary": {
+              "max": 0.11751152073732718,
+              "mean": 0.02485843674558567,
+              "median": 0.014878082380493193,
+              "min": -0.019620958751393525,
+              "n_defined": 20,
+              "n_total": 20,
+              "sample_sd": 0.032395679928727196,
+              "status": "DEFINED"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tie_tolerance": 1e-12
+}

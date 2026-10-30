@@ -1,0 +1,184 @@
+{
+  "confirmation_outcomes_accessed": false,
+  "controller_inputs_include_full_labels": false,
+  "dataset_image_reads": 0,
+  "evaluator_source_sha256": {
+    "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+    "experiments/calibration/stage05.py": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+    "experiments/calibration/stage1a_b3_mechanism_ablation.py": "9f7f6344105e105878208c20059f8571505539556a72b33b19adb1a4bd4c8c49",
+    "experiments/calibration/stage1a_b3_mechanism_formal.py": "c49b7e0442c9377a50458deb041242651d83389965796d8c2b68c6312f319855",
+    "experiments/calibration/stage1a_formal_comparison.py": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+    "tests/calibration/test_b3_mechanism_formal.py": "51e09ddd0ce69bd80a6b568380b0fa68b0412a91be320a06d06fba6c9dffbde9"
+  },
+  "gpu_inference_calls": 0,
+  "historical_a2_parity": "EXACT_0_MISMATCHES_ACROSS_76475_EVENTS",
+  "input_identity_sha256": "3ffa3305a7876d4ce352b5db7467cc2463049e6f7ba9f6368a6f39be846ce840",
+  "integrity_summary": {
+    "GPU_calls": "0",
+    "formal unit tests": "9/9 PASS; A1 suite 14/14 PASS including A0 verification",
+    "historical_a2_parity": "PASS (pre/post thresholds, predictions, event identity)",
+    "input_identity_sha256": "3ffa3305a7876d4ce352b5db7467cc2463049e6f7ba9f6368a6f39be846ce840",
+    "label_access_ledger_sha256": "e17f4440c1b7eedb70c09895a30f9626891e8ff03e84e66a97fb21b7975cfd65",
+    "label_access_phase": "after prediction seal verification",
+    "masks_and_confirmation_access": "none",
+    "memory_content_changes": "1190",
+    "official_label_provider_calls": "8 across 2 evaluator attempts; 4 distinct class vectors",
+    "prediction_seal": "8e1b4a78cbc4037386ff1bda83341b26695448a1d6f75bea9d8ddbad6953ff92",
+    "score_events": "76475",
+    "source_commit": "a0e444215e2cfcef9dfeb796bd95cf85e9d2a0f2",
+    "source_sha256_set_digest": "4a7f573aaf76733ef448221145d28da82989a639cfcdc648a51eeeb874a4c492",
+    "trajectories": "20/20",
+    "versioned_c64_states": "1210"
+  },
+  "label_access_attempts": [
+    {
+      "attempt_id": "attempt_1",
+      "classes_completed": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "classes_started": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "confirmation_outcomes_opened": false,
+      "failure": "NameError: unused aggregation comprehension referenced metric before assignment; failed before evaluation artifacts were written.",
+      "masks_opened": false,
+      "provider_calls_completed": 4,
+      "provider_calls_started": 4,
+      "raw_vectors_saved": false,
+      "status": "FAILED_AFTER_LABEL_ACCESS"
+    },
+    {
+      "attempt_id": "attempt_2",
+      "classes_completed": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "classes_started": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "provider_calls_completed": 4,
+      "provider_calls_started": 4,
+      "raw_vectors_saved": false,
+      "status": "COMPLETE"
+    }
+  ],
+  "label_provider_calls": 8,
+  "limitations": [
+    "Four development classes; five support seeds per class are not 20 independent industrial categories.",
+    "C64 setting is four deployed supports plus 64 additional protected normal calibration anchors, not strict four-shot-total.",
+    "No publication-level significance or finite-time/anytime guarantee is claimed.",
+    "Historical Stage 0.75-A/G2 source-byte parity remains blocked and is not retroactively repaired by A1 parity."
+  ],
+  "masks_accessed": false,
+  "mechanism_diagnostics_sha256": "e7cf2306306ea0ee3f812579e82462017f1ac263a3da0d2e8f810c8253038434",
+  "native_rescoring_calls": 0,
+  "original_stage075a_g2_source_byte_parity": "BLOCKED_UNCHANGED",
+  "outcome_label_vectors_saved": false,
+  "outcome_labels_accessed": true,
+  "paired_results_sha256": "7acc9a31e85c4d34ce863049d0d32603a00a554d7f93e4295632cb3cc7dfdc9b",
+  "per_method_metrics_sha256": "4054a4eadb31afb36146ed17e85fab82ca2a023bf64f37fbaff8f2644ac864e2",
+  "post_seal_evaluator_source_change": {
+    "changed_files": [
+      "experiments/calibration/stage1a_b3_mechanism_formal.py"
+    ],
+    "reason": "After the sealed prediction phase, corrected an evaluator-only NameError, added retry-safe label-access logging, and recorded the post-seal source digest. Prediction recurrence, inputs, and thresholds were unchanged."
+  },
+  "prediction_files_sha256": {
+    "predictions/audiojack_seed0.jsonl.gz": "d0fa42d7ea331207a71d401bf57c331125b56dc2788215c1a027a7c723bc93e7",
+    "predictions/audiojack_seed1.jsonl.gz": "b34234981bff50caec2873792585c5ae23aabedb7676ce12a794f851af142f16",
+    "predictions/audiojack_seed2.jsonl.gz": "ff2adbf2071ad4d9d5fcf209a8e38de972928d5be1769e4fab9a0369546b0592",
+    "predictions/audiojack_seed3.jsonl.gz": "62d52079b7c6c1d4547bd57ed3ca0ad6b32bad7af11a9f8a882b2543f63f659e",
+    "predictions/audiojack_seed4.jsonl.gz": "8e2a6ca59f3a5b34d3a5df265d2a64db34335f9c4c9a5b53159cd6180ac6cc50",
+    "predictions/regulator_seed0.jsonl.gz": "2957d84aed4f2b9a1d93eeebf2be834d056e957b4101b3c2138c11e7811dcf8b",
+    "predictions/regulator_seed1.jsonl.gz": "cc11c0e44406e49adbbf565d769ace2e4bb4b41b33e27a7b3f4dcae009f0aaf6",
+    "predictions/regulator_seed2.jsonl.gz": "13718348c2cd2d6fcb78c59387b6f01d96e88e9dcd6741dcf8d0adefc3e2b539",
+    "predictions/regulator_seed3.jsonl.gz": "3d632a72676d5eca428d913c9cdb78b94a4aac947d6e90b4d1e5f2aedfee80f5",
+    "predictions/regulator_seed4.jsonl.gz": "0385747f23b588d0235b75f693576eb34771a3237f577047763e26db709bbb44",
+    "predictions/rolled_strip_base_seed0.jsonl.gz": "182568b17d8e8fd5a0401775e8d6035ccc1c19ba9805c3e1b4523faddd6d7602",
+    "predictions/rolled_strip_base_seed1.jsonl.gz": "f86d01d9e0844e2d87e0aae98889c10e971287017acbea8e496df544d5d7137d",
+    "predictions/rolled_strip_base_seed2.jsonl.gz": "3ebc3e360b8aa5da0f42335708309bd0b6b4935caf8d7de67a7753a96689f2db",
+    "predictions/rolled_strip_base_seed3.jsonl.gz": "1b76103b455e6fefb77eee7bcbc38a0002d4adfae4a12d67aced385a7af8cc51",
+    "predictions/rolled_strip_base_seed4.jsonl.gz": "8108f9cdb59e680cc67dafaf583861a82954e6405758d68e881364381470ee22",
+    "predictions/switch_seed0.jsonl.gz": "06cf912238545e07c261f4aea35ae5ec2fdb1e3b6800ff53f4479aebe93d4d7c",
+    "predictions/switch_seed1.jsonl.gz": "45368fbc5b720df80ffbc6527fd5a8140158060b3c63917dbe29deb99452c6cd",
+    "predictions/switch_seed2.jsonl.gz": "85c9551da22ce855ce9666b7cfd2756720fadb38eae039ce6cf6b930df90cee2",
+    "predictions/switch_seed3.jsonl.gz": "8f2bf3c11a047ac0f38917bd4e13241497103e797486a27e81f117fa413b66f7",
+    "predictions/switch_seed4.jsonl.gz": "72adee5a3d91059118775ace5f01b31cb1e72ca693f43aeeaaa8e1e2d2a3fcd8"
+  },
+  "prediction_phase_complete_sha256": "8e1b4a78cbc4037386ff1bda83341b26695448a1d6f75bea9d8ddbad6953ff92",
+  "prediction_receipts_sha256": "3dfef1c707694cd1dd0989ba38b5fe34b1e24867e41bd49da3b5a15351cd468f",
+  "schema": "calibration.b3_state_lag_formal_audit.v1",
+  "scientific_interpretation": {
+    "classification": "H1_WEAK_OR_MIXED",
+    "contrasts": {
+      "A2-A3": {
+        "class_mean_ba_differences": {
+          "audiojack": -0.0002012789221668365,
+          "regulator": 0.002071571571571562,
+          "rolled_strip_base": 0.008067141089108887,
+          "switch": 0.004917545627023445
+        },
+        "equal_class_macro_ba_difference": 0.0037137448413842645,
+        "equal_class_macro_fpr_difference": 0.005086726308929808,
+        "equal_class_macro_worst256_fnr_difference": -0.02576509477143276,
+        "fpr_direction": "positive difference means A2 has higher FPR than the lagged arm",
+        "maximum_class_ba_loss": 0.0002012789221668365,
+        "positive_class_count": 3,
+        "support_criteria_met": false
+      },
+      "A2-A4": {
+        "class_mean_ba_differences": {
+          "audiojack": 0.001780327535422188,
+          "regulator": 0.012591091091091088,
+          "rolled_strip_base": 0.04010968440594056,
+          "switch": 0.025451106880334296
+        },
+        "equal_class_macro_ba_difference": 0.01998305247819703,
+        "equal_class_macro_fpr_difference": 0.02236305973177874,
+        "equal_class_macro_worst256_fnr_difference": -0.07752876954806046,
+        "fpr_direction": "positive difference means A2 has higher FPR than the lagged arm",
+        "maximum_class_ba_loss": 0.0,
+        "positive_class_count": 4,
+        "support_criteria_met": false
+      }
+    },
+    "criteria": {
+      "classification_is_descriptive_not_a_significance_test": true,
+      "manipulation_inconclusive_also_requires_zero_prediction_disagreements": true,
+      "manipulation_inconclusive_if_threshold_divergence_fraction_at_most": 0.01,
+      "maximum_class_mean_ba_loss": 0.03,
+      "maximum_worst256_fnr_cost": 0.05,
+      "meaningful_macro_ba_margin": 0.02,
+      "minimum_classes_with_positive_ba_effect": 3
+    },
+    "manipulation_changed_predictions": true,
+    "manipulation_changed_thresholds": true,
+    "reason": "Effects are smaller than the frozen meaningful margin, heterogeneous, or accompanied by operating-point/robustness costs.",
+    "threshold_divergence_fractions": {
+      "A2-A3": 0.31512605042016806,
+      "A2-A4": 0.7697478991596639
+    }
+  },
+  "score_history_query_tape_and_memory_shared_across_arms": true,
+  "source_commit": "a0e444215e2cfcef9dfeb796bd95cf85e9d2a0f2",
+  "source_sha256": {
+    "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+    "experiments/calibration/stage05.py": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+    "experiments/calibration/stage1a_b3_mechanism_ablation.py": "9f7f6344105e105878208c20059f8571505539556a72b33b19adb1a4bd4c8c49",
+    "experiments/calibration/stage1a_b3_mechanism_formal.py": "f58e0c4f8455b0073059d5f0951d38dcc6616be3ec7cb9a840f31c6519dd4a5a",
+    "experiments/calibration/stage1a_formal_comparison.py": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+    "tests/calibration/test_b3_mechanism_formal.py": "51e09ddd0ce69bd80a6b568380b0fa68b0412a91be320a06d06fba6c9dffbde9"
+  },
+  "status": "FORMAL_B3_MECHANISM_ABLATION_COMPLETE"
+}

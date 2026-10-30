@@ -1,0 +1,93 @@
+{
+  "confirmation_or_mask_access": false,
+  "evaluator_source_sha256": {
+    "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+    "experiments/calibration/stage05.py": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+    "experiments/calibration/stage1a_b3_mechanism_ablation.py": "9f7f6344105e105878208c20059f8571505539556a72b33b19adb1a4bd4c8c49",
+    "experiments/calibration/stage1a_b3_mechanism_formal.py": "c49b7e0442c9377a50458deb041242651d83389965796d8c2b68c6312f319855",
+    "experiments/calibration/stage1a_formal_comparison.py": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+    "tests/calibration/test_b3_mechanism_formal.py": "51e09ddd0ce69bd80a6b568380b0fa68b0412a91be320a06d06fba6c9dffbde9"
+  },
+  "event_count": 76475,
+  "formal_ablation_audit_sha256": "db8531ae50603dcfde79fcf2402bfdd66ebafa882228914c2705ee8787ed93c5",
+  "mechanism_diagnostics_sha256": "e7cf2306306ea0ee3f812579e82462017f1ac263a3da0d2e8f810c8253038434",
+  "memory_content_changes": 1190,
+  "outcome_label_vectors_saved": false,
+  "outcome_labels_accessed_after_prediction_seal": true,
+  "paired_results_sha256": "7acc9a31e85c4d34ce863049d0d32603a00a554d7f93e4295632cb3cc7dfdc9b",
+  "paper_report": "docs/calibration/audit/b3_state_lag_formal_v1_20261030/FORMAL_B3_MECHANISM_RESULTS.md",
+  "paper_report_sha256": "e98ac209560ad17753bed24e44eae7c2916bc6861f43cab37e7c48330c7c53c5",
+  "per_method_metrics_sha256": "4054a4eadb31afb36146ed17e85fab82ca2a023bf64f37fbaff8f2644ac864e2",
+  "prediction_phase_complete_sha256": "8e1b4a78cbc4037386ff1bda83341b26695448a1d6f75bea9d8ddbad6953ff92",
+  "prediction_receipts_sha256": "3dfef1c707694cd1dd0989ba38b5fe34b1e24867e41bd49da3b5a15351cd468f",
+  "report_generation_source_sha256": {
+    "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+    "experiments/calibration/stage05.py": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+    "experiments/calibration/stage1a_b3_mechanism_ablation.py": "9f7f6344105e105878208c20059f8571505539556a72b33b19adb1a4bd4c8c49",
+    "experiments/calibration/stage1a_b3_mechanism_formal.py": "d27a1c548e4598a0ae88c601b3a93499c8e5649cd2ebbf0cc83d12c0f9fb1015",
+    "experiments/calibration/stage1a_formal_comparison.py": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+    "tests/calibration/test_b3_mechanism_formal.py": "51e09ddd0ce69bd80a6b568380b0fa68b0412a91be320a06d06fba6c9dffbde9"
+  },
+  "run_identity": {
+    "branch": "calibration-stage0-contract-20261029",
+    "diagnostic_tolerances": {
+      "paired_tie": 1e-12,
+      "q_divergence": 1e-12,
+      "theta_divergence": 1e-12
+    },
+    "frozen_contract": {
+      "arms": {
+        "A2": 0,
+        "A3": 1,
+        "A4": 5
+      },
+      "c64_description": "four deployed normal supports plus 64 additional protected training-normal anchors",
+      "classes": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "common_horizon_start_zero_based": 1050,
+      "delta": 0.01,
+      "event_count": 76475,
+      "memory_content_changes": 1190,
+      "query_rate": 0.03,
+      "query_seed": 37,
+      "query_tape": "Q-A-TS-v1",
+      "support_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "trajectory_count": 20,
+      "window_size": 256
+    },
+    "input_identity_sha256": "3ffa3305a7876d4ce352b5db7467cc2463049e6f7ba9f6368a6f39be846ce840",
+    "interpretation_rules": {
+      "classification_is_descriptive_not_a_significance_test": true,
+      "manipulation_inconclusive_also_requires_zero_prediction_disagreements": true,
+      "manipulation_inconclusive_if_threshold_divergence_fraction_at_most": 0.01,
+      "maximum_class_mean_ba_loss": 0.03,
+      "maximum_worst256_fnr_cost": 0.05,
+      "meaningful_macro_ba_margin": 0.02,
+      "minimum_classes_with_positive_ba_effect": 3
+    },
+    "schema": "calibration.b3_state_lag_run_identity.v1",
+    "source_commit": "a0e444215e2cfcef9dfeb796bd95cf85e9d2a0f2",
+    "source_sha256": {
+      "experiments/calibration/metrics.py": "927e121a45c254f081850a2f058316984315af1bc9ee4df30597d96223184ed5",
+      "experiments/calibration/stage05.py": "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
+      "experiments/calibration/stage1a_b3_mechanism_ablation.py": "9f7f6344105e105878208c20059f8571505539556a72b33b19adb1a4bd4c8c49",
+      "experiments/calibration/stage1a_b3_mechanism_formal.py": "f58e0c4f8455b0073059d5f0951d38dcc6616be3ec7cb9a840f31c6519dd4a5a",
+      "experiments/calibration/stage1a_formal_comparison.py": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+      "tests/calibration/test_b3_mechanism_formal.py": "51e09ddd0ce69bd80a6b568380b0fa68b0412a91be320a06d06fba6c9dffbde9"
+    }
+  },
+  "run_identity_sha256": "4494dcab0fc21092657fb1da8af945c9efbba738dad38474b8eb3a16fb88918f",
+  "schema": "calibration.b3_state_lag_run_manifest.v1",
+  "status": "COMPLETE",
+  "trajectory_count": 20
+}

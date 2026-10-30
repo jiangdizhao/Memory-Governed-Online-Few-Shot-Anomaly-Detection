@@ -1,0 +1,47 @@
+{
+  "attempts": [
+    {
+      "attempt_id": "attempt_1",
+      "classes_completed": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "classes_started": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "confirmation_outcomes_opened": false,
+      "failure": "NameError: unused aggregation comprehension referenced metric before assignment; failed before evaluation artifacts were written.",
+      "masks_opened": false,
+      "provider_calls_completed": 4,
+      "provider_calls_started": 4,
+      "raw_vectors_saved": false,
+      "status": "FAILED_AFTER_LABEL_ACCESS"
+    },
+    {
+      "attempt_id": "attempt_2",
+      "classes_completed": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "classes_started": [
+        "audiojack",
+        "regulator",
+        "switch",
+        "rolled_strip_base"
+      ],
+      "provider_calls_completed": 4,
+      "provider_calls_started": 4,
+      "raw_vectors_saved": false,
+      "status": "COMPLETE"
+    }
+  ],
+  "prediction_seal_sha256": "8e1b4a78cbc4037386ff1bda83341b26695448a1d6f75bea9d8ddbad6953ff92",
+  "schema": "calibration.b3_state_lag_label_access_ledger.v1"
+}
