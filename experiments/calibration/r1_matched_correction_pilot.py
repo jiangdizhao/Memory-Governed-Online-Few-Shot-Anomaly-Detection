@@ -16,6 +16,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -32,11 +33,18 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 EXPECTED_BRANCH = "calibration-stage0-contract-20261029"
-PARENT_COMMIT = "acc241299373d2f93d8c85ada8d2dbba2caf4f9f"
+IDENTITY_CONTRACT_VERSION = "r1.source-bound.v1"
+R1_PROFILE_ID = "r1_switch_s0_512_digest_contract_v1"
+SUPPORT_ONLY_PROFILE_ID = "r1_switch_s0_support_bank_verify_v1"
+OUTPUT_NAMESPACE_PREFIX = "r1_digest_contract_v1"
+STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM = (
+    "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes")
+RAW_FIXED_BANK_DIGEST_ALGORITHM = (
+    "experiments.p0_protocol_audit.fixed_bank_profile.v1:raw-prototype-bytes")
 STAGE05 = ROOT / "outputs/calibration/stage05_exploratory_20261029"
 DEFAULT_DATASET_ROOT = Path(r"G:\dataset\realiad")
 DEFAULT_JSON_ROOT = DEFAULT_DATASET_ROOT / "jsons" / "realiad_jsons"
-DEFAULT_OUTPUT = ROOT / "outputs/calibration/r1_switch_s0_512_engineering_20261031"
+LEGACY_FAILED_OUTPUT = ROOT / "outputs/calibration/r1_switch_s0_512_engineering_20261031"
 MAX_EVENTS = 512
 MAX_OUTPUT_BYTES = 2 * 1024**3
 MAX_GPU_SECONDS = 120 * 60
@@ -83,6 +91,158 @@ class PilotConfig:
     smoke_events: int = SMOKE_EVENTS
     c2_neighbors: int = 5
     c2_interface_scale: float = 0.20
+
+
+def _validate_execution_identity(*, branch: str, head: str,
+                                 expected_source_commit: str,
+                                 profile_id: str,
+                                 support_only: bool) -> dict[str, str]:
+    expected_profile = SUPPORT_ONLY_PROFILE_ID if support_only else R1_PROFILE_ID
+    if branch != EXPECTED_BRANCH:
+        raise R1BlockedInput(
+            f"Source-bound R1 execution requires branch {EXPECTED_BRANCH}; found {branch}")
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", str(expected_source_commit)):
+        raise R1BlockedInput("Expected source commit must be a full 40-character Git SHA")
+    if head.lower() != expected_source_commit.lower():
+        raise R1BlockedInput(
+            f"Source revision mismatch: expected {expected_source_commit}; found {head}")
+    if profile_id != expected_profile:
+        raise R1BlockedInput(
+            f"Incompatible R1 profile: expected {expected_profile}; found {profile_id}")
+    return {
+        "branch": branch,
+        "source_commit": head.lower(),
+        "expected_source_commit": expected_source_commit.lower(),
+        "profile_id": profile_id,
+        "identity_contract_version": IDENTITY_CONTRACT_VERSION,
+    }
+
+
+def _validate_run_id(run_id: str) -> None:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", str(run_id)):
+        raise R1BlockedInput("run-id must be 1-64 safe filename characters")
+
+
+def _validate_run_identity_fields(run_id: str, authorization_id: str) -> None:
+    _validate_run_id(run_id)
+    if (not str(authorization_id).strip() or len(str(authorization_id)) > 128 or
+            any(ord(char) < 32 for char in str(authorization_id))):
+        raise R1BlockedInput("A bounded, explicit authorization-id is required")
+
+
+def _output_namespace(run_id: str, *, support_only: bool) -> Path:
+    _validate_run_id(run_id)
+    mode = "support_only" if support_only else "engineering"
+    output = ROOT / "outputs/calibration" / f"{OUTPUT_NAMESPACE_PREFIX}_{mode}_{run_id}"
+    if output.resolve() == LEGACY_FAILED_OUTPUT.resolve():
+        raise R1BlockedInput("The failed legacy R1 output is immutable and cannot be reused")
+    return output
+
+
+def _validate_p0_profile(p0_config: Any, scorer_profile: Any) -> None:
+    from experiments.calibration.native import NativeAdapterError, validate_p0_config
+    try:
+        validate_p0_config(p0_config, scorer_profile)
+    except (NativeAdapterError, ValueError, TypeError) as exc:
+        raise R1BlockedInput(f"Incompatible frozen P0/native scorer profile: {exc}") from exc
+
+
+def _execution_profile_sha256(config: PilotConfig, scorer_profile: Any,
+                              query_profile: Any, profile_id: str,
+                              support_only: bool) -> str:
+    return sha256_json({
+        "identity_contract_version": IDENTITY_CONTRACT_VERSION,
+        "profile_id": profile_id,
+        "support_only": bool(support_only),
+        "pilot_config": asdict(config),
+        "native_scorer_profile": asdict(scorer_profile),
+        "query_profile": asdict(query_profile),
+        "support_regime": "four_deployed_supports_plus_additional_C64",
+    })
+
+
+def _fixed_bank_digest_evidence(bank: Any, p0: Any, expected_sha256: str,
+                                structured_digest: Callable[[Any], str]) -> dict[str, Any]:
+    raw_profile = p0.fixed_bank_profile(bank)
+    actual_structured = structured_digest(bank)
+    expected = str(expected_sha256).lower()
+    layer_profile = []
+    for layer in raw_profile["layers"]:
+        item = dict(layer)
+        item["shape"] = [int(item["n_prototypes"]), int(item["feature_dim"])]
+        layer_profile.append(item)
+    return {
+        "expected_sha256": expected,
+        "expected_algorithm": STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+        "actual_structured_sha256": actual_structured,
+        "actual_structured_algorithm": STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+        "actual_raw_prototype_sha256": str(raw_profile["sha256"]),
+        "actual_raw_prototype_algorithm": RAW_FIXED_BANK_DIGEST_ALGORITHM,
+        "layer_profile": layer_profile,
+        "matches_expected_structured_digest": actual_structured == expected,
+    }
+
+
+def _check_fixed_bank_receipt(bank: Any, p0: Any, expected_sha256: str,
+                              structured_digest: Callable[[Any], str],
+                              persist_evidence: Callable[[Mapping[str, Any]], None]
+                              ) -> dict[str, Any]:
+    evidence = _fixed_bank_digest_evidence(
+        bank, p0, expected_sha256, structured_digest)
+    # Persist both algorithm-specific digests and tensor metadata before fail-closed exit.
+    persist_evidence(evidence)
+    if not evidence["matches_expected_structured_digest"]:
+        raise R1BlockedInput(
+            "Fixed support receipt mismatch: "
+            f"expected structured={evidence['expected_sha256']}; "
+            f"actual structured={evidence['actual_structured_sha256']}; "
+            f"raw prototype={evidence['actual_raw_prototype_sha256']}")
+    return evidence
+
+
+def _configure_historical_runtime(impl: Any, torch_module: Any) -> dict[str, Any]:
+    """Apply and record the Stage 0.5 deterministic initialization before DINO load."""
+    impl.set_seed(0)
+    backends = torch_module.backends.cuda
+    backends.enable_flash_sdp(False)
+    backends.enable_mem_efficient_sdp(False)
+    backends.enable_math_sdp(True)
+    sdp = {
+        "flash_enabled": bool(backends.flash_sdp_enabled()),
+        "memory_efficient_enabled": bool(backends.mem_efficient_sdp_enabled()),
+        "math_enabled": bool(backends.math_sdp_enabled()),
+    }
+    expected_sdp = {"flash_enabled": False,
+                    "memory_efficient_enabled": False,
+                    "math_enabled": True}
+    if sdp != expected_sdp:
+        raise R1BlockedInput(f"Historical math-only SDPA setup did not take effect: {sdp}")
+    if not torch_module.are_deterministic_algorithms_enabled():
+        raise R1BlockedInput("v22 deterministic-algorithm setup did not take effect")
+    if (not torch_module.backends.cudnn.deterministic or
+            torch_module.backends.cudnn.benchmark):
+        raise R1BlockedInput("v22 cuDNN deterministic setup did not take effect")
+    if (torch_module.backends.cudnn.allow_tf32 or
+            torch_module.backends.cuda.matmul.allow_tf32):
+        raise R1BlockedInput("v22 TF32-disable setup did not take effect")
+    return {
+        "profile_id": "stage05_set_seed_0_math_sdp_v1",
+        "seed": 0,
+        "sdp": sdp,
+        "deterministic_algorithms": bool(
+            torch_module.are_deterministic_algorithms_enabled()),
+        "cudnn_deterministic": bool(torch_module.backends.cudnn.deterministic),
+        "cudnn_benchmark": bool(torch_module.backends.cudnn.benchmark),
+        "cudnn_allow_tf32": bool(torch_module.backends.cudnn.allow_tf32),
+        "cuda_matmul_allow_tf32": bool(
+            torch_module.backends.cuda.matmul.allow_tf32),
+        "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
+        "python_version": platform.python_version(),
+        "torch_version": str(torch_module.__version__),
+        "cuda_runtime_version": str(torch_module.version.cuda),
+        "cuda_device_name": (str(torch_module.cuda.get_device_name())
+                             if torch_module.cuda.is_available() else None),
+    }
 
 
 def canonical_json(value: Any) -> str:
@@ -467,19 +627,48 @@ class EvidenceTapeWriter:
                 "passed": len(sealed) == len(finalized) if require_complete else True}
 
 
-def _validate_branch_and_start() -> dict[str, str]:
+def _validate_branch_and_start(*, expected_source_commit: str,
+                               profile_id: str,
+                               support_only: bool) -> dict[str, str]:
     branch = subprocess.check_output(["git", "branch", "--show-current"],
                                      cwd=ROOT, text=True).strip()
     head = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                    cwd=ROOT, text=True).strip()
-    if branch != EXPECTED_BRANCH or head != PARENT_COMMIT:
+    identity = _validate_execution_identity(
+        branch=branch, head=head,
+        expected_source_commit=expected_source_commit,
+        profile_id=profile_id, support_only=support_only)
+    tracked_changes = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=ROOT, text=True).strip()
+    if tracked_changes:
         raise R1BlockedInput(
-            f"Expected {EXPECTED_BRANCH}@{PARENT_COMMIT}; found {branch}@{head}")
-    return {"branch": branch, "parent_commit": head}
+            "Source-bound R1 execution requires a clean tracked worktree")
+    untracked = subprocess.check_output(
+        ["git", "ls-files", "--others", "--exclude-standard"],
+        cwd=ROOT, text=True).splitlines()
+    critical_exact = {
+        "test_phase3_AIF_simplified_v22.py", "vmb_visionad_new.py",
+        "experiments/p0_protocol_audit.py", "experiments/v02_memory.py",
+    }
+    untracked_sources = [path for path in untracked
+                         if path in critical_exact or
+                         (path.endswith(".py") and
+                          (path.startswith("experiments/calibration/") or
+                           path.startswith("experiments/risk_safe/")))]
+    if untracked_sources:
+        raise R1BlockedInput(
+            "Untracked Python source can shadow the bound R1 imports: " +
+            ", ".join(sorted(untracked_sources)[:8]))
+    return identity
 
 
-def _preflight(dataset_root: Path, json_root: Path) -> dict[str, Any]:
-    git_identity = _validate_branch_and_start()
+def _preflight(dataset_root: Path, json_root: Path, *,
+               expected_source_commit: str, profile_id: str,
+               support_only: bool) -> dict[str, Any]:
+    git_identity = _validate_branch_and_start(
+        expected_source_commit=expected_source_commit,
+        profile_id=profile_id, support_only=support_only)
     from experiments.calibration.profiles import NativeScorerConfig, QueryProtocolConfig
     from experiments.calibration.stage05 import _absolute_image_path
     from experiments.calibration.stage1a_p11_production import verify_stage05_qats_artifacts
@@ -775,9 +964,12 @@ def _source_hashes() -> dict[str, str]:
         "test_phase3_AIF_simplified_v22.py", "vmb_visionad_new.py",
         "experiments/v02_memory.py", "experiments/risk_safe/native_bridge.py",
         "experiments/a0_a1_strict4_matched.py", "experiments/p0_protocol_audit.py",
+        "experiments/calibration/native.py",
+        "experiments/calibration/r1_matched_correction_pilot.py",
         "experiments/calibration/profiles.py",
         "experiments/calibration/stage1a_formal_comparison.py",
         "experiments/calibration/stage05.py",
+        "experiments/calibration/stage05_runner.py",
         "experiments/calibration/stage1a_p11_production.py",
         "experiments/calibration/stage1a_p12_label_provider.py",
     ]
@@ -800,15 +992,33 @@ def _append_private_feedback(root: Path, record: Mapping[str, Any]) -> str:
     return sha256_bytes(payload)
 
 
-def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
-              json_root: Path = DEFAULT_JSON_ROOT,
-              output: Path = DEFAULT_OUTPUT,
-              resume_empty_bootstrap: bool = False) -> dict[str, Any]:
+def run_pilot(*, expected_source_commit: str, profile_id: str,
+              run_id: str, authorization_id: str,
+              support_only: bool = False,
+              dataset_root: Path = DEFAULT_DATASET_ROOT,
+              json_root: Path = DEFAULT_JSON_ROOT) -> dict[str, Any]:
     config = PilotConfig()
-    if output.exists() and not resume_empty_bootstrap:
-        raise FileExistsError(f"R1 output namespace already exists: {output}")
-    tape = EvidenceTapeWriter(output, max_bytes=config.max_output_bytes,
-                              resume_empty_bootstrap=resume_empty_bootstrap)
+    _validate_run_identity_fields(run_id, authorization_id)
+    expected_profile = SUPPORT_ONLY_PROFILE_ID if support_only else R1_PROFILE_ID
+    if profile_id != expected_profile:
+        raise R1BlockedInput(
+            f"Incompatible R1 profile: expected {expected_profile}; found {profile_id}")
+    output = _output_namespace(run_id, support_only=support_only)
+    if output.exists():
+        raise FileExistsError(
+            f"Versioned R1 output namespace already exists and cannot be resumed: {output}")
+    tape = EvidenceTapeWriter(output, max_bytes=config.max_output_bytes)
+    tape.update_manifest({
+        "task": "R1-D1 support-only verification" if support_only else "R1",
+        "status": "INCOMPLETE",
+        "run_id": run_id,
+        "authorization_id": authorization_id,
+        "profile_id": profile_id,
+        "identity_contract_version": IDENTITY_CONTRACT_VERSION,
+        "expected_source_commit": expected_source_commit,
+        "support_only": bool(support_only),
+        "historical_numerical_equivalence_claimed": False,
+    })
     preflight: dict[str, Any] = {}
     started = time.monotonic()
     pilot_execution_started: float | None = None
@@ -836,32 +1046,64 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
         import torch
         from experiments import p0_protocol_audit as p0
         from experiments.calibration import stage05
-        from experiments.calibration.profiles import NativeScorerConfig
-        from experiments.calibration.stage1a_p12_label_provider import QueriedPositionLabelReader
+        from experiments.calibration.profiles import NativeScorerConfig, QueryProtocolConfig
+        from experiments.calibration.native import _fixed_bank_digest
         from experiments.risk_safe.native_bridge import dynamic_codebooks
         from v02_memory import MemoryArm
 
-        preflight = _preflight(dataset_root, json_root)
-        torch_hub_dir = Path(torch.hub.get_dir())
-        hub_source_path, hub_source_sha256 = _hub_source_sha256(torch_hub_dir)
+        preflight = _preflight(
+            dataset_root, json_root,
+            expected_source_commit=expected_source_commit,
+            profile_id=profile_id, support_only=support_only)
+        impl = p0.require_sources()
+        runtime_profile = _configure_historical_runtime(impl, torch)
         if not torch.cuda.is_available():
             raise R1BlockedInput("Authorized CUDA device is unavailable")
         torch.cuda.reset_peak_memory_stats()
-        impl = p0.require_sources()
         scorer_profile = NativeScorerConfig()
+        query_profile = QueryProtocolConfig()
         cfg = p0.Config(
             device=config.device, augmentation_seed=0, bank_seed=0,
             fixed_capacity=25000, fixed_per_image=5000, augmentations=4,
             include_identity=False, multiplier=2.5, feature_fuse="concat",
             topk_patches=32, image_aggregation="max", image_topk=64,
             image_quantile=0.95, knn=5)
+        _validate_p0_profile(cfg, scorer_profile)
+        execution_profile_sha256 = _execution_profile_sha256(
+            config, scorer_profile, query_profile, profile_id, support_only)
+
+        torch_hub_dir = Path(torch.hub.get_dir())
+        hub_source_path, hub_source_sha256 = _hub_source_sha256(torch_hub_dir)
+        checkpoint = torch_hub_dir / "checkpoints" / "dinov2_vitl14_reg4_pretrain.pth"
+        if not checkpoint.is_file():
+            raise R1BlockedInput(
+                "Cached DINOv2 checkpoint is unavailable; network download is disabled")
+        checkpoint_sha256 = sha256_file(checkpoint)
+        source_hashes = _source_hashes()
+        tape.update_manifest({
+            "branch": preflight["git"]["branch"],
+            "source_commit": preflight["git"]["source_commit"],
+            "execution_profile_sha256": execution_profile_sha256,
+            "native_scorer_profile_sha256": scorer_profile.sha256,
+            "query_protocol_profile_sha256": query_profile.sha256,
+            "runtime_profile": runtime_profile,
+            "source_hashes": source_hashes,
+            "dino_hub_source_path_name": Path(hub_source_path).name,
+            "hub_source_tree_sha256": hub_source_sha256,
+            "checkpoint_file_name": checkpoint.name,
+            "checkpoint_sha256": checkpoint_sha256,
+            "fixed_support_sha256_expected": preflight[
+                "fixed_support_sha256_expected"],
+            "fixed_support_digest_algorithm": STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+            "historical_numerical_equivalence_claimed": False,
+        })
 
         torch.cuda.synchronize()
         dino_started = time.perf_counter()
         pilot_execution_started = time.monotonic()
         backbone = impl.DINOv2MultiLayerBackbone(device=config.device)
         weight_state_sha256 = _model_state_sha256(backbone.model)
-        source_hashes = _source_hashes()
+        tape.update_manifest({"loaded_model_state_sha256": weight_state_sha256})
         encoder_fingerprint = sha256_json({
             "model_name": scorer_profile.model_name,
             "loaded_model_state_sha256": weight_state_sha256,
@@ -882,9 +1124,50 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
             impl, backbone, [str(path) for path in preflight["support_paths"]], cfg)
         chosen = [str(path) for path in preflight["support_paths"]]
         bank = p0.build_vmb(impl, support_features, chosen, cfg)
+        def persist_fixed_digest_evidence(evidence: Mapping[str, Any]) -> None:
+            tape.update_manifest({
+                "fixed_bank_digest_validation": dict(evidence),
+                "fixed_support_sha256": evidence["actual_structured_sha256"],
+                "fixed_support_digest_algorithm": evidence["actual_structured_algorithm"],
+                "fixed_support_raw_prototype_sha256": evidence[
+                    "actual_raw_prototype_sha256"],
+                "fixed_support_raw_digest_algorithm": evidence[
+                    "actual_raw_prototype_algorithm"],
+                "fixed_support_layer_profile": evidence["layer_profile"],
+            })
+
+        fixed_digest_evidence = _check_fixed_bank_receipt(
+            bank, p0, preflight["fixed_support_sha256_expected"],
+            _fixed_bank_digest, persist_fixed_digest_evidence)
         fixed_profile = p0.fixed_bank_profile(bank)
-        if fixed_profile["sha256"] != preflight["fixed_support_sha256_expected"]:
-            raise R1BlockedInput("Rebuilt fixed support bank differs from frozen C64 score receipt")
+        fixed_digest = str(fixed_digest_evidence["actual_structured_sha256"])
+        fixed_raw_digest = str(fixed_digest_evidence["actual_raw_prototype_sha256"])
+        if support_only:
+            torch.cuda.synchronize()
+            elapsed = time.perf_counter() - dino_started
+            support_result = {
+                "status": "SUPPORT_ONLY_VERIFIED",
+                "task": "R1-D1 support-only fixed-bank verification",
+                "events_processed": 0,
+                "queried_labels_decoded": 0,
+                "c64_rescored": False,
+                "stream_images_decoded": 0,
+                "fixed_support_sha256": fixed_digest,
+                "fixed_support_digest_algorithm": STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+                "fixed_support_raw_prototype_sha256": fixed_raw_digest,
+                "fixed_support_raw_digest_algorithm": RAW_FIXED_BANK_DIGEST_ALGORITHM,
+                "fixed_support_layer_profile": fixed_profile["layers"],
+                "fixed_bank_digest_validation": fixed_digest_evidence,
+                "support_and_model_seconds": elapsed,
+                "loaded_model_state_sha256": weight_state_sha256,
+                "hub_source_tree_sha256": hub_source_sha256,
+                "checkpoint_sha256": checkpoint_sha256,
+                "source_hashes": source_hashes,
+                "historical_numerical_equivalence_claimed": False,
+            }
+            tape.update_manifest(support_result)
+            backbone.cleanup()
+            return support_result
         settings = SimpleNamespace(
             flat=256, stm=256, ltm=1, buffer=1, min_events=2,
             promote_every=16, cap_bytes=config.max_output_bytes)
@@ -904,7 +1187,6 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
         support_and_model_seconds = time.perf_counter() - dino_started
         memory_content_digest = _memory_content_sha256(bank)
         memory_state_digest = _memory_state_sha256(bank, memory_version)
-        fixed_digest = str(fixed_profile["sha256"])
         feature_dims = int(support_features[chosen[0]][0][0].shape[-1])
         feature_grid = int(support_features[chosen[0]][0][0].shape[0])
 
@@ -918,7 +1200,7 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
                 "scientific_outcome_evaluation": False,
             },
             "branch": preflight["git"]["branch"],
-            "parent_commit": preflight["git"]["parent_commit"],
+            "source_commit": preflight["git"]["source_commit"],
             "source_hashes": source_hashes,
             "scorer_profile_sha256": preflight["scorer_profile_sha256"],
             "query_binding_sha256": preflight["query_binding_sha256"],
@@ -934,6 +1216,10 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
             "c64_theta0_higher_q90": preflight["c64_theta0_higher_q90"],
             "c64_sigma0_with_floor_0_02": preflight["c64_sigma0_with_floor_0_02"],
             "fixed_support_sha256": fixed_digest,
+            "fixed_support_digest_algorithm": STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+            "fixed_support_raw_prototype_sha256": fixed_raw_digest,
+            "fixed_support_raw_digest_algorithm": RAW_FIXED_BANK_DIGEST_ALGORITHM,
+            "fixed_support_layer_profile": fixed_profile["layers"],
             "encoder_fingerprint_sha256": encoder_fingerprint,
             "loaded_model_state_sha256": weight_state_sha256,
             "hub_source_tree_sha256": hub_source_sha256,
@@ -970,6 +1256,7 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
             "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         })
 
+        from experiments.calibration.stage1a_p12_label_provider import QueriedPositionLabelReader
         label_reader = QueriedPositionLabelReader(
             category="switch", path=preflight["label_json_path"],
             expected_source_sha256=preflight["label_json_expected_sha256"],
@@ -1029,7 +1316,8 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
 
             if position < config.smoke_events:
                 before_parity = _memory_content_sha256(bank)
-                fixed_before_parity = p0.fixed_bank_profile(bank)["sha256"]
+                fixed_before_parity = _fixed_bank_digest(bank)
+                fixed_raw_before_parity = p0.fixed_bank_profile(bank)["sha256"]
                 torch.cuda.synchronize()
                 ref_started = time.perf_counter()
                 reference_score, reference_ids, reference_map = _native_reference_and_debug(
@@ -1038,8 +1326,10 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
                 native_seconds += time.perf_counter() - ref_started
                 if _memory_content_sha256(bank) != before_parity:
                     raise R1CausalityError("Native reference/debug score mutated Greedy memory")
-                if p0.fixed_bank_profile(bank)["sha256"] != fixed_before_parity or \
-                        fixed_before_parity != fixed_digest:
+                if (_fixed_bank_digest(bank) != fixed_before_parity or
+                        fixed_before_parity != fixed_digest or
+                        p0.fixed_bank_profile(bank)["sha256"] != fixed_raw_before_parity or
+                        fixed_raw_before_parity != fixed_raw_digest):
                     raise R1CausalityError("Native parity replay mutated frozen fixed memory")
                 if id(features[0]) != feature_object_id or tensor_sha256(features[0]) != feature_digest:
                     raise R1ParityError("Native parity replay changed the shared feature tensor")
@@ -1119,6 +1409,9 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
                 "greedy_memory_version_before": memory_before_version,
                 "greedy_memory_sha256_before": memory_before_digest,
                 "fixed_support_sha256": fixed_digest,
+                "fixed_support_digest_algorithm": STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+                "fixed_support_raw_prototype_sha256": fixed_raw_digest,
+                "fixed_support_raw_digest_algorithm": RAW_FIXED_BANK_DIGEST_ALGORITHM,
                 "score_state_sha256": score_state_digest,
                 "c0_score": c0_score, "c1_score": c1_score, "c2_score": c2_score,
                 "c0_prediction": preds["c0"], "c1_prediction": preds["c1"],
@@ -1322,7 +1615,9 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
         if list(label_reader.decoded_positions) != list(preflight["query_positions"]):
             raise R1CausalityError("Queried label disclosure order differs from the fixed tape")
         final_fixed = p0.fixed_bank_profile(bank)
-        if final_fixed["sha256"] != fixed_digest:
+        final_fixed_structured_sha256 = _fixed_bank_digest(bank)
+        if (final_fixed_structured_sha256 != fixed_digest or
+                final_fixed["sha256"] != fixed_raw_digest):
             raise R1CausalityError("Shared Greedy writer mutated the frozen fixed support bank")
         readback = tape.verify(require_complete=True)
         observed_anchors_both_signs = c1_active_positive > 0 and c1_active_negative > 0
@@ -1346,7 +1641,10 @@ def run_pilot(*, dataset_root: Path = DEFAULT_DATASET_ROOT,
             "normal_memory_write_events": normal_memory_writes,
             "greedy_memory_version_final": memory_version,
             "greedy_memory_sha256_final": memory_state_digest,
-            "fixed_support_sha256_final": final_fixed["sha256"],
+            "fixed_support_sha256_final": final_fixed_structured_sha256,
+            "fixed_support_digest_algorithm": STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+            "fixed_support_raw_prototype_sha256_final": final_fixed["sha256"],
+            "fixed_support_raw_digest_algorithm": RAW_FIXED_BANK_DIGEST_ALGORITHM,
             "causal_state_mismatches": causal_mismatches,
             "parity_failures": 0,
             "evidence_tape_readback": readback,
@@ -1412,16 +1710,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset-root", type=Path, default=DEFAULT_DATASET_ROOT)
     parser.add_argument("--json-root", type=Path, default=DEFAULT_JSON_ROOT)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--resume-empty-bootstrap-failure", action="store_true",
-                        help="Explicitly continue only the known empty import-bootstrap failure")
+    parser.add_argument("--expected-source-commit", required=True,
+                        help="Full commit SHA authorized for this execution")
+    parser.add_argument("--profile-id", required=True,
+                        choices=(R1_PROFILE_ID, SUPPORT_ONLY_PROFILE_ID))
+    parser.add_argument("--run-id", required=True,
+                        help="Unique suffix for a new non-overwriting output namespace")
+    parser.add_argument("--authorization-id", required=True,
+                        help="Researcher authorization record for this execution")
+    parser.add_argument("--support-only", action="store_true",
+                        help="Build/verify the fixed bank and stop before stream or label access")
     args = parser.parse_args(argv)
     try:
-        result = run_pilot(dataset_root=args.dataset_root, json_root=args.json_root,
-                           output=args.output,
-                           resume_empty_bootstrap=args.resume_empty_bootstrap_failure)
+        result = run_pilot(
+            dataset_root=args.dataset_root, json_root=args.json_root,
+            expected_source_commit=args.expected_source_commit,
+            profile_id=args.profile_id, run_id=args.run_id,
+            authorization_id=args.authorization_id,
+            support_only=args.support_only)
         print(json.dumps(result, sort_keys=True, indent=2, allow_nan=False))
-        return 0 if result["status"] in {"ENGINEERING_PASS", "INSUFFICIENT_ANCHOR_EVIDENCE"} else 1
+        return 0 if result["status"] in {
+            "ENGINEERING_PASS", "INSUFFICIENT_ANCHOR_EVIDENCE",
+            "SUPPORT_ONLY_VERIFIED"} else 1
     except Exception as exc:
         print(f"R1_PILOT_FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2

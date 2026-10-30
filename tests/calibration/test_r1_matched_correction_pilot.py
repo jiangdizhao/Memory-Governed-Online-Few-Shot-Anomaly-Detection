@@ -3,15 +3,32 @@ from __future__ import annotations
 
 import hashlib
 import json
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
+import torch
 
+from experiments.calibration.native import _fixed_bank_digest
+from experiments.calibration.profiles import NativeScorerConfig
 from experiments.calibration.r1_matched_correction_pilot import (
     CausalEventOrder,
     EvidenceTapeWriter,
+    EXPECTED_BRANCH,
+    R1BlockedInput,
+    R1_PROFILE_ID,
+    RAW_FIXED_BANK_DIGEST_ALGORITHM,
+    STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM,
+    SUPPORT_ONLY_PROFILE_ID,
     R1CausalityError,
     TapeIntegrityError,
+    LEGACY_FAILED_OUTPUT,
+    _output_namespace,
+    _check_fixed_bank_receipt,
+    _configure_historical_runtime,
+    _fixed_bank_digest_evidence,
+    _validate_execution_identity,
+    _validate_p0_profile,
     arrays_sha256,
     corrected_dense_map,
     deterministic_npz_bytes,
@@ -20,6 +37,7 @@ from experiments.calibration.r1_matched_correction_pilot import (
     signed_knn_delta,
     source_disjoint_anchor_indices,
 )
+from experiments.p0_protocol_audit import fixed_bank_profile
 
 
 def _arrays() -> dict[str, np.ndarray]:
@@ -52,6 +70,154 @@ def _metadata(arrays: dict[str, np.ndarray]) -> dict[str, object]:
         "c1_score": max_score(corrected_dense_map(base, ids, c1)),
         "c2_score": max_score(corrected_dense_map(base, ids, c2)),
         "query_decision": False,
+    }
+
+
+def _synthetic_bank() -> SimpleNamespace:
+    prototypes = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float16)
+    codebook = SimpleNamespace(protos=prototypes, K=25)
+    return SimpleNamespace(normal_fixed={"p0": [{"id": [codebook]}]})
+
+
+def test_raw_and_structured_fixed_bank_digests_are_distinct_algorithms():
+    bank = _synthetic_bank()
+    evidence = _fixed_bank_digest_evidence(
+        bank, SimpleNamespace(fixed_bank_profile=fixed_bank_profile),
+        _fixed_bank_digest(bank), _fixed_bank_digest)
+    assert evidence["actual_structured_algorithm"] == STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM
+    assert evidence["actual_raw_prototype_algorithm"] == RAW_FIXED_BANK_DIGEST_ALGORITHM
+    assert evidence["actual_structured_sha256"] != evidence["actual_raw_prototype_sha256"]
+
+
+def test_structured_fixed_bank_digest_is_deterministic():
+    bank = _synthetic_bank()
+    assert _fixed_bank_digest(bank) == _fixed_bank_digest(bank)
+
+
+def test_structured_fixed_bank_digest_detects_prototype_mutation():
+    bank = _synthetic_bank()
+    before = _fixed_bank_digest(bank)
+    bank.normal_fixed["p0"][0]["id"][0].protos[0, 0] = 0.75
+    assert _fixed_bank_digest(bank) != before
+
+
+def test_receipt_comparison_uses_structured_digest_not_raw_profile():
+    bank = _synthetic_bank()
+    expected = _fixed_bank_digest(bank)
+    persisted: list[dict[str, object]] = []
+    evidence = _check_fixed_bank_receipt(
+        bank, SimpleNamespace(fixed_bank_profile=fixed_bank_profile), expected,
+        _fixed_bank_digest, persisted.append)
+    assert evidence["matches_expected_structured_digest"] is True
+    assert evidence["actual_raw_prototype_sha256"] != expected
+    assert persisted == [evidence]
+
+
+def test_receipt_mismatch_persists_both_digests_and_layer_profile_before_failure():
+    bank = _synthetic_bank()
+    persisted: list[dict[str, object]] = []
+    with pytest.raises(R1BlockedInput) as exc_info:
+        _check_fixed_bank_receipt(
+            bank, SimpleNamespace(fixed_bank_profile=fixed_bank_profile), "0" * 64,
+            _fixed_bank_digest, persisted.append)
+    assert len(persisted) == 1
+    evidence = persisted[0]
+    assert evidence["matches_expected_structured_digest"] is False
+    assert evidence["layer_profile"][0]["dtype"] == "float16"
+    assert evidence["layer_profile"][0]["shape"] == [2, 2]
+    assert evidence["layer_profile"][0]["feature_dim"] == 2
+    assert evidence["expected_sha256"] in str(exc_info.value)
+    assert evidence["actual_structured_sha256"] in str(exc_info.value)
+    assert evidence["actual_raw_prototype_sha256"] in str(exc_info.value)
+
+
+def test_source_bound_identity_rejects_wrong_revision_and_profile():
+    expected = "a" * 40
+    with pytest.raises(R1BlockedInput, match="Source revision mismatch"):
+        _validate_execution_identity(
+            branch=EXPECTED_BRANCH, head="b" * 40,
+            expected_source_commit=expected,
+            profile_id=SUPPORT_ONLY_PROFILE_ID, support_only=True)
+    with pytest.raises(R1BlockedInput, match="Incompatible R1 profile"):
+        _validate_execution_identity(
+            branch=EXPECTED_BRANCH, head=expected,
+            expected_source_commit=expected,
+            profile_id=R1_PROFILE_ID, support_only=True)
+
+
+def test_versioned_output_namespaces_cannot_select_the_failed_r1_directory():
+    pilot_output = _output_namespace("case-01", support_only=False)
+    support_output = _output_namespace("case-01", support_only=True)
+    assert pilot_output != support_output
+    assert pilot_output != LEGACY_FAILED_OUTPUT
+    assert support_output != LEGACY_FAILED_OUTPUT
+    assert pilot_output.name == "r1_digest_contract_v1_engineering_case-01"
+
+
+def test_native_scorer_profile_mismatch_is_rejected():
+    profile = NativeScorerConfig()
+    p0_fields = (
+        "augmentation_seed", "bank_seed", "fixed_capacity", "fixed_per_image",
+        "augmentations", "include_identity", "multiplier", "feature_fuse",
+        "topk_patches", "image_aggregation", "image_topk", "image_quantile", "knn",
+    )
+    p0_cfg = SimpleNamespace(**{name: getattr(profile, name) for name in p0_fields})
+    _validate_p0_profile(p0_cfg, profile)
+    p0_cfg.augmentations = 3
+    with pytest.raises(R1BlockedInput, match="Incompatible frozen P0/native scorer profile"):
+        _validate_p0_profile(p0_cfg, profile)
+
+
+def test_historical_runtime_setup_applies_seed_and_math_only_sdp_before_load():
+    calls: list[tuple[str, object]] = []
+
+    class FakeSdp:
+        def __init__(self):
+            self.flash = True
+            self.memory_efficient = True
+            self.math = False
+            self.matmul = SimpleNamespace(allow_tf32=False)
+
+        def enable_flash_sdp(self, enabled):
+            calls.append(("flash", enabled))
+            self.flash = enabled
+
+        def enable_mem_efficient_sdp(self, enabled):
+            calls.append(("memory_efficient", enabled))
+            self.memory_efficient = enabled
+
+        def enable_math_sdp(self, enabled):
+            calls.append(("math", enabled))
+            self.math = enabled
+
+        def flash_sdp_enabled(self):
+            return self.flash
+
+        def mem_efficient_sdp_enabled(self):
+            return self.memory_efficient
+
+        def math_sdp_enabled(self):
+            return self.math
+
+    sdp = FakeSdp()
+    fake_torch = SimpleNamespace(
+        backends=SimpleNamespace(
+            cuda=sdp,
+            cudnn=SimpleNamespace(deterministic=True, benchmark=False,
+                                  allow_tf32=False)),
+        are_deterministic_algorithms_enabled=lambda: True,
+        cuda=SimpleNamespace(is_available=lambda: False),
+        version=SimpleNamespace(cuda="synthetic"),
+        __version__="synthetic",
+    )
+    impl = SimpleNamespace(set_seed=lambda seed: calls.append(("seed", seed)))
+    profile = _configure_historical_runtime(impl, fake_torch)
+    assert calls == [("seed", 0), ("flash", False),
+                     ("memory_efficient", False), ("math", True)]
+    assert profile["sdp"] == {
+        "flash_enabled": False,
+        "memory_efficient_enabled": False,
+        "math_enabled": True,
     }
 
 
