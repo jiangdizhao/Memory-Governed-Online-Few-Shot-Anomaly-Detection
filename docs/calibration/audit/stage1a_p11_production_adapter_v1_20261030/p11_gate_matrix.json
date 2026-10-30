@@ -1,0 +1,56 @@
+{
+  "base_commit_sha": "40a50d4234b70b677d77e3db91e520bff13ef8e5",
+  "branch": "calibration-stage0-contract-20261029",
+  "gates": [
+    {
+      "evidence": "Direct historical _writer_record schema; append/replacement/skip tested.",
+      "id": "P11-WRITER",
+      "status": "PASS_CPU_SHARED_NATIVE_WRITER_FIXTURE"
+    },
+    {
+      "evidence": "Four stored 3% Q-A-TS-v1 seed-37 tapes; exact tape/position/group identities verified.",
+      "id": "P11-QATS",
+      "status": "PASS_STORED_METADATA"
+    },
+    {
+      "evidence": "Authorization must bind exact verified tape identities; no approved real access records supplied.",
+      "id": "P11-AUTH",
+      "status": "PASS_SYNTHETIC_BINDING_ENFORCEMENT_REAL_ACCESS_BLOCKED"
+    },
+    {
+      "evidence": "Real AnchorLedger all-layer filter; retained-row mutation rejected. Numerical Native scoring not run.",
+      "id": "P11-LSO",
+      "status": "PASS_CPU_SOURCE_FILTER_NEGATIVE_TEST"
+    },
+    {
+      "evidence": "Initial 64-C64 snapshot precedes events; replay refresh occurs after query disclosure and exact writer/memory/C64 parity. Snapshot accepted by B4, B7 and Stage075BOffset.",
+      "id": "P11-EVIDENCE",
+      "status": "PASS_CAUSAL_CPU_SNAPSHOT_COMPATIBILITY"
+    },
+    {
+      "evidence": "One-shot/process-resume parity, response-chain mutation rejection, and causal anchor/proof cache restoration.",
+      "id": "P11-CHECKPOINT",
+      "status": "PASS_SYNTHETIC_PROCESS_RESUME"
+    },
+    {
+      "evidence": "20 initial C64 vectors and 1,190 transitions verified; no independent Native rescore.",
+      "id": "P11-C64",
+      "status": "PASS_HISTORICAL_ARTIFACT_LINKAGE_ONLY"
+    },
+    {
+      "evidence": "No new image/label access, GPU inference, masks, confirmation data or Stage 1-A evaluation.",
+      "id": "P11-SCOPE",
+      "status": "PASS_SCOPE_RESTRICTIONS"
+    },
+    {
+      "evidence": "Stop before real replay; no access decision was created.",
+      "id": "P11-REAL-REPLAY",
+      "status": "BLOCKED_RESEARCHER_APPROVAL_AND_NATIVE_NUMERICAL_PARITY"
+    }
+  ],
+  "historical_g2_status": "BLOCKED",
+  "overall": "CPU_ONLY_INTEGRATION_PASS_REAL_REPLAY_BLOCKED",
+  "researcher_approval_required": true,
+  "schema": "stage1a.p11_gate_matrix.v1",
+  "scientific_performance_evaluation": "NOT_RUN"
+}

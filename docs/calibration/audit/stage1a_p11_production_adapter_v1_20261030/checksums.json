@@ -1,0 +1,11 @@
+{
+  "files": {
+    "STAGE1A_P11_PRODUCTION_ADAPTER_REPORT.md": "50f93509c9ccb8ccfd77510f46f2722cf595044b835285b8092df4fbdc9749f8",
+    "historical_c64_linkage.json": "55435e2a6c2941ec5fbde625cdece97ee8ed1294f8bcb55170e068cead52b7ed",
+    "p11_gate_matrix.json": "ec53fb6802e1b265e5fc69e43df28f0fb40b90632e1b7958b09b0e9b19038457",
+    "query_tape_bindings.json": "bc78126226788d7cf26fb6ce8a605a8c1e0753abefa6550be3a2938ae4cc389b",
+    "source_provenance.json": "c39b9c2fba4739ec1897fbc1642894372118214f04818d310b6795a3b8fb4129",
+    "test_results.json": "05209249ddb955b02bccfe1b2c5123558925c761d5679ba743d4fa508f3b8714"
+  },
+  "schema": "stage1a.p11_audit_checksums.v1"
+}

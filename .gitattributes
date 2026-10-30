@@ -32,3 +32,8 @@ docs/calibration/audit/queried_anchor_identifiability_v1/** text eol=lf
 experiments/calibration/stage1a_p1_reconstruction.py text eol=lf
 tests/calibration/test_stage1a_p1_*.py text eol=lf
 docs/calibration/audit/stage1a_p1_reconstruction_v1_20261030/** text eol=lf
+
+# Stage 1-A P1.1 production adapter and compact provenance use canonical LF.
+experiments/calibration/stage1a_p11_production.py text eol=lf
+tests/calibration/test_stage1a_p11_production.py text eol=lf
+docs/calibration/audit/stage1a_p11_production_adapter_v1_20261030/** text eol=lf

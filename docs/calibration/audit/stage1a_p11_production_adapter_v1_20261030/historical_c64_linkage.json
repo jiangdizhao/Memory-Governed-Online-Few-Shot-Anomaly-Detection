@@ -1,0 +1,31 @@
+{
+  "schema": "stage1a.p11_historical_c64_linkage.v1",
+  "source": {
+    "stage05_score_tape_manifest_sha256": "c884694c7f63adb0984d1f96e386ab8ec1dd4a85d5bac4b62bb9b4509fb34e39",
+    "stage075a_audit_linkage_sha256": "47e9165e1ef4d58886fbccfbae60aa12101f9266ef83950854b930034aaaf301",
+    "stage075a_protocol_manifest_sha256": "948bdb5396269b391a9c8fb51681acabbcda46fe4dee145844344815d0404bf9"
+  },
+  "verification": {
+    "c64_transport_rows_verified": 1190,
+    "class_seed_initial_c64_vectors_verified": 20,
+    "historical_native_c64_rescoring_performed": false,
+    "historical_stage075a_incomplete_marker_present": true,
+    "independent_numerical_c64_parity": "NOT_ESTABLISHED; no new Native Scorer call was made",
+    "original_g2_closed": false,
+    "postwrite_c64_vectors_verified": 1190,
+    "stage05_score_tape_manifest_sha256": "c884694c7f63adb0984d1f96e386ab8ec1dd4a85d5bac4b62bb9b4509fb34e39",
+    "stage075a_audit_linkage_sha256": "47e9165e1ef4d58886fbccfbae60aa12101f9266ef83950854b930034aaaf301",
+    "stage075a_protocol_manifest_sha256": "948bdb5396269b391a9c8fb51681acabbcda46fe4dee145844344815d0404bf9",
+    "status": "PASS_HISTORICAL_ARTIFACT_LINKAGE_ONLY",
+    "verified_file_roles": [
+      "audiojack/scores.npz",
+      "audiojack/c64_transport.json",
+      "regulator/scores.npz",
+      "regulator/c64_transport.json",
+      "switch/scores.npz",
+      "switch/c64_transport.json",
+      "rolled_strip_base/scores.npz",
+      "rolled_strip_base/c64_transport.json"
+    ]
+  }
+}
