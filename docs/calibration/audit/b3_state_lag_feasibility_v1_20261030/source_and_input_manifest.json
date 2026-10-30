@@ -1,0 +1,761 @@
+{
+  "audit_output_sha256": {
+    "B3_STATE_LAG_FORMAL_RUNBOOK.md": "5d4a13ab2470b0d4f2d1df8f45829ee211f7117ebee84a95bd13b834de232e4b",
+    "a0_verification_output.txt": "0029f8ac95e07079f91c07ee7083f64f2c08581a8785105782c4815b604c8fc5",
+    "feasibility_matrix.json": "7b702b1da19cb8a2cd664604e19fb9e8d027cbfbb255cde1c2792323223a4350",
+    "feasibility_report.md": "58bc6cc2b1c32410b5d03e9c8da3a281a5160b0721f8da31b9625360681c4b59",
+    "test_report.md": "c23fdd22e7ea380e59333fc9b701b2b1b57f47b5f7d4dec84d0f23fb43b2a7ae",
+    "unittest_output.txt": "6dd3c39c2c050f23c882512f7fe19c19d9af1c4211699ab1cf0a53d91c1095d0"
+  },
+  "c64_group_identity_by_class": {
+    "audiojack": "88f61b52b1678d3f154907b65115896632e577c61c3da32992c4fcd20405b321",
+    "regulator": "b67740f3dd88aff13d0615a6da58e0ef0db11a606bed8f3af4a60787e9fcc27d",
+    "rolled_strip_base": "1cd93b91415ba4fb582d2057bf42d0efaab84a5b2273c7f02559b7ffd9f65dc8",
+    "switch": "b6d27657b707f22a43ee68ee63e3cb61676ba21c31a2f007d2feadbbf965719f"
+  },
+  "created_utc": "2026-10-30T10:53:52.756637+00:00",
+  "environment": {
+    "access_counts": {
+      "aggregate_schema_probe_objects_read_outside_verifier": 1,
+      "c64_initial_vectors_decoded": 20,
+      "distinct_versioned_c64_vectors_verified": 1210,
+      "event_trace_rows_decoded": 76475,
+      "frozen_trajectories_verified": 20,
+      "historical_a2_prediction_rows_decoded": 76475,
+      "image_files_opened": 0,
+      "label_or_outcome_files_opened": 0,
+      "memory_content_transitions_verified": 1190,
+      "p12_evidence_files_hashed_not_decoded": 20,
+      "performance_metric_files_opened": 0
+    },
+    "aggregate_receipt_schema_probe_objects_read_outside_verifier": 1,
+    "confirmation_label_files_opened": 0,
+    "cuda_inference_calls": 0,
+    "dataset_image_reads": 0,
+    "dataset_root_exists": true,
+    "dinov2_cache_exists": true,
+    "json_metadata_exists": true,
+    "label_provider_reads": 0,
+    "numpy_version": "1.24.1",
+    "outcome_label_vectors_opened": 0,
+    "p12_evidence_files_hashed_not_decoded": 20,
+    "performance_metric_files_opened": 0,
+    "platform": "Windows-10-10.0.26300-SP0",
+    "python_executable": "D:\\anaconda3\\envs\\torch\\python.exe",
+    "python_version": "3.11.14",
+    "torch_version": "2.0.1+cu117"
+  },
+  "frozen_source_root": "original checkout; read-only",
+  "historical_limitations": {
+    "historical_formal_outcome_metrics_read_or_used": false,
+    "historical_native_c64_rescoring_performed": false,
+    "original_g2_source_byte_parity": "BLOCKED_UNCHANGED",
+    "stage075a_incomplete_marker_present": true
+  },
+  "input_artifacts": [
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tape_manifest.json",
+      "role": "Stage05 score tape manifest",
+      "sha256": "c884694c7f63adb0984d1f96e386ab8ec1dd4a85d5bac4b62bb9b4509fb34e39"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/protocol_manifest.json",
+      "role": "Stage075A protocol_manifest.json",
+      "sha256": "948bdb5396269b391a9c8fb51681acabbcda46fe4dee145844344815d0404bf9"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/audit_linkage.json",
+      "role": "Stage075A audit_linkage.json",
+      "sha256": "47e9165e1ef4d58886fbccfbae60aa12101f9266ef83950854b930034aaaf301"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/recovery_preflight.json",
+      "role": "P1.2 recovery preflight",
+      "sha256": "8874ff5472db6924931e3e3a37b49d8d218668e66d95d4f90db7da34f58ee3cc"
+    },
+    {
+      "hash_mode": "canonical_lf_text",
+      "path": "docs/calibration/audit/stage1a_p12_low_memory_recovery_v3_20261030/trajectory_receipts_final.json",
+      "role": "P1.2 audit trajectory_receipts_final.json",
+      "sha256": "278afcdc9d8bbaaba1830c26905481aeb7699078198b135eb1e2399fa5a4af02"
+    },
+    {
+      "hash_mode": "canonical_lf_text",
+      "path": "docs/calibration/audit/stage1a_p12_low_memory_recovery_v3_20261030/exact_native_memory_parity_final.json",
+      "role": "P1.2 audit exact_native_memory_parity_final.json",
+      "sha256": "4e72dc16a3b3b03158abd18b0e74d3dd03637c3b3063b12c30b57df630009dd2"
+    },
+    {
+      "hash_mode": "canonical_lf_text",
+      "path": "docs/calibration/audit/stage1a_p12_low_memory_recovery_v3_20261030/anchor_evidence_reconciliation_final.json",
+      "role": "P1.2 audit anchor_evidence_reconciliation_final.json",
+      "sha256": "d2302ddf642aafd87209d059bd7a2e0aaa585fb696faa790d0fe01810d4b88e2"
+    },
+    {
+      "hash_mode": "canonical_lf_text",
+      "path": "docs/calibration/audit/stage1a_p12_low_memory_recovery_v3_20261030/source_provenance.json",
+      "role": "P1.2 audit source_provenance.json",
+      "sha256": "81f3bea368094670a99ca8db688e0b1f51f78ec869c1f190fb7499caa4ef9823"
+    },
+    {
+      "hash_mode": "canonical_lf_text",
+      "path": "docs/calibration/audit/stage1a_p12_low_memory_recovery_v3_20261030/p12_low_memory_recovery_gate_matrix_final.json",
+      "role": "P1.2 audit p12_low_memory_recovery_gate_matrix_final.json",
+      "sha256": "3c9885038f79219d2d3d69f94c10b5223c33f701cbf7b3009572cc18e27d9d84"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/prediction_phase_complete.json",
+      "role": "Formal A2 prediction_phase_complete.json",
+      "sha256": "f3e98fc3e8fdbceeb1304fc23fc52db4669e714290845449d502fb3af2e4db3e"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/preflight.json",
+      "role": "Formal A2 preflight.json",
+      "sha256": "c502584126a23afebb53427da2c1f644c343eb6ecc92c51bb85e41945f430734"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "docs/calibration/audit/stage1a_final_readiness_v6_20261030/stage1a_execution_manifest.json",
+      "role": "Stage1A readiness stage1a_execution_manifest.json",
+      "sha256": "7db10ca01f7eeb9e3e456e9e7499812b7517878e4fe9e7a36eb732c3f32fe0ef"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "docs/calibration/audit/stage1a_final_readiness_v6_20261030/stage1a_readiness_gate_matrix.json",
+      "role": "Stage1A readiness stage1a_readiness_gate_matrix.json",
+      "sha256": "a9a67ba7feccb248f8efb074f25f5463468dd555e1e7c9cab856d96dd1e8c277"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "docs/calibration/audit/stage1a_final_readiness_v6_20261030/source_provenance.json",
+      "role": "Stage1A readiness source_provenance.json",
+      "sha256": "ad272421689b664b9be6411447bc1ee69bc7ee25d079af294de83d368e96c76c"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/audiojack_support0.npz",
+      "role": "audiojack/seed0 initial C64 tape",
+      "sha256": "ad6edc2677809f1f0c455f80ea8aa002e9123fd9f19711936b5c8501696fdd93"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/audiojack/scores.npz",
+      "role": "Stage075A root linkage trajectories/audiojack/scores.npz",
+      "sha256": "2eddf57d079e4dac6360b1d458fa56e0341d2e3f73694b81424054c85150910e"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/audiojack/c64_transport.json",
+      "role": "Stage075A root linkage trajectories/audiojack/c64_transport.json",
+      "sha256": "cd79e28254fb129c6dfdbe1110a9124556271aa322c9058d7e8c25331aed78ce"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/audiojack/event_trace.jsonl.gz",
+      "role": "Stage075A root linkage trajectories/audiojack/event_trace.jsonl.gz",
+      "sha256": "e4b6f2c006c9fd228d9900ce8762bd12b7929dae706f7eea91ca5a6a3eff266f"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/audiojack/trajectory_manifest.json",
+      "role": "Stage075A root linkage trajectories/audiojack/trajectory_manifest.json",
+      "sha256": "8a2741bfe4c540b6d16a4dc8f70411cf9782da2a0c5338da4b36b4b5101448fa"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/audiojack/seed0.receipt.json",
+      "role": "P1.2 receipt audiojack/seed0",
+      "sha256": "3b03ade8761e369ea49d2d56879e5298d7ead2cf1b66c03f2b83a7b786919bdc"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed0.jsonl",
+      "role": "audiojack/seed0 frozen P1.2 evidence bytes",
+      "sha256": "2395014d8e3bc7acf46bf9522ed59bd3892dbb5bacf5b37d9eca443a6d361456"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/audiojack_seed0.jsonl.gz",
+      "role": "historical A2 predictions audiojack/seed0",
+      "sha256": "8779eb755ec294d69cc75f726f7afa4ede476f704b0b1084452b82185a43edb2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/audiojack_support1.npz",
+      "role": "audiojack/seed1 initial C64 tape",
+      "sha256": "ae4b8aaa0891f5a664e282cdb7fa19e5e7d794a9e994b4f475350fd5b331d165"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/audiojack/seed1.receipt.json",
+      "role": "P1.2 receipt audiojack/seed1",
+      "sha256": "a2806d6b10a0e3405835e4aba34f270f576f9d96c18417bdc83cde79d5489154"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed1.jsonl",
+      "role": "audiojack/seed1 frozen P1.2 evidence bytes",
+      "sha256": "c55e10c20646d302e6bb8c7690232981ea6e7b02f0b03e0d7d686c72676fe88b"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/audiojack_seed1.jsonl.gz",
+      "role": "historical A2 predictions audiojack/seed1",
+      "sha256": "75d709ded20bc17f085b6d7eb5b1c506eb5bcebbb2e35419cb5fc70f4b8695f6"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/audiojack_support2.npz",
+      "role": "audiojack/seed2 initial C64 tape",
+      "sha256": "7bcf03a144e284bb1a87297f3de9768c7dfaf42d7815365402d6121f66122aaa"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/audiojack/seed2.receipt.json",
+      "role": "P1.2 receipt audiojack/seed2",
+      "sha256": "ef631f54614d6a8cea0673ba28729daf0bb4123be7ae477a82262ffccfe7c09c"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed2.jsonl",
+      "role": "audiojack/seed2 frozen P1.2 evidence bytes",
+      "sha256": "66db8745a9cdf33b2e0be48f2c10cd9913c2e05ccae615954bcd2cabc16c9c7a"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/audiojack_seed2.jsonl.gz",
+      "role": "historical A2 predictions audiojack/seed2",
+      "sha256": "24b89629c7b65143347a587c5a4c89cb230f57b96c8309073a9ccc90038a9be2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/audiojack_support3.npz",
+      "role": "audiojack/seed3 initial C64 tape",
+      "sha256": "426715a085327857414cab5763e157dceb86abe6a706dafd2e4645fa784607fe"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/audiojack/seed3.receipt.json",
+      "role": "P1.2 receipt audiojack/seed3",
+      "sha256": "26aba7c3fa7fee3bee80fc3c2e9aedc11b5bcb1adfec2f8f0be4d3b72f110fec"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed3.jsonl",
+      "role": "audiojack/seed3 frozen P1.2 evidence bytes",
+      "sha256": "8149b8aed858be78b44731714cbe89f7f6ab21a8cd8137da6dd80117e935c8f7"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/audiojack_seed3.jsonl.gz",
+      "role": "historical A2 predictions audiojack/seed3",
+      "sha256": "5728a4542032d169c558ee1baf54a5f6e69e7d178a6b401d17ac27d4fe92bc88"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/audiojack_support4.npz",
+      "role": "audiojack/seed4 initial C64 tape",
+      "sha256": "2fd8eac532f989b21641a5f4ba5c89c6fc6c6d1233a2117d76b725c5ce6d0c3f"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/audiojack/seed4.receipt.json",
+      "role": "P1.2 receipt audiojack/seed4",
+      "sha256": "53390fef82bc075089ffd60b686700f761afe942ea6b4d3c3d85b7413039da88"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/audiojack_seed4.jsonl",
+      "role": "audiojack/seed4 frozen P1.2 evidence bytes",
+      "sha256": "d0905d2b2503f6030b838dd7bc0137de488dd1eae14f78379dc9486739bf7e48"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/audiojack_seed4.jsonl.gz",
+      "role": "historical A2 predictions audiojack/seed4",
+      "sha256": "e1acc2d5c0d17fa79133eb6cce30df57c85c2c34e3173f1d09919f1d5777e65c"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/regulator_support0.npz",
+      "role": "regulator/seed0 initial C64 tape",
+      "sha256": "0f6fdb241810bb3943ffd93d8fa5b9e2005c2eb6a1e6e9d53d99dcde5235f9f2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/regulator/scores.npz",
+      "role": "Stage075A root linkage trajectories/regulator/scores.npz",
+      "sha256": "2fe12bae6e8032c86d8f000fa98e172b2e17486d779fa29036cea87246e8fa38"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/regulator/c64_transport.json",
+      "role": "Stage075A root linkage trajectories/regulator/c64_transport.json",
+      "sha256": "f6e1c0de08a1a807fe5bfffbfcd211a258e1cf50efcd01d825112656270ac12b"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/regulator/event_trace.jsonl.gz",
+      "role": "Stage075A root linkage trajectories/regulator/event_trace.jsonl.gz",
+      "sha256": "a3f56915dec4bc0eab2422584fc09d8fd5ad92f853b529a5ebb1dd4b680d6d67"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/regulator/trajectory_manifest.json",
+      "role": "Stage075A root linkage trajectories/regulator/trajectory_manifest.json",
+      "sha256": "6debb1fc08abecd51a2a0a88bb0f06684bd7985d930f5e3b3f79bb124b2588b5"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/regulator/seed0.receipt.json",
+      "role": "P1.2 receipt regulator/seed0",
+      "sha256": "313392dc4feda7fd10cc594471cded22d45f52fd455bc3c9f399f65149214ed1"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed0.jsonl",
+      "role": "regulator/seed0 frozen P1.2 evidence bytes",
+      "sha256": "3d493b7f1823e79aba58c641950bc697221674e6870987e9d2edcf8c05ae6016"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/regulator_seed0.jsonl.gz",
+      "role": "historical A2 predictions regulator/seed0",
+      "sha256": "001d1d5b763c657ecd1d219132b8b8cbaaf2e34dcec15b0133c3c095d18af4ed"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/regulator_support1.npz",
+      "role": "regulator/seed1 initial C64 tape",
+      "sha256": "2af3fd91ef437ca5d6641fe35e93769816f66ae36def614a2e84cadd1f0faa59"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/regulator/seed1.receipt.json",
+      "role": "P1.2 receipt regulator/seed1",
+      "sha256": "11f798137440e6c19549f155475358a79900db5b5823d232a33e0f11606176dc"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed1.jsonl",
+      "role": "regulator/seed1 frozen P1.2 evidence bytes",
+      "sha256": "730614a1da84baf96df9eba3fff8401519c43aeea9969227ee8c4f4fc6507992"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/regulator_seed1.jsonl.gz",
+      "role": "historical A2 predictions regulator/seed1",
+      "sha256": "e01b3ac671ccb72061c73108b16615187415e026c40fb45a5ebfbc5b810e6eac"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/regulator_support2.npz",
+      "role": "regulator/seed2 initial C64 tape",
+      "sha256": "bf9fe83f698386cec5a21821f889e7a462ee527aaadb56f9eeac651f6ac41054"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/regulator/seed2.receipt.json",
+      "role": "P1.2 receipt regulator/seed2",
+      "sha256": "cb6bc55508e496298c6bc1840b5156646bf7d35fe2e77560dac79842eb9730fb"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed2.jsonl",
+      "role": "regulator/seed2 frozen P1.2 evidence bytes",
+      "sha256": "998ddab119c40b4f50a04f5a3b736fa7c18ef1f273191e173000ec9ed6529e51"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/regulator_seed2.jsonl.gz",
+      "role": "historical A2 predictions regulator/seed2",
+      "sha256": "61f3305f28d0bda6cad7942c5a544c521ff5ebe023fab307407ab9da375e4df3"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/regulator_support3.npz",
+      "role": "regulator/seed3 initial C64 tape",
+      "sha256": "2eee0b5e3c9f25aa5a3ff136914657397efb22d343cda37af92cba0ae0e4c92c"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/regulator/seed3.receipt.json",
+      "role": "P1.2 receipt regulator/seed3",
+      "sha256": "84c49843b949e678ed75af44c7b9a97d0f92c40829b9650654e7cfb22df4cb83"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed3.jsonl",
+      "role": "regulator/seed3 frozen P1.2 evidence bytes",
+      "sha256": "632e28da102fa5a53bdf53e9c2fb4976c01fda0b352386011f586e6921f991e2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/regulator_seed3.jsonl.gz",
+      "role": "historical A2 predictions regulator/seed3",
+      "sha256": "6272f4ed4b1eda20700e0d13c578e607da427dca46eb6c295b7771ad0ba922ae"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/regulator_support4.npz",
+      "role": "regulator/seed4 initial C64 tape",
+      "sha256": "6a12c3757b725dfa3334be5d6ab66651efa7ae9dc8ea4c3b9395d46087b00852"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/regulator/seed4.receipt.json",
+      "role": "P1.2 receipt regulator/seed4",
+      "sha256": "bbf4c907c3ee5bf229d1c129b4437aaa025b44f355b62f3df6905ee6c8e2b7a7"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/regulator_seed4.jsonl",
+      "role": "regulator/seed4 frozen P1.2 evidence bytes",
+      "sha256": "4d51b719613ae52e2c9a3a8ad519c7d17e3c54149a558b844800dea909417cc2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/regulator_seed4.jsonl.gz",
+      "role": "historical A2 predictions regulator/seed4",
+      "sha256": "225101a03005c08bb81fc43c3de070ea728343f482d480864e9afdb9b6e2b237"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/switch_support0.npz",
+      "role": "switch/seed0 initial C64 tape",
+      "sha256": "91fefe78fe54a2d933770b120df08894b4c8e6f69297d0cd2d2ac7b950e0aa9e"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/switch/scores.npz",
+      "role": "Stage075A root linkage trajectories/switch/scores.npz",
+      "sha256": "40c28e14c169844556ae463c035bb272c6381e34162cb7e3b9a7da9f73bff020"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/switch/c64_transport.json",
+      "role": "Stage075A root linkage trajectories/switch/c64_transport.json",
+      "sha256": "3479d977f4a57c0dfe264342888793ea0d65e505ff2bf0212bcdda25974c22ef"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/switch/event_trace.jsonl.gz",
+      "role": "Stage075A root linkage trajectories/switch/event_trace.jsonl.gz",
+      "sha256": "e251103786e25f0f5afcb185c471d6de245a6ccd50dca99304c65d45aea30303"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/switch/trajectory_manifest.json",
+      "role": "Stage075A root linkage trajectories/switch/trajectory_manifest.json",
+      "sha256": "f48950afe41e29f0792baeb914ed732d2a156f9397671a8e9db39f942f01ebf2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/switch/seed0.receipt.json",
+      "role": "P1.2 receipt switch/seed0",
+      "sha256": "ba1327acea2b555c3ee0e9df84f3a57b727825deca20ffd3441ba9568740527f"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed0.jsonl",
+      "role": "switch/seed0 frozen P1.2 evidence bytes",
+      "sha256": "bc0a8d3410b413909f10fd2e8aded8abd95efc265129e0cd02ff238a0fed6be4"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/switch_seed0.jsonl.gz",
+      "role": "historical A2 predictions switch/seed0",
+      "sha256": "90746c63f0ac670e00de7faa0bd4a95b6275de36749dc012099451e85184f0be"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/switch_support1.npz",
+      "role": "switch/seed1 initial C64 tape",
+      "sha256": "7116ce25061208caabf8db968e4f786d6a771cf00df5736ad477273b56d52127"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/switch/seed1.receipt.json",
+      "role": "P1.2 receipt switch/seed1",
+      "sha256": "5a82ef899cdea43f4aa2b9ff9bf06402b06c70ad7cd3883baf4c69ad08bf807d"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed1.jsonl",
+      "role": "switch/seed1 frozen P1.2 evidence bytes",
+      "sha256": "4a8366e848dc9f05915e43c28c9bbf4e2a9f7c720c5cdaa9a2eb927d0e220fa9"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/switch_seed1.jsonl.gz",
+      "role": "historical A2 predictions switch/seed1",
+      "sha256": "ea70a1821612b272ab8c7b5ef2f624ee0dd8eb28d1002f70ff34da323e1e2c99"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/switch_support2.npz",
+      "role": "switch/seed2 initial C64 tape",
+      "sha256": "146ac77031b183d488d6793598dc9fc1b29cb0bb336807ef0e51a3462deab9d1"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/switch/seed2.receipt.json",
+      "role": "P1.2 receipt switch/seed2",
+      "sha256": "4b29816870f716af17708ff2de54ef681b05fd70e4f74c87b00a4f1b5550fb8f"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed2.jsonl",
+      "role": "switch/seed2 frozen P1.2 evidence bytes",
+      "sha256": "04d13a3754cc62c69e4bc9f0830e5046bc18f499857f7c76e5de75ca87ac66be"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/switch_seed2.jsonl.gz",
+      "role": "historical A2 predictions switch/seed2",
+      "sha256": "33f9e20b98319ff754f30f5099ad616e30d5084587379b27ef481f2b48d2a9d2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/switch_support3.npz",
+      "role": "switch/seed3 initial C64 tape",
+      "sha256": "534ad7d34576969a3332afc2f2b27f81a97bdcf2f161a138871a63f049b47b79"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/switch/seed3.receipt.json",
+      "role": "P1.2 receipt switch/seed3",
+      "sha256": "8fd53ddabdbc059f2e5b5421cd598f4a2904c0c2ee32ebbe616e69e3c2d4bee2"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed3.jsonl",
+      "role": "switch/seed3 frozen P1.2 evidence bytes",
+      "sha256": "9b9b43e10ae2345e1f1d948e5fb05ca4e20f4fd215490f8c5dd5735a1427a521"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/switch_seed3.jsonl.gz",
+      "role": "historical A2 predictions switch/seed3",
+      "sha256": "fa726715bfbeaafd9b5ab7921c552f2a3a825c1f7af256df79a4efe7f6d6873a"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/switch_support4.npz",
+      "role": "switch/seed4 initial C64 tape",
+      "sha256": "5179e3d6ebb26be44ec13eb888601c1cf35935517602a112312c1096606b7143"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/switch/seed4.receipt.json",
+      "role": "P1.2 receipt switch/seed4",
+      "sha256": "9bccd8ad24a4d7cee3e2d09c2b1c9cbbceb4b529039fc168494367c4682501eb"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/switch_seed4.jsonl",
+      "role": "switch/seed4 frozen P1.2 evidence bytes",
+      "sha256": "e2b1e534c817c8b18fff648699722b74fc4cdd6742b7651ceeca676b4a6e250f"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/switch_seed4.jsonl.gz",
+      "role": "historical A2 predictions switch/seed4",
+      "sha256": "1b2113986c8d5ac034ee8e8f94761f77e5a566db6001e29c42a903b07093cfac"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/rolled_strip_base_support0.npz",
+      "role": "rolled_strip_base/seed0 initial C64 tape",
+      "sha256": "774c02efb5744337fc881e3f1469943e8780fb68dbccedac161c6bfa8a5bddc6"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/rolled_strip_base/scores.npz",
+      "role": "Stage075A root linkage trajectories/rolled_strip_base/scores.npz",
+      "sha256": "91bbe6a197f61bd74480bc21dddb7e3e1bd84c3c093bc28eb64cd3f98c84b6b4"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/rolled_strip_base/c64_transport.json",
+      "role": "Stage075A root linkage trajectories/rolled_strip_base/c64_transport.json",
+      "sha256": "0c1354566c3f0d9f98173297fd17b367be13d5b6e83bd5eec8dde98d2a7b9b0f"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/rolled_strip_base/event_trace.jsonl.gz",
+      "role": "Stage075A root linkage trajectories/rolled_strip_base/event_trace.jsonl.gz",
+      "sha256": "a65fa2b54cea6d61f92ca6e7d31ca5da858dc9b47da1706a786ad45d3bfaee0d"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage075a_greedy_ranking_repaired3_20261029/trajectories/rolled_strip_base/trajectory_manifest.json",
+      "role": "Stage075A root linkage trajectories/rolled_strip_base/trajectory_manifest.json",
+      "sha256": "4d2301063804c5dbd61c066ea8125f0e55e505f5a56186ca149f21a122e02099"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/rolled_strip_base/seed0.receipt.json",
+      "role": "P1.2 receipt rolled_strip_base/seed0",
+      "sha256": "c36d6d1c72d11e08e40a67d2aa8c9c522b20e99ec88f6a304fa8b3729f8af1ea"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_native_replay_v1_standing_authorization_05_20261030/private/evidence/rolled_strip_base_seed0.jsonl",
+      "role": "rolled_strip_base/seed0 frozen P1.2 evidence bytes",
+      "sha256": "33954a05edc44251453ead1a0be1813579247a7c5715643f56373eb0c53ea59a"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/rolled_strip_base_seed0.jsonl.gz",
+      "role": "historical A2 predictions rolled_strip_base/seed0",
+      "sha256": "3aa3b14d2114b2e18f95c3df898afef71a74256f359d80fccaceb1cc55191962"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/rolled_strip_base_support1.npz",
+      "role": "rolled_strip_base/seed1 initial C64 tape",
+      "sha256": "a8b5eef2af1b158f0321a97e24b11828ed66784ebfcaaecdb20d571c77df2af0"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/rolled_strip_base/seed1.receipt.json",
+      "role": "P1.2 receipt rolled_strip_base/seed1",
+      "sha256": "63ddd14345dd332cd3279446002a31d05fe301f009d42228d77846b6cb41f214"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed1.jsonl",
+      "role": "rolled_strip_base/seed1 frozen P1.2 evidence bytes",
+      "sha256": "30cf2d7ce11121c8a93c1d8a27910e6095140425fdc1287ae64f1ff8eccfa903"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/rolled_strip_base_seed1.jsonl.gz",
+      "role": "historical A2 predictions rolled_strip_base/seed1",
+      "sha256": "9d73efface9469b1d6a5a6e7a80f4f21993a6039078d26caa01619ce545b448f"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/rolled_strip_base_support2.npz",
+      "role": "rolled_strip_base/seed2 initial C64 tape",
+      "sha256": "7e09f047b10a745d27bb32021781a6fd1be5342240bdea277c0f81b1ac3a2cf5"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/rolled_strip_base/seed2.receipt.json",
+      "role": "P1.2 receipt rolled_strip_base/seed2",
+      "sha256": "6dab28775e46f21abd86608175483d386a5750bc7eb3ceb4294c247691f2c0ad"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed2.jsonl",
+      "role": "rolled_strip_base/seed2 frozen P1.2 evidence bytes",
+      "sha256": "02ff8ae00b98a2870f230692363395b4803599c81c079230be8fa47eb45a24d4"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/rolled_strip_base_seed2.jsonl.gz",
+      "role": "historical A2 predictions rolled_strip_base/seed2",
+      "sha256": "d0ff7002b50ea5f9a40a30366f307cb8be1f42cbe3877eec4c89ad2b4f9d60e0"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/rolled_strip_base_support3.npz",
+      "role": "rolled_strip_base/seed3 initial C64 tape",
+      "sha256": "df1763c62870bf3e44d81cfe3834c6d84a1f7ec7579487684d06b281d0346169"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/rolled_strip_base/seed3.receipt.json",
+      "role": "P1.2 receipt rolled_strip_base/seed3",
+      "sha256": "d92607271b6b2f8fdc14ca8076cea7ea3c15a05f712094e2b9084afeb93e51be"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed3.jsonl",
+      "role": "rolled_strip_base/seed3 frozen P1.2 evidence bytes",
+      "sha256": "2d18a72762fddc625784ba303f651c803a44bfad6d02abc186b56aa4cf947cbb"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/rolled_strip_base_seed3.jsonl.gz",
+      "role": "historical A2 predictions rolled_strip_base/seed3",
+      "sha256": "df0446d7a1491e3970b1ce83d5ccef2555dda17acb144874f38592fc8808e1b9"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage05_exploratory_20261029/score_tapes/rolled_strip_base_support4.npz",
+      "role": "rolled_strip_base/seed4 initial C64 tape",
+      "sha256": "a422f506d907c593dad8f8cb0a49e8f6673ef71e02e8f4281052f485a2b767cf"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/shards/rolled_strip_base/seed4.receipt.json",
+      "role": "P1.2 receipt rolled_strip_base/seed4",
+      "sha256": "39d90b990194436e46781b1790f85f15ec7666d855b9d877bc6479d49063ec53"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_p12_low_memory_recovery_v3_20261030/private/evidence/rolled_strip_base_seed4.jsonl",
+      "role": "rolled_strip_base/seed4 frozen P1.2 evidence bytes",
+      "sha256": "f29c466a7faa2d422b397bb3441767c3613d55e14ef8153723a515cb7799338b"
+    },
+    {
+      "hash_mode": "raw_bytes",
+      "path": "outputs/calibration/stage1a_formal_controller_comparison_v4_20261030/predictions/rolled_strip_base_seed4.jsonl.gz",
+      "role": "historical A2 predictions rolled_strip_base/seed4",
+      "sha256": "2507473a3bccce63c0a595d4890b3c2d996e2ec2fcad9db0806d33ce9e87bbbc"
+    }
+  ],
+  "mechanism_configuration": {
+    "arms_lag_by_memory_content_versions": {
+      "A2": 0,
+      "A3": 1,
+      "A4": 5
+    },
+    "delta": 0.01,
+    "initial_theta": "q90(memory_version_0)",
+    "prediction_rule": "score >= theta",
+    "q90_order_statistic_index_zero_based": 57,
+    "q90_quantile": 0.9,
+    "update_order": "predict, then apply transition for next event"
+  },
+  "schema": "calibration.b3_state_lag_a0_verification.v1",
+  "source_sha256": {
+    "base_commit": "cfaf0f925a71963333627687a04d8baac7414f0e",
+    "experiments/calibration/controllers.py": "cb55e3d815d46a9d955a257c3800e7c88b18bf95aac38efd037193ad3ece1ac2",
+    "experiments/calibration/stage075a.py": "80b7bcd5e2a27de82aabee4541f81b34f8f95ac791ef77311ca316c9c7cd4d5d",
+    "experiments/calibration/stage075a_runner.py": "b931630a45901836aa8883b73e9360219b9afcc277a7ade04fa8387cce26b6f4",
+    "experiments/calibration/stage1a_b3_mechanism_ablation.py": "556b50d55dab491b1dcced26f1f2ac0cbc7f290512638fcbc1029e1047212edc",
+    "experiments/calibration/stage1a_final_readiness.py": "3ce0705b6932f106793f65e8fb33b1e3e3d7f4b5911a4add1fc6e55fabf13a46",
+    "experiments/calibration/stage1a_formal_comparison.py": "ae59fb2fd59b2e1aebedc5b4f32858ea95b7022744a5f59a67b09d5fbe75471d",
+    "experiments/calibration/stage1a_p11_production.py": "77e84fa11c83eca683b0b95c4849b175053c0b24298e78dfe6482c91bdf6ea7d",
+    "experiments/calibration/stage1a_p12_runner.py": "8af1ab63530fd50d205321870a54c786110596241cb54839e6aa3c03d32a0979",
+    "experiments/calibration/stage1a_p12_sharded_recovery.py": "452dbb1059acea1fce752d0cbacc5f965ab2c3e46333b12ac70df9372e5c3368",
+    "master_plan": "479959b60f39ced55b4f15dc2a78a7dcbfcb9e8fb43cc035fc0db6b95515a6d4",
+    "tests/calibration/test_b3_mechanism_ablation.py": "ba13d7efe48c85a6205baab85daf4cda43a8e623f6383a7946c29fd4dddce996"
+  },
+  "status": "PASS",
+  "summary": {
+    "event_identity_mismatches": 0,
+    "events": 76475,
+    "memory_updates": 1190,
+    "post_threshold_mismatches": 0,
+    "pre_threshold_mismatches": 0,
+    "prediction_mismatches": 0,
+    "trajectory_count": 20
+  },
+  "worktree": {
+    "base_commit": "cfaf0f925a71963333627687a04d8baac7414f0e",
+    "branch": "calibration-b3-state-lag-a1-20261030",
+    "clean_verified_before_edits": true,
+    "isolated_worktree": true
+  }
+}
