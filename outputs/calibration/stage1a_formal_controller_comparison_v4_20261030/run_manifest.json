@@ -1,0 +1,33 @@
+{
+  "actual_head": "5546f037834b780eb71019a70655396499bb7800",
+  "branch": "calibration-stage0-contract-20261029",
+  "controller_rows": [
+    "B0",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5a",
+    "B5a-Frozen",
+    "B5b",
+    "B5b-Frozen",
+    "B7",
+    "Stage075BOffset"
+  ],
+  "created_utc_date": "2026-10-30",
+  "event_count": 76475,
+  "formal_comparison_audit_sha256": "1f93c881873736573152c28bdf0ec91e9ab33c9cb6e9d11bf4ac9d3957cf33d8",
+  "mask_or_confirmation_accessed": false,
+  "outcome_label_vectors_saved": false,
+  "paired_results_sha256": "f9177ad0d68bd9fade9bc38cf79e0cda06c9f20e8ad320bfa254c3a95117174f",
+  "per_method_metrics_sha256": "fdd69b8ec38d34c3f95fbdc3fe6c8ad0950d27948eae5ca75e31b3c0d11703e2",
+  "prediction_phase_complete_sha256": "f3e98fc3e8fdbceeb1304fc23fc52db4669e714290845449d502fb3af2e4db3e",
+  "prediction_receipts_sha256": "6e1d4233857ee40996f37b52c6296d85ffe9685c846cda857195b33c7b29eef2",
+  "preflight_sha256": "c502584126a23afebb53427da2c1f644c343eb6ecc92c51bb85e41945f430734",
+  "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+  "requested_head": "89e2cf4992408cbc5e86facb621749aa7210642b",
+  "runner_source_sha256": "a9391ab94e9a994198484cd3fb5efc7f534b3515c870723c141c3417ea717c84",
+  "schema": "stage1a.formal_comparison.run_manifest.v1",
+  "status": "COMPLETE",
+  "trajectory_count": 20
+}
