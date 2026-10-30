@@ -1,0 +1,71 @@
+{
+  "methods": {
+    "B0": {
+      "evidence": "none",
+      "queried_label": false,
+      "score": true
+    },
+    "B1": {
+      "evidence": "none",
+      "queried_label": "queried verified labels; only normal labels update W=256 buffer",
+      "score": true
+    },
+    "B2": {
+      "evidence": "additional C64 scalar initialization only",
+      "queried_label": "queried verified labels",
+      "score": true
+    },
+    "B3": {
+      "evidence": "protected current-memory C64 only",
+      "queried_label": false,
+      "score": true
+    },
+    "B4": {
+      "evidence": "causal current-memory queried anchors",
+      "queried_label": "queried verified labels",
+      "score": true
+    },
+    "B5a": {
+      "evidence": "none",
+      "queried_label": false,
+      "score": true
+    },
+    "B5a_FROZEN_FALLBACK": {
+      "evidence": "none; distinct theta0 fallback wrapper",
+      "queried_label": false,
+      "score": true
+    },
+    "B5b": {
+      "evidence": "none",
+      "queried_label": false,
+      "score": true
+    },
+    "B5b_FROZEN_FALLBACK": {
+      "evidence": "none; distinct theta0 fallback wrapper",
+      "queried_label": false,
+      "score": true
+    },
+    "B6": {
+      "evidence": "none; not run in readiness",
+      "queried_label": false,
+      "score": "applicability reference only"
+    },
+    "B7": {
+      "evidence": "protected C64 plus eligible queried normal LSO and queried defect anchors",
+      "queried_label": false,
+      "score": true
+    },
+    "B8": {
+      "evidence": "historical artifacts only",
+      "queried_label": false,
+      "score": "historical negative control only"
+    },
+    "Stage075BOffset": {
+      "evidence": "causal queried anchor evidence; holds own threshold if either class side is unavailable",
+      "queried_label": false,
+      "score": true
+    }
+  },
+  "schema": "stage1a.controller_input_matrix.v1",
+  "shared_score_memory_query_writer_path": "controller-independent frozen input path"
+}

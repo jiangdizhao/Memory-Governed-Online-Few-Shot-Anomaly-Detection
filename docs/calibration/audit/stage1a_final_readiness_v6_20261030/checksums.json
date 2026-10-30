@@ -1,0 +1,13 @@
+{
+  "files": {
+    "STAGE1A_FINAL_READINESS_REPORT.md": "309c03c583555b44921f711d7bfeb20e4dadba128bec9df07af8f8235f49ad00",
+    "source_provenance.json": "ad272421689b664b9be6411447bc1ee69bc7ee25d079af294de83d368e96c76c",
+    "stage1a_controller_input_matrix.json": "c6947585c600ec8406a7df9aa7621a3bdb8a9665d4421406d96a397e32675f81",
+    "stage1a_execution_manifest.json": "7db10ca01f7eeb9e3e456e9e7499812b7517878e4fe9e7a36eb732c3f32fe0ef",
+    "stage1a_frozen_method_registry.json": "5cf43c11023594fbf22b14198b4d649a8c522fae5fdb418d6a4bf6ce2ebd5dcc",
+    "stage1a_metric_contract.json": "655df37075210edb925ce7010d4fe2a0cf593a136e328b5087315fd5cd113433",
+    "stage1a_readiness_gate_matrix.json": "a9a67ba7feccb248f8efb074f25f5463468dd555e1e7c9cab856d96dd1e8c277",
+    "test_results.json": "fa7510a8843ac756a5067ba8d0d9285b7f762ff35fbcbf886c85d105eeac0463"
+  },
+  "schema": "stage1a.readiness.checksums.v1"
+}

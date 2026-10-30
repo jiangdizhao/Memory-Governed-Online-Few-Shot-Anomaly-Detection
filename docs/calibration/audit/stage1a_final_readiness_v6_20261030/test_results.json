@@ -1,0 +1,325 @@
+{
+  "bounded_real_input_smoke": {
+    "confirmation_classes_or_masks_accessed": false,
+    "events_through_first_query": 36,
+    "evidence_sha256": "2395014d8e3bc7acf46bf9522ed59bd3892dbb5bacf5b37d9eca443a6d361456",
+    "first_query_position": 35,
+    "full_stream_replayed": false,
+    "native_or_gpu_execution": false,
+    "performance_metrics_generated": false,
+    "precommitted_query_events_consumed": 1,
+    "query_tape_binding_sha256": "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183",
+    "receipt_sha256": "3b03ade8761e369ea49d2d56879e5298d7ead2cf1b66c03f2b83a7b786919bdc",
+    "registered_controllers_instantiated": 11,
+    "status": "PASS",
+    "trajectory": "audiojack/seed0",
+    "unqueried_labels_accessed": false
+  },
+  "command": "D:\\anaconda3\\envs\\torch\\python.exe -m unittest tests.calibration.test_stage1a_final_readiness tests.calibration.test_engine_and_ledger tests.calibration.test_controllers tests.calibration.test_spot_dspot tests.calibration.test_scdac_g tests.calibration.test_stage075b -v",
+  "exit_code": 0,
+  "schema": "stage1a.readiness.test_results.v1",
+  "scope": "synthetic CPU controller/metric fixtures plus existing causal/controller unit suites; bounded first-query frozen-input smoke is recorded separately; no real performance evaluation",
+  "status": "PASS",
+  "stdout_stderr_sha256": "f79f8a0324438a0f11b33ec04ea4f57aca40fe115f240712093ad22a1574a2e1",
+  "summary": "ared_score_or_memory (tests.calibration.test_engine_and_ledger.EngineLedgerTests.test_threshold_changes_do_not_change_shared_score_or_memory) ... ok\ntest_unqueried_label_swap_cannot_change_controller_or_memory_trajectory (tests.calibration.test_engine_and_ledger.EngineLedgerTests.test_unqueried_label_swap_cannot_change_controller_or_memory_trajectory) ... ok\ntest_b1_only_queried_verified_normals_enter_buffer (tests.calibration.test_controllers.ControllerTests.test_b1_only_queried_verified_normals_enter_buffer) ... ok\ntest_b2_uses_historical_sidecar_with_unqueried_fallback_disabled (tests.calibration.test_controllers.ControllerTests.test_b2_uses_historical_sidecar_with_unqueried_fallback_disabled) ... ok\ntest_b3_updates_once_per_memory_version (tests.calibration.test_controllers.ControllerTests.test_b3_updates_once_per_memory_version) ... ok\ntest_b4_current_memory_rescore_reverses_feasibility_without_stale_scores (tests.calibration.test_controllers.ControllerTests.test_b4_current_memory_rescore_reverses_feasibility_without_stale_scores) ... ok\ntest_b4_exact_error_count_boundaries_handle_ties (tests.calibration.test_controllers.ControllerTests.test_b4_exact_error_count_boundaries_handle_ties) ... ok\ntest_b4_missing_side_is_not_zero_risk (tests.calibration.test_controllers.ControllerTests.test_b4_missing_side_is_not_zero_risk) ... ok\ntest_b4_normal_lower_and_defect_upper_geometry_is_not_reversed (tests.calibration.test_controllers.ControllerTests.test_b4_normal_lower_and_defect_upper_geometry_is_not_reversed) ... ok\ntest_b4_overlapping_scores_are_genuinely_conflicting (tests.calibration.test_controllers.ControllerTests.test_b4_overlapping_scores_are_genuinely_conflicting) ... ok\ntest_b4_refreshes_new_queried_class_evidence_without_memory_change (tests.calibration.test_controllers.ControllerTests.test_b4_refreshes_new_queried_class_evidence_without_memory_change) ... ok\ntest_b4_updates_only_the_disclosed_class_side (tests.calibration.test_controllers.ControllerTests.test_b4_updates_only_the_disclosed_class_side) ... ok\ntest_controller_observation_and_feedback_have_no_unqueried_label_path (tests.calibration.test_controllers.ControllerTests.test_controller_observation_and_feedback_have_no_unqueried_label_path) ... ok\ntest_higher_quantile_boundary_ties (tests.calibration.test_controllers.ControllerTests.test_higher_quantile_boundary_ties) ... ok\ntest_operational_fallback_records_startup_and_abstention_without_changing_source (tests.calibration.test_controllers.ControllerTests.test_operational_fallback_records_startup_and_abstention_without_changing_source) ... ok\ntest_theta0_uses_d2_higher_q90_at_zero_based_rank_57 (tests.calibration.test_controllers.ControllerTests.test_theta0_uses_d2_higher_q90_at_zero_based_rank_57) ... ok\ntest_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean (tests.calibration.test_spot_dspot.SpotDspotTests.test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean) ... ok\ntest_grimshaw_matches_independent_scipy_gpd_mle (tests.calibration.test_spot_dspot.SpotDspotTests.test_grimshaw_matches_independent_scipy_gpd_mle) ... ok\ntest_insufficient_peak_initialization_fails_closed (tests.calibration.test_spot_dspot.SpotDspotTests.test_insufficient_peak_initialization_fails_closed) ... ok\ntest_pot_threshold_equation_and_near_zero_shape_limit (tests.calibration.test_spot_dspot.SpotDspotTests.test_pot_threshold_equation_and_near_zero_shape_limit) ... ok\ntest_spot_checkpoint_roundtrip_is_deterministic (tests.calibration.test_spot_dspot.SpotDspotTests.test_spot_checkpoint_roundtrip_is_deterministic) ... ok\ntest_spot_warmup_missingness_alarm_exclusion_and_peak_update (tests.calibration.test_spot_dspot.SpotDspotTests.test_spot_warmup_missingness_alarm_exclusion_and_peak_update) ... ok\ntest_all_five_evidence_states_and_missing_side_hold (tests.calibration.test_scdac_g.SCDACGTests.test_all_five_evidence_states_and_missing_side_hold) ... ok\ntest_b7_threshold_path_differs_from_b3_scq_under_two_sided_evidence (tests.calibration.test_scdac_g.SCDACGTests.test_b7_threshold_path_differs_from_b3_scq_under_two_sided_evidence) ... ok\ntest_both_state_reports_secondary_fpr_grid_and_cost_counts (tests.calibration.test_scdac_g.SCDACGTests.test_both_state_reports_secondary_fpr_grid_and_cost_counts) ... ok\ntest_candidate_grid_represents_score_ties_and_adjacent_decisions (tests.calibration.test_scdac_g.SCDACGTests.test_candidate_grid_represents_score_ties_and_adjacent_decisions) ... ok\ntest_current_version_only_and_checkpoint_roundtrip (tests.calibration.test_scdac_g.SCDACGTests.test_current_version_only_and_checkpoint_roundtrip) ... ok\ntest_empirically_incompatible_overlap_is_not_misreported_as_precision (tests.calibration.test_scdac_g.SCDACGTests.test_empirically_incompatible_overlap_is_not_misreported_as_precision) ... ok\ntest_fpr_diagnostic_minimizes_fnr_plus_movement_not_balanced_risk (tests.calibration.test_scdac_g.SCDACGTests.test_fpr_diagnostic_minimizes_fnr_plus_movement_not_balanced_risk) ... ok\ntest_identical_empirical_score_distributions_are_unidentifiable (tests.calibration.test_scdac_g.SCDACGTests.test_identical_empirical_score_distributions_are_unidentifiable) ... ok\ntest_perfect_separation_precision_boundary_at_8_13_14_and_32_defects (tests.calibration.test_scdac_g.SCDACGTests.test_perfect_separation_precision_boundary_at_8_13_14_and_32_defects) ... ok\ntest_primary_optimizes_inside_feasible_set_then_reports_clip_violation (tests.calibration.test_scdac_g.SCDACGTests.test_primary_optimizes_inside_feasible_set_then_reports_clip_violation) ... ok\ntest_secondary_diagnostics_do_not_change_primary_threshold (tests.calibration.test_scdac_g.SCDACGTests.test_secondary_diagnostics_do_not_change_primary_threshold) ... ok\ntest_b3_and_b7_are_the_existing_implementations (tests.calibration.test_stage075b.Stage075BContractTests.test_b3_and_b7_are_the_existing_implementations) ... ok\ntest_b8_full_objective_uses_current_and_transported_cdf_coordinates (tests.calibration.test_stage075b.Stage075BContractTests.test_b8_full_objective_uses_current_and_transported_cdf_coordinates) ... ok\ntest_b8_rejoins_gradually_after_departure (tests.calibration.test_stage075b.Stage075BContractTests.test_b8_rejoins_gradually_after_departure) ... ok\ntest_finite_rank_collision_keeps_raw_prediction_boundary (tests.calibration.test_stage075b.Stage075BContractTests.test_finite_rank_collision_keeps_raw_prediction_boundary) ... ok\ntest_focused_s1_s2_s6_s7_s8_s10_s11_s14_and_controls (tests.calibration.test_stage075b.Stage075BContractTests.test_focused_s1_s2_s6_s7_s8_s10_s11_s14_and_controls) ... ok\ntest_group_identity_rescores_do_not_create_new_evidence (tests.calibration.test_stage075b.Stage075BContractTests.test_group_identity_rescores_do_not_create_new_evidence) ... ok\ntest_offset_updates_only_when_evidence_digest_changes (tests.calibration.test_stage075b.Stage075BContractTests.test_offset_updates_only_when_evidence_digest_changes) ... ok\ntest_predict_before_disclosure_and_shared_memory (tests.calibration.test_stage075b.Stage075BContractTests.test_predict_before_disclosure_and_shared_memory) ... ok\ntest_public_observation_contains_no_label_or_group_identity (tests.calibration.test_stage075b.Stage075BContractTests.test_public_observation_contains_no_label_or_group_identity) ... ok\ntest_s0_actual_b3_exact_fallback (tests.calibration.test_stage075b.Stage075BContractTests.test_s0_actual_b3_exact_fallback) ... ok\ntest_s11_same_group_cross_view_and_duplicate_defect_rejected (tests.calibration.test_stage075b.Stage075BContractTests.test_s11_same_group_cross_view_and_duplicate_defect_rejected) ... ok\ntest_s12_common_scores_and_ranking_metrics (tests.calibration.test_stage075b.Stage075BContractTests.test_s12_common_scores_and_ranking_metrics) ... ok\ntest_s13_checkpoint_resume_exact_replay (tests.calibration.test_stage075b.Stage075BContractTests.test_s13_checkpoint_resume_exact_replay) ... ok\n\n----------------------------------------------------------------------\nRan 74 tests in 17.850s\n\nOK\n",
+  "test_count": 74,
+  "test_inventory_matches_unittest_count": true,
+  "tests": [
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_actual_registered_controller_suite_smoke_and_startup_modes",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_checkpoint_resume_matches_one_shot_synthetic_replay",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_controller_evidence_mutation_is_isolated",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_duplicate_or_stale_evidence_revision_fails",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_frozen_registry_keeps_applicability_and_historical_only_rows_separate",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_historical_writer_record_schema_and_transition_are_checked",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_memory_evidence_precedes_controller_feedback_and_score_update",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_metric_null_denominators_startup_fallback_and_full_windows",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_missing_evidence_at_a_memory_change_fails_closed",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_mutated_evidence_identity_and_wrong_boundary_fail",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_one_controller_cannot_mutate_another_controllers_shared_observation",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_p12_row_conversion_binds_category_seed_event_and_memory",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_predict_precedes_feedback_and_future_response_cannot_change_prior",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_query_response_chain_uses_receipt_identity_and_rejects_incomplete",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_threshold_changes_do_not_change_shared_score_ranking_metrics",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_unqueried_label_is_rejected_and_not_delivered",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage1a_final_readiness.test_unqueried_outcome_changes_are_outside_every_controller_input",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_anchor_checkpoint_compares_pil_image_payloads_by_pixels",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_anchor_checkpoint_roundtrips_private_features",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_anchor_lso_removes_all_matching_rows_across_layers",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_c64_is_additional_and_disjoint_from_exactly_four_supports",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_checkpoint_resume_matches_uninterrupted_run_and_restores_rng",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_common_horizon_and_operational_mode_metric_edges",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_evaluator_marks_missing_classes_and_abstentions_unavailable",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_predictions_share_one_score_and_memory_trajectory",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_protected_c64_does_not_accept_stream_overlap",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_startup_missing_is_distinct_from_abstention_and_survives_resume",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_tape_is_independent_of_swapped_private_labels",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_threshold_changes_do_not_change_shared_score_or_memory",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_engine_and_ledger.test_unqueried_label_swap_cannot_change_controller_or_memory_trajectory",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b1_only_queried_verified_normals_enter_buffer",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b2_uses_historical_sidecar_with_unqueried_fallback_disabled",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b3_updates_once_per_memory_version",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b4_current_memory_rescore_reverses_feasibility_without_stale_scores",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b4_exact_error_count_boundaries_handle_ties",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b4_missing_side_is_not_zero_risk",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b4_normal_lower_and_defect_upper_geometry_is_not_reversed",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b4_overlapping_scores_are_genuinely_conflicting",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b4_refreshes_new_queried_class_evidence_without_memory_change",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_b4_updates_only_the_disclosed_class_side",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_controller_observation_and_feedback_have_no_unqueried_label_path",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_higher_quantile_boundary_ties",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_operational_fallback_records_startup_and_abstention_without_changing_source",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_controllers.test_theta0_uses_d2_higher_q90_at_zero_based_rank_57",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_spot_dspot.test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_spot_dspot.test_grimshaw_matches_independent_scipy_gpd_mle",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_spot_dspot.test_insufficient_peak_initialization_fails_closed",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_spot_dspot.test_pot_threshold_equation_and_near_zero_shape_limit",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_spot_dspot.test_spot_checkpoint_roundtrip_is_deterministic",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_spot_dspot.test_spot_warmup_missingness_alarm_exclusion_and_peak_update",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_all_five_evidence_states_and_missing_side_hold",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_b7_threshold_path_differs_from_b3_scq_under_two_sided_evidence",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_both_state_reports_secondary_fpr_grid_and_cost_counts",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_candidate_grid_represents_score_ties_and_adjacent_decisions",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_current_version_only_and_checkpoint_roundtrip",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_empirically_incompatible_overlap_is_not_misreported_as_precision",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_fpr_diagnostic_minimizes_fnr_plus_movement_not_balanced_risk",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_identical_empirical_score_distributions_are_unidentifiable",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_perfect_separation_precision_boundary_at_8_13_14_and_32_defects",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_primary_optimizes_inside_feasible_set_then_reports_clip_violation",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_scdac_g.test_secondary_diagnostics_do_not_change_primary_threshold",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_b3_and_b7_are_the_existing_implementations",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_b8_full_objective_uses_current_and_transported_cdf_coordinates",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_b8_rejoins_gradually_after_departure",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_finite_rank_collision_keeps_raw_prediction_boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_focused_s1_s2_s6_s7_s8_s10_s11_s14_and_controls",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_group_identity_rescores_do_not_create_new_evidence",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_offset_updates_only_when_evidence_digest_changes",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_predict_before_disclosure_and_shared_memory",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_public_observation_contains_no_label_or_group_identity",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_s0_actual_b3_exact_fallback",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_s11_same_group_cross_view_and_duplicate_defect_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_s12_common_scores_and_ranking_metrics",
+      "status": "PASS"
+    },
+    {
+      "id": "tests.calibration.test_stage075b.test_s13_checkpoint_resume_exact_replay",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,907 @@
+{
+  "applicability_only": [
+    "B6"
+  ],
+  "execution_scope": [
+    "B0",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5a",
+    "B5a_FROZEN_FALLBACK",
+    "B5b",
+    "B5b_FROZEN_FALLBACK",
+    "B7",
+    "Stage075BOffset"
+  ],
+  "historical_only": [
+    "B8"
+  ],
+  "immutable": true,
+  "methods": {
+    "B0": {
+      "author_code_url": null,
+      "authors": null,
+      "claimed_guarantee": "None claimed.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "7b7a566659a6f48caab720987a05dd09b1763fc534d276c6f0dbd8d48b475de1",
+      "declared_parameters_and_grid": "No parameter grid executed in Stage 0.",
+      "equation": "theta_t=theta0; predict=1[s_t>=theta_t]",
+      "exact_differences": "No external adaptation; registered internal control.",
+      "faithful_or_adapted": "IMPLEMENTED",
+      "independent_unit_test_reference": [
+        "test_theta0_uses_d2_higher_q90_at_zero_based_rank_57"
+      ],
+      "information": [
+        "shared current unlabeled score"
+      ],
+      "initialization": "D2 higher q90 of 64 additional C64 normals under M0",
+      "initialization_and_warmup": "D2 higher q90 of 64 additional C64 normals under M0",
+      "input_permissions": [
+        "shared current unlabeled score"
+      ],
+      "invalidated_assumptions": "No external theorem is claimed by this registered control.",
+      "method_label": "Frozen-Theta",
+      "missing_and_insufficient_data_behavior": "Requires all 64 additional C64 normal scores; fail closed otherwise.",
+      "name": "Frozen-Theta",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Registered frozen-threshold control",
+      "paper_url": null,
+      "pinned_source_sha": null,
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "theta_t=theta0; predict=1[s_t>=theta_t]",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_theta0_uses_d2_higher_q90_at_zero_based_rank_57"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/controllers.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d"
+      },
+      "status": "IMPLEMENTED",
+      "venue": null,
+      "year": null
+    },
+    "B1": {
+      "author_code_url": null,
+      "authors": null,
+      "claimed_guarantee": "None claimed.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "f0741be0fa9596feec3a511bd699e1db6ee9b68bc872060aea62487c0a58aac6",
+      "declared_parameters_and_grid": {
+        "W": 256,
+        "insufficient": "HOLD at theta0",
+        "n_min": 16,
+        "q": 0.9
+      },
+      "defaults": {
+        "W": 256,
+        "insufficient": "HOLD at theta0",
+        "n_min": 16,
+        "q": 0.9
+      },
+      "equation": "theta= higher_q90(last W queried verified-normal stale scores)",
+      "exact_differences": "No external adaptation; registered internal control.",
+      "faithful_or_adapted": "IMPLEMENTED",
+      "fidelity": "Proposed frozen implementation defaults; no unlabeled scores.",
+      "independent_unit_test_reference": [
+        "test_b1_only_queried_verified_normals_enter_buffer"
+      ],
+      "information": [
+        "shared current unlabeled score",
+        "queried labels"
+      ],
+      "initialization_and_warmup": {
+        "W": 256,
+        "insufficient": "HOLD at theta0",
+        "n_min": 16,
+        "q": 0.9
+      },
+      "input_permissions": [
+        "shared current unlabeled score",
+        "queried labels"
+      ],
+      "invalidated_assumptions": "No external theorem is claimed by this registered control.",
+      "method_label": "RollingQ90QueriedNormal",
+      "missing_and_insufficient_data_behavior": "Holds theta0 until n_min queried verified normals are available.",
+      "name": "RollingQ90QueriedNormal",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Registered rolling-quantile control",
+      "paper_url": null,
+      "pinned_source_sha": null,
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "theta= higher_q90(last W queried verified-normal stale scores)",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_b1_only_queried_verified_normals_enter_buffer"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/controllers.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d"
+      },
+      "status": "IMPLEMENTED",
+      "venue": null,
+      "year": null
+    },
+    "B2": {
+      "adaptations": [
+        "disable source normal-only fallback because unqueried labels are unavailable",
+        "use source native numpy.quantile for C64 initialization; report separately from D2 theta0",
+        "balanced rescue and fast rescue remain source defaults disabled"
+      ],
+      "author_code_url": null,
+      "authors": null,
+      "claimed_guarantee": "Historical v22 behavior is wrapped for this interface; no native full-loop parity claim.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "a9f93c4b3dcf5fe555748bae3eab183fa710c356575d7b249c0c35c8d9a5bd3b",
+      "declared_parameters_and_grid": "No parameter grid executed in Stage 0.",
+      "exact_differences": [
+        "disable source normal-only fallback because unqueried labels are unavailable",
+        "use source native numpy.quantile for C64 initialization; report separately from D2 theta0",
+        "balanced rescue and fast rescue remain source defaults disabled"
+      ],
+      "faithful_or_adapted": "IMPLEMENTED_ADAPTED",
+      "independent_unit_test_reference": [
+        "test_b2_uses_historical_sidecar_with_unqueried_fallback_disabled"
+      ],
+      "information": [
+        "additional C64 scalar scores at M0",
+        "queried labels"
+      ],
+      "initialization_and_warmup": "See protocol; not separately parameterized.",
+      "input_permissions": [
+        "additional C64 scalar scores at M0",
+        "queried labels"
+      ],
+      "invalidated_assumptions": "Historical v22 behavior is wrapped for this interface; no native full-loop parity claim.",
+      "method_label": "OriginalGuardedDualAnchorSidecar",
+      "missing_and_insufficient_data_behavior": "Unavailable labels do not enter the adapted sidecar; source fallback is disabled.",
+      "name": "OriginalGuardedDualAnchorSidecar",
+      "no_guarantee": "Historical v22 behavior is wrapped for this interface; no native full-loop parity claim.",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Historical v22 Guarded Dual Anchor sidecar",
+      "paper_url": null,
+      "pinned_source_sha": null,
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": null,
+      "source": "test_phase3_AIF_simplified_v22.GuardedDualAnchorThresholdController",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_b2_uses_historical_sidecar_with_unqueried_fallback_disabled"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/controllers.py",
+        "test_phase3_AIF_simplified_v22.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+        "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30"
+      },
+      "status": "IMPLEMENTED_ADAPTED",
+      "venue": null,
+      "year": null
+    },
+    "B3": {
+      "author_code_url": null,
+      "authors": null,
+      "claimed_guarantee": "None claimed.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "af034ba4f2c522c1bd79a2bfb33f3bb03ddc32ca859e3080e70fdd346698905b",
+      "declared_parameters_and_grid": {
+        "Delta": 0.01,
+        "min_normals": 16,
+        "q": 0.9
+      },
+      "defaults": {
+        "Delta": 0.01,
+        "min_normals": 16,
+        "q": 0.9
+      },
+      "equation": "on M change: raw=higher_q90(C64 rescored at M); theta'=clip(raw,theta+-Delta); otherwise HOLD",
+      "exact_differences": "No external adaptation; registered internal control.",
+      "faithful_or_adapted": "IMPLEMENTED_PROPOSED",
+      "independent_unit_test_reference": [
+        "test_b3_updates_once_per_memory_version"
+      ],
+      "information": [
+        "protected C64 current-M scores"
+      ],
+      "initialization_and_warmup": {
+        "Delta": 0.01,
+        "min_normals": 16,
+        "q": 0.9
+      },
+      "input_permissions": [
+        "protected C64 current-M scores"
+      ],
+      "invalidated_assumptions": "No external theorem is claimed by this registered control.",
+      "method_label": "StateConsistentQuantile",
+      "missing_and_insufficient_data_behavior": "Holds theta when current-memory protected-C64 evidence is insufficient.",
+      "name": "StateConsistentQuantile",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Registered state-consistent quantile proposal",
+      "paper_url": null,
+      "pinned_source_sha": null,
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "on M change: raw=higher_q90(C64 rescored at M); theta'=clip(raw,theta+-Delta); otherwise HOLD",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_b3_updates_once_per_memory_version"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_exclusion": "C64 protected-only primary; queried-normal LSO excluded from B3.",
+      "source_files": [
+        "experiments/calibration/controllers.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d"
+      },
+      "status": "IMPLEMENTED_PROPOSED",
+      "venue": null,
+      "year": null
+    },
+    "B4": {
+      "author_code_url": null,
+      "authors": "Isaac Gibbs; Emmanuel Candès",
+      "claimed_guarantee": "Sparse selective feedback and dependent dynamic-memory scores do not inherit ACI guarantees.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "c4881512ea48b7d666cc291599debb06c49b4b5f33f1e9f4b6e6d0177463c77f",
+      "declared_parameters_and_grid": {
+        "alpha": 0.1,
+        "beta": 0.1,
+        "gamma_defect": 0.005,
+        "gamma_normal": 0.005
+      },
+      "defaults": {
+        "alpha": 0.1,
+        "beta": 0.1,
+        "gamma_defect": 0.005,
+        "gamma_normal": 0.005
+      },
+      "equation": "aN+=gammaN*(alpha-1[pred=defect]) on queried y=0; aD+=gammaD*(beta-1[pred=normal]) on queried y=1; exact empirical bounds: [normal lower, defect upper]",
+      "exact_differences": "No external adaptation; registered internal control.",
+      "faithful_or_adapted": "IMPLEMENTED_ADAPTED",
+      "independent_unit_test_reference": [
+        "test_b4_exact_error_count_boundaries_handle_ties",
+        "test_b4_missing_side_is_not_zero_risk"
+      ],
+      "information": [
+        "queried labels",
+        "current-M normal and defect anchors"
+      ],
+      "initialization_and_warmup": {
+        "alpha": 0.1,
+        "beta": 0.1,
+        "gamma_defect": 0.005,
+        "gamma_normal": 0.005
+      },
+      "input_permissions": [
+        "queried labels",
+        "current-M normal and defect anchors"
+      ],
+      "invalidated_assumptions": "Sparse selective feedback and dependent dynamic-memory scores do not inherit ACI guarantees.",
+      "method_label": "ADAPTED_DUAL_ACI",
+      "missing_and_insufficient_data_behavior": "Missing class-side evidence is unavailable and never assigned zero risk.",
+      "name": "ADAPTED_DUAL_ACI",
+      "no_guarantee": "Sparse selective feedback and dependent dynamic-memory scores do not inherit ACI guarantees.",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Adaptive Conformal Inference Under Distribution Shift",
+      "paper_url": "https://papers.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html",
+      "pinned_source_sha": null,
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "aN+=gammaN*(alpha-1[pred=defect]) on queried y=0; aD+=gammaD*(beta-1[pred=normal]) on queried y=1; exact empirical bounds: [normal lower, defect upper]",
+      "source": "Gibbs and Candès, Adaptive Conformal Inference Under Distribution Shift, NeurIPS 2021, https://papers.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_b4_exact_error_count_boundaries_handle_ties",
+          "test_b4_missing_side_is_not_zero_risk"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/controllers.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d"
+      },
+      "status": "IMPLEMENTED_ADAPTED",
+      "venue": "NeurIPS",
+      "year": 2021
+    },
+    "B5a": {
+      "adaptations": [
+        "Implements the KDD paper equations in Python; the pinned libspot C source is provenance/reference material and was not compiled for direct trace parity.",
+        "Adds deterministic sign-bracket root recovery alongside paper-style multi-start bounded optimization; every accepted root is checked against the Grimshaw equation and GPD likelihood.",
+        "Uses registered NumPy linear interpolation for the initial empirical level; the paper's practical 98% level does not prescribe an interpolation convention."
+      ],
+      "author_code_url": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "author_source_file_blob_sha": "fdebc8c216fffeea93afcc51efab83a2d6013351",
+      "authors": "Alban Siffer; Pierre-Alain Fouque; Alexandre Termier; Christine Largouet",
+      "blocker": "No compiled libspot C numerical parity was possible in the local environment; implementation follows the paper equations and the difference is explicit.",
+      "claimed_guarantee": "None claimed.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "737ad434234d68210d7c12b2ea24977e9cf1ca899dee66726601ca1eba1fe8ba",
+      "declared_parameters_and_grid": {
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "defaults": {
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "equation": "KDD 2017 Algorithm 2 / Eq. (1): high empirical u, Grimshaw GPD MLE on strict excesses, zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1), exponential limit for xi=0; alarm iff score>zq and exclude alarm from n/Nu updates.",
+      "exact_differences": [
+        "Implements the KDD paper equations in Python; the pinned libspot C source is provenance/reference material and was not compiled for direct trace parity.",
+        "Adds deterministic sign-bracket root recovery alongside paper-style multi-start bounded optimization; every accepted root is checked against the Grimshaw equation and GPD likelihood.",
+        "Uses registered NumPy linear interpolation for the initial empirical level; the paper's practical 98% level does not prescribe an interpolation convention."
+      ],
+      "faithful_or_adapted": "PAPER_EQUATION_IMPLEMENTATION_WITH_DECLARED_NUMERICAL_ADAPTATIONS; no compiled author-code parity claim",
+      "independent_unit_test_reference": [
+        "test_grimshaw_matches_independent_scipy_gpd_mle",
+        "test_pot_threshold_equation_and_near_zero_shape_limit",
+        "test_spot_warmup_missingness_alarm_exclusion_and_peak_update",
+        "test_spot_checkpoint_roundtrip_is_deterministic",
+        "test_insufficient_peak_initialization_fails_closed"
+      ],
+      "initialization_and_warmup": {
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "input_permissions": [
+        "shared score only"
+      ],
+      "invalidated_assumptions": "No external theorem is claimed by this registered control.",
+      "method_label": "SPOT",
+      "missing_and_insufficient_data_behavior": "Before n_init scores, prediction is explicitly unavailable; fewer than two strict initial peaks fail closed. After warm-up, alarms are excluded from observation/peak updates.",
+      "name": "SPOT",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Anomaly Detection in Streams with Extreme Value Theory",
+      "paper_url": "https://doi.org/10.1145/3097983.3098144",
+      "pinned_source_sha": "d57e921a08930b960d07adcbec3a839bd228fe94",
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "KDD 2017 Algorithm 2 / Eq. (1): high empirical u, Grimshaw GPD MLE on strict excesses, zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1), exponential limit for xi=0; alarm iff score>zq and exclude alarm from n/Nu updates.",
+      "reference_validation": "Grimshaw MLE compared to scipy.stats.genpareto.fit on a seeded independent GPD sample; POT equation, zero-shape limit, causal warm-up, alarm exclusion, accepted-peak update, insufficient peaks and checkpoint restore are tested.",
+      "source": "Siffer et al., KDD 2017, https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_grimshaw_matches_independent_scipy_gpd_mle",
+          "test_pot_threshold_equation_and_near_zero_shape_limit",
+          "test_spot_warmup_missingness_alarm_exclusion_and_peak_update",
+          "test_spot_checkpoint_roundtrip_is_deterministic",
+          "test_insufficient_peak_initialization_fails_closed"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/spot_dspot.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/spot_dspot.py": "540c7b2ba68db6deca16687ae7c208918462b8dce72ee9ef968cec0289023414"
+      },
+      "status": "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED",
+      "venue": "KDD",
+      "version": "SPOT-KDD2017-paper-equations-v1.0.0",
+      "year": 2017
+    },
+    "B5a_FROZEN_FALLBACK": {
+      "adaptations": [
+        "Implements the KDD paper equations in Python; the pinned libspot C source is provenance/reference material and was not compiled for direct trace parity.",
+        "Adds deterministic sign-bracket root recovery alongside paper-style multi-start bounded optimization; every accepted root is checked against the Grimshaw equation and GPD likelihood.",
+        "Uses registered NumPy linear interpolation for the initial empirical level; the paper's practical 98% level does not prescribe an interpolation convention.",
+        "Distinct deployment wrapper; fallback decisions are not attributed to the source algorithm."
+      ],
+      "author_code_url": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "author_source_file_blob_sha": "fdebc8c216fffeea93afcc51efab83a2d6013351",
+      "authors": "Alban Siffer; Pierre-Alain Fouque; Alexandre Termier; Christine Largouet",
+      "blocker": "No compiled libspot C numerical parity was possible in the local environment; implementation follows the paper equations and the difference is explicit.",
+      "claimed_guarantee": "None claimed.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "e6cd0328d9b6e4637e21ade9c81b1f73e2689d5079793cc7daf2f5235f5c6d3a",
+      "declared_parameters_and_grid": {
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "defaults": {
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "equation": "KDD 2017 Algorithm 2 / Eq. (1): high empirical u, Grimshaw GPD MLE on strict excesses, zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1), exponential limit for xi=0; alarm iff score>zq and exclude alarm from n/Nu updates.",
+      "exact_differences": [
+        "Implements the KDD paper equations in Python; the pinned libspot C source is provenance/reference material and was not compiled for direct trace parity.",
+        "Adds deterministic sign-bracket root recovery alongside paper-style multi-start bounded optimization; every accepted root is checked against the Grimshaw equation and GPD likelihood.",
+        "Uses registered NumPy linear interpolation for the initial empirical level; the paper's practical 98% level does not prescribe an interpolation convention.",
+        "Distinct deployment wrapper; fallback decisions are not attributed to the source algorithm."
+      ],
+      "faithful_or_adapted": "SEPARATE_OPERATIONAL_ADAPTATION; not the source-native algorithm",
+      "fallback_policy": "theta0 on source-native startup unavailable or abstention; otherwise source prediction",
+      "independent_unit_test_reference": [
+        "test_operational_fallback_records_startup_and_abstention_modes"
+      ],
+      "initialization_and_warmup": {
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "input_permissions": [
+        "shared score only"
+      ],
+      "invalidated_assumptions": "No external theorem is claimed by this registered control.",
+      "method_label": "SPOT + Frozen-Theta fallback",
+      "missing_and_insufficient_data_behavior": "Uses theta0 only when the source controller is unavailable or abstains; source state continues to update causally.",
+      "name": "SPOT + Frozen-Theta fallback",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Anomaly Detection in Streams with Extreme Value Theory",
+      "paper_url": "https://doi.org/10.1145/3097983.3098144",
+      "pinned_source_sha": "d57e921a08930b960d07adcbec3a839bd228fe94",
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "KDD 2017 Algorithm 2 / Eq. (1): high empirical u, Grimshaw GPD MLE on strict excesses, zq=u+(sigma/xi)*((q*n/Nu)^(-xi)-1), exponential limit for xi=0; alarm iff score>zq and exclude alarm from n/Nu updates.",
+      "reference_validation": "Grimshaw MLE compared to scipy.stats.genpareto.fit on a seeded independent GPD sample; POT equation, zero-shape limit, causal warm-up, alarm exclusion, accepted-peak update, insufficient peaks and checkpoint restore are tested.",
+      "source": "Siffer et al., KDD 2017, https://www.eecs.yorku.ca/course_archive/2018-19/F/6412/reading/kdd17p1067.pdf",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_operational_fallback_records_startup_and_abstention_modes"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/controllers.py"
+      ],
+      "source_native_comparator": "B5a",
+      "source_sha256": {
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+        "experiments/calibration/spot_dspot.py": "540c7b2ba68db6deca16687ae7c208918462b8dce72ee9ef968cec0289023414"
+      },
+      "status": "OPERATIONAL_VARIANT_WITH_EXPLICIT_THETA0_FALLBACK",
+      "venue": "KDD",
+      "version": "SPOT-KDD2017-paper-equations-v1.0.0",
+      "year": 2017
+    },
+    "B5b": {
+      "adaptations": [
+        "Independent implementation of the paper's dSPOT algorithm; pinned libspot C source contains no dSPOT implementation and is not cited as one.",
+        "During residual warm-up, the d raw-score history advances until the first POT threshold is available; initial decisions are explicitly unavailable."
+      ],
+      "author_code_url": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "authors": "Alban Siffer; Pierre-Alain Fouque; Alexandre Termier; Christine Largouet",
+      "blocker": "No independent author dSPOT implementation was found in the pinned libspot source; verification is against the KDD paper algorithm/equations, not author-code parity.",
+      "claimed_guarantee": "None claimed.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "5e3e0032c7527c5f9aa7cb782891911222e5b5ccadac2f3cff64ae7e9b9f5965",
+      "declared_parameters_and_grid": {
+        "d": 50,
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "defaults": {
+        "d": 50,
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "equation": "KDD 2017 Algorithm 3: residual r_t=x_t-mean(last d accepted normal raw observations); apply SPOT to residuals; reconstructed threshold=mean(window)+zq; an alarm changes neither the moving window nor POT state.",
+      "exact_differences": [
+        "Independent implementation of the paper's dSPOT algorithm; pinned libspot C source contains no dSPOT implementation and is not cited as one.",
+        "During residual warm-up, the d raw-score history advances until the first POT threshold is available; initial decisions are explicitly unavailable."
+      ],
+      "faithful_or_adapted": "PAPER_EQUATION_IMPLEMENTATION_WITH_DECLARED_NUMERICAL_ADAPTATIONS; no compiled author-code parity claim",
+      "independent_unit_test_reference": [
+        "test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean",
+        "test_spot_checkpoint_roundtrip_is_deterministic"
+      ],
+      "initialization_and_warmup": {
+        "d": 50,
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "input_permissions": [
+        "shared score only"
+      ],
+      "invalidated_assumptions": "No external theorem is claimed by this registered control.",
+      "method_label": "dSPOT",
+      "missing_and_insufficient_data_behavior": "First d raw observations and subsequent n_init residual observations have unavailable predictions; during residual warm-up the raw window slides, and runtime alarms update neither POT nor mean window.",
+      "name": "dSPOT",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Anomaly Detection in Streams with Extreme Value Theory",
+      "paper_url": "https://doi.org/10.1145/3097983.3098144",
+      "pinned_source_sha": "d57e921a08930b960d07adcbec3a839bd228fe94",
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "KDD 2017 Algorithm 3: residual r_t=x_t-mean(last d accepted normal raw observations); apply SPOT to residuals; reconstructed threshold=mean(window)+zq; an alarm changes neither the moving window nor POT state.",
+      "reference_validation": "Shared independent SPOT equation tests plus dSPOT residual initialization, accepted-normal window updates, alarm exclusion, reconstructed threshold and checkpoint tests.",
+      "source": "Siffer et al., KDD 2017 (same source as B5a)",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_dspot_uses_warmup_residuals_and_excludes_alarms_from_mean",
+          "test_spot_checkpoint_roundtrip_is_deterministic"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/spot_dspot.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/spot_dspot.py": "540c7b2ba68db6deca16687ae7c208918462b8dce72ee9ef968cec0289023414"
+      },
+      "status": "IMPLEMENTED_PAPER_EQUATIONS_REFERENCE_TESTED",
+      "venue": "KDD",
+      "version": "dSPOT-KDD2017-paper-equations-v1.0.0",
+      "year": 2017
+    },
+    "B5b_FROZEN_FALLBACK": {
+      "adaptations": [
+        "Independent implementation of the paper's dSPOT algorithm; pinned libspot C source contains no dSPOT implementation and is not cited as one.",
+        "During residual warm-up, the d raw-score history advances until the first POT threshold is available; initial decisions are explicitly unavailable.",
+        "Distinct deployment wrapper; fallback decisions are not attributed to the source algorithm."
+      ],
+      "author_code_url": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "author_source": "https://github.com/asiffer/libspot/tree/d57e921a08930b960d07adcbec3a839bd228fe94",
+      "authors": "Alban Siffer; Pierre-Alain Fouque; Alexandre Termier; Christine Largouet",
+      "blocker": "No independent author dSPOT implementation was found in the pinned libspot source; verification is against the KDD paper algorithm/equations, not author-code parity.",
+      "claimed_guarantee": "None claimed.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "09391fc88ff6c55718a356be2c28b04fadc7d19a882a3bd51ef0e96f714b5910",
+      "declared_parameters_and_grid": {
+        "d": 50,
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "defaults": {
+        "d": 50,
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "equation": "KDD 2017 Algorithm 3: residual r_t=x_t-mean(last d accepted normal raw observations); apply SPOT to residuals; reconstructed threshold=mean(window)+zq; an alarm changes neither the moving window nor POT state.",
+      "exact_differences": [
+        "Independent implementation of the paper's dSPOT algorithm; pinned libspot C source contains no dSPOT implementation and is not cited as one.",
+        "During residual warm-up, the d raw-score history advances until the first POT threshold is available; initial decisions are explicitly unavailable.",
+        "Distinct deployment wrapper; fallback decisions are not attributed to the source algorithm."
+      ],
+      "faithful_or_adapted": "SEPARATE_OPERATIONAL_ADAPTATION; not the source-native algorithm",
+      "fallback_policy": "theta0 on source-native startup unavailable or abstention; otherwise source prediction",
+      "independent_unit_test_reference": [
+        "test_operational_fallback_records_startup_and_abstention_modes"
+      ],
+      "initialization_and_warmup": {
+        "d": 50,
+        "grimshaw_starts": 10,
+        "level": 0.98,
+        "n_init": 1000,
+        "risk_q": 0.001,
+        "root_tolerance": 1e-06
+      },
+      "input_permissions": [
+        "shared score only"
+      ],
+      "invalidated_assumptions": "No external theorem is claimed by this registered control.",
+      "method_label": "dSPOT + Frozen-Theta fallback",
+      "missing_and_insufficient_data_behavior": "Uses theta0 only when the source controller is unavailable or abstains; source state continues to update causally.",
+      "name": "dSPOT + Frozen-Theta fallback",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Anomaly Detection in Streams with Extreme Value Theory",
+      "paper_url": "https://doi.org/10.1145/3097983.3098144",
+      "pinned_source_sha": "d57e921a08930b960d07adcbec3a839bd228fe94",
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "KDD 2017 Algorithm 3: residual r_t=x_t-mean(last d accepted normal raw observations); apply SPOT to residuals; reconstructed threshold=mean(window)+zq; an alarm changes neither the moving window nor POT state.",
+      "reference_validation": "Shared independent SPOT equation tests plus dSPOT residual initialization, accepted-normal window updates, alarm exclusion, reconstructed threshold and checkpoint tests.",
+      "source": "Siffer et al., KDD 2017 (same source as B5a)",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_operational_fallback_records_startup_and_abstention_modes"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/spot_dspot.py",
+        "experiments/calibration/controllers.py"
+      ],
+      "source_native_comparator": "B5b",
+      "source_sha256": {
+        "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+        "experiments/calibration/spot_dspot.py": "540c7b2ba68db6deca16687ae7c208918462b8dce72ee9ef968cec0289023414"
+      },
+      "status": "OPERATIONAL_VARIANT_WITH_EXPLICIT_THETA0_FALLBACK",
+      "venue": "KDD",
+      "version": "dSPOT-KDD2017-paper-equations-v1.0.0",
+      "year": 2017
+    },
+    "B6": {
+      "author_code_url": null,
+      "authors": "Sophia Huiwen Sun; Abishek Sankararaman; Balakrishnan Murali Narayanaswamy",
+      "checkpoint_schema": "calibration.sun_cs_checkpoint.v2",
+      "claimed_guarantee": "Score-quantile target differs from physical defects. Guarantees do not automatically cover dependent scores under dynamic memory or feedback.",
+      "complexity_and_runtime": "Optimized A2 O(n log n) time and O(n log n) temporary nodes per check; A3 worst-case O(T^2 log T) cumulative time and O(T log T) peak temporary nodes. Runtime/memory are reported in the sixth-pass audit.",
+      "configuration_sha256": "ed4d07efe2f891ff4ef3a4c4b4765350e557c054a1a677f08d7643113e025985",
+      "declared_parameters_and_grid": {
+        "delta": 0.01,
+        "empty_prefix": "ABSTAIN_COLD_START",
+        "endpoint_policy": "conservative_extended_real",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "p": 0.99,
+        "radius": "raw Equation (2), no clamp"
+      },
+      "defaults": {
+        "delta": 0.01,
+        "empty_prefix": "ABSTAIN_COLD_START",
+        "endpoint_policy": "conservative_extended_real",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "p": 0.99,
+        "radius": "raw Equation (2), no clamp"
+      },
+      "equation": "ICML 2024 Eq. (1)-(2), Algorithms 1-3: quantile confidence set; forward/backward confidence-set intersection change detector; decision-time abstain/reset; strict upper anomaly, lower benign, interval abstain.",
+      "exact_differences": "No external adaptation; registered internal control.",
+      "faithful_or_adapted": "PAPER_EQUATIONS_WITH_DECLARED_ENDPOINT_CONVENTIONS",
+      "historical_source_fidelity_spec": "docs/calibration/SUN_CS_SOURCE_FIDELITY_SPEC.md",
+      "implementation_conventions": [
+        "primary clipped q=0 endpoint is negative infinity and clipped q=1 endpoint is positive infinity",
+        "empirical-extrema q=0/sample minimum and q=1/sample maximum are a separate named sensitivity variant",
+        "interior midpoint ranks with floor rank zero extend to first order statistic",
+        "empty historical prefix abstains before current score is appended",
+        "at change event abstain, reset, then seed new segment with current score",
+        "no verified author code located; no author-code trace parity claim"
+      ],
+      "independent_unit_test_reference": [
+        "test_radius_matches_paper_equation_without_clamping",
+        "test_empirical_extrema_false_reset_pathology_and_conservative_control",
+        "test_conservative_upper_endpoint_clipping_precludes_anomaly",
+        "test_registered_finite_stream_endpoints_are_exact_for_unit_ramp",
+        "test_seeded_continuous_streams_are_reproducible_and_distinct",
+        "test_small_diagnostic_keeps_online_and_offline_information_separate",
+        "test_algorithm2_optimized_matches_independent_reference",
+        "test_algorithm3_event_trace_matches_independent_reference",
+        "test_checkpoint_restore_reproduces_remaining_event_trace"
+      ],
+      "information": [
+        "full causal unlabeled scalar-score stream; no physical labels or feedback"
+      ],
+      "initialization_and_warmup": {
+        "delta": 0.01,
+        "empty_prefix": "ABSTAIN_COLD_START",
+        "endpoint_policy": "conservative_extended_real",
+        "endpoint_policy_schema": "sun_cs_endpoint_policy.v2",
+        "p": 0.99,
+        "radius": "raw Equation (2), no clamp"
+      },
+      "input_permissions": [
+        "full causal unlabeled scalar-score stream; no physical labels or feedback"
+      ],
+      "invalidated_assumptions": "Score-quantile target differs from physical defects. Guarantees do not automatically cover dependent scores under dynamic memory or feedback.",
+      "method_label": "Sun-CS Algorithm 3",
+      "missing_and_insufficient_data_behavior": "Empty historical prefix yields ABSTAIN_COLD_START; primary clipped endpoint policy uses explicit extended-real bounds. Physical labels, feedback, and C64 offline matching are not consumed.",
+      "name": "Sun-CS source-native applicability-only reference",
+      "no_guarantee": "Score-quantile target differs from physical defects. Guarantees do not automatically cover dependent scores under dynamic memory or feedback.",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Online Adaptive Anomaly Thresholding with Confidence Sequences",
+      "paper_url": "https://proceedings.mlr.press/v235/sun24h.html",
+      "pinned_source_sha": null,
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reason": "Frozen protocol retains the reference without presenting it as a full-coverage binary detector.",
+      "reference_alg_or_equation": "ICML 2024 Eq. (1)-(2), Algorithms 1-3: quantile confidence set; forward/backward confidence-set intersection change detector; decision-time abstain/reset; strict upper anomaly, lower benign, interval abstain.",
+      "reference_implementation": "Independent O(n^2 log n) small-sequence reference and exact O(n log n) per-invocation Algorithm 2 implementation. Algorithm 3 rechecks each full past prefix, giving O(T^2 log T) worst-case cumulative time and O(T log T) peak auxiliary space for a length-T no-reset segment; causal and checkpointable.",
+      "reference_validation": "Simple independent A2/A3 reference, exact optimized trace parity under both endpoint policies, endpoint-pathology reproduction, reset boundary tests, seeded continuous synthetic diagnostics, and event-boundary resume; no verified author-code trace parity.",
+      "sensitivity_variants": [
+        {
+          "endpoint_policy": "empirical_extrema",
+          "id": "SUN_CS_A3_EMPIRICAL_EXTREMA",
+          "status": "EMPIRICAL_EXTREMA_SENSITIVITY",
+          "version": "B6-SUN-CS-A3-EMPIRICAL-EXTREMA-SENSITIVITY-v2.0.0"
+        }
+      ],
+      "source": "Sun et al., ICML 2024, https://proceedings.mlr.press/v235/sun24h.html",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "test_radius_matches_paper_equation_without_clamping",
+          "test_empirical_extrema_false_reset_pathology_and_conservative_control",
+          "test_conservative_upper_endpoint_clipping_precludes_anomaly",
+          "test_registered_finite_stream_endpoints_are_exact_for_unit_ramp",
+          "test_seeded_continuous_streams_are_reproducible_and_distinct",
+          "test_small_diagnostic_keeps_online_and_offline_information_separate",
+          "test_algorithm2_optimized_matches_independent_reference",
+          "test_algorithm3_event_trace_matches_independent_reference",
+          "test_checkpoint_restore_reproduces_remaining_event_trace"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_fidelity_spec": "docs/calibration/SUN_CS_A3_CONSERVATIVE_ENDPOINTS_v2.md",
+      "source_files": [
+        "experiments/calibration/sun_cs.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/sun_cs.py": "91b7bef1c621ded4e92b8c7a7172ae116a6c546c351ce532f377e874e81ebe35"
+      },
+      "source_target": "score-history quantile indicator, not physical-defect label",
+      "status": "APPLICABILITY_ONLY_NOT_EXECUTED_IN_STAGE1A_METHOD_COMPARISON",
+      "venue": "ICML / PMLR 235",
+      "version": "B6-SUN-CS-A3-CONSERVATIVE-EXTENDED-REAL-v2.0.0",
+      "year": 2024
+    },
+    "B7": {
+      "adaptation": "PROVISIONAL_METHOD_SPEC; exact numerical choices are registered in the new method spec because the proposal leaves them open",
+      "author_code_url": null,
+      "authors": "Internal proposal authorship not recorded in repository metadata",
+      "claimed_guarantee": "Descriptive only. Selective labels, serial dependence, repeated memory rescoring and threshold selection invalidate automatic transfer of binomial confidence guarantees.",
+      "complexity_and_runtime": "Not benchmarked; per-run operation counts are emitted where implemented.",
+      "configuration_sha256": "b1804230246ce6211b6bdec61d1eefec23ea481f96c617a6afd1c2ea255147d6",
+      "declared_parameters_and_grid": {
+        "delta": 0.05,
+        "fpr_diagnostic_targets": [
+          0.05,
+          0.1,
+          0.2
+        ],
+        "lambda_move": 0.05,
+        "max_step": 0.01,
+        "min_defects": 8,
+        "min_normals": 16,
+        "support_fnr": 0.2,
+        "support_fpr": 0.2
+      },
+      "defaults": {
+        "delta": 0.05,
+        "fpr_diagnostic_targets": [
+          0.05,
+          0.1,
+          0.2
+        ],
+        "lambda_move": 0.05,
+        "max_step": 0.01,
+        "min_defects": 8,
+        "min_normals": 16,
+        "support_fnr": 0.2,
+        "support_fpr": 0.2
+      },
+      "equations": "Current-state one-sided CP descriptive upper endpoints; primary min balanced upper risk plus movement over two-sided feasible candidates; if empty, CONFLICT minimum-risk compromise over all candidates; clip then report executed feasibility; FPR diagnostic minimizes FNR upper plus movement cost",
+      "exact_differences": "No external adaptation; registered internal control.",
+      "faithful_or_adapted": "IMPLEMENTED_PROVISIONAL",
+      "independent_unit_test_reference": [
+        "tests/calibration/test_scdac_g.py",
+        "test_b7_zero_error_cp_minimum_is_fourteen_not_eight",
+        "test_metadata_query_budgets_and_hypothetical_defect_fractions"
+      ],
+      "information": [
+        "protected C64 normal anchors",
+        "queried verified normal anchors with all-layer LSO",
+        "queried defect anchors",
+        "shared unlabeled stream scores are not consumed by B7"
+      ],
+      "initialization_and_warmup": {
+        "delta": 0.05,
+        "fpr_diagnostic_targets": [
+          0.05,
+          0.1,
+          0.2
+        ],
+        "lambda_move": 0.05,
+        "max_step": 0.01,
+        "min_defects": 8,
+        "min_normals": 16,
+        "support_fnr": 0.2,
+        "support_fpr": 0.2
+      },
+      "input_permissions": [
+        "protected C64 normal anchors",
+        "queried verified normal anchors with all-layer LSO",
+        "queried defect anchors",
+        "shared unlabeled stream scores are not consumed by B7"
+      ],
+      "invalidated_assumptions": "Descriptive only. Selective labels, serial dependence, repeated memory rescoring and threshold selection invalidate automatic transfer of binomial confidence guarantees.",
+      "method_label": "SCDAC-G",
+      "missing_and_insufficient_data_behavior": "NONE/NORMAL_ONLY/DEFECT_ONLY hold; both-side minimums gate optimization.",
+      "name": "SCDAC-G",
+      "no_guarantee": "Descriptive only. Selective labels, serial dependence, repeated memory rescoring and threshold selection invalidate automatic transfer of binomial confidence guarantees.",
+      "numerical_edge_cases": "See independent_unit_test_reference; no population guarantee is claimed.",
+      "paper_title": "Designing and Prioritizing Memory-Dependent / State-Consistent Calibration for Dynamic-Memory Industrial Anomaly Detection",
+      "paper_url": null,
+      "pinned_source_sha": null,
+      "random_seed_policy": "No method tuning or empirical seed search in Stage 0; query/support seeds are locked in the protocol.",
+      "reference_alg_or_equation": "Current-state one-sided CP descriptive upper endpoints; primary min balanced upper risk plus movement over two-sided feasible candidates; if empty, CONFLICT minimum-risk compromise over all candidates; clip then report executed feasibility; FPR diagnostic minimizes FNR upper plus movement cost",
+      "source": "docs/Designing and Prioritizing Memory-Dependent _ State-Consistent Calibration for Dynamic-Memory Indust.pdf; SHA-256 5fe07256384351c1170d67183eae5a80e5aa289a03586ba767671f062f4fb977",
+      "source_and_test_hash": {
+        "reference_test_ids": [
+          "tests/calibration/test_scdac_g.py",
+          "test_b7_zero_error_cp_minimum_is_fourteen_not_eight",
+          "test_metadata_query_budgets_and_hypothetical_defect_fractions"
+        ],
+        "source_hash_manifest": "source_hashes.json",
+        "test_results_manifest": "test_results.json"
+      },
+      "source_files": [
+        "experiments/calibration/scdac_g.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/scdac_g.py": "3bd332f575ce2c9e6ca561c6d6096cf19c5493773616a767da2a2f1b07a705b3"
+      },
+      "status": "IMPLEMENTED_PROVISIONAL",
+      "venue": "Internal research proposal",
+      "version": "SCDAC-G-v0.1-THIRD-PASS-PROVISIONAL_METHOD_SPEC",
+      "year": null
+    },
+    "B8": {
+      "configuration_sha256": "12dac2c4692ce6b3e86dd200d7cecc717805c8c6fb24bbd3b66f7d2053da620a",
+      "name": "Stage 0.75-B historical negative control",
+      "source": "Existing Stage 0.75-B artifacts; no new controller run.",
+      "source_files": [
+        "experiments/calibration/stage075b_controllers.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/stage075b_controllers.py": "166e5c27eb39bd65c146e300702439371c3be868b50adb6b54735decae5fcfed"
+      },
+      "status": "HISTORICAL_NEGATIVE_CONTROL_NOT_REEXECUTED"
+    },
+    "Stage075BOffset": {
+      "configuration": {
+        "max_step": 0.01,
+        "missing_class_side": "hold its own threshold",
+        "not_additive_b3_offset": true
+      },
+      "configuration_sha256": "48209ddcea428e0f5ed70def847aae60dc46d70cf8de1d0ed0bd2ca89c3aa945",
+      "equation": "desired=(median(current queried-normal scores)+median(current queried-defect scores))/2; if either side is unavailable, desired=own current theta; clip movement to +/-0.01",
+      "name": "Stage075BOffset raw-median-offset control",
+      "source": "experiments/calibration/stage075b_controllers.py::Stage075BOffset",
+      "source_files": [
+        "experiments/calibration/stage075b_controllers.py"
+      ],
+      "source_sha256": {
+        "experiments/calibration/stage075b_controllers.py": "166e5c27eb39bd65c146e300702439371c3be868b50adb6b54735decae5fcfed"
+      },
+      "status": "REGISTERED_DISTINCT_CONTROL",
+      "version": "stage075b-b3-raw-median-offset-v1"
+    }
+  },
+  "schema": "stage1a.frozen_method_registry.v1"
+}

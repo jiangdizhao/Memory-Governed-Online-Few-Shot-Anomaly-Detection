@@ -1,0 +1,51 @@
+{
+  "common_horizon": {
+    "start_zero_based": 1050,
+    "stop_exclusive": "stream end"
+  },
+  "coverage": [
+    "overall",
+    "normal_class_conditional",
+    "defect_class_conditional",
+    "selective_balanced_accuracy"
+  ],
+  "evaluation_target": "physical defect; labels remain in post-prediction evaluator",
+  "full_stream": [
+    "TP",
+    "TN",
+    "FP",
+    "FN",
+    "balanced_accuracy",
+    "FPR",
+    "FNR",
+    "defect_recall"
+  ],
+  "implementation": "experiments/calibration/metrics.py::PrivateOutcomeLedger plus readiness adapter",
+  "missingness": {
+    "fallback_variants": "separate rows with original/fallback decision fractions",
+    "source_startup_unavailable": "separate from available abstention"
+  },
+  "ranking": "shared-score AUROC/AUPRC computed once offline and invariant to threshold-only controllers",
+  "real_stream_metrics_created": false,
+  "schema": "stage1a.metric_contract.v1",
+  "source_native_spot_dspot_full_stream_ba": "null when startup-unavailable predictions occur; never ordinary full-stream BA",
+  "undefined_denominators": "JSON null; never coerce to zero",
+  "unsupervised_applicability": {
+    "fallback_is_deployment_hybrid": true,
+    "fallback_variants": "report fraction of decisions made by source-native method and by fallback separately",
+    "inappropriate_metrics": "report undefined rather than suppressing the comparator",
+    "methods": [
+      "B5a",
+      "B5b",
+      "B6"
+    ],
+    "post_outcome_numeric_coverage_cutoff": null,
+    "report_actual_and_class_conditional_coverage": true
+  },
+  "worst_window": {
+    "report_only_full_nonoverlap_windows": true,
+    "size": 256,
+    "stride": 256,
+    "undefined_windows_excluded_from_worst_defined": true
+  }
+}

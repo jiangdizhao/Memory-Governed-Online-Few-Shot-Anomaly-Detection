@@ -39,3 +39,8 @@ tests/calibration/test_stage1a_p11_production.py text eol=lf
 docs/calibration/audit/stage1a_p11_production_adapter_v1_20261030/** text eol=lf
 docs/calibration/audit/stage1a_p12_native_replay_v1_20261030/** text eol=lf
 outputs/calibration/stage1a_p12_native_replay_v1_20261030/** text eol=lf
+
+# Stage 1-A final readiness source and audit package use canonical LF bytes.
+experiments/calibration/stage1a_final_readiness.py text eol=lf
+tests/calibration/test_stage1a_final_readiness.py text eol=lf
+docs/calibration/audit/stage1a_final_readiness_v*_20261030/** text eol=lf

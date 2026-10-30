@@ -1,0 +1,49 @@
+{
+  "decision": "STAGE1A_READINESS_PARTIAL",
+  "formal_evaluation_executed": false,
+  "gates": [
+    {
+      "detail": "20/20 receipts and their evidence SHA-256 identities verified; four frozen score/writer/memory artifact sets linked.",
+      "id": "R-INPUTS",
+      "status": "PASS"
+    },
+    {
+      "detail": "Q-A-TS-v1 tapes verified metadata-only against four class identities and frozen aggregate binding.",
+      "id": "R-TAPE",
+      "status": "PASS"
+    },
+    {
+      "detail": "All executable methods registered; B6 applicability-only and B8 historical-only are explicitly excluded from execution.",
+      "id": "R-REGISTRY",
+      "status": "PASS"
+    },
+    {
+      "detail": "Synthetic causal tests pass; bounded audiojack/seed0 real-input adapter smoke consumes 36 events through only the first taped query, with no metrics.",
+      "id": "R-CAUSAL",
+      "status": "PASS"
+    },
+    {
+      "detail": "Synthetic fixtures verify the frozen metric, null-denominator, horizon, coverage, window, startup, fallback and ranking contracts.",
+      "id": "R-METRICS",
+      "status": "PASS"
+    },
+    {
+      "detail": "P1.2 final report checksum references do not match preserved report bytes; all 20 receipt/evidence pairs and their audit-summary fields do match.",
+      "id": "R-P12-AUDIT-LINKAGE",
+      "status": "BLOCKED"
+    },
+    {
+      "detail": "Historical G2 remains BLOCKED; exact executed P1.2 source bytes were not recovered.",
+      "id": "R-SOURCE-CAVEATS",
+      "status": "PASS_WITH_DECLARED_CAVEAT"
+    },
+    {
+      "detail": "No formal Stage 1-A comparison or Real-IAD performance metrics were generated; only the 36-event first-query readiness smoke ran.",
+      "id": "R-STAGE1-EVALUATION",
+      "status": "NOT_RUN"
+    }
+  ],
+  "historical_g2_status": "BLOCKED_UNCHANGED",
+  "researcher_review_required_for_acceptance": true,
+  "schema": "stage1a.readiness.gate_matrix.v1"
+}
