@@ -265,11 +265,12 @@ def test_checksums_and_npz_bytes_are_deterministic():
 
 def test_query_label_provider_is_unavailable_until_score_seal():
     calls: list[str] = []
-    gate = CausalEventOrder(9, queried=True)
+    gate = CausalEventOrder(9)
     with pytest.raises(R1CausalityError):
         gate.disclose(lambda: calls.append("read") or 0)
     assert calls == []
     gate.seal_scores()
+    gate.decide_query(True)
     assert gate.disclose(lambda: calls.append("read") or 1) == 1
     gate.corrections_updated()
     gate.memory_updated()
@@ -279,8 +280,9 @@ def test_query_label_provider_is_unavailable_until_score_seal():
 
 
 def test_unqueried_event_never_requests_a_label():
-    gate = CausalEventOrder(2, queried=False)
+    gate = CausalEventOrder(2)
     gate.seal_scores()
+    gate.decide_query(False)
     with pytest.raises(R1CausalityError):
         gate.disclose(lambda: pytest.fail("unqueried label provider was called"))
     gate.corrections_updated()
@@ -289,22 +291,28 @@ def test_unqueried_event_never_requests_a_label():
 
 
 def test_source_and_future_anchors_are_excluded():
-    positions = [1, 2, 4]
-    groups = ["same", "other", "future"]
+    import hashlib
+    same, other, future = [hashlib.sha256(value.encode()).hexdigest()
+                           for value in ("same", "other", "future")]
+    positions = [1, 2]
+    groups = [same, other]
     kept = source_disjoint_anchor_indices(positions, groups,
-                                         event_position=4, event_group="same")
+                                         event_position=4, event_group=same)
     assert kept == [1]
+    with pytest.raises(R1CausalityError, match="current/future"):
+        source_disjoint_anchor_indices([5], [future],
+                                       event_position=4, event_group=same)
     anchors = [
-        {"position": 1, "group_sha256": "same", "sign": 1,
-         "feature": np.array([1.0, 0.0], dtype=np.float32)},
-        {"position": 2, "group_sha256": "other", "sign": -1,
-         "feature": np.array([1.0, 0.0], dtype=np.float32)},
-        {"position": 5, "group_sha256": "future", "sign": 1,
-         "feature": np.array([1.0, 0.0], dtype=np.float32)},
+        {"position": 1, "group_sha256": same, "sign": 1,
+         "patch_id": 3, "feature": np.array([1.0, 0.0], dtype=np.float32),
+         "feature_sha256": arrays_sha256({"feature": np.array([1.0, 0.0], dtype=np.float32)})},
+        {"position": 2, "group_sha256": other, "sign": -1,
+         "patch_id": 4, "feature": np.array([1.0, 0.0], dtype=np.float32),
+         "feature_sha256": arrays_sha256({"feature": np.array([1.0, 0.0], dtype=np.float32)})},
     ]
     delta, count = signed_knn_delta(
         np.array([[1.0, 0.0]], dtype=np.float32), anchors,
-        event_position=4, event_group="same", neighbors=5, amplitude=0.20)
+        event_position=4, event_group=same, neighbors=5, amplitude=0.20)
     assert count == 1
     assert delta.tolist() == pytest.approx([-0.20])
 
@@ -315,6 +323,8 @@ def test_tape_refuses_duplicate_gapped_resume_and_label_payloads(tmp_path):
     with pytest.raises(TapeIntegrityError):
         writer.seal_event(1, arrays, _metadata(arrays))
     with pytest.raises(TapeIntegrityError):
+        writer.finalize_event(0, {"writer_action": {"action": "too_early"}})
+    with pytest.raises(TapeIntegrityError):
         writer.seal_event(0, arrays, {**_metadata(arrays), "label": 1})
     writer.seal_event(0, arrays, _metadata(arrays))
     with pytest.raises(TapeIntegrityError):
@@ -322,6 +332,8 @@ def test_tape_refuses_duplicate_gapped_resume_and_label_payloads(tmp_path):
     with pytest.raises(FileExistsError):
         EvidenceTapeWriter(tmp_path / "tape")
     writer.finalize_event(0, {"writer_action": {"action": "no_write"}})
+    with pytest.raises(TapeIntegrityError):
+        writer.finalize_event(0, {"writer_action": {"action": "duplicate"}})
     assert writer.verify()["passed"]
 
 

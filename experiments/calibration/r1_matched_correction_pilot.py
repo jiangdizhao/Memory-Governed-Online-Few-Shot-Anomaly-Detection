@@ -37,6 +37,7 @@ IDENTITY_CONTRACT_VERSION = "r1.source-bound.v1"
 R1_PROFILE_ID = "r1_switch_s0_512_digest_contract_v1"
 SUPPORT_ONLY_PROFILE_ID = "r1_switch_s0_support_bank_verify_v1"
 OUTPUT_NAMESPACE_PREFIX = "r1_digest_contract_v1"
+C2_ANCHOR_CAPACITY = 256
 STRUCTURED_FIXED_BANK_DIGEST_ALGORITHM = (
     "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes")
 RAW_FIXED_BANK_DIGEST_ALGORITHM = (
@@ -334,16 +335,82 @@ def source_disjoint_anchor_indices(anchor_positions: Sequence[int],
                                    event_position: int,
                                    event_group: str) -> list[int]:
     if len(anchor_positions) != len(anchor_groups):
-        raise ValueError("Anchor positions and source groups differ in length")
-    if not event_group:
-        raise ValueError("Current official source group is missing")
+        raise R1CausalityError("Anchor positions and source groups differ in length")
+    event_position = _causal_position(event_position, "current event position")
+    event_group = _causal_group_sha256(event_group, "current source group")
     keep: list[int] = []
     for index, (position, group) in enumerate(zip(anchor_positions, anchor_groups)):
-        if int(position) >= int(event_position):
-            continue
-        if str(group) != str(event_group):
+        anchor_position = _causal_position(position, f"anchor {index} position")
+        anchor_group = _causal_group_sha256(group, f"anchor {index} source group")
+        if anchor_position >= event_position:
+            raise R1CausalityError(
+                f"Pre-score anchor {index} has current/future position {anchor_position} "
+                f"at event {event_position}")
+        if anchor_group != event_group:
             keep.append(index)
     return keep
+
+
+def _causal_position(value: Any, name: str) -> int:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)):
+        raise R1CausalityError(f"{name} must be an integer")
+    position = int(value)
+    if position < 0:
+        raise R1CausalityError(f"{name} must be nonnegative")
+    return position
+
+
+def _causal_group_sha256(value: Any, name: str) -> str:
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+        raise R1CausalityError(f"{name} lacks valid SHA-256 provenance")
+    return value
+
+
+def _validate_c2_anchor_state(anchors: Sequence[Mapping[str, Any]], *,
+                              event_position: int, phase: str,
+                              event_group: str | None = None) -> list[int]:
+    """Validate stored C2 provenance; return only pre-score eligible indices."""
+    event_position = _causal_position(event_position, "current event position")
+    if phase not in ("pre_score", "post_update"):
+        raise ValueError(f"Unknown C2 anchor validation phase: {phase}")
+    if phase == "pre_score":
+        event_group = _causal_group_sha256(event_group, "current source group")
+    eligible: list[int] = []
+    required = {"position", "group_sha256", "patch_id", "sign", "feature",
+                "feature_sha256"}
+    for index, anchor in enumerate(anchors):
+        if not isinstance(anchor, Mapping) or not required.issubset(anchor):
+            raise R1CausalityError(f"C2 anchor {index} has missing/malformed provenance")
+        position = _causal_position(anchor["position"], f"C2 anchor {index} position")
+        group = _causal_group_sha256(anchor["group_sha256"],
+                                     f"C2 anchor {index} source group")
+        patch_id = anchor["patch_id"]
+        sign = anchor["sign"]
+        if (isinstance(patch_id, (bool, np.bool_)) or
+                not isinstance(patch_id, (int, np.integer)) or
+                not 0 <= int(patch_id) < 784):
+            raise R1CausalityError(f"C2 anchor {index} has invalid patch identity")
+        if isinstance(sign, (bool, np.bool_)) or not isinstance(sign, (int, np.integer)) or int(sign) not in (-1, 1):
+            raise R1CausalityError(f"C2 anchor {index} has invalid signed-label provenance")
+        feature = np.asarray(anchor["feature"])
+        feature_sha = _causal_group_sha256(anchor["feature_sha256"],
+                                           f"C2 anchor {index} feature digest")
+        if (feature.ndim != 1 or feature.dtype != np.dtype(np.float32) or
+                not np.isfinite(feature).all() or
+                arrays_sha256({"feature": feature}) != feature_sha):
+            raise R1CausalityError(f"C2 anchor {index} feature/provenance digest is invalid")
+        if phase == "pre_score":
+            if position >= event_position:
+                raise R1CausalityError(
+                    f"C2 pre-score state contains current/future anchor {position} "
+                    f"at event {event_position}")
+            if group != event_group:
+                eligible.append(index)
+        elif position > event_position:
+            raise R1CausalityError(
+                f"C2 post-update state contains future anchor {position} "
+                f"after event {event_position}")
+    return eligible
 
 
 def signed_knn_delta(query_rows: np.ndarray, anchors: Sequence[Mapping[str, Any]], *,
@@ -353,9 +420,9 @@ def signed_knn_delta(query_rows: np.ndarray, anchors: Sequence[Mapping[str, Any]
     q = np.asarray(query_rows, dtype=np.float32)
     if q.ndim != 2 or not np.isfinite(q).all() or neighbors < 1:
         raise ValueError("Invalid query feature matrix or neighbor count")
-    eligible = [a for a in anchors
-                if int(a["position"]) < int(event_position) and
-                str(a["group_sha256"]) != str(event_group)]
+    eligible_indices = _validate_c2_anchor_state(
+        anchors, event_position=event_position, phase="pre_score", event_group=event_group)
+    eligible = [anchors[index] for index in eligible_indices]
     if not eligible:
         return np.zeros((len(q),), dtype=np.float32), 0
     bank = np.stack([np.asarray(a["feature"], dtype=np.float32) for a in eligible])
@@ -375,10 +442,10 @@ def signed_knn_delta(query_rows: np.ndarray, anchors: Sequence[Mapping[str, Any]
 
 
 class CausalEventOrder:
-    """Runtime guard for score -> reveal -> correction -> common write order."""
-    def __init__(self, position: int, queried: bool):
-        self.position = int(position)
-        self.queried = bool(queried)
+    """Runtime guard for score seal -> query decision -> reveal -> updates."""
+    def __init__(self, position: int):
+        self.position = _causal_position(position, "current event position")
+        self.queried: bool | None = None
         self.phase = "observed"
 
     def seal_scores(self) -> None:
@@ -386,17 +453,27 @@ class CausalEventOrder:
             raise R1CausalityError("Scores were sealed in an invalid event phase")
         self.phase = "scores_sealed"
 
+    def decide_query(self, queried: bool) -> bool:
+        if (self.phase != "scores_sealed" or self.queried is not None or
+                not isinstance(queried, (bool, np.bool_))):
+            raise R1CausalityError("Query decision occurred before score seal or more than once")
+        self.queried = bool(queried)
+        self.phase = "query_decided"
+        return self.queried
+
     def disclose(self, provider: Callable[[], int]) -> int:
-        if self.phase != "scores_sealed" or not self.queried:
+        if self.phase != "query_decided" or not self.queried:
             raise R1CausalityError("Queried label requested before score seal or on an unqueried event")
-        value = int(provider())
-        if value not in (0, 1):
+        value = provider()
+        if (isinstance(value, (bool, np.bool_)) or
+                not isinstance(value, (int, np.integer)) or int(value) not in (0, 1)):
             raise R1CausalityError("Queried label provider returned a nonbinary value")
+        value = int(value)
         self.phase = "label_disclosed"
         return value
 
     def corrections_updated(self) -> None:
-        expected = "label_disclosed" if self.queried else "scores_sealed"
+        expected = "label_disclosed" if self.queried else "query_decided"
         if self.phase != expected:
             raise R1CausalityError("Correction update occurred before legal disclosure")
         self.phase = "corrections_updated"
@@ -410,6 +487,120 @@ class CausalEventOrder:
         if self.phase != "memory_updated":
             raise R1CausalityError("Event did not complete the required causal phases")
         self.phase = "complete"
+
+
+def _seal_prediction_and_reveal(*, gate: CausalEventOrder, tape: Any,
+                                position: int, arrays: Mapping[str, np.ndarray],
+                                metadata: Mapping[str, Any],
+                                query_positions: Sequence[int],
+                                label_provider: Callable[[], int]
+                                ) -> tuple[dict[str, Any], bool, int | None]:
+    """Seal public scores before deciding whether to reveal a queried label."""
+    if _causal_position(position, "event position") != gate.position:
+        raise R1CausalityError("Tape seal position differs from causal event position")
+    query_tape = tuple(_causal_position(value, "query tape position")
+                       for value in query_positions)
+    if query_tape != tuple(sorted(set(query_tape))):
+        raise R1CausalityError("Query tape positions are not sorted and unique")
+    sealed = tape.seal_event(position, arrays, metadata)
+    gate.seal_scores()
+    queried = gate.decide_query(position in set(query_tape))
+    label = gate.disclose(label_provider) if queried else None
+    return sealed, queried, label
+
+
+class OrderedQueriedLabelReader:
+    """Enforce exact frozen-tape order around the existing restricted reader."""
+    def __init__(self, reader: Callable[[str, int, str], int],
+                 positions: Sequence[int]):
+        values = tuple(_causal_position(value, "queried position") for value in positions)
+        if not values or values != tuple(sorted(set(values))):
+            raise R1CausalityError("Queried position reader requires a nonempty sorted unique tape")
+        self.reader = reader
+        self.positions = values
+        self.cursor = 0
+
+    @property
+    def decoded_positions(self) -> list[int]:
+        return self.reader.decoded_positions
+
+    def __call__(self, category: str, position: int, source_key: str) -> int:
+        position = _causal_position(position, "queried label position")
+        if self.cursor >= len(self.positions) or position != self.positions[self.cursor]:
+            raise R1CausalityError("Queried label disclosure is not the next frozen tape position")
+        value = self.reader(category, position, source_key)
+        self.cursor += 1
+        return value
+
+    def close(self) -> None:
+        self.reader.close()
+
+
+def common_c0_greedy_writer_action(*, position: int, c0_score: float,
+                                   theta: float, sigma: float,
+                                   c0_prediction: int,
+                                   candidate_ids: np.ndarray,
+                                   candidate_features: np.ndarray,
+                                   feature_layers: Sequence[Any],
+                                   queried: bool, disclosed_label: int | None,
+                                   eligibility: Callable[..., tuple[bool, int, str, Any]],
+                                   update: Callable[..., Mapping[str, Any]]) -> dict[str, Any]:
+    """Apply the shared normal writer using only frozen C0 inputs and legal feedback."""
+    position = _causal_position(position, "writer event position")
+    score, threshold, sigma = float(c0_score), float(theta), float(sigma)
+    if not all(math.isfinite(value) for value in (score, threshold, sigma)):
+        raise R1CausalityError("Common Greedy writer received a nonfinite C0 input")
+    if int(c0_prediction) not in (0, 1) or int(c0_prediction) != int(score >= threshold):
+        raise R1CausalityError("Common Greedy writer prediction is not derived from C0 score/threshold")
+    if not isinstance(queried, (bool, np.bool_)):
+        raise R1CausalityError("Common Greedy writer query state must be an explicit boolean")
+    ids = np.asarray(candidate_ids)
+    features = np.asarray(candidate_features)
+    if (ids.shape != (32,) or ids.dtype != np.dtype(np.int64) or
+            len(set(ids.tolist())) != 32 or np.any(ids < 0) or np.any(ids >= 784)):
+        raise R1CausalityError("Common Greedy writer candidate IDs are malformed")
+    if (features.ndim != 2 or features.shape[0] != 32 or
+            features.dtype != np.dtype(np.float32) or not np.isfinite(features).all()):
+        raise R1CausalityError("Common Greedy writer candidate features are malformed")
+    if queried:
+        if (isinstance(disclosed_label, (bool, np.bool_)) or
+                not isinstance(disclosed_label, (int, np.integer)) or
+                int(disclosed_label) not in (0, 1)):
+            raise R1CausalityError("Queried common writer lacks legal binary feedback")
+    elif disclosed_label is not None:
+        raise R1CausalityError("Unqueried event supplied supervised writer feedback")
+
+    action: dict[str, Any] = {
+        "input_score_source": "common_C0",
+        "score": score,
+        "theta": threshold,
+        "sigma": sigma,
+        "prediction": int(c0_prediction),
+        "candidate_ids_sha256": sha256_json(ids.tolist()),
+        "candidate_features_sha256": arrays_sha256({"top32_features": features}),
+        "action": "no_normal_memory_write",
+    }
+    if not queried:
+        action["eligibility_reason"] = "unqueried_event"
+        return action
+    if disclosed_label == 1:
+        action["action"] = "verified_defect_no_normal_write"
+        action["eligibility_reason"] = "verified_defect"
+        return action
+
+    allow, keep, reason, _info = eligibility(
+        score=score, theta=threshold, sigmaN=max(sigma, 0.02),
+        pred_defect=bool(c0_prediction), novelty=0.0)
+    if not allow:
+        action.update({"action": "native_gate_no_write",
+                       "eligibility_reason": str(reason), "keep_count": int(keep)})
+        return action
+    result = update(position=position, feature_layers=feature_layers,
+                    candidate_ids=ids, score=score, theta=threshold, sigma=sigma)
+    action.update(dict(result))
+    action.update({"action": "native_greedy_normal_update",
+                   "eligibility_reason": str(reason), "keep_count": int(keep)})
+    return action
 
 
 def _contains_forbidden_label_payload(value: Any) -> bool:
@@ -900,17 +1091,87 @@ def _correction_state_sha256(bank: Any,
     return digest.hexdigest()
 
 
+def _validate_c1_source_groups(source_groups: Mapping[int, set[str]],
+                               last_steps: Sequence[int], *, event_position: int,
+                               phase: str, event_group: str | None = None) -> list[int]:
+    """Validate active C1 slot provenance; replacement history stays conservative."""
+    event_position = _causal_position(event_position, "current event position")
+    if phase not in ("pre_score", "post_update"):
+        raise ValueError(f"Unknown C1 anchor validation phase: {phase}")
+    if phase == "pre_score":
+        event_group = _causal_group_sha256(event_group, "current source group")
+    positions = [_causal_position(value, f"C1 slot {slot} last_step")
+                 for slot, value in enumerate(last_steps)]
+    active_count = len(positions)
+    slot_keys: set[int] = set()
+    for raw_slot in source_groups:
+        if (isinstance(raw_slot, (bool, np.bool_)) or
+                not isinstance(raw_slot, (int, np.integer)) or int(raw_slot) < 0):
+            raise R1CausalityError("C1 source-group provenance has a malformed slot key")
+        slot_keys.add(int(raw_slot))
+    if any(slot >= active_count for slot in slot_keys):
+        raise R1CausalityError("C1 source-group provenance references an inactive slot")
+    eligible: list[int] = []
+    for slot, last_step in enumerate(positions):
+        if phase == "pre_score" and last_step >= event_position:
+            raise R1CausalityError(
+                f"C1 pre-score slot {slot} has current/future last_step {last_step} "
+                f"at event {event_position}")
+        if phase == "post_update" and last_step > event_position:
+            raise R1CausalityError(
+                f"C1 post-update slot {slot} has future last_step {last_step} "
+                f"after event {event_position}")
+        history = source_groups.get(slot)
+        if not isinstance(history, (set, frozenset)) or not history:
+            raise R1CausalityError(f"Active C1 slot {slot} lacks source-group provenance")
+        for value in history:
+            _causal_group_sha256(value, f"C1 slot {slot} source-group history")
+        if phase == "pre_score" and event_group not in history:
+            eligible.append(slot)
+    return eligible
+
+
+def _record_c1_source_group_updates(source_groups: dict[int, set[str]], *,
+                                    last_steps: Sequence[int], event_position: int,
+                                    event_group: str) -> None:
+    """Union current provenance for touched slots; replacement is intentionally overinclusive."""
+    event_position = _causal_position(event_position, "current event position")
+    event_group = _causal_group_sha256(event_group, "current source group")
+    positions = [_causal_position(value, f"C1 slot {slot} last_step")
+                 for slot, value in enumerate(last_steps)]
+    active_count = len(positions)
+    for raw_slot in list(source_groups):
+        if (isinstance(raw_slot, (bool, np.bool_)) or
+                not isinstance(raw_slot, (int, np.integer)) or int(raw_slot) < 0):
+            raise R1CausalityError("C1 source-group provenance has a malformed slot key")
+        if int(raw_slot) >= active_count:
+            raise R1CausalityError("C1 source-group provenance references an inactive slot")
+    for slot, last_step in enumerate(positions):
+        if last_step > event_position:
+            raise R1CausalityError("C1 native Codebook reports an update from the future")
+        if last_step == event_position:
+            history = source_groups.get(slot)
+            if history is None:
+                history = set()
+                source_groups[slot] = history
+            if not isinstance(history, set):
+                raise R1CausalityError(f"C1 slot {slot} provenance is not mutable exact-set state")
+            for value in history:
+                _causal_group_sha256(value, f"C1 slot {slot} prior source-group history")
+            history.add(event_group)
+    _validate_c1_source_groups(source_groups, positions,
+                               event_position=event_position, phase="post_update")
+
+
 def _filtered_c1_codebook(impl: Any, bank: Any, source_groups: Mapping[int, set[str]],
-                          current_group: str) -> tuple[Any, list[int]]:
+                          current_group: str, *, event_position: int
+                          ) -> tuple[Any, list[int]]:
     import torch
     live = bank.corr_cb["p0"]["id"][0]
     n = int(live.size())
-    missing = [slot for slot in range(n) if slot not in source_groups or not source_groups[slot]]
-    if missing:
-        raise R1CausalityError("Active C1 anchor lacks source-group provenance")
-    eligible = [slot for slot in range(n) if current_group not in source_groups[slot]]
-    if any(current_group in source_groups[slot] for slot in eligible):
-        raise R1CausalityError("C1 source-group exclusion failed")
+    eligible = _validate_c1_source_groups(
+        source_groups, live.last_step[:n].detach().to("cpu").tolist(),
+        event_position=event_position, phase="pre_score", event_group=current_group)
     cfg = bank.corr_cfg
     cfg_copy = type(cfg)(**asdict(cfg))
     cfg_copy.enabled = True
@@ -926,9 +1187,11 @@ def _filtered_c1_codebook(impl: Any, bank: Any, source_groups: Mapping[int, set[
 
 
 def _c1_score_delta(impl: Any, bank: Any, selected_features: torch.Tensor,
-                    source_groups: Mapping[int, set[str]], current_group: str
+                    source_groups: Mapping[int, set[str]], current_group: str,
+                    *, event_position: int
                     ) -> tuple[np.ndarray, dict[str, Any]]:
-    filtered, eligible = _filtered_c1_codebook(impl, bank, source_groups, current_group)
+    filtered, eligible = _filtered_c1_codebook(
+        impl, bank, source_groups, current_group, event_position=event_position)
     if not eligible:
         return np.zeros((32,), dtype=np.float32), {
             "eligible_anchor_slots": 0, "same_source_excluded_anchor_slots": int(bank.corr_cb["p0"]["id"][0].size()),
@@ -1242,7 +1505,7 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                        "neighbors": config.c2_neighbors,
                        "amplitude": config.c2_interface_scale,
                        "distance": "unit-normalized cosine distance; deterministic index tie break",
-                       "capacity": 256, "retention": "FIFO",
+                       "capacity": C2_ANCHOR_CAPACITY, "retention": "FIFO",
                        "scientific_hyperparameters_approved": False,
                        "future_preregistration_required": [
                            "neighbor count", "correction amplitude", "distance normalization/locality",
@@ -1263,6 +1526,8 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
             positions=preflight["query_positions"],
             group_sha256_by_position=preflight["query_group_sha256_by_position"],
         )
+        label_reader = OrderedQueriedLabelReader(
+            label_reader, preflight["query_positions"])
         records = preflight["stream_metadata"]
         support_and_model_elapsed = support_and_model_seconds
         started = time.monotonic()
@@ -1270,6 +1535,7 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                               "support_and_model_seconds": support_and_model_elapsed})
 
         for position, meta in enumerate(records):
+            gate = CausalEventOrder(position)
             elapsed = (time.monotonic() - pilot_execution_started
                        if pilot_execution_started is not None else time.monotonic() - started)
             if elapsed >= config.max_gpu_seconds:
@@ -1347,7 +1613,8 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                 features[0].to(bank.device))[torch.as_tensor(
                     top_ids, device=bank.device, dtype=torch.long)]
             c1_delta, c1_diag = _c1_score_delta(
-                impl, bank, normalized_selected, c1_source_groups, group_sha)
+                impl, bank, normalized_selected, c1_source_groups, group_sha,
+                event_position=position)
             c1_far_field_count += int(c1_diag["far_field_patch_count"])
             c1_far_field_abs_max = max(
                 c1_far_field_abs_max, float(c1_diag["far_field_abs_correction_max"]))
@@ -1372,7 +1639,6 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
             preds = {"c0": int(c0_score >= theta),
                      "c1": int(c1_score >= theta),
                      "c2": int(c2_score >= theta)}
-            queried = position in preflight["query_positions"]
             memory_before_version = memory_version
             memory_before_digest = memory_state_digest
             c1_before_digest = _correction_state_sha256(bank, c1_source_groups)
@@ -1416,8 +1682,6 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                 "c0_score": c0_score, "c1_score": c1_score, "c2_score": c2_score,
                 "c0_prediction": preds["c0"], "c1_prediction": preds["c1"],
                 "c2_prediction": preds["c2"],
-                "query_decision": bool(queried),
-                "query_reference": (f"switch:{position}" if queried else None),
                 "c1_state_sha256_before": c1_before_digest,
                 "c2_state_sha256_before": c2_before_digest,
                 "c1_eligible_anchor_slots": int(c1_diag["eligible_anchor_slots"]),
@@ -1426,17 +1690,15 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                 "c1_far_field_patch_count": int(c1_diag["far_field_patch_count"]),
                 "c1_far_field_abs_correction_max": float(c1_diag["far_field_abs_correction_max"]),
             }
-            gate = CausalEventOrder(position, queried)
-            gate.seal_scores()
-            sealed_record = tape.seal_event(position, arrays, metadata)
-
-            label: int | None = None
+            sealed_record, queried, label = _seal_prediction_and_reveal(
+                gate=gate, tape=tape, position=position, arrays=arrays,
+                metadata=metadata, query_positions=preflight["query_positions"],
+                label_provider=lambda: label_reader(
+                    "switch", position, str(meta["sample_key"])))
             feedback_ref: str | None = None
             correction_write_summary: dict[str, Any] = {"c1": None, "c2_added": 0}
             if queried:
                 query_count += 1
-                label = gate.disclose(lambda: label_reader(
-                    "switch", position, str(meta["sample_key"])))
                 query_labels_decoded += 1
                 feedback_payload = {
                     "schema": "calibration.r1_private_feedback.v1",
@@ -1471,16 +1733,10 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                     bank.corr_cfg.enabled = False
                 c1_layer = c1_result.get("layers", {}).get("0", {})
                 new_n = int(c1_cb.size())
-                for slot in range(new_n):
-                    if int(c1_cb.last_step[slot].item()) != position:
-                        continue
-                    current_count = int(c1_cb.count[slot].item())
-                    # Union even when native replacement metadata is ambiguous:
-                    # this may over-exclude a source, but cannot leak it back in.
-                    c1_source_groups.setdefault(slot, set()).add(group_sha)
-                for slot in list(c1_source_groups):
-                    if slot >= new_n:
-                        del c1_source_groups[slot]
+                _record_c1_source_group_updates(
+                    c1_source_groups,
+                    last_steps=c1_cb.last_step[:new_n].detach().to("cpu").tolist(),
+                    event_position=position, event_group=group_sha)
                 kept = int(c1_layer.get("kept", 0))
                 admitted = int(c1_layer.get("inserted", 0)) + int(c1_layer.get("merged", 0)) + int(c1_layer.get("replaced", 0))
                 if sign > 0:
@@ -1499,8 +1755,8 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                         "feature": feature_row, "feature_sha256": feature_sha,
                     })
                     c2_added += 1
-                if len(c2_anchors) > 256:
-                    del c2_anchors[:len(c2_anchors) - 256]
+                if len(c2_anchors) > C2_ANCHOR_CAPACITY:
+                    del c2_anchors[:len(c2_anchors) - C2_ANCHOR_CAPACITY]
                 c2_active_anchors = len(c2_anchors)
                 correction_update_seconds += time.perf_counter() - c1_update_started
                 _append_jsonl(output / "correction_anchor_events.jsonl", {
@@ -1512,7 +1768,7 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                     "c1_stats": {k: int(v) for k, v in c1_layer.items()
                                  if isinstance(v, (int, np.integer))},
                     "c2_added_patch_rows": c2_added,
-                    "c2_retention": "FIFO, max 256 patch anchors",
+                    "c2_retention": f"FIFO, max {C2_ANCHOR_CAPACITY} patch anchors",
                 })
                 correction_write_summary = {
                     "c1": {k: int(v) for k, v in c1_layer.items()
@@ -1521,39 +1777,41 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                 }
             gate.corrections_updated()
 
-            writer_action: dict[str, Any] = {
-                "input_score_source": "common_C0",
-                "score": float(c0_score), "theta": theta,
-                "sigma": float(preflight["c64_sigma0_with_floor_0_02"]),
-                "candidate_ids_sha256": sha256_json(top_ids.tolist()),
-                "action": "no_normal_memory_write",
-                "memory_version_after": memory_version,
-            }
+            _validate_c1_source_groups(
+                c1_source_groups,
+                c1_cb.last_step[:int(c1_cb.size())].detach().to("cpu").tolist(),
+                event_position=position, phase="post_update")
+            _validate_c2_anchor_state(
+                c2_anchors, event_position=position, phase="post_update")
+
             writer_started = time.perf_counter()
             memory_content_before_write = _memory_content_sha256(bank)
-            if queried and label == 0:
-                allow, keep, reason, _info = impl.select_informative_normal_write(
-                    score=float(c0_score), theta=theta,
-                    sigmaN=float(max(preflight["c64_sigma0_with_floor_0_02"], 0.02)),
-                    pred_defect=bool(c0_score >= theta), novelty=0.0)
-                if allow:
-                    audit_before = writer.audit()
-                    writer.update(impl, list(features), {0: top_ids.tolist()}, position,
-                                  score=float(c0_score), theta=theta,
-                                  sigma=float(preflight["c64_sigma0_with_floor_0_02"]))
-                    audit_after = writer.audit()
-                    writer_action.update({
-                        "action": "native_greedy_normal_update",
-                        "eligibility_reason": str(reason),
-                        "keep_count": int(keep),
-                        "accepted_patches_delta": int(audit_after["accepted_patches"] - audit_before["accepted_patches"]),
-                        "skipped_patches_delta": int(audit_after["skipped_patches"] - audit_before["skipped_patches"]),
-                    })
-                    normal_memory_writes += 1
-                else:
-                    writer_action.update({"action": "native_gate_no_write",
-                                          "eligibility_reason": str(reason),
-                                          "keep_count": int(keep)})
+            def _writer_update(*, position: int, feature_layers: Sequence[Any],
+                               candidate_ids: np.ndarray, score: float,
+                               theta: float, sigma: float) -> Mapping[str, Any]:
+                audit_before = writer.audit()
+                writer.update(impl, list(feature_layers),
+                              {0: candidate_ids.tolist()}, position,
+                              score=score, theta=theta, sigma=sigma)
+                audit_after = writer.audit()
+                return {
+                    "accepted_patches_delta": int(
+                        audit_after["accepted_patches"] - audit_before["accepted_patches"]),
+                    "skipped_patches_delta": int(
+                        audit_after["skipped_patches"] - audit_before["skipped_patches"]),
+                }
+
+            writer_action = common_c0_greedy_writer_action(
+                position=position, c0_score=float(c0_score), theta=theta,
+                sigma=float(preflight["c64_sigma0_with_floor_0_02"]),
+                c0_prediction=preds["c0"], candidate_ids=top_ids,
+                candidate_features=arrays["top32_features"],
+                feature_layers=features, queried=queried,
+                disclosed_label=label,
+                eligibility=impl.select_informative_normal_write,
+                update=_writer_update)
+            if writer_action["action"] == "native_greedy_normal_update":
+                normal_memory_writes += 1
             writer_seconds += time.perf_counter() - writer_started
             memory_content_after_write = _memory_content_sha256(bank)
             if memory_content_after_write != memory_content_before_write:
@@ -1563,19 +1821,9 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
             writer_action["memory_version_after"] = memory_version
             writer_action["memory_digest_after"] = memory_state_digest
             gate.memory_updated()
-            gate.finish()
 
             c1_after_digest = _correction_state_sha256(bank, c1_source_groups)
             c2_after_digest = _c2_state_sha256(c2_anchors)
-            if queried:
-                c1_group_positions = [a["position"] for a in c2_anchors]
-                c1_group_values = [a["group_sha256"] for a in c2_anchors]
-                if any(pos >= position for pos in c1_group_positions):
-                    causal_mismatches += 1
-                    raise R1CausalityError("C2 anchor bank contains a current/future event")
-                _ = source_disjoint_anchor_indices(
-                    c1_group_positions, c1_group_values,
-                    event_position=position, event_group=group_sha)
 
             peak_rss = max(peak_rss, _process_rss_bytes() or 0)
             if torch.cuda.is_available():
@@ -1584,6 +1832,8 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                 peak_cuda_reserved = max(peak_cuda_reserved,
                                          int(torch.cuda.max_memory_reserved()))
             transition = {
+                "query_decision": bool(queried),
+                "query_reference": (f"switch:{position}" if queried else None),
                 "writer_inputs_sha256": sha256_json({
                     "score": c0_score, "theta": theta,
                     "sigma": preflight["c64_sigma0_with_floor_0_02"],
@@ -1600,6 +1850,7 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                 "causal_order_complete": True,
             }
             tape.finalize_event(position, transition)
+            gate.finish()
             if queried and label_reader.decoded_positions[-1] != position:
                 causal_mismatches += 1
                 raise R1CausalityError("Queried label reader disclosed a different position")
