@@ -1,0 +1,176 @@
+{
+  "catalog_source_sha256": "9c17d4ba78210ad65a288fedcdd6ea8a65d0926da05a960d3ed8dd1c3210552f",
+  "categories": [
+    "audiojack",
+    "bottle_cap",
+    "button_battery",
+    "end_cap",
+    "eraser",
+    "fire_hood",
+    "mint",
+    "mounts",
+    "pcb",
+    "phone_battery",
+    "plastic_nut",
+    "plastic_plug",
+    "porcelain_doll",
+    "regulator",
+    "rolled_strip_base",
+    "sim_card_set",
+    "switch",
+    "tape",
+    "terminalblock",
+    "toothbrush",
+    "toy",
+    "toy_brick",
+    "transistor1",
+    "u_block",
+    "usb",
+    "usb_adaptor",
+    "vcpill",
+    "wooden_beads",
+    "woodstick",
+    "zipper"
+  ],
+  "claims": {
+    "h_class_policy": "separately versioned and separately authorized if required",
+    "supported": "within-category source-group holdout under H-SOURCE",
+    "unseen_category_generalization": false
+  },
+  "g1_g2_boundary": {
+    "g1_substitutes_for_g2": false,
+    "g1a": "49 fixed cell centers on R1 28x28 patch grid; source-disjoint normal geometry",
+    "g1b": "native C0 Top-32 under category-specific Fixed Support and category-specific M0 state",
+    "g2": "causal queried Correction Anchor to strictly future native patch study"
+  },
+  "group_digest_algorithm": "sha256:official-sample-group-nul-prefix-utf8.v1",
+  "grouping_unit": "official_sample_key",
+  "identity_contract_version": "realid-offical-sample-key-v2",
+  "partition_seed": 20261101,
+  "policy_sha256": "73afab2b6f306043094bd5e3c1643a8c004c04ba2237be6ba43b6eca25642719",
+  "ranking_algorithm": "sha256:r2-l2d-hsource-group-rank.v1",
+  "role_rules": {
+    "A": {
+      "disposition": "REQUIRED_ALL_30",
+      "minimum_groups_for_four_supports_plus_64_C64": 68,
+      "minimum_groups_for_full_geometry": 100,
+      "population": "all_authorized_train_normal_source_groups"
+    },
+    "B": {
+      "exposed_development_categories": [
+        "audiojack",
+        "regulator",
+        "rolled_strip_base",
+        "switch"
+      ],
+      "minimum_groups_per_outcome_class": 100,
+      "minimum_groups_per_role": 200,
+      "ordinary_category_quota": "floor(3*n/5) fresh groups; prior-exposed groups also remain in B",
+      "population": "authorized_test_source_groups_for_development",
+      "protected_not_applicable_categories": [
+        "mint",
+        "pcb"
+      ]
+    },
+    "C": {
+      "minimum_groups_per_outcome_class": 100,
+      "minimum_groups_per_role": 200,
+      "not_applicable_exposed_development_categories": [
+        "audiojack",
+        "regulator",
+        "rolled_strip_base",
+        "switch"
+      ],
+      "ordinary_category_quota": "n - floor(3*n/5) fresh groups",
+      "outcomes": "independent sealed evaluator only after method and analysis freeze",
+      "population": "sealed_authorized_test_source_groups",
+      "protected_confirmation_only_categories": [
+        "mint",
+        "pcb"
+      ]
+    },
+    "dispositions": {
+      "A_required_all_categories": [
+        "audiojack",
+        "bottle_cap",
+        "button_battery",
+        "end_cap",
+        "eraser",
+        "fire_hood",
+        "mint",
+        "mounts",
+        "pcb",
+        "phone_battery",
+        "plastic_nut",
+        "plastic_plug",
+        "porcelain_doll",
+        "regulator",
+        "rolled_strip_base",
+        "sim_card_set",
+        "switch",
+        "tape",
+        "terminalblock",
+        "toothbrush",
+        "toy",
+        "toy_brick",
+        "transistor1",
+        "u_block",
+        "usb",
+        "usb_adaptor",
+        "vcpill",
+        "wooden_beads",
+        "woodstick",
+        "zipper"
+      ],
+      "B_not_applicable_categories": [
+        "mint",
+        "pcb"
+      ],
+      "C_not_applicable_categories": [
+        "audiojack",
+        "regulator",
+        "rolled_strip_base",
+        "switch"
+      ]
+    }
+  },
+  "schema": "r2_l2e.h_source_partition_policy.v1",
+  "source_group_rules": {
+    "all_camera_views_stay_together": true,
+    "cross_category_or_role_overlap": "reject",
+    "insufficient_groups": "fail closed; do not change ratio, seed, or merge categories",
+    "prior_exposure": "exclude from C; assign to B except protected categories, which block for policy review",
+    "train_test_identity_overlap": "A has priority; exclude overlapping Test group from B/C and record count"
+  },
+  "strategy": "H-SOURCE",
+  "support_c64": {
+    "additional_c64_images_per_category_and_seed": 64,
+    "c64_is_strict_four_shot_total": false,
+    "one_image_per_source_group": true,
+    "role_membership_shared_across_support_seeds": true,
+    "selection_population": "A only",
+    "support_c64_source_groups_disjoint": true,
+    "support_images_per_category_and_seed": 4
+  },
+  "temporal_stream": {
+    "bursty_block_groups": 50,
+    "label_use_for_order": "offline evaluator only; controller receives no future labels",
+    "maximum_queries_per_official_sample_key": 1,
+    "minimum_queried_groups_per_outcome_class_for_G2": 20,
+    "order_ranking_algorithm": "sha256:r2-l2e-temporal-order.v1",
+    "order_stress_seed": 20261102,
+    "query_fraction_of_image_events": "0.03",
+    "query_protocol": "Q-A-TS-v1",
+    "query_seed": 37,
+    "same_event_multiset": true,
+    "stress_orders": [
+      "RANDOM",
+      "NORMAL_FIRST",
+      "DEFECT_FIRST",
+      "BURSTY_50_GROUP"
+    ],
+    "time_bins": 16
+  },
+  "version": "1.0.0-proposed",
+  "views_per_source_group": 5
+}
