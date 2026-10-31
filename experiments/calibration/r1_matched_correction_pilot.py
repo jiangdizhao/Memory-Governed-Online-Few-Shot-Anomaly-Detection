@@ -21,7 +21,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+import uuid
 from types import SimpleNamespace
 from typing import Any, Callable, Iterable, Mapping, Sequence
 import zipfile
@@ -48,6 +50,7 @@ DEFAULT_JSON_ROOT = DEFAULT_DATASET_ROOT / "jsons" / "realiad_jsons"
 LEGACY_FAILED_OUTPUT = ROOT / "outputs/calibration/r1_switch_s0_512_engineering_20261031"
 MAX_EVENTS = 512
 MAX_OUTPUT_BYTES = 2 * 1024**3
+OUTPUT_FAILURE_RESERVE_BYTES = 64 * 1024
 MAX_GPU_SECONDS = 120 * 60
 SMOKE_EVENTS = 16
 QUERY_BINDING_SHA256 = "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183"
@@ -616,6 +619,10 @@ def _contains_forbidden_label_payload(value: Any) -> bool:
 
 def _append_jsonl(path: Path, record: Mapping[str, Any]) -> None:
     payload = (canonical_json(record) + "\n").encode("utf-8")
+    budget = _budget_for_path(path)
+    if budget is not None:
+        budget.append(path, payload)
+        return
     fd = os.open(path, os.O_CREAT | os.O_APPEND | os.O_WRONLY, 0o600)
     try:
         with os.fdopen(fd, "ab", closefd=False) as stream:
@@ -627,6 +634,10 @@ def _append_jsonl(path: Path, record: Mapping[str, Any]) -> None:
 
 
 def _write_once(path: Path, payload: bytes) -> None:
+    budget = _budget_for_path(path)
+    if budget is not None:
+        budget.write_once(path, payload)
+        return
     fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     with os.fdopen(fd, "wb") as stream:
         stream.write(payload)
@@ -634,7 +645,12 @@ def _write_once(path: Path, payload: bytes) -> None:
         os.fsync(stream.fileno())
 
 
-def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
+def _atomic_json(path: Path, value: Mapping[str, Any], *,
+                 failure_reserved: bool = False) -> None:
+    budget = _budget_for_path(path)
+    if budget is not None:
+        budget.atomic_json(path, value, failure_reserved=failure_reserved)
+        return
     payload = (canonical_json(value) + "\n").encode("utf-8")
     with tempfile.NamedTemporaryFile(dir=path.parent, prefix=path.name + ".",
                                      suffix=".tmp", delete=False) as stream:
@@ -649,17 +665,284 @@ def _directory_bytes(path: Path) -> int:
     return sum(p.stat().st_size for p in path.rglob("*") if p.is_file())
 
 
+class OutputBudgetError(R1ResourceLimit):
+    """A write was refused before it could consume unreserved output bytes."""
+
+
+_ACTIVE_OUTPUT_BUDGETS: dict[str, "OutputBudget"] = {}
+_ACTIVE_OUTPUT_BUDGETS_LOCK = threading.Lock()
+
+
+class OutputBudget:
+    """Pre-account known output writes and reserve bytes for failure records.
+
+    This accountant rejects unknown files and serializes application writers.
+    It is not an OS quota; unrelated same-user processes can bypass it, so the
+    GPU pilot remains blocked until a hard filesystem quota is installed.
+    """
+
+    _FIXED_FILES = {
+        "run_manifest.json", "sealed_scores.jsonl", "event_transitions.jsonl",
+        "private_feedback.jsonl", "correction_anchor_events.jsonl",
+        "supervisor_status.json", "attempt_history.jsonl",
+    }
+
+    def __init__(self, root: Path, *, max_bytes: int = MAX_OUTPUT_BYTES,
+                 failure_reserve_bytes: int = OUTPUT_FAILURE_RESERVE_BYTES,
+                 allowed_parent: Path | None = None,
+                 allow_existing: bool = False):
+        self.root = Path(os.path.abspath(root))
+        self.root_key = os.path.normcase(str(self.root.resolve(strict=False)))
+        self.max_bytes = int(max_bytes)
+        self.failure_reserve_bytes = int(failure_reserve_bytes)
+        if (self.max_bytes <= 0 or self.failure_reserve_bytes <= 0 or
+                self.failure_reserve_bytes >= self.max_bytes):
+            raise OutputBudgetError("Output budget and failure reserve must be positive and bounded")
+        if allowed_parent is not None:
+            parent = Path(allowed_parent).resolve(strict=True)
+            actual_parent = self.root.parent.resolve(strict=True)
+            if os.path.normcase(str(actual_parent)) != os.path.normcase(str(parent)):
+                raise OutputBudgetError("Output directory is not a direct child of its authorized parent")
+            if not self.root.name.startswith(f"{OUTPUT_NAMESPACE_PREFIX}_"):
+                raise OutputBudgetError("Output directory lacks the versioned R1 namespace prefix")
+        if self.root.exists() and not allow_existing:
+            raise FileExistsError(f"Output namespace already exists: {self.root}")
+        if self.root.exists() and not self.root.is_dir():
+            raise OutputBudgetError("Output namespace exists but is not a directory")
+        self._write_lock = threading.Lock()
+        with _ACTIVE_OUTPUT_BUDGETS_LOCK:
+            if self.root_key in _ACTIVE_OUTPUT_BUDGETS:
+                raise OutputBudgetError("A writer is already active for this output directory")
+            _ACTIVE_OUTPUT_BUDGETS[self.root_key] = self
+        try:
+            if allow_existing:
+                if self._audit_tree() > self.max_bytes:
+                    raise OutputBudgetError("Existing output already exceeds its authorized byte budget")
+        except BaseException:
+            self.close()
+            raise
+
+    @property
+    def normal_limit(self) -> int:
+        return self.max_bytes - self.failure_reserve_bytes
+
+    def close(self) -> None:
+        with _ACTIVE_OUTPUT_BUDGETS_LOCK:
+            if _ACTIVE_OUTPUT_BUDGETS.get(self.root_key) is self:
+                del _ACTIVE_OUTPUT_BUDGETS[self.root_key]
+
+    def ensure_root(self) -> None:
+        if self.root.exists():
+            if not self.root.is_dir() or self.root.is_symlink():
+                raise OutputBudgetError("Output root is not a plain directory")
+            return
+        self.root.mkdir(parents=True, exist_ok=False)
+
+    def _is_reparse_point(self, path: Path) -> bool:
+        if path.is_symlink():
+            return True
+        if os.name == "nt" and path.exists():
+            import ctypes
+            attrs = ctypes.windll.kernel32.GetFileAttributesW(str(path))
+            if attrs == 0xFFFFFFFF:
+                raise OutputBudgetError(f"Cannot inspect output path attributes: {path}")
+            return bool(attrs & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
+        return False
+
+    def _relative(self, path: Path) -> str:
+        candidate = Path(os.path.abspath(path))
+        try:
+            relative = candidate.relative_to(self.root)
+        except ValueError as exc:
+            raise OutputBudgetError("Writer attempted a path outside the authorized output directory") from exc
+        current = self.root
+        if current.exists() and self._is_reparse_point(current):
+            raise OutputBudgetError("Output root cannot be a symlink or reparse point")
+        for part in relative.parts[:-1]:
+            current = current / part
+            if current.exists() and self._is_reparse_point(current):
+                raise OutputBudgetError("Output subdirectory cannot be a symlink or reparse point")
+        name = relative.as_posix()
+        if (name not in self._FIXED_FILES and
+                not re.fullmatch(r"events/event_[0-9]{6}\.npz", name) and
+                not re.fullmatch(r"(?:run_manifest|supervisor_status)\.json\.[A-Fa-f0-9-]+\.tmp", name)):
+            raise OutputBudgetError(f"Output filename is not in the audited writer allowlist: {name}")
+        return name
+
+    def _audit_tree(self) -> int:
+        if not self.root.exists():
+            return 0
+        if not self.root.is_dir() or self._is_reparse_point(self.root):
+            raise OutputBudgetError("Output namespace is not a plain directory")
+        total = 0
+        for path in self.root.rglob("*"):
+            if path.is_dir():
+                if path.relative_to(self.root).as_posix() != "events":
+                    raise OutputBudgetError("Output contains an unaccounted subdirectory")
+                if self._is_reparse_point(path):
+                    raise OutputBudgetError("Output directory contains a reparse point")
+                continue
+            relative = self._relative(path)
+            if not path.is_file() or self._is_reparse_point(path):
+                raise OutputBudgetError(f"Output contains a non-regular file: {relative}")
+            stat = path.stat()
+            if getattr(stat, "st_nlink", 1) > 1:
+                raise OutputBudgetError(f"Output contains a multiply-linked file: {relative}")
+            total += int(stat.st_size)
+        return total
+
+    def _acquire_os_mutex(self):
+        if os.name != "nt":
+            raise OutputBudgetError("Cross-process output serialization requires the Windows mutex backend")
+        import ctypes
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_wchar_p]
+        kernel32.CreateMutexW.restype = ctypes.c_void_p
+        kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        kernel32.WaitForSingleObject.restype = ctypes.c_uint32
+        kernel32.ReleaseMutex.argtypes = [ctypes.c_void_p]
+        kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+        name = "Local\\R1OutputBudget-" + hashlib.sha256(self.root_key.encode()).hexdigest()
+        handle = kernel32.CreateMutexW(None, False, name)
+        if not handle:
+            raise OutputBudgetError("CreateMutexW failed for output writer serialization")
+        handle = ctypes.c_void_p(handle)
+        status = kernel32.WaitForSingleObject(handle, 0)
+        if status not in (0x00000000, 0x00000080):  # WAIT_OBJECT_0 / WAIT_ABANDONED
+            kernel32.CloseHandle(handle)
+            raise OutputBudgetError("Concurrent writer detected for output directory")
+
+        def release() -> None:
+            kernel32.ReleaseMutex(handle)
+            kernel32.CloseHandle(handle)
+        return release
+
+    def _acquire_write_guards(self):
+        if not self._write_lock.acquire(blocking=False):
+            raise OutputBudgetError("Concurrent writer detected in this process")
+        try:
+            return self._acquire_os_mutex()
+        except BaseException:
+            self._write_lock.release()
+            raise
+
+    def _write(self, path: Path, payload: bytes, *, append: bool,
+               failure_reserved: bool) -> None:
+        if not isinstance(payload, bytes):
+            raise TypeError("Budgeted payload must be bytes")
+        target = Path(path)
+        relative = self._relative(target)
+        release_os = self._acquire_write_guards()
+        try:
+            current_bytes = self._audit_tree()
+            if current_bytes > self.max_bytes:
+                raise OutputBudgetError("Existing output already exceeds its authorized byte budget")
+            exists = target.exists()
+            if exists and not append:
+                raise FileExistsError(f"Refusing to overwrite output file: {relative}")
+            if append and exists and not target.is_file():
+                raise OutputBudgetError("Append destination is not a regular file")
+            limit = self.max_bytes if failure_reserved else self.normal_limit
+            if current_bytes + len(payload) > limit:
+                raise OutputBudgetError(
+                    f"Write refused before I/O: {relative} would exceed "
+                    f"{'total' if failure_reserved else 'normal'} output budget")
+            flags = os.O_CREAT | os.O_WRONLY | (os.O_APPEND if append else os.O_EXCL)
+            if hasattr(os, "O_BINARY"):
+                flags |= os.O_BINARY
+            fd = os.open(target, flags, 0o600)
+            try:
+                with os.fdopen(fd, "ab" if append else "wb", closefd=False) as stream:
+                    stream.write(payload)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+            finally:
+                os.close(fd)
+            if self._audit_tree() > limit:
+                raise OutputBudgetError("Observed output exceeds the pre-write budget")
+        finally:
+            release_os()
+            self._write_lock.release()
+
+    def write_once(self, path: Path, payload: bytes, *, failure_reserved: bool = False) -> None:
+        self._write(path, payload, append=False, failure_reserved=failure_reserved)
+
+    def append(self, path: Path, payload: bytes, *, failure_reserved: bool = False) -> None:
+        self._write(path, payload, append=True, failure_reserved=failure_reserved)
+
+    def atomic_json(self, path: Path, value: Mapping[str, Any], *,
+                    failure_reserved: bool = False) -> None:
+        payload = (canonical_json(value) + "\n").encode("utf-8")
+        target = Path(path)
+        target_relative = self._relative(target)
+        if target_relative not in {"run_manifest.json", "supervisor_status.json"}:
+            raise OutputBudgetError("Atomic JSON replacement is limited to status manifests")
+        temp = target.with_name(target.name + "." + uuid.uuid4().hex + ".tmp")
+        self._relative(temp)
+        release_os = self._acquire_write_guards()
+        try:
+            current_bytes = self._audit_tree()
+            if current_bytes > self.max_bytes:
+                raise OutputBudgetError("Existing output already exceeds its authorized byte budget")
+            limit = self.max_bytes if failure_reserved else self.normal_limit
+            if current_bytes + len(payload) > limit:
+                raise OutputBudgetError(f"Manifest replacement refused before I/O: {target_relative}")
+            flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+            if hasattr(os, "O_BINARY"):
+                flags |= os.O_BINARY
+            fd = os.open(temp, flags, 0o600)
+            try:
+                with os.fdopen(fd, "wb", closefd=False) as stream:
+                    stream.write(payload)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+            finally:
+                os.close(fd)
+            os.replace(temp, target)
+            if self._audit_tree() > limit:
+                raise OutputBudgetError("Observed output exceeds the pre-write manifest budget")
+        finally:
+            release_os()
+            self._write_lock.release()
+
+    def write_supervisor_record(self, record: Mapping[str, Any]) -> None:
+        self.ensure_root()
+        self.atomic_json(self.root / "supervisor_status.json", record,
+                         failure_reserved=True)
+
+
+def _budget_for_path(path: Path) -> OutputBudget | None:
+    candidate = Path(os.path.abspath(path))
+    with _ACTIVE_OUTPUT_BUDGETS_LOCK:
+        budgets = sorted(_ACTIVE_OUTPUT_BUDGETS.values(),
+                         key=lambda budget: len(str(budget.root)), reverse=True)
+    for budget in budgets:
+        try:
+            candidate.relative_to(budget.root)
+        except ValueError:
+            continue
+        return budget
+    return None
+
+
 class EvidenceTapeWriter:
     """Append-only event shards; restart is refused without a full state checkpoint."""
     def __init__(self, root: Path, *, max_bytes: int = MAX_OUTPUT_BYTES,
-                 resume_empty_bootstrap: bool = False):
+                 resume_empty_bootstrap: bool = False,
+                 budget: OutputBudget | None = None,
+                 allowed_parent: Path | None = None):
         self.root = Path(root)
         self.max_bytes = int(max_bytes)
         self.next_sealed = 0
         self.next_finalized = 0
+        if self.root.exists() and not resume_empty_bootstrap:
+            raise FileExistsError(f"R1 output namespace already exists: {self.root}")
+        self.budget = budget or OutputBudget(
+            self.root, max_bytes=max_bytes, allowed_parent=allowed_parent,
+            allow_existing=resume_empty_bootstrap)
+        if self.budget.root != Path(os.path.abspath(self.root)):
+            raise OutputBudgetError("Evidence tape and output budget roots differ")
         if self.root.exists():
-            if not resume_empty_bootstrap:
-                raise FileExistsError(f"R1 output namespace already exists: {self.root}")
             entries = {path.name for path in self.root.iterdir()}
             manifest_path = self.root / "run_manifest.json"
             if entries != {"events", "run_manifest.json"} or not (self.root / "events").is_dir():
@@ -708,8 +991,14 @@ class EvidenceTapeWriter:
     def update_manifest(self, updates: Mapping[str, Any]) -> None:
         self.manifest.update(dict(updates))
         self.manifest["output_bytes"] = _directory_bytes(self.root)
-        if self.manifest["output_bytes"] > self.max_bytes:
-            raise R1ResourceLimit("R1 output exceeded the 2 GiB authorized ceiling")
+        self.manifest["output_budget"] = {
+            "schema": "calibration.r1_output_budget.v1",
+            "max_bytes": self.budget.max_bytes,
+            "failure_reserve_bytes": self.budget.failure_reserve_bytes,
+            "normal_write_limit_bytes": self.budget.normal_limit,
+            "enforcement": "central pre-write accountant plus Windows mutex",
+            "filesystem_quota_required_for_gpu": True,
+        }
         _atomic_json(self.root / "run_manifest.json", self.manifest)
 
     def seal_event(self, position: int, arrays: Mapping[str, np.ndarray],
@@ -1229,6 +1518,7 @@ def _source_hashes() -> dict[str, str]:
         "experiments/a0_a1_strict4_matched.py", "experiments/p0_protocol_audit.py",
         "experiments/calibration/native.py",
         "experiments/calibration/r1_matched_correction_pilot.py",
+        "experiments/calibration/r1_runtime_supervisor.py",
         "experiments/calibration/profiles.py",
         "experiments/calibration/stage1a_formal_comparison.py",
         "experiments/calibration/stage05.py",
@@ -1255,11 +1545,29 @@ def _append_private_feedback(root: Path, record: Mapping[str, Any]) -> str:
     return sha256_bytes(payload)
 
 
+def _require_supervised_authorization(authorization_id: str) -> None:
+    if (os.environ.get("R1_PILOT_SUPERVISED_CHILD") != "1" or
+            os.environ.get("R1_PILOT_SUPERVISOR_AUTHORIZATION_ID") != authorization_id or
+            not re.fullmatch(r"[0-9a-f]{64}",
+                             os.environ.get("R1_PILOT_SUPERVISOR_NONCE", ""))):
+        raise R1BlockedInput(
+            "Real R1 execution must be launched by the explicit-authorization supervisor")
+    try:
+        from experiments.calibration.r1_runtime_supervisor import current_process_is_in_job
+        if not current_process_is_in_job():
+            raise R1BlockedInput("R1 child is not contained in a Windows Job Object")
+    except R1BlockedInput:
+        raise
+    except Exception as exc:
+        raise R1BlockedInput(f"Cannot verify supervised Windows process containment: {exc}") from exc
+
+
 def run_pilot(*, expected_source_commit: str, profile_id: str,
               run_id: str, authorization_id: str,
               support_only: bool = False,
               dataset_root: Path = DEFAULT_DATASET_ROOT,
               json_root: Path = DEFAULT_JSON_ROOT) -> dict[str, Any]:
+    _require_supervised_authorization(authorization_id)
     config = PilotConfig()
     _validate_run_identity_fields(run_id, authorization_id)
     expected_profile = SUPPORT_ONLY_PROFILE_ID if support_only else R1_PROFILE_ID
@@ -1270,7 +1578,12 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
     if output.exists():
         raise FileExistsError(
             f"Versioned R1 output namespace already exists and cannot be resumed: {output}")
-    tape = EvidenceTapeWriter(output, max_bytes=config.max_output_bytes)
+    budget = OutputBudget(
+        output, max_bytes=config.max_output_bytes,
+        allowed_parent=ROOT / "outputs" / "calibration")
+    tape = EvidenceTapeWriter(output, max_bytes=config.max_output_bytes,
+                              budget=budget,
+                              allowed_parent=ROOT / "outputs" / "calibration")
     tape.update_manifest({
         "task": "R1-D1 support-only verification" if support_only else "R1",
         "status": "INCOMPLETE",
@@ -1951,7 +2264,8 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
                                 "peak_cuda_allocated_bytes": peak_cuda_allocated,
                                 "peak_cuda_reserved_bytes": peak_cuda_reserved,
                                 "output_bytes": _directory_bytes(output)})
-                _atomic_json(output / "run_manifest.json", current)
+                _atomic_json(output / "run_manifest.json", current,
+                             failure_reserved=True)
             except Exception:
                 pass
         raise
