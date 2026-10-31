@@ -20,7 +20,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 import uuid
@@ -51,6 +50,8 @@ LEGACY_FAILED_OUTPUT = ROOT / "outputs/calibration/r1_switch_s0_512_engineering_
 MAX_EVENTS = 512
 MAX_OUTPUT_BYTES = 2 * 1024**3
 OUTPUT_FAILURE_RESERVE_BYTES = 64 * 1024
+MIN_OUTPUT_FREE_BYTES = 10 * 1024**3
+OUTPUT_STORAGE_PROTOCOL_ID = "r1.s4b.application_budget_10g_preflight.v1"
 MAX_GPU_SECONDS = 120 * 60
 SMOKE_EVENTS = 16
 QUERY_BINDING_SHA256 = "dbe72a2f989ee314becc07e0c8b8c7a8353ffacabbfc93863d5666cff9d28183"
@@ -79,6 +80,18 @@ class R1ResourceLimit(R1Error):
 
 class TapeIntegrityError(R1Error):
     pass
+
+
+def _path_is_reparse_point(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    if os.name == "nt" and path.exists():
+        import ctypes
+        attrs = ctypes.windll.kernel32.GetFileAttributesW(str(path))
+        if attrs == 0xFFFFFFFF:
+            raise OutputBudgetError(f"Cannot inspect output path attributes: {path}")
+        return bool(attrs & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
+    return False
 
 
 @dataclass(frozen=True)
@@ -619,46 +632,16 @@ def _contains_forbidden_label_payload(value: Any) -> bool:
 
 def _append_jsonl(path: Path, record: Mapping[str, Any]) -> None:
     payload = (canonical_json(record) + "\n").encode("utf-8")
-    budget = _budget_for_path(path)
-    if budget is not None:
-        budget.append(path, payload)
-        return
-    fd = os.open(path, os.O_CREAT | os.O_APPEND | os.O_WRONLY, 0o600)
-    try:
-        with os.fdopen(fd, "ab", closefd=False) as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-    finally:
-        os.close(fd)
+    _budget_for_path(path).append(path, payload)
 
 
 def _write_once(path: Path, payload: bytes) -> None:
-    budget = _budget_for_path(path)
-    if budget is not None:
-        budget.write_once(path, payload)
-        return
-    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-    with os.fdopen(fd, "wb") as stream:
-        stream.write(payload)
-        stream.flush()
-        os.fsync(stream.fileno())
+    _budget_for_path(path).write_once(path, payload)
 
 
 def _atomic_json(path: Path, value: Mapping[str, Any], *,
                  failure_reserved: bool = False) -> None:
-    budget = _budget_for_path(path)
-    if budget is not None:
-        budget.atomic_json(path, value, failure_reserved=failure_reserved)
-        return
-    payload = (canonical_json(value) + "\n").encode("utf-8")
-    with tempfile.NamedTemporaryFile(dir=path.parent, prefix=path.name + ".",
-                                     suffix=".tmp", delete=False) as stream:
-        temp_path = Path(stream.name)
-        stream.write(payload)
-        stream.flush()
-        os.fsync(stream.fileno())
-    os.replace(temp_path, path)
+    _budget_for_path(path).atomic_json(path, value, failure_reserved=failure_reserved)
 
 
 def _directory_bytes(path: Path) -> int:
@@ -677,8 +660,9 @@ class OutputBudget:
     """Pre-account known output writes and reserve bytes for failure records.
 
     This accountant rejects unknown files and serializes application writers.
-    It is not an OS quota; unrelated same-user processes can bypass it, so the
-    GPU pilot remains blocked until a hard filesystem quota is installed.
+    It is not OS-level storage isolation; the revised R1-S4B pilot protocol
+    explicitly accepts that limitation and pairs this bound with free-space
+    preflight. Unrelated same-user processes can still bypass this accountant.
     """
 
     _FIXED_FILES = {
@@ -705,6 +689,7 @@ class OutputBudget:
                 raise OutputBudgetError("Output directory is not a direct child of its authorized parent")
             if not self.root.name.startswith(f"{OUTPUT_NAMESPACE_PREFIX}_"):
                 raise OutputBudgetError("Output directory lacks the versioned R1 namespace prefix")
+        self._reject_reparse_ancestors()
         if self.root.exists() and not allow_existing:
             raise FileExistsError(f"Output namespace already exists: {self.root}")
         if self.root.exists() and not self.root.is_dir():
@@ -732,24 +717,24 @@ class OutputBudget:
                 del _ACTIVE_OUTPUT_BUDGETS[self.root_key]
 
     def ensure_root(self) -> None:
+        self._reject_reparse_ancestors()
         if self.root.exists():
-            if not self.root.is_dir() or self.root.is_symlink():
+            if not self.root.is_dir() or _path_is_reparse_point(self.root):
                 raise OutputBudgetError("Output root is not a plain directory")
             return
         self.root.mkdir(parents=True, exist_ok=False)
 
     def _is_reparse_point(self, path: Path) -> bool:
-        if path.is_symlink():
-            return True
-        if os.name == "nt" and path.exists():
-            import ctypes
-            attrs = ctypes.windll.kernel32.GetFileAttributesW(str(path))
-            if attrs == 0xFFFFFFFF:
-                raise OutputBudgetError(f"Cannot inspect output path attributes: {path}")
-            return bool(attrs & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
-        return False
+        return _path_is_reparse_point(path)
+
+    def _reject_reparse_ancestors(self) -> None:
+        for ancestor in reversed((self.root, *self.root.parents)):
+            if ancestor.exists() and self._is_reparse_point(ancestor):
+                raise OutputBudgetError(
+                    f"Output path contains a symlink or reparse point: {ancestor}")
 
     def _relative(self, path: Path) -> str:
+        self._reject_reparse_ancestors()
         candidate = Path(os.path.abspath(path))
         try:
             relative = candidate.relative_to(self.root)
@@ -775,20 +760,35 @@ class OutputBudget:
         if not self.root.is_dir() or self._is_reparse_point(self.root):
             raise OutputBudgetError("Output namespace is not a plain directory")
         total = 0
-        for path in self.root.rglob("*"):
-            if path.is_dir():
-                if path.relative_to(self.root).as_posix() != "events":
-                    raise OutputBudgetError("Output contains an unaccounted subdirectory")
+        directories = [self.root]
+        while directories:
+            directory = directories.pop()
+            try:
+                entries = list(os.scandir(directory))
+            except OSError as exc:
+                raise OutputBudgetError(f"Cannot audit output directory {directory}: {exc}") from exc
+            for entry in entries:
+                path = Path(entry.path)
                 if self._is_reparse_point(path):
-                    raise OutputBudgetError("Output directory contains a reparse point")
-                continue
-            relative = self._relative(path)
-            if not path.is_file() or self._is_reparse_point(path):
-                raise OutputBudgetError(f"Output contains a non-regular file: {relative}")
-            stat = path.stat()
-            if getattr(stat, "st_nlink", 1) > 1:
-                raise OutputBudgetError(f"Output contains a multiply-linked file: {relative}")
-            total += int(stat.st_size)
+                    raise OutputBudgetError(f"Output contains a reparse point: {path}")
+                relative = path.relative_to(self.root).as_posix()
+                try:
+                    is_directory = entry.is_dir(follow_symlinks=False)
+                    is_file = entry.is_file(follow_symlinks=False)
+                except OSError as exc:
+                    raise OutputBudgetError(f"Cannot inspect output entry {path}: {exc}") from exc
+                if is_directory:
+                    if relative != "events":
+                        raise OutputBudgetError("Output contains an unaccounted subdirectory")
+                    directories.append(path)
+                    continue
+                if not is_file:
+                    raise OutputBudgetError(f"Output contains a non-regular file: {relative}")
+                self._relative(path)
+                stat = entry.stat(follow_symlinks=False)
+                if getattr(stat, "st_nlink", 1) > 1:
+                    raise OutputBudgetError(f"Output contains a multiply-linked file: {relative}")
+                total += int(stat.st_size)
         return total
 
     def _acquire_os_mutex(self):
@@ -911,18 +911,48 @@ class OutputBudget:
                          failure_reserved=True)
 
 
-def _budget_for_path(path: Path) -> OutputBudget | None:
+def _require_minimum_output_free_space(path: Path, *,
+                                       minimum_bytes: int = MIN_OUTPUT_FREE_BYTES,
+                                       disk_usage_fn: Callable[[Path], Any] | None = None
+                                       ) -> int:
+    """Fail closed unless the existing output parent has the required free space."""
+    target = Path(os.path.abspath(path))
+    if not target.exists() or not target.is_dir():
+        raise R1BlockedInput(
+            f"Output-space check requires an existing directory: {target}")
+    for ancestor in reversed((target, *target.parents)):
+        if ancestor.exists() and _path_is_reparse_point(ancestor):
+            raise R1BlockedInput(
+                f"Output-space check refuses symlink/reparse path: {ancestor}")
+    try:
+        usage = (disk_usage_fn or shutil.disk_usage)(target)
+        free_bytes = int(usage.free)
+    except Exception as exc:
+        raise R1BlockedInput(
+            f"Cannot verify free space for output parent {target}: {exc}") from exc
+    if free_bytes < int(minimum_bytes):
+        raise R1ResourceLimit(
+            f"Insufficient output-volume space: {free_bytes} bytes free; "
+            f"at least {int(minimum_bytes)} bytes required")
+    return free_bytes
+
+
+def _budget_for_path(path: Path) -> OutputBudget:
     candidate = Path(os.path.abspath(path))
     with _ACTIVE_OUTPUT_BUDGETS_LOCK:
         budgets = sorted(_ACTIVE_OUTPUT_BUDGETS.values(),
                          key=lambda budget: len(str(budget.root)), reverse=True)
+    if not budgets:
+        raise OutputBudgetError(
+            "Budget-controlled R1 write attempted without an active OutputBudget")
     for budget in budgets:
         try:
             candidate.relative_to(budget.root)
         except ValueError:
             continue
         return budget
-    return None
+    raise OutputBudgetError(
+        "Budget-controlled R1 write path is outside every active OutputBudget")
 
 
 class EvidenceTapeWriter:
@@ -975,8 +1005,10 @@ class EvidenceTapeWriter:
                                   "resume_mode": "explicit_empty_bootstrap_only"})
             self.update_manifest({})
         else:
-            self.root.mkdir(parents=True)
-            (self.root / "events").mkdir()
+            self.budget.ensure_root()
+            (self.root / "events").mkdir(exist_ok=False)
+            if self.budget._is_reparse_point(self.root / "events"):
+                raise OutputBudgetError("Event shard directory cannot be a reparse point")
             self.manifest: dict[str, Any] = {
                 "schema": "calibration.r1_evidence_tape.v1",
                 "status": "INCOMPLETE",
@@ -997,7 +1029,9 @@ class EvidenceTapeWriter:
             "failure_reserve_bytes": self.budget.failure_reserve_bytes,
             "normal_write_limit_bytes": self.budget.normal_limit,
             "enforcement": "central pre-write accountant plus Windows mutex",
-            "filesystem_quota_required_for_gpu": True,
+            "storage_protocol_id": OUTPUT_STORAGE_PROTOCOL_ID,
+            "os_hard_storage_isolation": False,
+            "researcher_protocol_accepts_application_only_bound": True,
         }
         _atomic_json(self.root / "run_manifest.json", self.manifest)
 
@@ -1578,6 +1612,7 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
     if output.exists():
         raise FileExistsError(
             f"Versioned R1 output namespace already exists and cannot be resumed: {output}")
+    output_parent_free_bytes = _require_minimum_output_free_space(output.parent)
     budget = OutputBudget(
         output, max_bytes=config.max_output_bytes,
         allowed_parent=ROOT / "outputs" / "calibration")
@@ -1593,6 +1628,15 @@ def run_pilot(*, expected_source_commit: str, profile_id: str,
         "identity_contract_version": IDENTITY_CONTRACT_VERSION,
         "expected_source_commit": expected_source_commit,
         "support_only": bool(support_only),
+        "output_storage_protocol": {
+            "protocol_id": OUTPUT_STORAGE_PROTOCOL_ID,
+            "max_output_bytes": config.max_output_bytes,
+            "failure_reserve_bytes": OUTPUT_FAILURE_RESERVE_BYTES,
+            "minimum_free_bytes": MIN_OUTPUT_FREE_BYTES,
+            "free_bytes_before_model_initialization": output_parent_free_bytes,
+            "os_hard_storage_isolation": False,
+            "acceptance_basis": "R1-S4B Minimal Readiness Repair task authorization",
+        },
         "historical_numerical_equivalence_claimed": False,
     })
     preflight: dict[str, Any] = {}

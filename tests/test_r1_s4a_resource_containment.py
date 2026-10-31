@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 import subprocess
 import sys
 import textwrap
@@ -15,10 +16,17 @@ import torch
 
 from experiments.calibration.r1_matched_correction_pilot import (
     EvidenceTapeWriter,
+    MAX_OUTPUT_BYTES,
+    MIN_OUTPUT_FREE_BYTES,
+    OUTPUT_FAILURE_RESERVE_BYTES,
     OutputBudget,
     OutputBudgetError,
     R1BlockedInput,
+    R1ResourceLimit,
+    _atomic_json,
     _append_jsonl,
+    _require_minimum_output_free_space,
+    _write_once,
     _require_supervised_authorization,
     common_c0_greedy_writer_action,
 )
@@ -191,6 +199,103 @@ def test_output_budget_rejects_reused_and_wrong_namespace(tmp_path):
     with pytest.raises(OutputBudgetError, match="namespace prefix"):
         OutputBudget(allowed, max_bytes=256, failure_reserve_bytes=64,
                      allowed_parent=tmp_path)
+
+
+def test_budgeted_r1_write_wrappers_fail_closed_without_matching_budget(tmp_path, monkeypatch):
+    import experiments.calibration.r1_matched_correction_pilot as pilot
+
+    monkeypatch.setattr(pilot, "_ACTIVE_OUTPUT_BUDGETS", {})
+    targets = [tmp_path / "no-budget" / name for name in (
+        "public.jsonl", "private.bin", "run_manifest.json")]
+    with pytest.raises(OutputBudgetError, match="without an active OutputBudget"):
+        _append_jsonl(targets[0], {"synthetic": True})
+    with pytest.raises(OutputBudgetError, match="without an active OutputBudget"):
+        _write_once(targets[1], b"synthetic")
+    with pytest.raises(OutputBudgetError, match="without an active OutputBudget"):
+        _atomic_json(targets[2], {"synthetic": True})
+    assert not (tmp_path / "no-budget").exists()
+
+    root = tmp_path / "active-budget"
+    budget = OutputBudget(root, max_bytes=1024, failure_reserve_bytes=128)
+    budget.ensure_root()
+    outside_targets = [tmp_path / "escape" / name for name in (
+        "public.jsonl", "private.bin", "run_manifest.json")]
+    with pytest.raises(OutputBudgetError, match="outside every active OutputBudget"):
+        _append_jsonl(outside_targets[0], {"synthetic": True})
+    with pytest.raises(OutputBudgetError, match="outside every active OutputBudget"):
+        _write_once(outside_targets[1], b"synthetic")
+    with pytest.raises(OutputBudgetError, match="outside every active OutputBudget"):
+        _atomic_json(outside_targets[2], {"synthetic": True})
+    assert not (tmp_path / "escape").exists()
+    budget.close()
+
+
+def test_output_free_space_preflight_uses_ten_gib_threshold_and_fails_closed(tmp_path):
+    enough = lambda _path: SimpleNamespace(free=MIN_OUTPUT_FREE_BYTES)
+    too_little = lambda _path: SimpleNamespace(free=MIN_OUTPUT_FREE_BYTES - 1)
+    assert _require_minimum_output_free_space(
+        tmp_path, disk_usage_fn=enough) == MIN_OUTPUT_FREE_BYTES
+    with pytest.raises(R1ResourceLimit, match="at least"):
+        _require_minimum_output_free_space(tmp_path, disk_usage_fn=too_little)
+
+    def unavailable(_path):
+        raise OSError("synthetic disk query failure")
+
+    with pytest.raises(R1BlockedInput, match="Cannot verify free space"):
+        _require_minimum_output_free_space(tmp_path, disk_usage_fn=unavailable)
+
+
+def test_application_storage_limits_and_runtime_deadline_remain_fixed():
+    assert MAX_RUNTIME_SECONDS == 120 * 60
+    assert MAX_OUTPUT_BYTES == 2 * 1024**3
+    assert OUTPUT_FAILURE_RESERVE_BYTES == 64 * 1024
+
+
+def test_output_budget_and_free_space_preflight_reject_reparse_ancestors(
+        tmp_path, monkeypatch):
+    import experiments.calibration.r1_matched_correction_pilot as pilot
+
+    root = tmp_path / "r1_digest_contract_v1_engineering_reparse-test"
+    monkeypatch.setattr(pilot, "_path_is_reparse_point",
+                        lambda path: Path(path) == tmp_path)
+    with pytest.raises(OutputBudgetError, match="reparse point"):
+        OutputBudget(root, max_bytes=1024, failure_reserve_bytes=128)
+    with pytest.raises(R1BlockedInput, match="symlink/reparse path"):
+        _require_minimum_output_free_space(tmp_path, disk_usage_fn=lambda _path: None)
+
+
+def test_supervisor_checks_disk_space_before_child_launch_and_rejects_reuse(
+        tmp_path, monkeypatch):
+    import experiments.calibration.r1_matched_correction_pilot as pilot
+
+    output = tmp_path / "r1_digest_contract_v1_engineering_unique-test"
+    monkeypatch.setattr(pilot, "_validate_run_identity_fields", lambda *_args: None)
+    monkeypatch.setattr(pilot, "_validate_branch_and_start", lambda **_kwargs: {})
+    monkeypatch.setattr(pilot, "_output_namespace", lambda *_args, **_kwargs: output)
+    monkeypatch.setattr(
+        pilot.shutil, "disk_usage",
+        lambda _path: SimpleNamespace(free=MIN_OUTPUT_FREE_BYTES - 1))
+    launched = []
+    monkeypatch.setattr(runtime_supervisor, "run_supervised_child",
+                        lambda *args, **kwargs: launched.append((args, kwargs)))
+
+    with pytest.raises(R1ResourceLimit, match="Insufficient output-volume space"):
+        supervise_r1_pilot(
+            expected_source_commit="a" * 40,
+            profile_id=pilot.R1_PROFILE_ID,
+            run_id="synthetic-low-space", authorization_id="synthetic-authorization",
+            authorized=True)
+    assert launched == []
+    assert not output.exists()
+
+    output.mkdir()
+    with pytest.raises(FileExistsError, match="automatic restart is forbidden"):
+        supervise_r1_pilot(
+            expected_source_commit="a" * 40,
+            profile_id=pilot.R1_PROFILE_ID,
+            run_id="synthetic-low-space", authorization_id="synthetic-authorization",
+            authorized=True)
+    assert launched == []
 
 
 def test_job_object_contains_child_and_returns_on_normal_exit(tmp_path):

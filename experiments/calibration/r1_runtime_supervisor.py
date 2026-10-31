@@ -268,7 +268,8 @@ def run_supervised_child(command: Sequence[str], *,
                          output_dir: Path | None = None,
                          max_output_bytes: int = 2 * 1024**3,
                          failure_reserve_bytes: int = 64 * 1024,
-                         allowed_output_parent: Path | None = None) -> SupervisorResult:
+                         allowed_output_parent: Path | None = None,
+                         output_preflight_free_bytes: int | None = None) -> SupervisorResult:
     """Run a command suspended-in-job and kill its complete tree at deadline."""
     _require_windows()
     if not command or any(not isinstance(value, str) or not value for value in command):
@@ -375,6 +376,9 @@ def run_supervised_child(command: Sequence[str], *,
                     "finished_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                     "automatic_restart": False,
                     "process_tree_containment": "Windows Job Object, suspended assignment, kill-on-close",
+                    "output_preflight_free_bytes": output_preflight_free_bytes,
+                    "minimum_output_free_bytes": 10 * 1024**3,
+                    "os_hard_storage_isolation": False,
                 })
             finally:
                 budget.close()
@@ -399,8 +403,10 @@ def supervise_r1_pilot(*, expected_source_commit: str, profile_id: str,
     if authorized is not True:
         raise SupervisorError("Explicit --authorize-real-execution is required")
     from experiments.calibration.r1_matched_correction_pilot import (
-        DEFAULT_DATASET_ROOT, DEFAULT_JSON_ROOT, OUTPUT_NAMESPACE_PREFIX,
+        DEFAULT_DATASET_ROOT, DEFAULT_JSON_ROOT, MIN_OUTPUT_FREE_BYTES,
+        OUTPUT_NAMESPACE_PREFIX,
         ROOT, SUPPORT_ONLY_PROFILE_ID, R1_PROFILE_ID,
+        _require_minimum_output_free_space,
         _output_namespace, _validate_branch_and_start,
         _validate_run_identity_fields,
     )
@@ -413,6 +419,8 @@ def supervise_r1_pilot(*, expected_source_commit: str, profile_id: str,
     output = _output_namespace(run_id, support_only=support_only)
     if output.exists():
         raise FileExistsError(f"R1 output namespace exists; automatic restart is forbidden: {output}")
+    output_preflight_free_bytes = _require_minimum_output_free_space(
+        output.parent, minimum_bytes=MIN_OUTPUT_FREE_BYTES)
     run_module = ROOT / "experiments" / "calibration" / "r1_matched_correction_pilot.py"
     command = [sys.executable, str(run_module),
                "--dataset-root", str(dataset_root or DEFAULT_DATASET_ROOT),
@@ -431,7 +439,8 @@ def supervise_r1_pilot(*, expected_source_commit: str, profile_id: str,
     return run_supervised_child(
         command, timeout_seconds=MAX_RUNTIME_SECONDS, env=child_env, cwd=ROOT,
         output_dir=output, max_output_bytes=2 * 1024**3,
-        allowed_output_parent=ROOT / "outputs" / "calibration")
+        allowed_output_parent=ROOT / "outputs" / "calibration",
+        output_preflight_free_bytes=output_preflight_free_bytes)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
