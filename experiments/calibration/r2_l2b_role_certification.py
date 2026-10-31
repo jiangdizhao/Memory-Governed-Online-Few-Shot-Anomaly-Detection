@@ -29,7 +29,8 @@ from experiments.calibration.r2_l2a_allclass_inventory import (
 )
 
 
-SCHEMA = "r2_l2b.role_certification.v1"
+SCHEMA = "r2_l2b.role_certification.v2"
+SOURCE_GROUP_DIGEST_ALGORITHM = "sha256:official-sample-group-nul-prefix-utf8.v1"
 PROPOSAL_ID = "r2_l2b_h_source_allclass_roles"
 PROPOSAL_VERSION = "1.0.0-proposed"
 STRATEGY_H_SOURCE = "H-SOURCE"
@@ -49,14 +50,19 @@ CONDITION_BEARING_IDENTITY_FIELDS = {
     "official_sample_key", "sample_key", "image_id", "image_path", "file_name",
 }
 TRAIN_LABEL_FIELDS = {
-    "normal_status", "is_good", "label", "anomaly_label",
+    "anomaly_class", "normal_status", "is_good", "label", "anomaly_label",
     "ground_truth", "defect", "defect_type",
 }
 TEST_OUTCOME_FIELDS = {
-    "label", "anomaly_label", "ground_truth", "is_anomaly",
+    "anomaly_class", "label", "anomaly_label", "ground_truth", "is_anomaly",
     "defect", "defect_type",
 }
-MASK_FIELDS = {"mask", "mask_path"}
+MASK_FIELDS = {
+    "mask", "mask_path", "gt_mask", "gt_mask_path", "anomaly_mask",
+    "anomaly_mask_path", "segmentation", "segmentation_path",
+}
+TRAIN_KNOWN_METADATA_FIELDS = IDENTITY_METADATA_FIELDS | TRAIN_LABEL_FIELDS | MASK_FIELDS
+TEST_KNOWN_METADATA_FIELDS = IDENTITY_METADATA_FIELDS | TEST_OUTCOME_FIELDS | MASK_FIELDS
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -432,7 +438,7 @@ def evaluate_policy_approval(
         approval.signature_ed25519_hex,
     ):
         return "PENDING_EXTERNAL_APPROVAL_TRUST_ROOT"
-    return "APPROVED_POLICY_PENDING_LOCAL_ACCESS"
+    return "RESEARCHER_POLICY_APPROVED"
 
 
 @dataclass(frozen=True)
@@ -492,6 +498,18 @@ def default_access_scope() -> AccessScopeManifest:
 
 def access_scope_errors(scope: AccessScopeManifest) -> tuple[str, ...]:
     errors: list[str] = []
+    if not set(scope.parsed_sections).issubset({"train", "test"}):
+        errors.append("parsed section set contains an unknown section")
+    unknown_train_fields = (
+        set(scope.allowed_train_metadata_fields) - TRAIN_KNOWN_METADATA_FIELDS
+    )
+    unknown_test_fields = (
+        set(scope.allowed_test_metadata_fields) - TEST_KNOWN_METADATA_FIELDS
+    )
+    if unknown_train_fields:
+        errors.append("train field allowlist contains unrecognized metadata fields")
+    if unknown_test_fields:
+        errors.append("test field allowlist contains unrecognized metadata fields")
     if scope.approval_state != "APPROVED":
         errors.append("researcher approval is absent")
     if not scope.approval_id:
@@ -522,12 +540,11 @@ def access_scope_errors(scope: AccessScopeManifest) -> tuple[str, ...]:
         and not scope.allow_outcome_label_access
     ):
         errors.append("test outcome fields are not explicitly authorized")
-    if (
-        "test" in scope.parsed_sections
-        and set(scope.allowed_test_metadata_fields).intersection(MASK_FIELDS)
-        and not scope.allow_mask_access
-    ):
-        errors.append("test masks are not explicitly authorized")
+    if any(
+        set(fields).intersection(MASK_FIELDS)
+        for fields in (scope.allowed_train_metadata_fields, scope.allowed_test_metadata_fields)
+    ) and not scope.allow_mask_access:
+        errors.append("segmentation masks are not explicitly authorized")
     if any(
         set(fields).intersection(IDENTITY_METADATA_FIELDS)
         for fields in (scope.allowed_train_metadata_fields, scope.allowed_test_metadata_fields)
@@ -574,6 +591,13 @@ def require_metadata_scope(
         raise R2L2BContractError("category is outside the explicit local access approval")
     if section not in scope.parsed_sections:
         raise R2L2BContractError(f"{section} section is not explicitly approved")
+    known_fields = (
+        TRAIN_KNOWN_METADATA_FIELDS if section == "train"
+        else TEST_KNOWN_METADATA_FIELDS if section == "test"
+        else set()
+    )
+    if not set(fields).issubset(known_fields):
+        raise R2L2BContractError("requested metadata contains unrecognized field names")
     allowed = (
         set(scope.allowed_train_metadata_fields) if section == "train"
         else set(scope.allowed_test_metadata_fields) if section == "test"
@@ -596,12 +620,12 @@ def require_metadata_scope(
     if section == "test" and set(fields).intersection(TEST_OUTCOME_FIELDS):
         if not scope.allow_outcome_label_access:
             raise R2L2BContractError("test outcome labels are not approved")
-    if section == "test" and set(fields).intersection(MASK_FIELDS) and not scope.allow_mask_access:
-        raise R2L2BContractError("test masks are not approved")
+    if set(fields).intersection(MASK_FIELDS) and not scope.allow_mask_access:
+        raise R2L2BContractError("segmentation masks are not approved")
 
 
 def source_group_digest_from_key(category_id: str, official_sample_key: str) -> str:
-    """Domain-separate the established official_sample_key identity contract."""
+    """Return the frozen R1/Stage 0.5 operational group identity digest."""
     from experiments.risk_safe.preflight import (
         IDENTITY_VERSION,
         OFFICIAL_SAMPLE_KEY_RE,
@@ -610,18 +634,18 @@ def source_group_digest_from_key(category_id: str, official_sample_key: str) -> 
 
     if category_id not in CANONICAL_CATEGORY_IDS:
         raise R2L2BContractError("source identity category is outside the public catalog")
+    if not isinstance(official_sample_key, str):
+        raise R2L2BContractError("sample key must be a string")
     match = OFFICIAL_SAMPLE_KEY_RE.fullmatch(f"{official_sample_key}_C1_")
     if match is None or match.group("sample_key") != official_sample_key:
         raise R2L2BContractError("sample key does not satisfy the official identity contract")
     if not official_sample_key.startswith(category_id + "_"):
         raise R2L2BContractError("sample key category does not match the supplied category")
-    return canonical_sha256({
-        "schema": "r2_l2b.source_group_identity.v1",
-        "identity_contract_version": IDENTITY_VERSION,
-        "grouping_unit": PRIMARY_GROUPING_UNIT,
-        "category_id": category_id,
-        "official_sample_key": official_sample_key,
-    })
+    if PRIMARY_GROUPING_UNIT != "official_sample_key" or not IDENTITY_VERSION:
+        raise R2L2BContractError("frozen official-sample identity contract is unavailable")
+    return hashlib.sha256(
+        ("official-sample-group\0" + str(official_sample_key)).encode("utf-8")
+    ).hexdigest()
 
 
 def source_group_digest_from_image_path(path_string: str, category_id: str) -> str:
@@ -645,6 +669,7 @@ class RoleIdentityReceipt:
     role: str
     grouping_unit: str
     identity_contract_version: str
+    group_digest_algorithm: str
     source_manifest_sha256: str
     producer_id: str
     group_members: tuple[SourceGroupMember, ...]
@@ -671,6 +696,8 @@ def _identity_receipt_errors(receipt: RoleIdentityReceipt) -> tuple[str, ...]:
         errors.append("unknown receipt role")
     if receipt.grouping_unit != GROUPING_UNIT or receipt.identity_contract_version != IDENTITY_CONTRACT_VERSION:
         errors.append("incompatible grouping or identity contract")
+    if receipt.group_digest_algorithm != SOURCE_GROUP_DIGEST_ALGORITHM:
+        errors.append("incompatible source-group digest algorithm")
     try:
         _require_sha256(receipt.source_manifest_sha256, "source manifest SHA-256")
         groups = [member.group_sha256 for member in receipt.group_members]
@@ -739,6 +766,7 @@ def make_role_identity_receipt(
         role=role,
         grouping_unit=GROUPING_UNIT,
         identity_contract_version=IDENTITY_CONTRACT_VERSION,
+        group_digest_algorithm=SOURCE_GROUP_DIGEST_ALGORITHM,
         source_manifest_sha256=source_manifest_sha256,
         producer_id=producer_id,
         group_members=members,
@@ -759,6 +787,7 @@ class ReviewedIdentityManifest:
     role: str
     grouping_unit: str
     identity_contract_version: str
+    group_digest_algorithm: str
     source_manifest_sha256: str
     group_members: tuple[SourceGroupMember, ...]
     image_count: int
@@ -794,6 +823,7 @@ def make_reviewed_identity_manifest(
         role=receipt.role,
         grouping_unit=receipt.grouping_unit,
         identity_contract_version=receipt.identity_contract_version,
+        group_digest_algorithm=receipt.group_digest_algorithm,
         source_manifest_sha256=receipt.source_manifest_sha256,
         group_members=receipt.group_members,
         image_count=receipt.image_count,
@@ -894,6 +924,8 @@ def certify_role_identity(
         or manifest.role != receipt.role
         or manifest.grouping_unit != receipt.grouping_unit
         or manifest.identity_contract_version != receipt.identity_contract_version
+        or manifest.group_digest_algorithm != receipt.group_digest_algorithm
+        or manifest.group_digest_algorithm != SOURCE_GROUP_DIGEST_ALGORITHM
         or manifest.source_manifest_sha256 != receipt.source_manifest_sha256
         or manifest.group_members != receipt.group_members
         or manifest.image_count != receipt.image_count
@@ -1035,7 +1067,11 @@ def certify_a_reference_availability(
     except R2L2BContractError:
         return "PENDING_A_REFERENCE_RECEIPT"
     if (
-        receipt.authorized_normal_reference_image_count <= 0
+        isinstance(receipt.authorized_normal_reference_image_count, bool)
+        or not isinstance(receipt.authorized_normal_reference_image_count, int)
+        or receipt.authorized_normal_reference_image_count <= 0
+        or isinstance(receipt.authorized_source_group_count, bool)
+        or not isinstance(receipt.authorized_source_group_count, int)
         or receipt.authorized_source_group_count <= 0
         or not receipt.authorization_id.strip()
         or receipt.contains_image_paths
@@ -1099,7 +1135,7 @@ def _role_identity_status(
     )
     if identity_status != "CERTIFIED_FROM_SOURCE_EVIDENCE":
         return identity_status, reason
-    if policy_status != "APPROVED_POLICY_PENDING_LOCAL_ACCESS":
+    if policy_status != "RESEARCHER_POLICY_APPROVED":
         return "PENDING_POLICY_APPROVAL", "role policy has not been approved for this category"
     if (
         scope.approval_state != "APPROVED"
@@ -1147,7 +1183,16 @@ def build_category_readiness(
             f"A/B/C source-group overlap detected for {len(overlaps)} source group(s)")
 
     rows: list[dict[str, Any]] = []
+    scope_ready = not access_scope_errors(scope)
     for category in categories:
+        category_access_ready = (
+            scope_ready
+            and category in scope.approved_categories
+            and (
+                category not in PROTECTED_DEFAULT
+                or category in scope.explicitly_authorized_protected_categories
+            )
+        )
         role_states: dict[str, str] = {}
         for role in ROLE_NAMES:
             key = (category, role)
@@ -1178,8 +1223,16 @@ def build_category_readiness(
         rows.append({
             "category_id": category,
             "public_catalog_status": "VERIFIED_PUBLIC_CATEGORY_ONLY",
-            "local_data_inventory_status": "PENDING_AUTHORIZATION",
-            "protected_status": "PROTECTED_SEALED" if protected else "PENDING_RESEARCHER_REVIEW",
+            "local_data_inventory_status": (
+                "LOCAL_SCOPE_AUTHORIZED_METADATA_ONLY"
+                if category_access_ready else "PENDING_AUTHORIZATION"
+            ),
+            "protected_status": (
+                "PROTECTED_ACCESS_AUTHORIZED"
+                if protected and category_access_ready
+                else "PROTECTED_SEALED" if protected
+                else "NOT_PROTECTED"
+            ),
             "role_policy_status": policy_status,
             "role_identity_status": role_states,
             "a_reference_status": a_status,
@@ -1193,48 +1246,82 @@ def build_category_readiness(
         all(state == "CERTIFIED_FROM_SOURCE_EVIDENCE" for state in row["role_identity_status"].values())
         for row in rows
     )
-    scope_ready = not access_scope_errors(scope)
     role_certified = (
-        policy_status == "APPROVED_POLICY_PENDING_LOCAL_ACCESS"
+        policy_status == "RESEARCHER_POLICY_APPROVED"
         and scope_ready and all_roles_ready
     )
     full_a_ready = role_certified and all_a_ready
-    missing = [
-        "researcher must choose and approve H-SOURCE or freeze an exact H-CLASS category set",
-        "researcher must approve the complete versioned category-by-role policy",
-        "explicit local root, category, physical JSON byte, parsed field, and output disclosure scope",
-        "explicit acknowledgment that train and test sections may share physical JSON bytes",
-        "normal/OK status access is label-bearing and needs a separate explicit decision",
-        "Mint/PCB and any other protected categories need category-specific written authorization",
-        "authorized local metadata inventory and independently reviewed A/B/C source-group identity manifests",
-        "independent reviewer trust directory pinned outside producer-controlled receipts",
-        "pairwise source-group disjointness certification, including independently reviewed C identities",
-        "normal-only A reference availability receipts and independent source evidence",
-        "separate decision on DINO/feature extraction, output location, byte limit, and disclosed fields",
-        "separate G1 regime decision; neither regime merges into C0 memory and no radius is selected",
-    ]
+    protocol_matched_a_pool_ready = all(
+        category in a_receipts
+        and isinstance(a_receipts[category].authorized_normal_reference_image_count, int)
+        and not isinstance(a_receipts[category].authorized_normal_reference_image_count, bool)
+        and a_receipts[category].authorized_normal_reference_image_count >= 64
+        and isinstance(a_receipts[category].authorized_source_group_count, int)
+        and not isinstance(a_receipts[category].authorized_source_group_count, bool)
+        and a_receipts[category].authorized_source_group_count >= 64
+        for category in categories
+    )
+    protocol_matched_ready = (
+        role_certified and all_a_ready and protocol_matched_a_pool_ready
+    )
+    missing: list[str] = []
+    if policy_status != "RESEARCHER_POLICY_APPROVED":
+        missing.append("researcher approval of the complete versioned category-by-role policy")
+    if not scope_ready:
+        missing.append("approved local root, category, byte, field, and disclosure scope")
+    if not all_roles_ready:
+        missing.append("independently reviewed A/B/C source-group identity manifests")
+    if not all_a_ready:
+        missing.append("normal-only A reference availability receipts and independent source evidence")
+    if not role_certified:
+        missing.append("policy, local-access, and pairwise A/B/C source-disjointness certification")
+    if not protocol_matched_a_pool_ready:
+        missing.append(
+            "at least 64 authorized normal A images across 64 distinct source groups per category"
+        )
+    missing.append(
+        "separate G1 regime authorization and source-identified C64 selection evidence"
+    )
     if full_a_ready:
-        missing = []
-    elif role_certified:
-        missing = [
-            item for item in missing
-            if "normal-only A reference availability receipts" in item
-            or "G1 regime decision" in item
-        ]
+        missing.append("authorized G1 geometry execution and results (not run by this audit)")
     return {
-        "schema": "r2_l2b.category_readiness.v1",
-        "status": "R2_L2B_PROTOCOL_READY_FOR_RESEARCHER_APPROVAL",
+        "schema": "r2_l2b.category_readiness.v2",
+        "status": (
+            "R2_L2B_G1_FULL_A_REFERENCE_POOL_READY_GEOMETRY_NOT_RUN"
+            if full_a_ready
+            else "R2_L2B_PENDING_AUTHORIZATION_OR_IDENTITY_EVIDENCE"
+        ),
         "role_certified": bool(role_certified),
         "g1_full_a_ready": bool(full_a_ready),
-        "g1_protocol_matched_ready": False,
+        "g1_protocol_matched_ready": protocol_matched_ready,
         "role_certification_status": (
-            "R2_L2B_ROLE_CERTIFIED" if role_certified else "PENDING"
+            "R2_L2B_ROLE_IDENTITIES_CERTIFIED"
+            if role_certified
+            else "PENDING_POLICY_LOCAL_ACCESS_OR_IDENTITY_CERTIFICATION"
         ),
         "policy_status": policy_status,
         "public_inventory_status": "R2_L2A_R_PUBLIC_INVENTORY_PASS",
-        "local_data_access_status": "PENDING_AUTHORIZATION",
+        "local_data_access_status": (
+            "LOCAL_SCOPE_AUTHORIZED_METADATA_ONLY" if scope_ready
+            else "PENDING_AUTHORIZATION"
+        ),
         "actual_distance_statistics": "NOT_RUN",
-        "g1_status": "R2_L2B_G1_NOT_AUTHORIZED",
+        "g1_status": (
+            "R2_L2B_G1_REFERENCE_POOLS_READY_GEOMETRY_NOT_AUTHORIZED_OR_RUN"
+            if full_a_ready
+            else "R2_L2B_G1_NOT_AUTHORIZED"
+        ),
+        "g1_full_a_status": (
+            "REFERENCE_POOL_READY_GEOMETRY_NOT_AUTHORIZED_OR_RUN" if full_a_ready
+            else "PENDING_ROLE_OR_A_REFERENCE_EVIDENCE"
+        ),
+        "g1_protocol_matched_status": (
+            "64_SOURCE_GROUP_CANDIDATES_AVAILABLE_SELECTION_NOT_RUN"
+            if protocol_matched_ready
+            else "PENDING_64_NORMAL_IMAGES_AND_SOURCE_GROUPS"
+        ),
+        "g1_geometry_status": "NOT_AUTHORIZED_OR_RUN",
+        "g1_geometry_complete": False,
         "category_rows": rows,
         "missing_prerequisites": missing,
         "h_source_proposal_sha256": proposal.proposal_sha256,

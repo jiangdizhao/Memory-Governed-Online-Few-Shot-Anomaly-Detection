@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, replace
+import hashlib
 import json
 
 import pytest
@@ -20,6 +21,7 @@ from experiments.calibration.r2_l2b_role_certification import (
     IndependentReviewerAttestation,
     R2L2BContractError,
     ReviewedIdentityManifest,
+    SOURCE_GROUP_DIGEST_ALGORITHM,
     SourceGroupMember,
     access_scope_errors,
     build_category_readiness,
@@ -99,6 +101,98 @@ def synthetic_review(receipt, *, reviewer="independent-reviewer", population="no
         trusted_identity_source_sha256s=("a" * 64,),
     )
     return manifest, attestation, trust
+
+
+def complete_synthetic_readiness_inputs(a_groups=64):
+    """Build ephemeral, explicitly synthetic evidence; no production keys/data."""
+    catalog = catalog_receipt()
+    proposal = make_h_source_proposal(catalog)
+    reviewer_key = private_key()
+    researcher_key = private_key()
+    reviewer_id = "synthetic-independent-reviewer"
+    researcher_id = "synthetic-researcher"
+    receipts = {}
+    manifests = {}
+    attestations = {}
+    identity_sources = []
+    a_receipts = {}
+    reviewed_a_receipt_hashes = []
+
+    for category in CANONICAL_CATEGORY_IDS:
+        a_sha = canonical_sha256({"synthetic_a_reference": category})
+        reviewed_a_receipt_hashes.append(a_sha)
+        a_receipts[category] = AReferenceAvailabilityReceipt(
+            category_id=category,
+            authorized_normal_reference_image_count=a_groups,
+            authorized_source_group_count=a_groups,
+            receipt_sha256=a_sha,
+            authorization_id="synthetic-only-not-production",
+        )
+        for role in ("A", "B", "C"):
+            source_sha = canonical_sha256({"synthetic_identity_source": [category, role]})
+            group_members = tuple(
+                SourceGroupMember(
+                    canonical_sha256({"synthetic_group": [category, role, index]}), 1
+                )
+                for index in range(a_groups if role == "A" else 1)
+            )
+            identity_sources.append(source_sha)
+            receipt = make_role_identity_receipt(
+                category_id=category,
+                role=role,
+                source_manifest_sha256=source_sha,
+                producer_id="synthetic-producer",
+                group_members=group_members,
+            )
+            manifest = make_reviewed_identity_manifest(
+                receipt,
+                population=(
+                    "authorized_normal_reference_only" if role == "A"
+                    else "not_asserted"
+                ),
+                normal_evidence_manifest_sha256=(
+                    canonical_sha256({"synthetic_normal_evidence": category})
+                    if role == "A" else None
+                ),
+            )
+            attestation = make_reviewer_attestation(
+                receipt, manifest, reviewer_id=reviewer_id,
+                decision_id=f"synthetic-{category}-{role}",
+                private_key=reviewer_key,
+            )
+            key = (category, role)
+            receipts[key] = receipt
+            manifests[key] = manifest
+            attestations[key] = attestation
+
+    trust = make_reviewer_trust_directory(
+        directory_id="synthetic-trust-root-not-production",
+        trusted_reviewer_public_keys={reviewer_id: public_key_hex(reviewer_key)},
+        trusted_policy_approver_public_keys={researcher_id: public_key_hex(researcher_key)},
+        trusted_identity_source_sha256s=identity_sources,
+        reviewed_a_availability_receipt_sha256s=reviewed_a_receipt_hashes,
+        approved_proposal_sha256s=(proposal.proposal_sha256,),
+    )
+    approval = make_researcher_approval(
+        proposal,
+        researcher_id=researcher_id,
+        decision_id="synthetic-policy-approval-not-production",
+        approved_categories=CANONICAL_CATEGORY_IDS,
+        approved_roles=("A", "B", "C"),
+        approved_protected_policy_categories=("mint", "pcb"),
+        private_key=researcher_key,
+    )
+    scope = replace(
+        default_access_scope(),
+        approval_state="APPROVED",
+        approval_id="synthetic-local-scope-not-production",
+        approved_local_root="C:/synthetic-do-not-access",
+        approved_categories=CANONICAL_CATEGORY_IDS,
+        explicitly_authorized_protected_categories=("mint", "pcb"),
+        independent_c_identity_certificate_supplied=True,
+        maximum_output_bytes=1024,
+    )
+    return catalog, proposal, scope, approval, trust, receipts, manifests, attestations, a_receipts
 
 
 def test_complete_h_source_role_policy_is_explicit_but_unapproved():
@@ -185,13 +279,13 @@ def test_complete_researcher_policy_decision_does_not_grant_local_access():
         proposal, approval, trust,
         expected_trust_directory_sha256=trust.directory_sha256,
     )
-    assert status == "APPROVED_POLICY_PENDING_LOCAL_ACCESS"
+    assert status == "RESEARCHER_POLICY_APPROVED"
     report = build_category_readiness(
         catalog_receipt(), proposal, default_access_scope(),
         policy_approval=approval, trust_directory=trust,
         expected_trust_directory_sha256=trust.directory_sha256,
     )
-    assert report["policy_status"] == "APPROVED_POLICY_PENDING_LOCAL_ACCESS"
+    assert report["policy_status"] == "RESEARCHER_POLICY_APPROVED"
     assert report["local_data_access_status"] == "PENDING_AUTHORIZATION"
     assert report["role_certified"] is False
 
@@ -201,6 +295,7 @@ def test_public_catalog_never_implies_local_access():
     scope = default_access_scope()
     report = build_category_readiness(catalog_receipt(), proposal, scope)
     assert report["public_inventory_status"] == "R2_L2A_R_PUBLIC_INVENTORY_PASS"
+    assert report["schema"] == "r2_l2b.category_readiness.v2"
     assert report["local_data_access_status"] == "PENDING_AUTHORIZATION"
     assert report["role_certified"] is False
     assert report["g1_full_a_ready"] is False
@@ -216,6 +311,71 @@ def test_public_catalog_never_implies_local_access():
             "C": "PENDING_MISSING_RECEIPT",
         }
         for row in report["category_rows"]
+    )
+    assert report["g1_geometry_status"] == "NOT_AUTHORIZED_OR_RUN"
+    assert report["g1_geometry_complete"] is False
+
+
+def test_fully_satisfied_synthetic_evidence_has_consistent_readiness_states():
+    (
+        catalog, proposal, scope, approval, trust, receipts, manifests,
+        attestations, a_receipts,
+    ) = complete_synthetic_readiness_inputs()
+    report = build_category_readiness(
+        catalog,
+        proposal,
+        scope,
+        policy_approval=approval,
+        trust_directory=trust,
+        expected_trust_directory_sha256=trust.directory_sha256,
+        role_receipts=receipts,
+        reviewer_manifests=manifests,
+        reviewer_attestations=attestations,
+        a_reference_receipts=a_receipts,
+    )
+    assert report["public_inventory_status"] == "R2_L2A_R_PUBLIC_INVENTORY_PASS"
+    assert report["local_data_access_status"] == "LOCAL_SCOPE_AUTHORIZED_METADATA_ONLY"
+    assert report["policy_status"] == "RESEARCHER_POLICY_APPROVED"
+    assert report["role_certification_status"] == "R2_L2B_ROLE_IDENTITIES_CERTIFIED"
+    assert report["role_certified"] is True
+    assert report["g1_full_a_ready"] is True
+    assert report["g1_status"] == "R2_L2B_G1_REFERENCE_POOLS_READY_GEOMETRY_NOT_AUTHORIZED_OR_RUN"
+    assert report["g1_protocol_matched_ready"] is True
+    assert report["g1_protocol_matched_status"] == "64_SOURCE_GROUP_CANDIDATES_AVAILABLE_SELECTION_NOT_RUN"
+    assert report["g1_geometry_status"] == "NOT_AUTHORIZED_OR_RUN"
+    assert report["g1_geometry_complete"] is False
+    assert report["actual_distance_statistics"] == "NOT_RUN"
+    assert all(
+        row["local_data_inventory_status"] == "LOCAL_SCOPE_AUTHORIZED_METADATA_ONLY"
+        for row in report["category_rows"]
+    )
+    assert not any("A/B/C source-group identity manifests" in item
+                   for item in report["missing_prerequisites"])
+
+
+def test_protocol_matched_candidate_pool_requires_64_distinct_a_groups():
+    (
+        catalog, proposal, scope, approval, trust, receipts, manifests,
+        attestations, a_receipts,
+    ) = complete_synthetic_readiness_inputs(a_groups=63)
+    report = build_category_readiness(
+        catalog,
+        proposal,
+        scope,
+        policy_approval=approval,
+        trust_directory=trust,
+        expected_trust_directory_sha256=trust.directory_sha256,
+        role_receipts=receipts,
+        reviewer_manifests=manifests,
+        reviewer_attestations=attestations,
+        a_reference_receipts=a_receipts,
+    )
+    assert report["role_certified"] is True
+    assert report["g1_full_a_ready"] is True
+    assert report["g1_protocol_matched_ready"] is False
+    assert report["g1_protocol_matched_status"] == "PENDING_64_NORMAL_IMAGES_AND_SOURCE_GROUPS"
+    assert "at least 64 authorized normal A images" in " ".join(
+        report["missing_prerequisites"]
     )
 
 
@@ -339,7 +499,62 @@ def test_test_label_and_protected_category_access_require_separate_approval():
         )
 
 
-def test_test_mask_permission_is_separate_from_outcome_label_permission():
+@pytest.mark.parametrize(
+    ("section", "field", "authorization_flag", "message"),
+    [
+        ("train", "anomaly_class", "allow_train_normal_ok_status", "label-bearing"),
+        ("test", "anomaly_class", "allow_outcome_label_access", "outcome"),
+    ],
+)
+def test_anomaly_class_is_label_bearing_on_train_and_test(section, field, authorization_flag, message):
+    allowed_field = (
+        "allowed_train_metadata_fields" if section == "train"
+        else "allowed_test_metadata_fields"
+    )
+    scope = replace(
+        default_access_scope(),
+        approval_state="APPROVED",
+        approval_id="synthetic-access-approval",
+        approved_local_root="C:/synthetic-not-used",
+        approved_categories=("audiojack",),
+        allow_physical_json_file_bytes=True,
+        acknowledge_train_and_test_may_share_physical_json=True,
+        parsed_sections=(section,),
+        **{allowed_field: (field,)},
+        maximum_output_bytes=1024,
+    )
+    assert any(message in error for error in access_scope_errors(scope))
+    with pytest.raises(R2L2BContractError, match=message):
+        require_metadata_scope(
+            scope, category_id="audiojack", section=section, fields=(field,)
+        )
+    authorized = replace(scope, **{authorization_flag: True})
+    require_metadata_scope(
+        authorized, category_id="audiojack", section=section, fields=(field,)
+    )
+
+
+def test_unrecognized_field_names_are_rejected_even_if_allowlisted():
+    scope = replace(
+        default_access_scope(),
+        approval_state="APPROVED",
+        approval_id="synthetic-access-approval",
+        approved_local_root="C:/synthetic-not-used",
+        approved_categories=("audiojack",),
+        allow_physical_json_file_bytes=True,
+        acknowledge_train_and_test_may_share_physical_json=True,
+        parsed_sections=("train",),
+        allowed_train_metadata_fields=("future_secret_field",),
+        maximum_output_bytes=1024,
+    )
+    assert any("unrecognized" in error for error in access_scope_errors(scope))
+    with pytest.raises(R2L2BContractError, match="unrecognized"):
+        require_metadata_scope(
+            scope, category_id="audiojack", section="train",
+            fields=("future_secret_field",),
+        )
+@pytest.mark.parametrize("mask_field", ("mask_path", "gt_mask_path", "segmentation_path"))
+def test_test_mask_path_permission_is_separate_from_outcome_label_permission(mask_field):
     scope = replace(
         default_access_scope(),
         approval_state="APPROVED",
@@ -349,17 +564,26 @@ def test_test_mask_permission_is_separate_from_outcome_label_permission():
         allow_physical_json_file_bytes=True,
         acknowledge_train_and_test_may_share_physical_json=True,
         parsed_sections=("test",),
-        allowed_test_metadata_fields=("mask",),
-        allow_outcome_label_access=True,
+        allowed_test_metadata_fields=(mask_field,),
         maximum_output_bytes=1024,
     )
     with pytest.raises(R2L2BContractError, match="masks"):
         require_metadata_scope(
-            scope, category_id="audiojack", section="test", fields=("mask",)
+            scope, category_id="audiojack", section="test", fields=(mask_field,)
         )
+    authorized_mask_scope = replace(
+        scope,
+        allowed_test_metadata_fields=(mask_field,),
+        allow_mask_access=True,
+        output_disclosure_fields=("masks",),
+    )
+    require_metadata_scope(
+        authorized_mask_scope, category_id="audiojack", section="test",
+        fields=(mask_field,),
+    )
 
 
-def test_official_multiview_sample_key_maps_to_one_domain_separated_group():
+def test_official_multiview_sample_key_maps_to_the_frozen_r1_group_digest():
     c1 = "OK/S0001/audiojack_0001_OK_C1_20200101000000.jpg"
     c2 = "OK/S0001/audiojack_0001_OK_C2_20200101000001.jpg"
     digest1 = source_group_digest_from_image_path(c1, "audiojack")
@@ -367,6 +591,11 @@ def test_official_multiview_sample_key_maps_to_one_domain_separated_group():
     assert digest1 == digest2
     assert digest1 == source_group_digest_from_key("audiojack", "audiojack_0001_OK")
     assert digest1 != source_group_digest_from_key("audiojack", "audiojack_0002_OK")
+    expected = hashlib.sha256(
+        ("official-sample-group\0" + "audiojack_0001_OK").encode("utf-8")
+    ).hexdigest()
+    assert digest1 == expected
+    assert SOURCE_GROUP_DIGEST_ALGORITHM == "sha256:official-sample-group-nul-prefix-utf8.v1"
     assert len(digest1) == 64
 
 
@@ -393,9 +622,27 @@ def test_role_receipt_keeps_multiview_group_once_without_raw_identity():
     assert receipt.contains_raw_sample_keys is False
     assert receipt.contains_image_paths is False
     assert receipt.contains_labels_or_masks is False
+    assert receipt.schema == "r2_l2b.role_certification.v2"
+    assert receipt.identity_contract_version == "realid-offical-sample-key-v2"
+    assert receipt.group_digest_algorithm == SOURCE_GROUP_DIGEST_ALGORITHM
     serialized = json.dumps(asdict(receipt))
     assert "audiojack_0001_OK" not in serialized
     assert "S0001" not in serialized
+
+
+def test_role_receipt_rejects_mixed_source_group_digest_algorithm():
+    receipt = synthetic_receipt()
+    manifest, attestation, trust = synthetic_review(receipt)
+    mixed = replace(receipt, group_digest_algorithm="sha256:canonical-json-context.v1")
+    mixed_payload = asdict(mixed)
+    mixed_payload.pop("receipt_sha256")
+    mixed = replace(mixed, receipt_sha256=canonical_sha256(mixed_payload))
+    status, reason = certify_role_identity(
+        mixed, manifest, attestation, trust,
+        expected_trust_directory_sha256=trust.directory_sha256,
+    )
+    assert status == "PENDING_INDEPENDENT_REVIEW"
+    assert "incompatible source-group digest algorithm" in reason
 
 
 def test_missing_receipt_is_not_an_empty_role():
@@ -610,7 +857,7 @@ def test_c_role_needs_explicit_external_certificate_in_access_scope():
         attestation=attestation,
         trust_directory=trust,
         expected_trust_directory_sha256=trust.directory_sha256,
-        policy_status="APPROVED_POLICY_PENDING_LOCAL_ACCESS",
+        policy_status="RESEARCHER_POLICY_APPROVED",
         scope=base_scope,
     )
     assert status == "PENDING_INDEPENDENT_REVIEW"
@@ -623,7 +870,7 @@ def test_c_role_needs_explicit_external_certificate_in_access_scope():
         attestation=attestation,
         trust_directory=trust,
         expected_trust_directory_sha256=trust.directory_sha256,
-        policy_status="APPROVED_POLICY_PENDING_LOCAL_ACCESS",
+        policy_status="RESEARCHER_POLICY_APPROVED",
         scope=certified_scope,
     )
     assert status == "CERTIFIED_FROM_SOURCE_EVIDENCE"
@@ -640,7 +887,7 @@ def test_receipt_cannot_be_substituted_into_another_category_or_role_slot():
         attestation=attestation,
         trust_directory=trust,
         expected_trust_directory_sha256=trust.directory_sha256,
-        policy_status="APPROVED_POLICY_PENDING_LOCAL_ACCESS",
+        policy_status="RESEARCHER_POLICY_APPROVED",
         scope=default_access_scope(),
     )
     assert status == "PENDING_INDEPENDENT_REVIEW"
@@ -653,7 +900,7 @@ def test_receipt_cannot_be_substituted_into_another_category_or_role_slot():
         attestation=attestation,
         trust_directory=trust,
         expected_trust_directory_sha256=trust.directory_sha256,
-        policy_status="APPROVED_POLICY_PENDING_LOCAL_ACCESS",
+        policy_status="RESEARCHER_POLICY_APPROVED",
         scope=default_access_scope(),
     )
     assert status == "PENDING_INDEPENDENT_REVIEW"
