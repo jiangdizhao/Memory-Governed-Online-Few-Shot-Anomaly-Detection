@@ -5,7 +5,7 @@ does not load models, images, dataset metadata, or feature-cache files.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import hashlib
 import json
 import math
@@ -14,12 +14,16 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
+from experiments.calibration.r2_l2a_allclass_inventory import CANONICAL_CATEGORY_IDS
+
 
 G1_ENGINE_VERSION = "r2_l2a.streaming_exact.v1"
 G1A_SAMPLING_POLICY = "r1_grid28x28_cell_centers_7x7_v1"
 G1B_SELECTION_RULE = "r1_native_c0_top32_indices_v1"
 G1B_BASELINE_MEMORY_CONTRACT = "R1_M0_FIXED_SUPPORT_PLUS_EMPTY_GREEDY_V1"
 R1_FIXED_SUPPORT_SHA256 = "8a710d028509350568e976bc3ede66aa59603499cbea525bdd8579322b1a1558"
+R1_FIXED_SUPPORT_CATEGORY_ID = "switch"
+R1_FIXED_SUPPORT_SEED = 0
 R1_FIXED_SUPPORT_DIGEST_ALGORITHM = (
     "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes")
 K_NEIGHBORS = 5
@@ -48,6 +52,64 @@ def _canonical_sha256(value: Any) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def category_fixed_support_receipt_sha256(
+    category_id: str,
+    seed: int,
+    digest_algorithm: str,
+    fixed_support_sha256: str,
+) -> str:
+    """Content-bind a structured fixed-bank digest to category and seed."""
+    if category_id not in CANONICAL_CATEGORY_IDS:
+        raise GeometryContractError("fixed-support category is outside the pinned public catalog")
+    if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+        raise GeometryContractError("fixed-support seed must be a nonnegative integer")
+    if digest_algorithm != R1_FIXED_SUPPORT_DIGEST_ALGORITHM:
+        raise GeometryContractError("fixed-support digest algorithm is incompatible")
+    _sha256(fixed_support_sha256, "structured fixed-support digest")
+    return _canonical_sha256({
+        "schema": "r2_l2a.category_fixed_support_identity.v1",
+        "category_id": category_id,
+        "seed": seed,
+        "digest_algorithm": digest_algorithm,
+        "fixed_support_sha256": fixed_support_sha256,
+    })
+
+
+def category_m0_scorer_state_sha256(
+    *,
+    category_id: str,
+    representation_sha256: str,
+    scorer_profile_sha256: str,
+    fixed_support_receipt_sha256: str,
+    score_state_memory_sha256: str,
+    baseline_memory_contract: str,
+    baseline_memory_certificate_sha256: str,
+) -> str:
+    """Bind the frozen category bank, representation, M0 state, and certificate."""
+    if category_id not in CANONICAL_CATEGORY_IDS:
+        raise GeometryContractError("M0 scorer category is outside the pinned public catalog")
+    for value, field in (
+        (representation_sha256, "representation fingerprint"),
+        (scorer_profile_sha256, "native scorer profile digest"),
+        (fixed_support_receipt_sha256, "fixed-support receipt digest"),
+        (score_state_memory_sha256, "score-state memory digest"),
+        (baseline_memory_certificate_sha256, "baseline memory certificate digest"),
+    ):
+        _sha256(value, field)
+    if baseline_memory_contract != G1B_BASELINE_MEMORY_CONTRACT:
+        raise GeometryContractError("M0 scorer state uses an incompatible memory contract")
+    return _canonical_sha256({
+        "schema": "r2_l2a.category_m0_scorer_state.v1",
+        "category_id": category_id,
+        "representation_sha256": representation_sha256,
+        "scorer_profile_sha256": scorer_profile_sha256,
+        "fixed_support_receipt_sha256": fixed_support_receipt_sha256,
+        "score_state_memory_sha256": score_state_memory_sha256,
+        "baseline_memory_contract": baseline_memory_contract,
+        "baseline_memory_certificate_sha256": baseline_memory_certificate_sha256,
+    })
+
+
 @dataclass(frozen=True)
 class R1DescriptorProfile:
     """R1 receipt-backed identity for selected native patch descriptors."""
@@ -74,8 +136,31 @@ class R1DescriptorProfile:
     l2_normalized: bool
 
     @property
+    def representation_sha256(self) -> str:
+        """Class-invariant DINO descriptor identity, independent of scorer/support."""
+        return _canonical_sha256({
+            "schema": "r2_l2a.dino_descriptor_representation.v1",
+            "model_variant": self.model_variant,
+            "checkpoint_file": self.checkpoint_file,
+            "checkpoint_sha256": self.checkpoint_sha256,
+            "hub_source_tree_sha256": self.hub_source_tree_sha256,
+            "loaded_model_state_sha256": self.loaded_model_state_sha256,
+            "hook_layers": self.hook_layers,
+            "layer_fusion": self.layer_fusion,
+            "feature_concatenation": self.feature_concatenation,
+            "preprocessing": self.preprocessing,
+            "view": self.view,
+            "encoder_fingerprint_sha256": self.encoder_fingerprint_sha256,
+            "preprocess_fingerprint_sha256": self.preprocess_fingerprint_sha256,
+            "feature_shape": self.feature_shape,
+            "feature_dtype": self.feature_dtype,
+            "l2_normalized": self.l2_normalized,
+        })
+
+    @property
     def sha256(self) -> str:
-        return _canonical_sha256(asdict(self))
+        """Compatibility alias for the class-invariant representation identity."""
+        return self.representation_sha256
 
 
 # Values are projected from the R1 run manifest and checked against frozen R1
@@ -152,7 +237,7 @@ def validate_feature_cache_receipt(
     _sha256(receipt.cache_sha256, "feature cache digest")
     _sha256(receipt.inventory_sha256, "inventory digest")
     wanted = {
-        "profile_sha256": expected.sha256,
+        "profile_sha256": expected.representation_sha256,
         "encoder_fingerprint_sha256": expected.encoder_fingerprint_sha256,
         "preprocess_fingerprint_sha256": expected.preprocess_fingerprint_sha256,
         "native_scorer_profile_sha256": expected.native_scorer_profile_sha256,
@@ -181,7 +266,7 @@ def validate_feature_cache_receipt(
             "status": "PENDING_EXTERNAL_CACHE_AND_INVENTORY_RECEIPT_REVIEW",
             "cache_sha256": receipt.cache_sha256,
             "inventory_sha256": receipt.inventory_sha256,
-            "profile_sha256": expected.sha256,
+            "profile_sha256": expected.representation_sha256,
         }
     if (_sha256(verified_cache_sha256, "externally verified cache digest")
             != receipt.cache_sha256
@@ -192,7 +277,7 @@ def validate_feature_cache_receipt(
         "status": "COMPATIBLE_EXTERNALLY_VERIFIED_METADATA_RECEIPT",
         "cache_sha256": receipt.cache_sha256,
         "inventory_sha256": receipt.inventory_sha256,
-        "profile_sha256": expected.sha256,
+        "profile_sha256": expected.representation_sha256,
         "feature_shape": list(expected.feature_shape),
         "feature_dtype": expected.feature_dtype,
         "role": "A",
@@ -209,7 +294,8 @@ class DescriptorBatch:
     image_sha256: tuple[str, ...]
     representation_sha256: str
     role: str = "A"
-    access_status: str = "AUTHORIZED_A_IDENTITY_RECEIPT"
+    access_status: str = "PENDING_AUTHORIZATION"
+    a_reference_availability_receipt_sha256: str | None = None
     inventory_sha256: str = "0" * 64
     cache_receipt_sha256: str = "0" * 64
     contains_labels_or_masks: bool = False
@@ -218,13 +304,30 @@ class DescriptorBatch:
 
 
 def validate_descriptor_batch(batch: DescriptorBatch,
-                              expected_dimension: int | None = None) -> np.ndarray:
+                              expected_dimension: int | None = None,
+                              *,
+                              verified_a_reference_availability_receipts: Mapping[str, str] | None = None,
+                              ) -> np.ndarray:
     if (not isinstance(batch.category_id, str)
             or not re.fullmatch(r"[a-z][a-z0-9_]*", batch.category_id)
             or batch.role != "A"):
         raise GeometryContractError("G1 geometry accepts only an explicit category A role")
-    if not isinstance(batch.access_status, str) or not batch.access_status:
-        raise GeometryContractError("descriptor batch requires an explicit access status")
+    if batch.access_status != "AUTHORIZED_FOR_G1_REFERENCE_POPULATION":
+        raise GeometryContractError("A reference population is not externally authorized for G1")
+    if batch.a_reference_availability_receipt_sha256 is None:
+        raise GeometryContractError("descriptor batch lacks an A availability receipt")
+    a_receipt_sha256 = _sha256(
+        batch.a_reference_availability_receipt_sha256,
+        "A reference availability receipt digest")
+    verified_a_receipts = verified_a_reference_availability_receipts or {}
+    verified_for_category = verified_a_receipts.get(batch.category_id)
+    if verified_for_category is None:
+        raise GeometryContractError(
+            "no externally verified A availability receipt exists for this category")
+    if (_sha256(verified_for_category, "externally verified A availability receipt digest")
+            != a_receipt_sha256):
+        raise GeometryContractError(
+            "A availability receipt does not match the externally verified category receipt")
     if batch.contains_labels_or_masks or batch.contains_private_feedback \
             or batch.contains_correction_anchors:
         raise GeometryContractError("descriptor input contains a forbidden information class")
@@ -277,6 +380,13 @@ class Top32SelectionReceipt:
     baseline_memory_certificate_sha256: str
     selection_rule: str
     selected_indices: tuple[int, ...]
+    category_id: str
+    representation_sha256: str
+    fixed_support_category_id: str
+    fixed_support_seed: int
+    fixed_support_digest_algorithm: str
+    fixed_support_receipt_sha256: str
+    m0_scorer_state_sha256: str
     role: str = "A"
     contains_labels_or_masks: bool = False
 
@@ -284,7 +394,8 @@ class Top32SelectionReceipt:
 def validate_top32_selection(receipt: Top32SelectionReceipt) -> None:
     for field in ("query_image_sha256", "scorer_profile_sha256",
                   "fixed_support_sha256", "score_state_memory_sha256", "source_receipt_sha256",
-                  "baseline_memory_certificate_sha256"):
+                  "baseline_memory_certificate_sha256", "representation_sha256",
+                  "fixed_support_receipt_sha256", "m0_scorer_state_sha256"):
         _sha256(getattr(receipt, field), field)
     if receipt.role != "A" or receipt.contains_labels_or_masks:
         raise GeometryContractError("Top-32 selection receipt is not a permitted A-only projection")
@@ -292,10 +403,51 @@ def validate_top32_selection(receipt: Top32SelectionReceipt) -> None:
         raise GeometryContractError("Top-32 selection rule is not the frozen R1 native C0 rule")
     if receipt.scorer_profile_sha256 != R1_DESCRIPTOR_PROFILE.native_scorer_profile_sha256:
         raise GeometryContractError("Top-32 selection uses an incompatible native scorer profile")
-    if receipt.fixed_support_sha256 != R1_FIXED_SUPPORT_SHA256:
-        raise GeometryContractError("Top-32 selection uses an incompatible fixed support bank")
+    if receipt.representation_sha256 != R1_DESCRIPTOR_PROFILE.representation_sha256:
+        raise GeometryContractError("Top-32 selection uses an incompatible representation identity")
+    if receipt.category_id not in CANONICAL_CATEGORY_IDS:
+        raise GeometryContractError("Top-32 selection category is outside the pinned public catalog")
+    if receipt.fixed_support_category_id != receipt.category_id:
+        raise GeometryContractError("fixed-support bank identity is bound to a different category")
+    if (isinstance(receipt.fixed_support_seed, bool)
+            or not isinstance(receipt.fixed_support_seed, int)
+            or receipt.fixed_support_seed < 0):
+        raise GeometryContractError("fixed-support seed must be a nonnegative integer")
+    if receipt.fixed_support_digest_algorithm != R1_FIXED_SUPPORT_DIGEST_ALGORITHM:
+        raise GeometryContractError("fixed-support digest algorithm is incompatible")
+    expected_support_receipt = category_fixed_support_receipt_sha256(
+        receipt.fixed_support_category_id,
+        receipt.fixed_support_seed,
+        receipt.fixed_support_digest_algorithm,
+        receipt.fixed_support_sha256,
+    )
+    if receipt.fixed_support_receipt_sha256 != expected_support_receipt:
+        raise GeometryContractError(
+            "fixed-support receipt digest is not bound to this category, seed, and bank")
+    if receipt.fixed_support_sha256 == R1_FIXED_SUPPORT_SHA256:
+        if (receipt.category_id != R1_FIXED_SUPPORT_CATEGORY_ID
+                or receipt.fixed_support_seed != R1_FIXED_SUPPORT_SEED):
+            raise GeometryContractError(
+                "historical switch/seed-0 fixed-support digest cannot be reused by this category/seed")
+    if (receipt.category_id == R1_FIXED_SUPPORT_CATEGORY_ID
+            and receipt.fixed_support_seed == R1_FIXED_SUPPORT_SEED
+            and receipt.fixed_support_sha256 != R1_FIXED_SUPPORT_SHA256):
+        raise GeometryContractError(
+            "switch/seed-0 receipt does not match the retained historical fixed-support digest")
     if receipt.baseline_memory_contract != G1B_BASELINE_MEMORY_CONTRACT:
         raise GeometryContractError("Top-32 selection lacks the frozen R1 M0 memory contract")
+    expected_m0_state = category_m0_scorer_state_sha256(
+        category_id=receipt.category_id,
+        representation_sha256=receipt.representation_sha256,
+        scorer_profile_sha256=receipt.scorer_profile_sha256,
+        fixed_support_receipt_sha256=receipt.fixed_support_receipt_sha256,
+        score_state_memory_sha256=receipt.score_state_memory_sha256,
+        baseline_memory_contract=receipt.baseline_memory_contract,
+        baseline_memory_certificate_sha256=receipt.baseline_memory_certificate_sha256,
+    )
+    if receipt.m0_scorer_state_sha256 != expected_m0_state:
+        raise GeometryContractError(
+            "Top-32 receipt is not bound to the correct category-specific M0 scorer state")
     if (len(receipt.selected_indices) != 32
             or len(set(receipt.selected_indices)) != 32
             or any(isinstance(i, bool) or not isinstance(i, (int, np.integer))
@@ -307,34 +459,41 @@ def g1b_identifiability_status(
     receipt: Top32SelectionReceipt | None,
     *,
     verified_receipt_sha256: str | None = None,
+    verified_fixed_support_receipt_sha256: str | None = None,
     verified_baseline_certificate_sha256: str | None = None,
 ) -> str:
     if receipt is None:
         return "NOT_YET_IDENTIFIABLE"
     validate_top32_selection(receipt)
-    if verified_receipt_sha256 is None or verified_baseline_certificate_sha256 is None:
+    if (verified_receipt_sha256 is None or verified_fixed_support_receipt_sha256 is None
+            or verified_baseline_certificate_sha256 is None):
         return "NOT_YET_IDENTIFIABLE"
     if (_sha256(verified_receipt_sha256, "externally verified Top-32 receipt digest")
             != receipt.source_receipt_sha256
+            or _sha256(verified_fixed_support_receipt_sha256,
+                       "externally verified category fixed-support receipt digest")
+            != receipt.fixed_support_receipt_sha256
             or _sha256(verified_baseline_certificate_sha256,
                        "externally verified baseline certificate digest")
             != receipt.baseline_memory_certificate_sha256):
-        raise GeometryContractError("external Top-32/M0 review digests do not match receipt")
-    return "IDENTIFIABLE_FROM_EXTERNALLY_VERIFIED_FROZEN_NATIVE_C0_RECEIPT"
+        raise GeometryContractError("external Top-32/support/M0 review digests do not match receipt")
+    return "IDENTIFIABLE_FROM_EXTERNALLY_VERIFIED_CATEGORY_NATIVE_C0_RECEIPT"
 
 
 def select_g1b_features(features: np.ndarray,
                         receipt: Top32SelectionReceipt,
                         *,
                         verified_receipt_sha256: str | None = None,
+                        verified_fixed_support_receipt_sha256: str | None = None,
                         verified_baseline_certificate_sha256: str | None = None) -> np.ndarray:
     """Select only indices emitted by the frozen scorer; never rerank locally."""
     validate_top32_selection(receipt)
     if g1b_identifiability_status(
             receipt,
             verified_receipt_sha256=verified_receipt_sha256,
+            verified_fixed_support_receipt_sha256=verified_fixed_support_receipt_sha256,
             verified_baseline_certificate_sha256=verified_baseline_certificate_sha256
-    ) != "IDENTIFIABLE_FROM_EXTERNALLY_VERIFIED_FROZEN_NATIVE_C0_RECEIPT":
+    ) != "IDENTIFIABLE_FROM_EXTERNALLY_VERIFIED_CATEGORY_NATIVE_C0_RECEIPT":
         raise GeometryContractError("G1-B is NOT_YET_IDENTIFIABLE without external receipt review")
     x = np.asarray(features)
     if x.shape != (784, 4096) or x.dtype != np.float32:
@@ -397,6 +556,7 @@ def compare_source_disjoint(
     query_block_size: int = DEFAULT_QUERY_BLOCK_SIZE,
     reference_block_size: int = DEFAULT_REFERENCE_BLOCK_SIZE,
     max_pairwise_elements: int = DEFAULT_MAX_PAIRWISE_ELEMENTS,
+    verified_a_reference_availability_receipts: Mapping[str, str] | None = None,
 ) -> DistanceStats:
     """Compute exact nearest/fifth distances with bounded blockwise matmul.
 
@@ -404,8 +564,17 @@ def compare_source_disjoint(
     top-k selection. Equal distances are ordered by original reference index.
     Only Q-block by R-block distance arrays are materialized.
     """
-    q = validate_descriptor_batch(query)
-    r = validate_descriptor_batch(reference)
+    if (query.a_reference_availability_receipt_sha256
+            != reference.a_reference_availability_receipt_sha256):
+        raise GeometryContractError(
+            "query and reference batches use different A availability receipts")
+    verified_a_receipts = verified_a_reference_availability_receipts or {}
+    q = validate_descriptor_batch(
+        query,
+        verified_a_reference_availability_receipts=verified_a_receipts)
+    r = validate_descriptor_batch(
+        reference,
+        verified_a_reference_availability_receipts=verified_a_receipts)
     if query.category_id != reference.category_id:
         raise GeometryContractError("query and reference must belong to the same category")
     if query.representation_sha256 != reference.representation_sha256:
@@ -516,6 +685,10 @@ def compare_source_disjoint(
         block_pairwise_elements=block_product,
         metadata={
             "engine_version": G1_ENGINE_VERSION,
+            "a_reference_availability_receipt_sha256": {
+                "query": query.a_reference_availability_receipt_sha256,
+                "reference": reference.a_reference_availability_receipt_sha256,
+            },
             "distance": "1 - clip(float64_dot, -1, 1)",
             "neighbor_count": K_NEIGHBORS,
             "source_group_exclusion": "exact_digest_equality_before_topk",

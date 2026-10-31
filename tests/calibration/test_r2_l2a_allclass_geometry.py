@@ -7,11 +7,24 @@ import numpy as np
 import pytest
 
 from experiments.calibration.r2_l2a_allclass_inventory import (
+    AReferenceAvailabilityReceipt,
+    CANONICAL_CATEGORY_IDS,
+    CATALOG_EXTRACTION_ALGORITHM,
     EXPECTED_CATEGORY_COUNT,
+    PINNED_COMMIT,
+    PINNED_CONFIG_VERSION,
+    PINNED_RAW_SOURCE_URI,
+    PINNED_SOURCE_PATH,
+    PINNED_SOURCE_SHA256,
+    PINNED_SOURCE_URI,
     OfficialCatalogReceipt,
     PartitionOverlapError,
+    RolePolicyEntry,
     RoleGroupReceipt,
     build_inventory_preflight,
+    extract_category_catalog_from_config_bytes,
+    make_role_policy as build_role_policy,
+    official_catalog_from_pinned_source_bytes,
     partition_preflight,
 )
 from experiments.calibration.r2_l2a_g1_geometry import (
@@ -20,11 +33,16 @@ from experiments.calibration.r2_l2a_g1_geometry import (
     FeatureCacheReceipt,
     G1B_BASELINE_MEMORY_CONTRACT,
     G1B_SELECTION_RULE,
+    R1_FIXED_SUPPORT_CATEGORY_ID,
+    R1_FIXED_SUPPORT_SEED,
     R1_FIXED_SUPPORT_SHA256,
+    R1_FIXED_SUPPORT_DIGEST_ALGORITHM,
     GeometryContractError,
     R1_DESCRIPTOR_PROFILE,
     Top32SelectionReceipt,
-    compare_source_disjoint,
+    category_fixed_support_receipt_sha256,
+    category_m0_scorer_state_sha256,
+    compare_source_disjoint as _compare_source_disjoint,
     conditional_query_group_bootstrap,
     g1a_spatial_indices,
     g1b_identifiability_status,
@@ -38,6 +56,7 @@ from experiments.calibration.r2_l2a_g1_geometry import (
 REPRESENTATION = hashlib.sha256(b"synthetic-r2-l2a-representation").hexdigest()
 INVENTORY = hashlib.sha256(b"synthetic-inventory").hexdigest()
 CACHE = hashlib.sha256(b"synthetic-cache-receipt").hexdigest()
+A_AUTHORIZATION = hashlib.sha256(b"synthetic-a-authorization").hexdigest()
 
 
 def digest(value: str) -> str:
@@ -51,10 +70,20 @@ def make_batch(category, features, groups, images, **kwargs):
         source_group_sha256=tuple(groups),
         image_sha256=tuple(images),
         representation_sha256=kwargs.pop("representation_sha256", REPRESENTATION),
+        access_status=kwargs.pop("access_status", "AUTHORIZED_FOR_G1_REFERENCE_POPULATION"),
+        a_reference_availability_receipt_sha256=kwargs.pop(
+            "a_reference_availability_receipt_sha256", A_AUTHORIZATION),
         inventory_sha256=kwargs.pop("inventory_sha256", INVENTORY),
         cache_receipt_sha256=kwargs.pop("cache_receipt_sha256", CACHE),
         **kwargs,
     )
+
+
+def compare_source_disjoint(query, reference, **kwargs):
+    """Synthetic test adapter supplies only the explicitly reviewed fixture receipt."""
+    verified = {query.category_id: query.a_reference_availability_receipt_sha256}
+    kwargs.setdefault("verified_a_reference_availability_receipts", verified)
+    return _compare_source_disjoint(query, reference, **kwargs)
 
 
 def unit(angle, dimension=2):
@@ -99,13 +128,33 @@ def brute_force(query, reference, radii):
 
 def make_catalog(n=30):
     return OfficialCatalogReceipt(
-        source_uri="https://realiad4ad.github.io/Real-IAD/",
-        source_sha256=digest("official-public-catalog-projection"),
-        release_id="synthetic-catalog-fixture-v1",
-        categories=tuple(f"category_{i:02d}" for i in range(n)),
+        source_uri=PINNED_SOURCE_URI,
+        source_sha256=PINNED_SOURCE_SHA256,
+        release_id=PINNED_CONFIG_VERSION,
+        categories=CANONICAL_CATEGORY_IDS[:n],
         official_source_verified=True,
         non_label_bearing=True,
+        source_commit=PINNED_COMMIT,
+        source_path=PINNED_SOURCE_PATH,
+        dataset_config_version=PINNED_CONFIG_VERSION,
+        extraction_algorithm=CATALOG_EXTRACTION_ALGORITHM,
     )
+
+
+def make_role_policy(categories, dispositions=None):
+    dispositions = dispositions or {}
+    entries = []
+    for category in categories:
+        for role in ("A", "B", "C"):
+            disposition = dispositions.get((category, role), "REQUIRED")
+            entries.append(RolePolicyEntry(
+                category_id=category,
+                role=role,
+                disposition=disposition,
+                rationale=("synthetic design rationale" if disposition == "NOT_APPLICABLE"
+                           else None),
+            ))
+    return build_role_policy("synthetic-r2-l2a-policy", "v1", entries)
 
 
 def role_receipts(categories):
@@ -148,15 +197,107 @@ def valid_cache_receipt(**changes):
     return FeatureCacheReceipt(**fields)
 
 
+def valid_top32_receipt(**changes):
+    fields = dict(
+        query_image_sha256=digest("image"),
+        scorer_profile_sha256=R1_DESCRIPTOR_PROFILE.native_scorer_profile_sha256,
+        fixed_support_sha256=digest("category-specific-structured-bank"),
+        score_state_memory_sha256=digest("frozen-baseline-memory"),
+        source_receipt_sha256=digest("native-c0-index-receipt"),
+        baseline_memory_contract=G1B_BASELINE_MEMORY_CONTRACT,
+        baseline_memory_certificate_sha256=digest("certified-r1-m0"),
+        selection_rule=G1B_SELECTION_RULE,
+        selected_indices=tuple(range(32)),
+        category_id=CANONICAL_CATEGORY_IDS[0],
+        representation_sha256=R1_DESCRIPTOR_PROFILE.representation_sha256,
+        fixed_support_category_id=CANONICAL_CATEGORY_IDS[0],
+        fixed_support_seed=0,
+        fixed_support_digest_algorithm=R1_FIXED_SUPPORT_DIGEST_ALGORITHM,
+        fixed_support_receipt_sha256=digest("placeholder-bank-receipt"),
+        m0_scorer_state_sha256=digest("placeholder-m0-scorer-state"),
+    )
+    fields.update(changes)
+    if "fixed_support_receipt_sha256" not in changes:
+        fields["fixed_support_receipt_sha256"] = category_fixed_support_receipt_sha256(
+            fields["fixed_support_category_id"],
+            fields["fixed_support_seed"],
+            fields["fixed_support_digest_algorithm"],
+            fields["fixed_support_sha256"],
+        )
+    if "m0_scorer_state_sha256" not in changes:
+        fields["m0_scorer_state_sha256"] = category_m0_scorer_state_sha256(
+            category_id=fields["category_id"],
+            representation_sha256=fields["representation_sha256"],
+            scorer_profile_sha256=fields["scorer_profile_sha256"],
+            fixed_support_receipt_sha256=fields["fixed_support_receipt_sha256"],
+            score_state_memory_sha256=fields["score_state_memory_sha256"],
+            baseline_memory_contract=fields["baseline_memory_contract"],
+            baseline_memory_certificate_sha256=fields["baseline_memory_certificate_sha256"],
+        )
+    return Top32SelectionReceipt(**fields)
+
+
 def test_incomplete_inventory_lists_all_slots_and_never_becomes_a_four_class_universe():
-    report = build_inventory_preflight(make_catalog(4))
+    report = build_inventory_preflight()
     assert report["expected_category_count"] == 30
-    assert report["listed_category_count"] == 4
+    assert report["listed_category_count"] == 0
     assert report["verified_category_count"] == 0
     assert report["complete_30_category_inventory"] is False
     assert len(report["categories"]) == 30
-    assert sum(item["category_id"] is None for item in report["categories"]) == 26
+    assert sum(item["category_id"] is None for item in report["categories"]) == 30
     assert report["status"] == "PENDING_AUTHORIZATION_INCOMPLETE_OFFICIAL_CATALOG"
+    with pytest.raises(ValueError, match="exactly 30 categories"):
+        build_inventory_preflight(make_catalog(4))
+
+
+def test_official_catalog_parser_projects_only_matching_train_test_category_ids():
+    category_lines = "".join(
+        f"      - data/Real-IAD/realiad_jsons/{category}.json\n"
+        for category in CANONICAL_CATEGORY_IDS)
+    fixture = (
+        "version: v1.0.0\n"
+        "dataset:\n"
+        "  train:\n"
+        "    meta_file:\n" + category_lines +
+        "  test:\n"
+        "    meta_file:\n" + category_lines +
+        "    image_dir: data/Real-IAD/images\n"
+    ).encode("utf-8")
+    version, train, test = extract_category_catalog_from_config_bytes(fixture)
+    assert version == "v1.0.0"
+    assert train == test == CANONICAL_CATEGORY_IDS
+    assert "data/Real-IAD" not in repr((version, train, test))
+
+
+def test_official_catalog_parser_rejects_duplicate_and_inconsistent_source_lists():
+    base_lines = "".join(
+        f"      - data/Real-IAD/realiad_jsons/{category}.json\n"
+        for category in CANONICAL_CATEGORY_IDS)
+    duplicate = base_lines.replace(
+        f"      - data/Real-IAD/realiad_jsons/{CANONICAL_CATEGORY_IDS[-1]}.json\n",
+        f"      - data/Real-IAD/realiad_jsons/{CANONICAL_CATEGORY_IDS[0]}.json\n")
+    duplicate_fixture = (
+        "version: v1.0.0\ndataset:\n  train:\n    meta_file:\n" + duplicate
+        + "  test:\n    meta_file:\n" + base_lines).encode("utf-8")
+    with pytest.raises(ValueError, match="duplicate category"):
+        extract_category_catalog_from_config_bytes(duplicate_fixture)
+    different_test = base_lines.replace(
+        f"      - data/Real-IAD/realiad_jsons/{CANONICAL_CATEGORY_IDS[-1]}.json\n",
+        "      - data/Real-IAD/realiad_jsons/unknown_category.json\n")
+    inconsistent_fixture = (
+        "version: v1.0.0\ndataset:\n  train:\n    meta_file:\n" + base_lines
+        + "  test:\n    meta_file:\n" + different_test).encode("utf-8")
+    with pytest.raises(ValueError, match="differ|cross-check"):
+        extract_category_catalog_from_config_bytes(inconsistent_fixture)
+
+
+def test_pinned_catalog_factory_rejects_modified_bytes_and_unpinned_source():
+    with pytest.raises(ValueError, match="pinned official Tencent"):
+        official_catalog_from_pinned_source_bytes(
+            b"synthetic", source_uri="https://github.com/somewhere/config.yaml")
+    with pytest.raises(ValueError, match="digest mismatch"):
+        official_catalog_from_pinned_source_bytes(b"synthetic")
+    assert PINNED_RAW_SOURCE_URI.startswith("https://raw.githubusercontent.com/")
 
 
 def test_inventory_records_protected_and_unavailable_category_access_explicitly():
@@ -170,6 +311,18 @@ def test_inventory_records_protected_and_unavailable_category_access_explicitly(
     with pytest.raises(ValueError, match="outside the supplied catalog"):
         build_inventory_preflight(catalog, category_access_status={
             "not-a-catalog-category": "PROTECTED_SEALED"})
+
+
+def test_complete_inventory_status_is_public_catalog_verification_only():
+    catalog = make_catalog()
+    report = build_inventory_preflight(catalog)
+    assert report["status"] == "VERIFIED_30_CATEGORY_PUBLIC_INVENTORY"
+    assert report["verified_category_count"] == 30
+    assert tuple(row["category_id"] for row in report["categories"]) == CANONICAL_CATEGORY_IDS
+    assert all(row["access_status"] == "PENDING_AUTHORIZATION"
+               for row in report["categories"])
+    assert report["catalog_source"]["source_commit"] == PINNED_COMMIT
+    assert report["catalog_source"]["source_sha256"] == PINNED_SOURCE_SHA256
 
 
 def test_absent_catalog_has_thirty_explicit_unresolved_slots():
@@ -187,7 +340,7 @@ def test_catalog_requires_official_non_label_bearing_source_and_exact_unique_nam
         build_inventory_preflight(replace(make_catalog(), contains_image_paths=True))
     with pytest.raises(ValueError, match="duplicate"):
         build_inventory_preflight(replace(make_catalog(), categories=("one",) * 30))
-    with pytest.raises(ValueError, match="approved official HTTPS"):
+    with pytest.raises(ValueError, match="exact pinned official"):
         build_inventory_preflight(replace(
             make_catalog(), source_uri="https://example.net/category-list"))
 
@@ -195,13 +348,21 @@ def test_catalog_requires_official_non_label_bearing_source_and_exact_unique_nam
 def test_a_b_c_partition_receipts_certify_disjointness_only_when_complete():
     catalog = make_catalog()
     receipts = role_receipts(catalog.categories)
+    policy = make_role_policy(catalog.categories)
     report = partition_preflight(
         catalog, receipts,
+        role_policy=policy,
+        verified_role_policy_sha256s=[policy.policy_sha256],
         verified_identity_receipt_sha256s=[r.receipt_sha256 for r in receipts],
         verified_c_certificate_sha256=digest("synthetic-c-certificate"),
     )
     assert report["status"] == "PARTITION_CERTIFIED_DISJOINT"
     assert report["certified_disjoint"] is True
+    assert report["role_policy_declared"] is True
+    assert report["role_policy_externally_verified"] is True
+    assert report["role_identity_receipts_complete"] is True
+    assert report["authorized_a_data_available"] is False
+    assert report["g1_geometry_complete"] is False
     assert report["overlap_count"] == 0
     assert report["c_certification_status"] == "EXTERNAL_CERTIFICATE_VERIFIED_BY_CALLER"
     assert report["role_group_counts"][catalog.categories[0]] == {"A": 1, "B": 1, "C": 1}
@@ -209,20 +370,117 @@ def test_a_b_c_partition_receipts_certify_disjointness_only_when_complete():
     a_b_receipts = [r for r in role_receipts(catalog.categories) if r.role != "C"]
     pending = partition_preflight(
         catalog, a_b_receipts,
+        role_policy=policy,
+        verified_role_policy_sha256s=[policy.policy_sha256],
         verified_identity_receipt_sha256s=[r.receipt_sha256 for r in a_b_receipts])
     assert pending["certified_disjoint"] is False
     assert pending["c_certification_status"] == "PENDING_AUTHORIZATION"
     assert len(pending["missing_category_roles"]) == 30
 
-    unverified = partition_preflight(catalog, receipts)
-    assert unverified["status"] == "PENDING_AUTHORIZATION_C_CERTIFICATE_REVIEW"
+    unverified = partition_preflight(catalog, receipts, role_policy=policy)
+    assert unverified["status"] == "PENDING_EXTERNAL_ROLE_POLICY_REVIEW"
     assert unverified["certified_disjoint"] is False
 
     c_verified_but_receipts_unreviewed = partition_preflight(
         catalog, receipts,
+        role_policy=policy,
+        verified_role_policy_sha256s=[policy.policy_sha256],
         verified_c_certificate_sha256=digest("synthetic-c-certificate"))
     assert c_verified_but_receipts_unreviewed["status"] == \
         "PENDING_EXTERNAL_RECEIPT_PROVENANCE_REVIEW"
+    assert c_verified_but_receipts_unreviewed["role_disjointness_externally_certified"] is False
+
+
+def test_partition_requires_explicit_externally_reviewed_policy_for_not_applicable_roles():
+    catalog = make_catalog()
+    categories = catalog.categories
+    disposition = {(category, "C"): "NOT_APPLICABLE" for category in categories}
+    policy = make_role_policy(categories, disposition)
+    a_b_receipts = [r for r in role_receipts(categories) if r.role != "C"]
+    missing_policy = partition_preflight(
+        catalog, a_b_receipts, role_policy=policy,
+        verified_identity_receipt_sha256s=[r.receipt_sha256 for r in a_b_receipts])
+    assert missing_policy["role_policy_externally_verified"] is False
+    assert missing_policy["role_identity_receipts_complete"] is False
+    verified = partition_preflight(
+        catalog, a_b_receipts, role_policy=policy,
+        verified_role_policy_sha256s=[policy.policy_sha256],
+        verified_identity_receipt_sha256s=[r.receipt_sha256 for r in a_b_receipts])
+    assert verified["role_identity_receipts_complete"] is True
+    assert verified["c_certification_status"] == "NOT_REQUIRED_BY_EXTERNALLY_VERIFIED_POLICY"
+    assert verified["a_reference_authorization_by_category"][categories[0]] == \
+        "PENDING_AUTHORIZATION"
+    with pytest.raises(ValueError, match="explicitly cover every category"):
+        incomplete = build_role_policy("incomplete", "v1", policy.entries[:-1])
+        partition_preflight(catalog, role_policy=incomplete)
+    with pytest.raises(ValueError, match="despite NOT_APPLICABLE"):
+        c_receipt = next(r for r in role_receipts(categories) if r.role == "C")
+        partition_preflight(catalog, [c_receipt], role_policy=policy)
+    with pytest.raises(ValueError, match="genuine written rationale"):
+        bad = make_role_policy(categories, disposition)
+        bad_entries = tuple(replace(entry, rationale=None) if entry.role == "C" else entry
+                            for entry in bad.entries)
+        invalid = build_role_policy("bad", "v1", bad_entries)
+        partition_preflight(catalog, role_policy=invalid)
+
+
+def test_absent_partition_policy_is_pending_and_never_treated_as_empty_roles():
+    catalog = make_catalog()
+    report = partition_preflight(catalog)
+    assert report["role_policy_declared"] is False
+    assert report["role_policy_externally_verified"] is False
+    assert report["role_identity_receipts_complete"] is False
+    assert report["role_disjointness_externally_certified"] is False
+    assert report["authorized_a_data_available"] is False
+    assert report["g1_geometry_complete"] is False
+    assert len(report["pending_policy_category_roles"]) == 90
+
+
+def test_verified_a_not_applicable_policy_keeps_category_unavailable_for_g1():
+    catalog = make_catalog()
+    category = catalog.categories[0]
+    policy = make_role_policy(catalog.categories, {(category, "A"): "NOT_APPLICABLE"})
+    receipts = [r for r in role_receipts(catalog.categories)
+                if not (r.category_id == category and r.role == "A")]
+    report = partition_preflight(
+        catalog, receipts, role_policy=policy,
+        verified_role_policy_sha256s=[policy.policy_sha256],
+        verified_identity_receipt_sha256s=[r.receipt_sha256 for r in receipts],
+        verified_c_certificate_sha256=digest("synthetic-c-certificate"),
+    )
+    assert report["a_reference_authorization_by_category"][category] == "NOT_AUTHORIZED_FOR_G1"
+    assert report["authorized_a_data_available"] is False
+    assert report["role_identity_receipts_complete"] is True
+
+
+def test_a_reference_authorization_requires_external_count_only_receipt():
+    catalog = make_catalog()
+    receipts = role_receipts(catalog.categories)
+    policy = make_role_policy(catalog.categories)
+    category = catalog.categories[0]
+    a_receipt = AReferenceAvailabilityReceipt(
+        category_id=category,
+        authorized_normal_reference_image_count=4,
+        authorized_source_group_count=1,
+        receipt_sha256=digest("a-availability"),
+        authorization_id="synthetic-review",
+    )
+    report = partition_preflight(
+        catalog, receipts, role_policy=policy,
+        a_reference_receipts=[a_receipt],
+        verified_role_policy_sha256s=[policy.policy_sha256],
+        verified_identity_receipt_sha256s=[r.receipt_sha256 for r in receipts],
+        verified_c_certificate_sha256=digest("synthetic-c-certificate"),
+        verified_a_reference_receipt_sha256s=[a_receipt.receipt_sha256],
+    )
+    assert report["authorized_a_data_available"] is True
+    assert report["a_reference_authorization_by_category"][category] == \
+        "AUTHORIZED_FOR_G1_REFERENCE_POPULATION"
+    assert report["g1_geometry_complete"] is False
+    with pytest.raises(ValueError, match="normals only"):
+        partition_preflight(
+            catalog, receipts, role_policy=policy,
+            a_reference_receipts=[replace(a_receipt, population="mixed")])
 
 
 def test_partition_overlap_and_protected_receipt_projection_fail_closed():
@@ -259,6 +517,18 @@ def test_r1_descriptor_profile_matches_receipt_backed_native_geometry():
     assert profile.l2_normalized is True
     assert profile.view == "id"
     assert len(profile.source_hashes) == 5
+    other_class = replace(
+        profile,
+        profile_id="r1_other_class",
+        fixed_support_sha256=digest("other-bank"),
+        native_scorer_profile_sha256=digest("other-scorer-profile"),
+        source_hashes=(("category_specific_runner.py", digest("runner")),),
+    )
+    assert other_class.representation_sha256 == profile.representation_sha256
+    assert other_class.encoder_fingerprint_sha256 == profile.encoder_fingerprint_sha256
+    assert other_class.preprocess_fingerprint_sha256 == profile.preprocess_fingerprint_sha256
+    assert replace(profile, preprocess_fingerprint_sha256=digest("changed-preprocess")).representation_sha256 \
+        != profile.representation_sha256
 
 
 def test_cache_compatibility_is_metadata_only_and_rejects_provenance_mismatch():
@@ -296,26 +566,23 @@ def test_g1a_spatial_sampling_is_deterministic_and_has_49_frozen_positions():
 
 def test_g1b_stays_not_identifiable_without_a_native_top32_receipt():
     assert g1b_identifiability_status(None) == "NOT_YET_IDENTIFIABLE"
-    receipt = Top32SelectionReceipt(
-        query_image_sha256=digest("image"),
-        scorer_profile_sha256=R1_DESCRIPTOR_PROFILE.native_scorer_profile_sha256,
-        fixed_support_sha256=R1_FIXED_SUPPORT_SHA256,
-        score_state_memory_sha256=digest("frozen-baseline-memory"),
-        source_receipt_sha256=digest("native-c0-index-receipt"),
-        baseline_memory_contract=G1B_BASELINE_MEMORY_CONTRACT,
-        baseline_memory_certificate_sha256=digest("certified-r1-m0"),
-        selection_rule=G1B_SELECTION_RULE,
-        selected_indices=tuple(range(32)),
-    )
+    receipt = valid_top32_receipt()
     assert g1b_identifiability_status(receipt) == "NOT_YET_IDENTIFIABLE"
     assert g1b_identifiability_status(
+        receipt,
+        verified_receipt_sha256=receipt.source_receipt_sha256,
+        verified_baseline_certificate_sha256=receipt.baseline_memory_certificate_sha256,
+    ) == "NOT_YET_IDENTIFIABLE"
+    assert g1b_identifiability_status(
         receipt, verified_receipt_sha256=receipt.source_receipt_sha256,
+        verified_fixed_support_receipt_sha256=receipt.fixed_support_receipt_sha256,
         verified_baseline_certificate_sha256=receipt.baseline_memory_certificate_sha256
-    ) == "IDENTIFIABLE_FROM_EXTERNALLY_VERIFIED_FROZEN_NATIVE_C0_RECEIPT"
+    ) == "IDENTIFIABLE_FROM_EXTERNALLY_VERIFIED_CATEGORY_NATIVE_C0_RECEIPT"
     features = np.zeros((784, 4096), dtype=np.float32)
     features[:, 0] = 1.0
     selected = select_g1b_features(
         features, receipt, verified_receipt_sha256=receipt.source_receipt_sha256,
+        verified_fixed_support_receipt_sha256=receipt.fixed_support_receipt_sha256,
         verified_baseline_certificate_sha256=receipt.baseline_memory_certificate_sha256)
     assert selected.shape == (32, 4096)
     assert selected.flags.writeable is False
@@ -323,12 +590,103 @@ def test_g1b_stays_not_identifiable_without_a_native_top32_receipt():
         g1b_identifiability_status(
             replace(receipt, selected_indices=tuple(range(31))),
             verified_receipt_sha256=receipt.source_receipt_sha256,
+            verified_fixed_support_receipt_sha256=receipt.fixed_support_receipt_sha256,
             verified_baseline_certificate_sha256=receipt.baseline_memory_certificate_sha256)
     with pytest.raises(GeometryContractError, match="incompatible native scorer"):
         g1b_identifiability_status(
             replace(receipt, scorer_profile_sha256=digest("wrong-scorer")),
             verified_receipt_sha256=receipt.source_receipt_sha256,
+            verified_fixed_support_receipt_sha256=receipt.fixed_support_receipt_sha256,
             verified_baseline_certificate_sha256=receipt.baseline_memory_certificate_sha256)
+
+
+def test_g1b_allows_category_specific_banks_but_requires_matching_provenance():
+    other_category = CANONICAL_CATEGORY_IDS[1]
+    receipt = valid_top32_receipt(
+        category_id=other_category,
+        fixed_support_category_id=other_category,
+        fixed_support_sha256=digest("not-the-historical-switch-bank"),
+        fixed_support_seed=17,
+    )
+    assert g1b_identifiability_status(receipt) == "NOT_YET_IDENTIFIABLE"
+    assert receipt.fixed_support_sha256 != R1_FIXED_SUPPORT_SHA256
+    assert g1b_identifiability_status(
+        receipt,
+        verified_receipt_sha256=receipt.source_receipt_sha256,
+        verified_fixed_support_receipt_sha256=receipt.fixed_support_receipt_sha256,
+        verified_baseline_certificate_sha256=receipt.baseline_memory_certificate_sha256,
+    ) == "IDENTIFIABLE_FROM_EXTERNALLY_VERIFIED_CATEGORY_NATIVE_C0_RECEIPT"
+    for change, message in (
+        ({"fixed_support_category_id": CANONICAL_CATEGORY_IDS[0]}, "different category"),
+        ({"fixed_support_digest_algorithm": "raw-prototype-bytes"}, "digest algorithm"),
+        ({"representation_sha256": digest("wrong-representation")}, "representation identity"),
+    ):
+        with pytest.raises(GeometryContractError, match=message):
+            g1b_identifiability_status(replace(receipt, **change))
+    with pytest.raises(GeometryContractError, match="support/M0"):
+        g1b_identifiability_status(
+            receipt,
+            verified_receipt_sha256=receipt.source_receipt_sha256,
+            verified_fixed_support_receipt_sha256=digest("wrong-bank-receipt"),
+            verified_baseline_certificate_sha256=receipt.baseline_memory_certificate_sha256,
+        )
+
+
+def test_historical_switch_seed0_bank_and_m0_state_cannot_cross_categories():
+    switch_receipt = valid_top32_receipt(
+        category_id="switch",
+        fixed_support_category_id="switch",
+        fixed_support_sha256=R1_FIXED_SUPPORT_SHA256,
+        fixed_support_seed=0,
+    )
+    assert g1b_identifiability_status(switch_receipt) == "NOT_YET_IDENTIFIABLE"
+    # Reusing the exact switch receipt under another category is rejected even
+    # if the caller rewrites its category labels to look internally consistent.
+    with pytest.raises(GeometryContractError, match="receipt digest is not bound|cannot be reused"):
+        g1b_identifiability_status(replace(
+            switch_receipt,
+            category_id=CANONICAL_CATEGORY_IDS[1],
+            fixed_support_category_id=CANONICAL_CATEGORY_IDS[1],
+        ))
+
+    other_category = CANONICAL_CATEGORY_IDS[1]
+    other_bank = valid_top32_receipt(
+        category_id=other_category,
+        fixed_support_category_id=other_category,
+        fixed_support_sha256=digest("other-class-bank"),
+        fixed_support_seed=0,
+    )
+    with pytest.raises(GeometryContractError, match="category-specific M0 scorer state"):
+        g1b_identifiability_status(replace(
+            other_bank, m0_scorer_state_sha256=switch_receipt.m0_scorer_state_sha256))
+
+
+def test_fixed_support_and_m0_receipt_digests_are_deterministic_and_category_bound():
+    switch_digest = category_fixed_support_receipt_sha256(
+        R1_FIXED_SUPPORT_CATEGORY_ID, R1_FIXED_SUPPORT_SEED,
+        R1_FIXED_SUPPORT_DIGEST_ALGORITHM, R1_FIXED_SUPPORT_SHA256)
+    assert switch_digest == category_fixed_support_receipt_sha256(
+        R1_FIXED_SUPPORT_CATEGORY_ID, R1_FIXED_SUPPORT_SEED,
+        R1_FIXED_SUPPORT_DIGEST_ALGORITHM, R1_FIXED_SUPPORT_SHA256)
+    other_digest = category_fixed_support_receipt_sha256(
+        CANONICAL_CATEGORY_IDS[0], R1_FIXED_SUPPORT_SEED,
+        R1_FIXED_SUPPORT_DIGEST_ALGORITHM, digest("other-bank"))
+    assert switch_digest != other_digest
+    assert switch_digest != category_fixed_support_receipt_sha256(
+        CANONICAL_CATEGORY_IDS[0], R1_FIXED_SUPPORT_SEED,
+        R1_FIXED_SUPPORT_DIGEST_ALGORITHM, R1_FIXED_SUPPORT_SHA256)
+
+    receipt = valid_top32_receipt()
+    other_state = category_m0_scorer_state_sha256(
+        category_id=CANONICAL_CATEGORY_IDS[1],
+        representation_sha256=receipt.representation_sha256,
+        scorer_profile_sha256=receipt.scorer_profile_sha256,
+        fixed_support_receipt_sha256=receipt.fixed_support_receipt_sha256,
+        score_state_memory_sha256=receipt.score_state_memory_sha256,
+        baseline_memory_contract=receipt.baseline_memory_contract,
+        baseline_memory_certificate_sha256=receipt.baseline_memory_certificate_sha256,
+    )
+    assert other_state != receipt.m0_scorer_state_sha256
 
 
 def test_same_source_and_same_image_rows_are_excluded_before_neighbor_selection():
@@ -374,6 +732,31 @@ def test_nearest_ties_are_broken_by_original_reference_index():
     assert stats.nearest_reference_index[0] == 0
     assert stats.local_reference_count_by_radius[0].tolist() == [0, 0, 2]
     assert stats.boundary_equal_count_by_radius[0].tolist() == [0, 2, 0]
+
+
+def test_geometry_requires_authorized_a_receipt_and_external_digest_review():
+    unreviewed = digest("unreviewed-a-receipt")
+    query = make_batch(
+        "cat", [[1.0, 0.0]], [digest("qg")], [digest("qi")],
+        a_reference_availability_receipt_sha256=unreviewed)
+    reference = make_batch(
+        "cat", [[0.0, 1.0]], [digest("rg")], [digest("ri")],
+        a_reference_availability_receipt_sha256=unreviewed)
+    with pytest.raises(GeometryContractError, match="does not match the externally verified category"):
+        _compare_source_disjoint(
+            query, reference, radii=[0.0, 1.0, 2.0],
+            verified_a_reference_availability_receipts={"cat": A_AUTHORIZATION})
+    with pytest.raises(GeometryContractError, match="no externally verified A availability"):
+        _compare_source_disjoint(
+            query, reference, radii=[0.0, 1.0, 2.0],
+            verified_a_reference_availability_receipts={"audiojack": unreviewed})
+    pending = make_batch(
+        "cat", [[1.0, 0.0]], [digest("pg")], [digest("pi")],
+        access_status="PENDING_AUTHORIZATION")
+    pending_reference = make_batch(
+        "cat", [[0.0, 1.0]], [digest("prg")], [digest("pri")])
+    with pytest.raises(GeometryContractError, match="not externally authorized"):
+        compare_source_disjoint(pending, pending_reference, radii=[0.0, 1.0, 2.0])
 
 
 def test_strict_radius_boundary_excludes_equal_and_distance_two_boundary():
@@ -518,6 +901,7 @@ def test_macro_pooled_and_worst_category_summaries_preserve_heterogeneity():
     (lambda b: replace(b, features=np.asarray([[np.nan, 0.0]], dtype=np.float32)), "finite"),
     (lambda b: replace(b, features=np.asarray([[1.0, 0.0]], dtype=np.float16)), "dtype"),
     (lambda b: replace(b, source_group_sha256=("bad",)), "source-group"),
+    (lambda b: replace(b, access_status="NOT_AUTHORIZED_FOR_G1"), "not externally authorized"),
     (lambda b: replace(b, role="C"), "role"),
     (lambda b: replace(b, contains_labels_or_masks=True), "forbidden information"),
 ])

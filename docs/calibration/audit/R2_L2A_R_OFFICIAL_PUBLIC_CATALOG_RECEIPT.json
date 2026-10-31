@@ -1,0 +1,64 @@
+{
+  "schema": "r2_l2a.official_public_catalog_receipt.v1",
+  "source": {
+    "repository": "Tencent/AnomalyDetection_Real-IAD",
+    "commit": "98c28ffbe95b380d17a3777d77219152368c19e9",
+    "path": "experiments/RealIAD-full/config.yaml",
+    "uri": "https://github.com/Tencent/AnomalyDetection_Real-IAD/blob/98c28ffbe95b380d17a3777d77219152368c19e9/experiments/RealIAD-full/config.yaml",
+    "sha256": "9c17d4ba78210ad65a288fedcdd6ea8a65d0926da05a960d3ed8dd1c3210552f",
+    "size_bytes": 5574,
+    "dataset_config_version": "v1.0.0",
+    "extraction_algorithm": "strict_yaml_dataset_train_test_meta_file_v1"
+  },
+  "catalog": {
+    "train_category_count": 30,
+    "test_category_count": 30,
+    "train_distinct_category_count": 30,
+    "test_distinct_category_count": 30,
+    "train_test_sets_equal": true,
+    "categories": [
+      "audiojack",
+      "bottle_cap",
+      "button_battery",
+      "end_cap",
+      "eraser",
+      "fire_hood",
+      "mint",
+      "mounts",
+      "pcb",
+      "phone_battery",
+      "plastic_nut",
+      "plastic_plug",
+      "porcelain_doll",
+      "regulator",
+      "rolled_strip_base",
+      "sim_card_set",
+      "switch",
+      "tape",
+      "terminalblock",
+      "toothbrush",
+      "toy",
+      "toy_brick",
+      "transistor1",
+      "u_block",
+      "usb",
+      "usb_adaptor",
+      "vcpill",
+      "wooden_beads",
+      "woodstick",
+      "zipper"
+    ]
+  },
+  "projection": {
+    "fields": [
+      "canonical_category_identifiers_only"
+    ],
+    "contains_image_paths": false,
+    "contains_labels_or_masks": false
+  },
+  "authorization": {
+    "local_data_access_authorized": false,
+    "local_partition_identity_verified": false,
+    "geometry_verified": false
+  }
+}
