@@ -57,9 +57,11 @@ S1_SOURCE_PATHS = CORE_SOURCE_PATHS + (
 
 
 class S3Error(RuntimeError):
-    def __init__(self, status: str, message: str):
+    def __init__(self, status: str, message: str,
+                 *, root_exception_type: str | None = None):
         super().__init__(message)
         self.status = status
+        self.root_exception_type = root_exception_type
 
 
 def canonical_json(value: Any) -> str:
@@ -214,7 +216,8 @@ def _load_json(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise S3Error("BLOCKED_INPUT", f"Cannot read required JSON receipt {path.name}: {exc}") from exc
+        raise S3Error("BLOCKED_INPUT", f"Cannot read required JSON receipt {path.name}: {exc}",
+                      root_exception_type=type(exc).__name__) from exc
     if not isinstance(value, dict):
         raise S3Error("BLOCKED_INPUT", f"Receipt is not a JSON object: {path.name}")
     return value
@@ -501,6 +504,69 @@ def _safe_preflight_output(preflight: Mapping[str, Any]) -> dict[str, Any]:
             if key not in ("dataset_root", "support_paths", "stream_paths")}
 
 
+def _native_score_bank_reference(impl: Any, bank: Any, image: Any,
+                                 features: Sequence[Any], cfg: Any) -> tuple[float, np.ndarray]:
+    """Call the historical two-value score_bank wrapper and validate its IDs."""
+    from experiments.a0_a1_strict4_matched import score_bank
+
+    try:
+        native_score, native_amap = score_bank(impl, bank, image, list(features), cfg)
+    except Exception as exc:
+        raise S3Error("INCOMPLETE", f"Native score_bank API failed: {type(exc).__name__}: {exc}",
+                      root_exception_type=type(exc).__name__) from exc
+    try:
+        candidates = impl.layer_to_topk_from_amap(native_amap)
+    except Exception as exc:
+        raise S3Error("INCOMPLETE", f"Native Top-32 extraction failed: {type(exc).__name__}: {exc}",
+                      root_exception_type=type(exc).__name__) from exc
+    if not isinstance(candidates, Mapping) or 0 not in candidates:
+        raise S3Error("TOPK_PARITY_FAILED", "Native score_bank map has no layer-0 Top-32 IDs")
+    try:
+        native_ids = validate_top32(np.asarray(candidates[0], dtype=np.int64))
+        native_score = float(native_score)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise S3Error("TOPK_PARITY_FAILED", f"Malformed native layer-0 Top-32 IDs: {exc}",
+                      root_exception_type=type(exc).__name__) from exc
+    return native_score, native_ids
+
+
+def _native_debug_map_evidence(bank: Any, impl: Any, image: Any,
+                               features: Sequence[Any], cfg: Any) -> tuple[Mapping[str, Any], np.ndarray, np.ndarray]:
+    """Return the diagnostic A_pre grid and independently reported Top-32 IDs."""
+    try:
+        debug = bank.score_sample_correction_debug_maps(
+            cls_name="p0", view_to_feats={"id": list(features)}, mode=0,
+            views={"id": impl.ViewSpec("id", "id")},
+            topk_patches=cfg.topk_patches, mode_scoring="boost",
+            lam=0.8, tau_close=0.20, gamma=1.0,
+            layer_fusion="mean", view_fusion="mean",
+            img_agg=cfg.image_aggregation, img_topk=cfg.image_topk,
+            img_quantile=cfg.image_quantile, concept_assign_view="id",
+            img_hw=(image.height, image.width))
+    except Exception as exc:
+        raise S3Error("INCOMPLETE", f"Native diagnostic scoring failed: {type(exc).__name__}: {exc}",
+                      root_exception_type=type(exc).__name__) from exc
+    if not isinstance(debug, Mapping):
+        raise S3Error("INCOMPLETE", "Native diagnostic API returned a non-mapping result",
+                      root_exception_type="TypeError")
+    if "A_pre" not in debug:
+        raise S3Error("INCOMPLETE", "Native diagnostic result is missing A_pre",
+                      root_exception_type="KeyError")
+    debug_hw = np.asarray(debug["A_pre"])
+    if (debug_hw.shape != (28, 28) or debug_hw.dtype != np.dtype(np.float32) or
+            not np.isfinite(debug_hw).all()):
+        raise S3Error("MAP_PARITY_FAILED", "Native A_pre map must be finite float32 [28,28]")
+    try:
+        debug_ids = np.asarray(
+            debug["debug"]["per_view"]["id"]["layer_summary"]["layer0"]["topk_patch_idx"],
+            dtype=np.int64)
+        debug_ids = validate_top32(debug_ids)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise S3Error("TOPK_PARITY_FAILED", f"Native diagnostic Top-32 IDs are unavailable or malformed: {exc}",
+                      root_exception_type=type(exc).__name__) from exc
+    return debug, debug_hw, debug_ids
+
+
 def _event_arrays(*, base_map: np.ndarray, debug_map: np.ndarray,
                   adapter_ids: np.ndarray, native_ids: np.ndarray,
                   debug_ids: np.ndarray, selected_features: np.ndarray) -> dict[str, np.ndarray]:
@@ -545,6 +611,33 @@ def _map_comparison(adapter: np.ndarray, native_hw: np.ndarray) -> dict[str, Any
         "native_shape": list(native_hw.shape),
         "native_dtype": str(native_hw.dtype),
         "coordinate_transform": "native A_pre [28,28] flattened row-major to identity [784]; no interpolation",
+    }
+
+
+def _native_parity_results(adapter_map: np.ndarray, adapter_ids: np.ndarray,
+                           adapter_score: float, native_score: float,
+                           native_map: np.ndarray, native_ids: np.ndarray,
+                           debug_ids: np.ndarray) -> dict[str, Any]:
+    """Compute the frozen S3 map, ordered Top-32, and scalar parity gates."""
+    base_map = validate_dense_map(adapter_map)
+    base_ids = validate_top32(adapter_ids)
+    score = float(adapter_score)
+    native_score = float(native_score)
+    map_result = _map_comparison(base_map, native_map)
+    top32_equal = bool(np.array_equal(base_ids, validate_top32(native_ids)) and
+                       np.array_equal(base_ids, validate_top32(debug_ids)))
+    score_delta = abs(score - native_score)
+    scalar_tolerance = SCALAR_ATOL + SCALAR_RTOL * abs(native_score)
+    max_reconstructed = max_aggregate(base_map)
+    return {
+        "map_result": map_result,
+        "top32_equal": top32_equal,
+        "score_delta": score_delta,
+        "scalar_tolerance": scalar_tolerance,
+        "scalar_tolerance_pass": score_delta <= scalar_tolerance,
+        "scalar_exact": score == native_score,
+        "max_reconstructed": max_reconstructed,
+        "max_reconstruction_exact": score == max_reconstructed,
     }
 
 
@@ -808,6 +901,10 @@ def _run_gpu(*, expected_source_commit: str, run_id: str,
         "authorization_id": authorization_id,
         "run_id": run_id,
         "status": "INCOMPLETE",
+        "overall_execution_status": "INCOMPLETE",
+        "tape_integrity_status": "NOT_VERIFIED",
+        "event_count_complete": False,
+        "root_exception_type": None,
         "gpu_execution_status": "STARTED",
         "category": "switch",
         "support_seed": 0,
@@ -990,7 +1087,6 @@ def _run_gpu(*, expected_source_commit: str, run_id: str,
     summary["correction_defect_state_before"] = pre_corr_defect
     _atomic_json(manifest_path, summary)
 
-    from experiments.a0_a1_strict4_matched import score_bank
     stream_started = time.perf_counter()
     primary_failure: S3Error | None = None
     try:
@@ -1019,33 +1115,20 @@ def _run_gpu(*, expected_source_commit: str, run_id: str,
             summary["timings_seconds"]["adapter_scoring"] += time.perf_counter() - adapter_started
 
             native_started = time.perf_counter()
-            native_score, native_amap, _ = score_bank(impl, bank, image, list(features), cfg)
-            native_candidate = impl.layer_to_topk_from_amap(native_amap)
-            native_ids = np.asarray(native_candidate.get(0, []), dtype=np.int64)
+            native_score, native_ids = _native_score_bank_reference(
+                impl, bank, image, list(features), cfg)
             torch.cuda.synchronize()
             summary["timings_seconds"]["native_score_bank"] += time.perf_counter() - native_started
 
             diagnostic_started = time.perf_counter()
-            debug = bank.score_sample_correction_debug_maps(
-                cls_name="p0", view_to_feats={"id": list(features)}, mode=0,
-                views={"id": impl.ViewSpec("id", "id")},
-                topk_patches=cfg.topk_patches, mode_scoring="boost",
-                lam=0.8, tau_close=0.20, gamma=1.0,
-                layer_fusion="mean", view_fusion="mean",
-                img_agg=cfg.image_aggregation, img_topk=cfg.image_topk,
-                img_quantile=cfg.image_quantile, concept_assign_view="id",
-                img_hw=(image.height, image.width))
+            debug, debug_hw, debug_ids = _native_debug_map_evidence(
+                bank, impl, image, features, cfg)
             torch.cuda.synchronize()
             summary["timings_seconds"]["diagnostic_map_scoring"] += time.perf_counter() - diagnostic_started
 
             base_map = validate_dense_map(np.asarray(adapter_map))
             adapter_ids = validate_top32(adapter_ids)
             native_ids = validate_top32(native_ids)
-            debug_hw = np.asarray(debug["A_pre"])
-            debug_ids = np.asarray(
-                debug["debug"]["per_view"]["id"]["layer_summary"]["layer0"]["topk_patch_idx"],
-                dtype=np.int64)
-            debug_ids = validate_top32(debug_ids)
             grid_hw = list(debug["debug"]["grid_hw"])
             if grid_hw != [28, 28] or debug_hw.shape != (28, 28):
                 raise S3Error("MAP_PARITY_FAILED", f"Native identity grid differs at event {position}")
@@ -1056,17 +1139,17 @@ def _run_gpu(*, expected_source_commit: str, run_id: str,
                     native_layer_count != 1 or adapter_summary["layer0"].get("use_defect_bank") is not False or
                     adapter_summary["layer0"].get("corr_bank_size") != 0):
                 raise S3Error("MAP_PARITY_FAILED", f"Layer/view metadata differs at event {position}")
-            map_result = _map_comparison(base_map, debug_hw)
-            top32_equal = bool(np.array_equal(adapter_ids, native_ids) and
-                               np.array_equal(adapter_ids, debug_ids))
-            adapter_score = float(adapter_score)
-            native_score = float(native_score)
-            score_delta = abs(adapter_score - native_score)
-            scalar_tolerance = SCALAR_ATOL + SCALAR_RTOL * abs(native_score)
-            scalar_tolerance_pass = score_delta <= scalar_tolerance
-            scalar_exact = adapter_score == native_score
-            max_reconstructed = max_aggregate(base_map)
-            max_reconstruction_exact = adapter_score == max_reconstructed
+            parity = _native_parity_results(
+                base_map, adapter_ids, adapter_score, native_score,
+                debug_hw, native_ids, debug_ids)
+            map_result = parity["map_result"]
+            top32_equal = parity["top32_equal"]
+            score_delta = parity["score_delta"]
+            scalar_tolerance = parity["scalar_tolerance"]
+            scalar_tolerance_pass = parity["scalar_tolerance_pass"]
+            scalar_exact = parity["scalar_exact"]
+            max_reconstructed = parity["max_reconstructed"]
+            max_reconstruction_exact = parity["max_reconstruction_exact"]
             residual = np.asarray(debug["A_corr"], dtype=np.float32).reshape(-1, order="C")
             zero_reconstructed = zero_correction_reconstruction(base_map, residual)
             zero_correction_exact = bool(np.array_equal(zero_reconstructed, base_map))
@@ -1162,7 +1245,8 @@ def _run_gpu(*, expected_source_commit: str, run_id: str,
     except S3Error as exc:
         primary_failure = exc
     except Exception as exc:
-        primary_failure = S3Error("INCOMPLETE", f"Replay error {type(exc).__name__}: {exc}")
+        primary_failure = S3Error("INCOMPLETE", f"Replay error {type(exc).__name__}: {exc}",
+                                  root_exception_type=type(exc).__name__)
     finally:
         summary["timings_seconds"]["stream_encoding"] = float(summary["timings_seconds"]["stream_encoding"])
         summary["total_gpu_subprocess_wall_seconds"] = time.monotonic() - started
@@ -1191,6 +1275,7 @@ def _run_gpu(*, expected_source_commit: str, run_id: str,
     if primary_failure is not None:
         summary["status"] = primary_failure.status
         summary["failure_message"] = str(primary_failure)
+        summary["root_exception_type"] = primary_failure.root_exception_type
     elif not final_mem_ok:
         summary["status"] = "MEMORY_IMMUTABILITY_FAILED"
         summary["failure_message"] = "Fixed/dynamic/correction/defect state changed during scoring"
@@ -1200,6 +1285,9 @@ def _run_gpu(*, expected_source_commit: str, run_id: str,
     else:
         summary["status"] = "INCOMPLETE"
         summary["gpu_replay_parity_status"] = "ALL_16_PARITY_CHECKS_PASS_PENDING_TAPE_READBACK"
+    summary["overall_execution_status"] = summary["status"]
+    summary["tape_integrity_status"] = "NOT_VERIFIED"
+    summary["event_count_complete"] = False
     summary["output_bytes"] = _directory_bytes(output_dir)
     _atomic_json(manifest_path, summary)
     cleanup = getattr(backbone, "cleanup", None)
@@ -1236,7 +1324,11 @@ def run_gpu(args: argparse.Namespace) -> int:
         if output_dir.is_dir() and (output_dir / "run_manifest.json").is_file():
             try:
                 _update_manifest(output_dir / "run_manifest.json",
-                                 {"status": exc.status, "failure_message": str(exc),
+                                 {"status": exc.status, "overall_execution_status": exc.status,
+                                  "tape_integrity_status": "NOT_VERIFIED",
+                                  "event_count_complete": False,
+                                  "failure_message": str(exc),
+                              "root_exception_type": exc.root_exception_type,
                                   "gpu_execution_status": "FAILED"})
             except Exception:
                 pass
@@ -1246,7 +1338,11 @@ def run_gpu(args: argparse.Namespace) -> int:
         if output_dir.is_dir() and (output_dir / "run_manifest.json").is_file():
             try:
                 _update_manifest(output_dir / "run_manifest.json",
-                                 {"status": "INCOMPLETE", "failure_type": type(exc).__name__,
+                                 {"status": "INCOMPLETE", "overall_execution_status": "INCOMPLETE",
+                                  "tape_integrity_status": "NOT_VERIFIED",
+                                  "event_count_complete": False,
+                                  "failure_type": type(exc).__name__,
+                              "root_exception_type": type(exc).__name__,
                                   "failure_message": str(exc), "gpu_execution_status": "FAILED"})
             except Exception:
                 pass
@@ -1261,9 +1357,20 @@ def run_verify(args: argparse.Namespace) -> int:
         return 0
     except Exception as exc:
         print(canonical_json({"readback_integrity_pass": False,
-                              "error_type": type(exc).__name__, "error": str(exc)}),
-              file=sys.stderr)
+                              "readback_integrity_failure": _is_tape_integrity_failure(exc),
+                              "error_type": type(exc).__name__,
+                              "root_exception_type": getattr(exc, "root_exception_type", None) or
+                              type(exc).__name__,
+                              "error": str(exc)}))
         return 5
+
+
+def _is_tape_integrity_failure(exc: Exception) -> bool:
+    """Identify tape validation/serialization failures separately from verifier errors."""
+    if isinstance(exc, ValueError):
+        return True
+    return (isinstance(exc, S3Error) and exc.status == "BLOCKED_INPUT" and
+            exc.root_exception_type == "JSONDecodeError")
 
 
 def main(argv: Sequence[str] | None = None) -> int:

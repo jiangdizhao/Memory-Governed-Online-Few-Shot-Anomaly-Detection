@@ -6,6 +6,7 @@ from dataclasses import asdict
 import numpy as np
 import pytest
 
+from experiments.a0_a1_strict4_matched import score_bank as historical_score_bank
 from experiments.calibration import r1_s3_native_map_parity as s3
 
 
@@ -107,6 +108,134 @@ def test_dense_map_shape_dtype_finiteness_and_top32_validation():
     assert len(set(ids.tolist())) == 32
     with pytest.raises(ValueError, match="unique"):
         s3.validate_top32(np.zeros(32, dtype=np.int64))
+
+
+class _FakeNativeBank:
+    def __init__(self, *, amap=None, ids=None, fail=False):
+        self.amap = np.zeros((28, 28), dtype=np.float32) if amap is None else amap
+        self.ids = np.arange(32, dtype=np.int64) if ids is None else ids
+        self.fail = fail
+
+    def score_sample_multiview(self, **_kwargs):
+        if self.fail:
+            raise RuntimeError("synthetic native scoring error")
+        # The native bank API returns three values; the historical wrapper
+        # intentionally exposes only (score, anomaly map).
+        return 0.0, self.amap, {"synthetic": True}
+
+    def score_sample_correction_debug_maps(self, **_kwargs):
+        return {
+            "A_pre": self.amap,
+            "A_corr": np.zeros((28, 28), dtype=np.float32),
+            "debug": {
+                "grid_hw": [28, 28],
+                "per_view": {"id": {"layer_summary": {
+                    "layer0": {"topk_patch_idx": self.ids}}}},
+            },
+        }
+
+
+class _FakeNativeImpl:
+    ViewSpec = staticmethod(lambda *_args: object())
+
+    def __init__(self, *, ids=None, missing_layer=False):
+        self.ids = np.arange(32, dtype=np.int64) if ids is None else ids
+        self.missing_layer = missing_layer
+
+    def layer_to_topk_from_amap(self, _amap):
+        return {} if self.missing_layer else {0: self.ids}
+
+
+class _FakeNativeImage:
+    height = 224
+    width = 224
+
+
+class _FakeNativeConfig:
+    topk_patches = 32
+    image_aggregation = "max"
+    image_topk = 1
+    image_quantile = 0.95
+
+
+def test_native_reference_uses_real_score_bank_wrapper_two_value_contract():
+    bank = _FakeNativeBank()
+    impl = _FakeNativeImpl()
+    image = _FakeNativeImage()
+    cfg = _FakeNativeConfig()
+
+    wrapped = historical_score_bank(impl, bank, image, [], cfg)
+    assert len(wrapped) == 2
+    score, ids = s3._native_score_bank_reference(impl, bank, image, [], cfg)
+    assert score == 0.0
+    np.testing.assert_array_equal(ids, np.arange(32, dtype=np.int64))
+
+    debug, native_map, debug_ids = s3._native_debug_map_evidence(bank, impl, image, [], cfg)
+    assert debug["debug"]["grid_hw"] == [28, 28]
+    assert native_map.shape == (28, 28) and native_map.dtype == np.float32
+    np.testing.assert_array_equal(debug_ids, np.arange(32, dtype=np.int64))
+
+
+def test_native_reference_rejects_malformed_map_and_missing_top32():
+    bank = _FakeNativeBank(amap=np.zeros((27, 28), dtype=np.float32))
+    with pytest.raises(s3.S3Error) as malformed:
+        s3._native_debug_map_evidence(
+            bank, _FakeNativeImpl(), _FakeNativeImage(), [], _FakeNativeConfig())
+    assert malformed.value.status == "MAP_PARITY_FAILED"
+
+    with pytest.raises(s3.S3Error) as missing_native:
+        s3._native_score_bank_reference(
+            _FakeNativeImpl(missing_layer=True), _FakeNativeBank(), _FakeNativeImage(),
+            [], _FakeNativeConfig())
+    assert missing_native.value.status == "TOPK_PARITY_FAILED"
+
+    missing_debug = _FakeNativeBank(ids=[])
+    with pytest.raises(s3.S3Error) as missing_diagnostic:
+        s3._native_debug_map_evidence(
+            missing_debug, _FakeNativeImpl(), _FakeNativeImage(), [], _FakeNativeConfig())
+    assert missing_diagnostic.value.status == "TOPK_PARITY_FAILED"
+
+
+def test_native_api_exception_is_incomplete_with_root_exception_type():
+    with pytest.raises(s3.S3Error) as failure:
+        s3._native_score_bank_reference(
+            _FakeNativeImpl(), _FakeNativeBank(fail=True), _FakeNativeImage(),
+            [], _FakeNativeConfig())
+    assert failure.value.status == "INCOMPLETE"
+    assert failure.value.root_exception_type == "RuntimeError"
+
+
+def test_tape_integrity_failure_classifies_validation_not_api_or_access_errors():
+    assert s3._is_tape_integrity_failure(ValueError("bad event sequence")) is True
+    assert s3._is_tape_integrity_failure(s3.S3Error(
+        "BLOCKED_INPUT", "invalid serialized JSON", root_exception_type="JSONDecodeError")) is True
+    assert s3._is_tape_integrity_failure(s3.S3Error(
+        "BLOCKED_INPUT", "receipt unavailable", root_exception_type="PermissionError")) is False
+    assert s3._is_tape_integrity_failure(RuntimeError("API failed")) is False
+
+
+def test_native_parity_helper_preserves_map_top32_and_scalar_gates():
+    amap = np.zeros(784, dtype=np.float32)
+    ids = np.arange(32, dtype=np.int64)
+    passing = s3._native_parity_results(
+        amap, ids, 0.0, 0.0, amap.reshape(28, 28), ids, ids)
+    assert passing["map_result"]["exact_elementwise_equality_count"] == 784
+    assert passing["map_result"]["exact_byte_equality"] is True
+    assert passing["top32_equal"] is True
+    assert passing["scalar_tolerance_pass"] is True
+    assert passing["max_reconstruction_exact"] is True
+
+    map_mismatch = amap.reshape(28, 28).copy()
+    map_mismatch[0, 0] = 1.0
+    assert s3._native_parity_results(amap, ids, 0.0, 0.0, map_mismatch, ids, ids)[
+        "map_result"]["exact_byte_equality"] is False
+    other_ids = ids[::-1].copy()
+    assert s3._native_parity_results(
+        amap, ids, 0.0, 0.0, amap.reshape(28, 28), other_ids, ids)["top32_equal"] is False
+    scalar_failure = s3._native_parity_results(
+        amap, ids, 0.0, 0.2, amap.reshape(28, 28), ids, ids)
+    assert scalar_failure["scalar_tolerance_pass"] is False
+    assert scalar_failure["max_reconstruction_exact"] is True
 
 
 def test_image_max_aggregation_and_exact_zero_correction_without_mutation():

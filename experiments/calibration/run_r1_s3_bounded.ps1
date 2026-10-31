@@ -267,35 +267,55 @@ if (Test-Path -LiteralPath $runManifestPath -PathType Leaf) {
 }
 
 $finalStatus = $gpuStatus
+$runNow = $null
+if (Test-Path -LiteralPath $runManifestPath -PathType Leaf) {
+    try { $runNow = Get-Content -Raw -LiteralPath $runManifestPath | ConvertFrom-Json }
+    catch { $runNow = $null }
+}
+$tapeIntegrityPass = ($readbackExitCode -eq 0 -and $null -ne $readback -and
+                      $readback.readback_integrity_pass -eq $true)
+$tapeIntegrityFailure = ($null -ne $readback -and
+                          $readback.readback_integrity_pass -eq $false -and
+                          $readback.readback_integrity_failure -eq $true)
+$tapeIntegrityStatus = 'NOT_VERIFIED'
+if ($tapeIntegrityPass) { $tapeIntegrityStatus = 'PASS' }
+elseif ($tapeIntegrityFailure) { $tapeIntegrityStatus = 'FAIL' }
+$eventCountComplete = ($null -ne $readback -and $null -ne $runNow -and
+                       $readback.events_present -eq 16 -and
+                       $runNow.events_processed -eq 16)
+$readbackParityPass = ($tapeIntegrityPass -and $eventCountComplete -and
+                       $readback.dense_map_exact_readback_count -eq 16 -and
+                       $readback.top32_exact_readback_count -eq 16 -and
+                       $readback.scalar_max_readback_count -eq 16 -and
+                       $readback.scalar_tolerance_readback_count -eq 16 -and
+                       $readback.zero_correction_readback_count -eq 16 -and
+                       $readback.dynamic_memory_readback_count -eq 16 -and
+                       $readback.source_feature_immutability_readback_count -eq 16)
+$replayPass = ($null -ne $runNow -and $runNow.events_processed -eq 16 -and
+               $runNow.gpu_replay_parity_status -eq 'ALL_16_PARITY_CHECKS_PASS_PENDING_TAPE_READBACK' -and
+               $runNow.dense_map_exact_event_count -eq 16 -and
+               $runNow.top32_exact_event_count -eq 16 -and
+               $runNow.scalar_tolerance_event_count -eq 16 -and
+               $runNow.fixed_memory_unchanged -eq $true -and
+               $runNow.dynamic_memory_unchanged_and_empty -eq $true -and
+               $runNow.correction_defect_state_unchanged -eq $true -and
+               $runNow.runtime_profile_id -eq 'stage05_set_seed_0_math_sdp_v1')
+$rootExceptionType = $null
+if ($null -ne $runNow -and $runNow.root_exception_type) {
+    $rootExceptionType = [string]$runNow.root_exception_type
+}
+elseif ($tapeIntegrityFailure -and $readback.root_exception_type) {
+    $rootExceptionType = [string]$readback.root_exception_type
+}
 if ($timedOut -or $outputLimitReached) {
     $finalStatus = 'RESOURCE_LIMIT_REACHED'
 }
 elseif ($gpuStatus -eq 'INCOMPLETE' -and $childExitCode -eq 0) {
-    $runNow = Get-Content -Raw -LiteralPath $runManifestPath | ConvertFrom-Json
-    $readbackPass = ($readbackExitCode -eq 0 -and $null -ne $readback -and
-                     $readback.readback_integrity_pass -eq $true -and
-                     $readback.events_present -eq 16 -and
-                     $readback.dense_map_exact_readback_count -eq 16 -and
-                     $readback.top32_exact_readback_count -eq 16 -and
-                     $readback.scalar_max_readback_count -eq 16 -and
-                     $readback.scalar_tolerance_readback_count -eq 16 -and
-                     $readback.zero_correction_readback_count -eq 16 -and
-                     $readback.dynamic_memory_readback_count -eq 16 -and
-                     $readback.source_feature_immutability_readback_count -eq 16)
-    $replayPass = ($runNow.events_processed -eq 16 -and
-                   $runNow.gpu_replay_parity_status -eq 'ALL_16_PARITY_CHECKS_PASS_PENDING_TAPE_READBACK' -and
-                   $runNow.dense_map_exact_event_count -eq 16 -and
-                   $runNow.top32_exact_event_count -eq 16 -and
-                   $runNow.scalar_tolerance_event_count -eq 16 -and
-                   $runNow.fixed_memory_unchanged -eq $true -and
-                   $runNow.dynamic_memory_unchanged_and_empty -eq $true -and
-                   $runNow.correction_defect_state_unchanged -eq $true -and
-                   $runNow.runtime_profile_id -eq 'stage05_set_seed_0_math_sdp_v1')
-    if ($readbackPass -and $replayPass) { $finalStatus = 'S3_NATIVE_MAP_PARITY_PASS' }
-    elseif (-not $readbackPass) { $finalStatus = 'TAPE_INTEGRITY_FAILED' }
+    if ($tapeIntegrityFailure) { $finalStatus = 'TAPE_INTEGRITY_FAILED' }
+    elseif ($readbackParityPass -and $replayPass) { $finalStatus = 'S3_NATIVE_MAP_PARITY_PASS' }
     else { $finalStatus = 'INCOMPLETE' }
 }
-elseif ($readbackExitCode -ne 0 -and $gpuStatus -eq 'INCOMPLETE') {
+elseif ($tapeIntegrityFailure -and $gpuStatus -eq 'INCOMPLETE') {
     $finalStatus = 'TAPE_INTEGRITY_FAILED'
 }
 
@@ -304,6 +324,10 @@ $finalBytes = Get-OutputBytes $outputDir
 $launcherStatus = $finalStatus
 Set-LauncherFields $launcherManifestPath @{
     status = $launcherStatus
+    overall_execution_status = $finalStatus
+    tape_integrity_status = $tapeIntegrityStatus
+    event_count_complete = $eventCountComplete
+    root_exception_type = $rootExceptionType
     gpu_child_finished_at_utc = $childFinishedUtc.ToString('o')
     gpu_child_wall_seconds = [Math]::Round($stopwatch.Elapsed.TotalSeconds, 6)
     gpu_child_exit_code = $childExitCode
@@ -318,6 +342,10 @@ Set-LauncherFields $launcherManifestPath @{
 }
 Set-RunFields $runManifestPath @{
     status = $finalStatus
+    overall_execution_status = $finalStatus
+    tape_integrity_status = $tapeIntegrityStatus
+    event_count_complete = $eventCountComplete
+    root_exception_type = $rootExceptionType
     supervisor_status = $finalStatus
     supervisor_finished_at_utc = $finishedAt.ToString('o')
     total_gpu_subprocess_wall_seconds = [Math]::Round($stopwatch.Elapsed.TotalSeconds, 6)
