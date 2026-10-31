@@ -1,0 +1,670 @@
+{
+  "actual_role_certification": "PENDING",
+  "proposal": {
+    "additional_protected_categories_unreviewed": true,
+    "catalog_source_sha256": "9c17d4ba78210ad65a288fedcdd6ea8a65d0926da05a960d3ed8dd1c3210552f",
+    "frozen_role_policy_sha256": "97c7b9aa43f655570b3dbe89208aa98c96841e493f5f4024548d138183539be8",
+    "grouping_unit": "official_sample_key",
+    "identity_contract_version": "realid-offical-sample-key-v2",
+    "proposal_id": "r2_l2b_h_source_allclass_roles",
+    "proposal_sha256": "531a62e78519702f13dfc1fdb579e8476c29d3ff2993219605516d0ca7433324",
+    "protected_categories": [
+      "mint",
+      "pcb"
+    ],
+    "roles": [
+      {
+        "category_id": "audiojack",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "audiojack",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "audiojack",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "bottle_cap",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "bottle_cap",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "bottle_cap",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "button_battery",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "button_battery",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "button_battery",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "end_cap",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "end_cap",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "end_cap",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "eraser",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "eraser",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "eraser",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "fire_hood",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "fire_hood",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "fire_hood",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "mint",
+        "rationale": "Retained sealed pending explicit researcher authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PENDING_AUTHORIZATION_PROTECTED"
+      },
+      {
+        "category_id": "mint",
+        "rationale": "Retained sealed pending explicit researcher authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PENDING_AUTHORIZATION_PROTECTED"
+      },
+      {
+        "category_id": "mint",
+        "rationale": "Retained sealed pending explicit researcher authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PENDING_AUTHORIZATION_PROTECTED"
+      },
+      {
+        "category_id": "mounts",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "mounts",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "mounts",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "pcb",
+        "rationale": "Retained sealed pending explicit researcher authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PENDING_AUTHORIZATION_PROTECTED"
+      },
+      {
+        "category_id": "pcb",
+        "rationale": "Retained sealed pending explicit researcher authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PENDING_AUTHORIZATION_PROTECTED"
+      },
+      {
+        "category_id": "pcb",
+        "rationale": "Retained sealed pending explicit researcher authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PENDING_AUTHORIZATION_PROTECTED"
+      },
+      {
+        "category_id": "phone_battery",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "phone_battery",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "phone_battery",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "plastic_nut",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "plastic_nut",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "plastic_nut",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "plastic_plug",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "plastic_plug",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "plastic_plug",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "porcelain_doll",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "porcelain_doll",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "porcelain_doll",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "regulator",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "regulator",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "regulator",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "rolled_strip_base",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "rolled_strip_base",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "rolled_strip_base",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "sim_card_set",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "sim_card_set",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "sim_card_set",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "switch",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "switch",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "switch",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "tape",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "tape",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "tape",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "terminalblock",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "terminalblock",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "terminalblock",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toothbrush",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toothbrush",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toothbrush",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toy",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toy",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toy",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toy_brick",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toy_brick",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "toy_brick",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "transistor1",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "transistor1",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "transistor1",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "u_block",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "u_block",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "u_block",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "usb",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "usb",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "usb",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "usb_adaptor",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "usb_adaptor",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "usb_adaptor",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "vcpill",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "vcpill",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "vcpill",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "wooden_beads",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "wooden_beads",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "wooden_beads",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "woodstick",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "woodstick",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "woodstick",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "zipper",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "A",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "zipper",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "B",
+        "state": "PROPOSED"
+      },
+      {
+        "category_id": "zipper",
+        "rationale": "Proposed source-group role; requires researcher approval and local authorization.",
+        "reviewed_reason_sha256": null,
+        "role": "C",
+        "state": "PROPOSED"
+      }
+    ],
+    "strategy": "H-SOURCE",
+    "version": "1.0.0-proposed"
+  },
+  "public_catalog_is_not_local_access_authorization": true,
+  "recommendation": "H-SOURCE",
+  "role_identity_contract": {
+    "assignment_status": "no local source groups assigned or counted",
+    "grouping_unit": "official_sample_key",
+    "identity_contract_version": "realid-offical-sample-key-v2",
+    "multiview_rule": "all views sharing one official_sample_key remain in one role",
+    "pairwise_disjoint_roles": [
+      "A",
+      "B",
+      "C"
+    ]
+  },
+  "role_purposes": {
+    "A": "parameter-design reference",
+    "B": "development evaluation",
+    "C": "sealed confirmation"
+  },
+  "schema": "r2_l2b.proposed_30_class_role_policy.v1",
+  "status": "PROPOSED_NOT_APPROVED"
+}

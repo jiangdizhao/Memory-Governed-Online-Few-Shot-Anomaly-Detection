@@ -1,0 +1,39 @@
+{
+  "acknowledge_train_and_test_may_share_physical_json": false,
+  "allow_feature_extraction": false,
+  "allow_mask_access": false,
+  "allow_official_image_identity_metadata": false,
+  "allow_official_sample_key_condition_tokens": false,
+  "allow_outcome_label_access": false,
+  "allow_physical_json_file_bytes": false,
+  "allow_train_normal_ok_status": false,
+  "allowed_test_metadata_fields": [],
+  "allowed_train_metadata_fields": [],
+  "approval_id": null,
+  "approval_state": "PENDING_RESEARCHER_DECISION",
+  "approved_categories": [],
+  "approved_local_root": null,
+  "explicitly_authorized_protected_categories": [],
+  "independent_c_identity_certificate_supplied": false,
+  "maximum_output_bytes": 0,
+  "output_disclosure_fields": [],
+  "parsed_sections": [],
+  "prospective_roots_only_not_authorized": [
+    "G:/dataset/realiad",
+    "G:/dataset/realiad/jsons/realiad_jsons"
+  ],
+  "researcher_decisions_required": [
+    "Select H-SOURCE or freeze the exact H-CLASS holdout categories before any local metadata access.",
+    "Approve the exact versioned 30-category by A/B/C role policy or attach independently reviewed N/A reasons.",
+    "Name the approved local dataset root and category allowlist; separately name Mint, PCB, or other protected categories only if authorized.",
+    "Authorize physical JSON file-byte access and explicitly acknowledge that train and test sections may share one file.",
+    "List exact train and test fields; decide separately whether train normal/OK status and the OK/NG/defect tokens embedded in official_sample_key may be read.",
+    "Authorize official image identity metadata and provide the independent reviewer/source trust root.",
+    "Supply independently reviewed role identity manifests, pairwise A/B/C disjointness evidence, and a separately reviewed C identity certificate.",
+    "Choose G1-FULL-A, G1-PROTOCOL-MATCHED, or both as separate evidence regimes; do not merge either into C0 memory.",
+    "Decide separately whether future DINO feature extraction is allowed and name the checkpoint/source identities.",
+    "Set the exact output directory, maximum output bytes, and fields permitted for disclosure.",
+    "Keep test outcome labels and masks separately denied unless a later, separately scoped authorization explicitly grants them."
+  ],
+  "schema": "r2_l2b.local_data_access_scope.v1"
+}
