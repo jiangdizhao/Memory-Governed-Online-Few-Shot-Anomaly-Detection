@@ -47,6 +47,19 @@ from experiments.calibration.r2_g1a_switch_pilot import (
     project_r1_g1a_features,
     read_only_artifact_status,
     select_bounded_groups,
+    project_switch_train_normal_json_bytes,
+    build_development_identity_manifest,
+    G1A_DEVELOPMENT_AUTHORIZATION_ID,
+    G1ADevelopmentOutputBudget,
+    _instantiate_r1_backbone_offline,
+    _prepare_development_output_namespace,
+    _open_development_output_store,
+    _write_supervisor_status,
+    _verify_development_repository,
+    _run_development_worker,
+    run_development_pilot,
+    make_development_permit,
+    compare_g1a_development_cohort,
     validate_a_evidence_bundle,
     validate_authorization_scope,
     validate_projected_receipt,
@@ -735,6 +748,252 @@ def test_new_output_store_writes_only_projected_sanitized_receipt(tmp_path):
             assert "contains_labels_or_masks" in receipt_json
     finally:
         store.close()
+
+
+def test_development_projection_never_materializes_test_or_defect_paths(monkeypatch):
+    import json
+
+    decoded_values = []
+    original = json.JSONDecoder.raw_decode
+
+    def spy(self, text, idx=0):
+        value, end = original(self, text, idx)
+        decoded_values.append(value)
+        return value, end
+
+    monkeypatch.setattr(json.JSONDecoder, "raw_decode", spy)
+    document = {
+        "meta": {"normal_class": "OK", "prefix": "switch"},
+        "train": [
+            {"anomaly_class": "OK", "image_path": "OK/S0001/switch_0001_OK_C1_20200101000000.jpg"},
+            {"anomaly_class": "scratch", "image_path": "DEFECT_PATH_SECRET.jpg"},
+        ],
+        "test": [{"anomaly_class": "TEST_LABEL_SECRET", "image_path": "TEST_PATH_SECRET.jpg"}],
+    }
+    projection = project_switch_train_normal_json_bytes(
+        json.dumps(document).encode("utf-8"))
+    assert projection["normal_train_rows"] == [{
+        "anomaly_class": "OK",
+        "image_path": "OK/S0001/switch_0001_OK_C1_20200101000000.jpg",
+    }]
+    assert projection["train_record_count"] == 2
+    assert projection["test_values_structurally_skipped"] is True
+    assert "DEFECT_PATH_SECRET" not in repr(projection)
+    assert "TEST_PATH_SECRET" not in repr(projection)
+    assert "TEST_LABEL_SECRET" not in repr(projection)
+    assert "DEFECT_PATH_SECRET.jpg" not in decoded_values
+    assert "TEST_PATH_SECRET.jpg" not in decoded_values
+    assert "TEST_LABEL_SECRET" not in decoded_values
+
+
+def test_development_normal_identity_selection_is_fixed_and_reproducible(tmp_path, monkeypatch):
+    import json
+    import experiments.calibration.r2_g1a_switch_pilot as pilot
+
+    root = tmp_path / "dataset"
+    root.mkdir()
+    monkeypatch.setattr(pilot, "DATASET_ROOT", str(root))
+    rows = []
+    for sample in range(1, 101):
+        name = f"switch_{sample:04d}_OK_C1_20200101000000.jpg"
+        relative = Path("images") / "switch" / "OK" / f"S{sample:04d}" / name
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(b"synthetic image placeholder; never decoded")
+        rows.append({
+            "anomaly_class": "OK",
+            "image_path": f"OK/S{sample:04d}/{name}",
+        })
+    projection = {
+        "meta": {"normal_class": "OK", "prefix": "switch"},
+        "normal_train_rows": rows,
+        "train_record_count": 100,
+        "non_normal_train_record_count": 0,
+        "test_section_present": True,
+        "test_values_structurally_skipped": True,
+    }
+    digest = hashlib.sha256(b"synthetic metadata").hexdigest()
+    first = build_development_identity_manifest(
+        projection, metadata_source_sha256=digest, dataset_root=root)
+    second = build_development_identity_manifest(
+        projection, metadata_source_sha256=digest, dataset_root=root)
+    records, manifest, identity_sha, counts = first
+    assert len(records) == 100
+    assert [record.source_group_sha256 for record in records] == [
+        record.source_group_sha256 for record in second[0]]
+    assert identity_sha == second[2]
+    assert counts == second[3]
+    assert all(record.camera_id == 1 for record in records)
+    assert counts["selected_source_group_count"] == 100
+    assert manifest["test_values_structurally_skipped"] is True
+    assert manifest["test_record_count_computed"] is False
+    assert json.loads(_canonical_json_bytes(manifest))["selected_identities"][0]["rank"] == 1
+    permit = make_development_permit(
+        output_directory=tmp_path / "run", execution_commit="1" * 40,
+        source_fingerprint_sha256="2" * 64,
+        identity_manifest_sha256=identity_sha, records=records)
+    with pytest.raises(G1AAuthorizationError, match="frozen ranked identities"):
+        compare_g1a_development_cohort(
+            records[1:11], [None] * 10, [None] * 10,
+            permit=permit, identity_manifest_sha256=identity_sha, stage="S1")
+    with pytest.raises(G1AAuthorizationError, match="frozen ranked identities"):
+        compare_g1a_development_cohort(
+            tuple(reversed(records)), [None] * 100, [None] * 100,
+            permit=permit, identity_manifest_sha256=identity_sha, stage="S2")
+
+
+def test_development_output_budget_allows_only_private_and_public_receipts(tmp_path):
+    root = tmp_path / "run"
+    budget = G1ADevelopmentOutputBudget(
+        root, max_bytes=1024, failure_reserve_bytes=128)
+    try:
+        budget.ensure_root()
+        (root / "events").mkdir()
+        budget.write_once(root / "private_identity_manifest.json", b"private")
+        budget.write_once(root / "public_summary.json", b"public")
+        with pytest.raises(OutputBudgetError, match="allowlist"):
+            budget.write_once(root / "untracked.bin", b"escape")
+        with pytest.raises(OutputBudgetError, match="before I/O"):
+            budget.write_once(root / "events" / "event_000001.npz", b"x" * 897)
+        assert not (root / "events" / "event_000001.npz").exists()
+        assert sum(path.stat().st_size for path in root.rglob("*") if path.is_file()) < 1024
+    finally:
+        budget.close()
+
+
+def test_development_output_namespace_is_unique_and_never_resumed(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    output = repo / "outputs" / "calibration" / "r2_g1_pilot" / "r2_g1a_switch_test_03"
+    manifest = {
+        "status": "AUTHORIZED_PREPARED",
+        "authorization_scope_sha256": "a" * 64,
+        "authorization_scope": {"authorization_id": G1A_DEVELOPMENT_AUTHORIZATION_ID},
+    }
+    _prepare_development_output_namespace(
+        output, repo_root=repo, initial_manifest=manifest)
+    store = _open_development_output_store(output, repo_root=repo, worker_start=True)
+    store.close()
+    with pytest.raises(G1AOutputError, match="already exists"):
+        _prepare_development_output_namespace(
+            output, repo_root=repo, initial_manifest=manifest)
+    (output / "unexpected.bin").write_bytes(b"must fail closed")
+    with pytest.raises(OutputBudgetError, match="not in the audited writer allowlist"):
+        _open_development_output_store(output, repo_root=repo, worker_start=False)
+
+
+def test_development_supervisor_receipt_matches_accounted_bytes(tmp_path):
+    import json
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    output = repo / "outputs" / "calibration" / "r2_g1_pilot" / "r2_g1a_switch_test_06"
+    _prepare_development_output_namespace(
+        output, repo_root=repo,
+        initial_manifest={"status": "AUTHORIZED_PREPARED"})
+    actual = _write_supervisor_status(
+        output, repo_root=repo,
+        record={"status": "TIMED_OUT_TERMINATED", "termination_confirmed": True})
+    receipt = json.loads((output / "supervisor_status.json").read_text(encoding="utf-8"))
+    file_bytes = sum(path.stat().st_size for path in output.rglob("*") if path.is_file())
+    assert actual == file_bytes
+    assert receipt["output_bytes"] == file_bytes
+
+
+def test_development_worker_cannot_be_invoked_without_supervisor_nonce(monkeypatch, tmp_path):
+    for key in (
+        "R2_G1A_DEVELOPMENT_WORKER_NONCE",
+        "R2_G1A_DEVELOPMENT_SCOPE_SHA256",
+        "R2_G1A_DEVELOPMENT_DEADLINE_MONOTONIC",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    with pytest.raises(G1AAuthorizationError, match="supervised parent"):
+        _run_development_worker(
+            repo_root=tmp_path / "missing", run_id="r2_g1a_switch_test_04",
+            output_directory=tmp_path / "output", execution_commit="0" * 40,
+            source_fingerprint_sha256="a" * 64,
+        )
+
+
+def test_development_parent_requires_explicit_authorization_before_repository_access(tmp_path):
+    with pytest.raises(G1AAuthorizationError, match="explicit"):
+        run_development_pilot(
+            repo_root=tmp_path / "missing", run_id="r2_g1a_switch_test_05",
+            authorization_token="",
+        )
+
+
+def test_development_repository_rejects_wrong_branch_or_source_revision(tmp_path, monkeypatch):
+    import experiments.calibration.r2_g1a_switch_pilot as pilot
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    values = {
+        "branch --show-current": "calibration-stage0-contract-20261029",
+        "rev-parse HEAD": "1" * 40,
+        "rev-parse HEAD^": "0" * 40,
+    }
+    monkeypatch.setattr(pilot, "_git_text", lambda _root, *args: values[" ".join(args)])
+    with pytest.raises(G1APilotError, match="not directly based"):
+        _verify_development_repository(root)
+    values["branch --show-current"] = "wrong-branch"
+    with pytest.raises(G1APilotError, match="restricted to the reviewed calibration branch"):
+        _verify_development_repository(root)
+
+
+def test_development_model_loader_is_local_only_and_denies_downloads(tmp_path, monkeypatch):
+    import types
+    import experiments.calibration.r2_g1a_switch_pilot as pilot
+
+    hub_dir = tmp_path / "torch-hub"
+    source = hub_dir / "facebookresearch_dinov2_main"
+    source.mkdir(parents=True)
+    (source / "hubconf.py").write_text("# synthetic local source\n", encoding="utf-8")
+    (hub_dir / "checkpoints").mkdir()
+    calls = []
+
+    class Hub:
+        @staticmethod
+        def get_dir():
+            return str(hub_dir)
+
+        @staticmethod
+        def load(repo, model, **kwargs):
+            calls.append((repo, model, kwargs))
+            return "local-model"
+
+        @staticmethod
+        def load_state_dict_from_url(url, *args, **kwargs):
+            return (url, args, kwargs)
+
+        @staticmethod
+        def download_url_to_file(*args, **kwargs):
+            raise AssertionError("the original network function should be guarded")
+
+    torch = types.SimpleNamespace(hub=Hub)
+    original_load = Hub.load
+    original_weights = Hub.load_state_dict_from_url
+    original_download = Hub.download_url_to_file
+    monkeypatch.setattr(pilot, "verify_file_sha256", lambda *_args: "verified")
+
+    class Implementation:
+        @staticmethod
+        def DINOv2MultiLayerBackbone(*, device):
+            assert device == "cuda:0"
+            loaded = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14_reg")
+            weights = torch.hub.load_state_dict_from_url(
+                "https://example.invalid/dinov2_vitl14_reg4_pretrain.pth")
+            assert weights[0].endswith(pilot.R1_DESCRIPTOR_PROFILE.checkpoint_file)
+            with pytest.raises(G1APilotError, match="network download is disabled"):
+                torch.hub.download_url_to_file("https://example.invalid/other.pth", "x")
+            return loaded
+
+    result = _instantiate_r1_backbone_offline(Implementation, torch)
+    assert result == "local-model"
+    assert calls == [(str(source), "dinov2_vitl14_reg", {"source": "local"})]
+    assert Hub.load is original_load
+    assert Hub.load_state_dict_from_url is original_weights
+    assert Hub.download_url_to_file is original_download
 
 
 def test_missing_or_incompatible_group_or_camera_record_does_not_open_path():
