@@ -517,6 +517,19 @@ def test_r1_descriptor_profile_matches_receipt_backed_native_geometry():
     assert profile.l2_normalized is True
     assert profile.view == "id"
     assert len(profile.source_hashes) == 5
+    assert profile.source_commit == "c86d5b89fa0062b87d80adb324eaa6bc3c94448e"
+    assert dict(profile.source_hashes) == {
+        "experiments/calibration/r1_matched_correction_pilot.py":
+            "3208e2c52277ad76351eb86968e362aa315effe9e3c734bfe2b6ff7bab0db448",
+        "experiments/calibration/native.py":
+            "3a347d65aaf4bfd6b41eff2ea7339d878065bb2e08ed64795f57b0458135dd45",
+        "experiments/p0_protocol_audit.py":
+            "03586ae40f79e9e49ad6545a4131c411a5f6adef9d085feae0b885f2f98966da",
+        "vmb_visionad_new.py":
+            "0430959e86ba75b029341aef003655e6a3ac7d08df22f3f48a04e0b2d7fc39c9",
+        "test_phase3_AIF_simplified_v22.py":
+            "a79b6a78ccf918c9314025ab0acef2d9e8d84cf44600615a4085cd82802bda4f",
+    }
     other_class = replace(
         profile,
         profile_id="r1_other_class",
