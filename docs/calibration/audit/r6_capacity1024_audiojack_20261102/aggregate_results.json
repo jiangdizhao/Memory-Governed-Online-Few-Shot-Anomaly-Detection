@@ -1,0 +1,5276 @@
+{
+  "actual_capacity_profile": {
+    "correction_config_capacity": 1024,
+    "fpsa_correction": {
+      "capacity": 1024,
+      "metadata_shapes": {
+        "beta": [
+          1024
+        ],
+        "count": [
+          1024
+        ],
+        "kappa": [
+          1024
+        ],
+        "last_step": [
+          1024
+        ],
+        "outcome_fn": [
+          1024
+        ],
+        "outcome_fp": [
+          1024
+        ],
+        "outcome_tn": [
+          1024
+        ],
+        "outcome_tp": [
+          1024
+        ],
+        "radius": [
+          1024
+        ]
+      },
+      "occupancy": 0,
+      "prototype_shape": [
+        1024,
+        4096
+      ]
+    },
+    "gc_correction": {
+      "capacity": 1024,
+      "metadata_shapes": {
+        "beta": [
+          1024
+        ],
+        "count": [
+          1024
+        ],
+        "kappa": [
+          1024
+        ],
+        "last_step": [
+          1024
+        ],
+        "outcome_fn": [
+          1024
+        ],
+        "outcome_fp": [
+          1024
+        ],
+        "outcome_tn": [
+          1024
+        ],
+        "outcome_tp": [
+          1024
+        ],
+        "radius": [
+          1024
+        ]
+      },
+      "occupancy": 0,
+      "prototype_shape": [
+        1024,
+        4096
+      ]
+    },
+    "greedy": [
+      {
+        "capacity": 1024,
+        "layer": 0,
+        "metadata_shapes": {
+          "meta_boundary": [
+            0
+          ],
+          "meta_count": [
+            0
+          ],
+          "meta_coverage": [
+            0
+          ],
+          "meta_distinct_events": [
+            0
+          ],
+          "meta_first_step": [
+            0
+          ],
+          "meta_fp_rescue": [
+            0
+          ],
+          "meta_last_event": [
+            0
+          ],
+          "meta_last_step": [
+            0
+          ],
+          "meta_utility": [
+            0
+          ]
+        },
+        "occupancy": 0,
+        "prototype_dtype": "torch.float16"
+      }
+    ],
+    "greedy_settings": {
+      "buffer": 1,
+      "flat": 1024,
+      "ltm": 1,
+      "stm": 1024
+    }
+  },
+  "arms": {
+    "FPSA1024-B3": {
+      "scorer": "GC-FPSA",
+      "threshold": "FPSA1024 complete-state protected C64 q90"
+    },
+    "FPSA1024-Frozen": {
+      "scorer": "GC-FPSA",
+      "threshold": "frozen C64 higher-q90"
+    },
+    "G1024-B3": {
+      "scorer": "G",
+      "threshold": "G1024 complete-state protected C64 q90"
+    },
+    "G1024-Frozen": {
+      "scorer": "G",
+      "threshold": "frozen C64 higher-q90"
+    },
+    "GC1024-B3": {
+      "scorer": "GC",
+      "threshold": "GC1024 complete-state protected C64 q90"
+    },
+    "GC1024-Frozen": {
+      "scorer": "GC",
+      "threshold": "frozen C64 higher-q90"
+    }
+  },
+  "b3_controller_state_updates": {
+    "G": 74,
+    "GC": 104,
+    "GC-FPSA": 105
+  },
+  "c64_rescoring": {
+    "changed_state_cached_native_parity": {
+      "max_abs_error_by_scorer": {
+        "G": 0.0,
+        "GC": 0.0,
+        "GC-FPSA": 0.0
+      },
+      "passed": true,
+      "representative_reference_count": 1,
+      "same_scoring_path_from_memory_and_disk_cache": true,
+      "tolerance": {
+        "atol": 1e-05,
+        "rtol": 0.0001
+      }
+    },
+    "feature_cache_bytes": 1023443584,
+    "feature_cache_count": 64,
+    "initial_native_score_parity": {
+      "G": {
+        "count": 64,
+        "max_abs_error": 0.0
+      },
+      "GC": {
+        "count": 64,
+        "max_abs_error": 0.0
+      },
+      "GC-FPSA": {
+        "count": 64,
+        "max_abs_error": 0.0
+      }
+    },
+    "rescore_rounds_by_scorer": {
+      "G": 74,
+      "GC": 104,
+      "GC-FPSA": 105
+    },
+    "rescore_seconds_by_scorer": {
+      "G": 37.71035979967564,
+      "GC": 30.938320600194857,
+      "GC-FPSA": 30.37578939832747
+    },
+    "score_calls_by_scorer": {
+      "G": 4738,
+      "GC": 6658,
+      "GC-FPSA": 6722
+    }
+  },
+  "classification": "RETROSPECTIVE_EXPOSED_AUDIOJACK_DEVELOPMENT_CLASS_VALIDATION",
+  "dataset_protocol": {
+    "C64_is_additional_to_supports": true,
+    "Stage_B_labels_read_after_complete_Stage_A_seal": true,
+    "category": "audiojack",
+    "event_count": 3815,
+    "event_order": "frozen original Real-IAD TEST JSON order; physical chronology not asserted",
+    "first_anomalous_feedback_position": 1305,
+    "independent_validation": false,
+    "protected_reference_count": 64,
+    "query_count": 114,
+    "query_groups_unique": true,
+    "query_rate": 0.029882044560943642,
+    "support_count": 4,
+    "test_masks_opened": false,
+    "unqueried_TEST_labels_accessed_in_stage_a": false
+  },
+  "distance_from_r5_best_b3_fnr": {
+    "FPSA1024-B3": {
+      "fnr_difference_r6_minus_r5": -0.12268518518518523,
+      "fnr_reduction_percentage_points": 12.268518518518523
+    },
+    "G1024-B3": {
+      "fnr_difference_r6_minus_r5": -0.06095679012345684,
+      "fnr_reduction_percentage_points": 6.095679012345684
+    },
+    "GC1024-B3": {
+      "fnr_difference_r6_minus_r5": -0.12191358024691362,
+      "fnr_reduction_percentage_points": 12.191358024691363
+    }
+  },
+  "execution_attempts": {
+    "automatic_restart": false,
+    "smoke_attempt_count": 3,
+    "smoke_attempt_statuses": [
+      "FAILED_NONZERO_EXIT",
+      "FAILED_NONZERO_EXIT",
+      "COMPLETED"
+    ]
+  },
+  "execution_costs": {
+    "c64_rescore_seconds_by_scorer": {
+      "G": 37.71035979967564,
+      "GC": 30.938320600194857,
+      "GC-FPSA": 30.37578939832747
+    },
+    "overall_elapsed_seconds_through_stage_b": 584.7165114879608,
+    "peak_cpu_rss_bytes": 3954745344,
+    "peak_cuda_allocated_bytes": 1572342784,
+    "peak_cuda_reserved_bytes": 14285799424,
+    "stage_a_wall_seconds": 495.34399999980815,
+    "stage_b_wall_seconds": 5.047000000020489,
+    "stream_image_encodings": 3815,
+    "writer_seconds": 0.605903
+  },
+  "final_correction_occupancy": {
+    "GC": {
+      "negative": 691,
+      "positive": 333,
+      "total": 1024,
+      "zero": 0
+    },
+    "GC-FPSA": {
+      "negative": 661,
+      "positive": 363,
+      "total": 1024,
+      "zero": 0
+    }
+  },
+  "first_capacity_dependent_divergence": {
+    "G": {
+      "capacity_source": "shared Greedy normal memory",
+      "first_divergent_update_position": 1007,
+      "first_score_position_after_update": 1008,
+      "historical_capacity": 256,
+      "occupancy_after_by_layer": [
+        264
+      ],
+      "occupancy_before_by_layer": [
+        256
+      ],
+      "r3_expected_writer_action": "native_greedy_normal_update",
+      "r6_actual_writer_action": "native_greedy_normal_update",
+      "r6_capacity": 1024,
+      "reason": "R6 admitted a prototype beyond the historical full-bank boundary."
+    },
+    "GC": {
+      "capacity_source": "GC Correction bank",
+      "correction_occupancy_after": 257,
+      "correction_occupancy_before": 225,
+      "first_divergent_update_position": 859,
+      "first_score_position_after_update": 860,
+      "greedy_occupancy_after_by_layer": [
+        232
+      ],
+      "greedy_occupancy_before_by_layer": [
+        224
+      ],
+      "historical_capacity": 256,
+      "r6_capacity": 1024,
+      "reason": "Native update admitted a prototype beyond the historical full-bank boundary."
+    },
+    "GC-FPSA": {
+      "capacity_source": "FPSA Correction bank",
+      "correction_occupancy_after": 257,
+      "correction_occupancy_before": 225,
+      "first_divergent_update_position": 859,
+      "first_score_position_after_update": 860,
+      "greedy_occupancy_after_by_layer": [
+        232
+      ],
+      "greedy_occupancy_before_by_layer": [
+        224
+      ],
+      "historical_capacity": 256,
+      "r6_capacity": 1024,
+      "reason": "Native update admitted a prototype beyond the historical full-bank boundary."
+    }
+  },
+  "fixed_512_event_windows": {
+    "FPSA1024-B3": [
+      {
+        "accuracy": 0.9375,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 32,
+          "tn": 480,
+          "tp": 0
+        },
+        "end_position_exclusive": 512,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.0625,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 0
+      },
+      {
+        "accuracy": 0.888671875,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 57,
+          "tn": 455,
+          "tp": 0
+        },
+        "end_position_exclusive": 1024,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.111328125,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 512
+      },
+      {
+        "accuracy": 0.765625,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.737171464330413,
+        "confusion": {
+          "fn": 44,
+          "fp": 76,
+          "tn": 300,
+          "tp": 92
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.3235294117647059,
+        "fpr": 0.20212765957446807,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      {
+        "accuracy": 0.693359375,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.691897426493062,
+        "confusion": {
+          "fn": 72,
+          "fp": 85,
+          "tn": 161,
+          "tp": 194
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.2706766917293233,
+        "fpr": 0.34552845528455284,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      {
+        "accuracy": 0.732421875,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.7309258777235075,
+        "confusion": {
+          "fn": 71,
+          "fp": 66,
+          "tn": 205,
+          "tp": 170
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.2946058091286307,
+        "fpr": 0.24354243542435425,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      },
+      {
+        "accuracy": 0.72265625,
+        "anomalous_events": 263,
+        "balanced_accuracy": 0.7238383190556904,
+        "confusion": {
+          "fn": 84,
+          "fp": 58,
+          "tn": 191,
+          "tp": 179
+        },
+        "end_position_exclusive": 3072,
+        "events": 512,
+        "fnr": 0.3193916349809886,
+        "fpr": 0.23293172690763053,
+        "normal_events": 249,
+        "partial_tail": false,
+        "start_position": 2560
+      },
+      {
+        "accuracy": 0.724609375,
+        "anomalous_events": 272,
+        "balanced_accuracy": 0.7287990196078431,
+        "confusion": {
+          "fn": 92,
+          "fp": 49,
+          "tn": 191,
+          "tp": 180
+        },
+        "end_position_exclusive": 3584,
+        "events": 512,
+        "fnr": 0.3382352941176471,
+        "fpr": 0.20416666666666666,
+        "normal_events": 240,
+        "partial_tail": false,
+        "start_position": 3072
+      },
+      {
+        "accuracy": 0.8051948051948052,
+        "anomalous_events": 118,
+        "balanced_accuracy": 0.8076346182690866,
+        "confusion": {
+          "fn": 36,
+          "fp": 9,
+          "tn": 104,
+          "tp": 82
+        },
+        "end_position_exclusive": 3815,
+        "events": 231,
+        "fnr": 0.3050847457627119,
+        "fpr": 0.07964601769911504,
+        "normal_events": 113,
+        "partial_tail": true,
+        "start_position": 3584
+      }
+    ],
+    "FPSA1024-Frozen": [
+      {
+        "accuracy": 0.99609375,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 2,
+          "tn": 510,
+          "tp": 0
+        },
+        "end_position_exclusive": 512,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.00390625,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 0
+      },
+      {
+        "accuracy": 1.0,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 0,
+          "tn": 512,
+          "tp": 0
+        },
+        "end_position_exclusive": 1024,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.0,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 512
+      },
+      {
+        "accuracy": 0.751953125,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.5495150187734669,
+        "confusion": {
+          "fn": 120,
+          "fp": 7,
+          "tn": 369,
+          "tp": 16
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.8823529411764706,
+        "fpr": 0.018617021276595744,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      {
+        "accuracy": 0.57421875,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.5897671006785256,
+        "confusion": {
+          "fn": 215,
+          "fp": 3,
+          "tn": 243,
+          "tp": 51
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.8082706766917294,
+        "fpr": 0.012195121951219513,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      {
+        "accuracy": 0.599609375,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.5758371484129778,
+        "confusion": {
+          "fn": 200,
+          "fp": 5,
+          "tn": 266,
+          "tp": 41
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.8298755186721992,
+        "fpr": 0.01845018450184502,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      },
+      {
+        "accuracy": 0.59765625,
+        "anomalous_events": 263,
+        "balanced_accuracy": 0.6081512361232,
+        "confusion": {
+          "fn": 204,
+          "fp": 2,
+          "tn": 247,
+          "tp": 59
+        },
+        "end_position_exclusive": 3072,
+        "events": 512,
+        "fnr": 0.7756653992395437,
+        "fpr": 0.008032128514056224,
+        "normal_events": 249,
+        "partial_tail": false,
+        "start_position": 2560
+      },
+      {
+        "accuracy": 0.55859375,
+        "anomalous_events": 272,
+        "balanced_accuracy": 0.5838235294117647,
+        "confusion": {
+          "fn": 223,
+          "fp": 3,
+          "tn": 237,
+          "tp": 49
+        },
+        "end_position_exclusive": 3584,
+        "events": 512,
+        "fnr": 0.8198529411764706,
+        "fpr": 0.0125,
+        "normal_events": 240,
+        "partial_tail": false,
+        "start_position": 3072
+      },
+      {
+        "accuracy": 0.5887445887445888,
+        "anomalous_events": 118,
+        "balanced_accuracy": 0.5970826458677065,
+        "confusion": {
+          "fn": 93,
+          "fp": 2,
+          "tn": 111,
+          "tp": 25
+        },
+        "end_position_exclusive": 3815,
+        "events": 231,
+        "fnr": 0.788135593220339,
+        "fpr": 0.017699115044247787,
+        "normal_events": 113,
+        "partial_tail": true,
+        "start_position": 3584
+      }
+    ],
+    "G1024-B3": [
+      {
+        "accuracy": 0.939453125,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 31,
+          "tn": 481,
+          "tp": 0
+        },
+        "end_position_exclusive": 512,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.060546875,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 0
+      },
+      {
+        "accuracy": 0.88671875,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 58,
+          "tn": 454,
+          "tp": 0
+        },
+        "end_position_exclusive": 1024,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.11328125,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 512
+      },
+      {
+        "accuracy": 0.802734375,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.7413172715894869,
+        "confusion": {
+          "fn": 53,
+          "fp": 48,
+          "tn": 328,
+          "tp": 83
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.3897058823529412,
+        "fpr": 0.1276595744680851,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      {
+        "accuracy": 0.720703125,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.7237147747417324,
+        "confusion": {
+          "fn": 94,
+          "fp": 49,
+          "tn": 197,
+          "tp": 172
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.3533834586466165,
+        "fpr": 0.1991869918699187,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      {
+        "accuracy": 0.74609375,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.7383289185588952,
+        "confusion": {
+          "fn": 95,
+          "fp": 35,
+          "tn": 236,
+          "tp": 146
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.3941908713692946,
+        "fpr": 0.12915129151291513,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      },
+      {
+        "accuracy": 0.75390625,
+        "anomalous_events": 263,
+        "balanced_accuracy": 0.7576770962175698,
+        "confusion": {
+          "fn": 100,
+          "fp": 26,
+          "tn": 223,
+          "tp": 163
+        },
+        "end_position_exclusive": 3072,
+        "events": 512,
+        "fnr": 0.38022813688212925,
+        "fpr": 0.10441767068273092,
+        "normal_events": 249,
+        "partial_tail": false,
+        "start_position": 2560
+      },
+      {
+        "accuracy": 0.74609375,
+        "anomalous_events": 272,
+        "balanced_accuracy": 0.7541666666666667,
+        "confusion": {
+          "fn": 102,
+          "fp": 28,
+          "tn": 212,
+          "tp": 170
+        },
+        "end_position_exclusive": 3584,
+        "events": 512,
+        "fnr": 0.375,
+        "fpr": 0.11666666666666667,
+        "normal_events": 240,
+        "partial_tail": false,
+        "start_position": 3072
+      },
+      {
+        "accuracy": 0.8181818181818182,
+        "anomalous_events": 118,
+        "balanced_accuracy": 0.8207214639268037,
+        "confusion": {
+          "fn": 35,
+          "fp": 7,
+          "tn": 106,
+          "tp": 83
+        },
+        "end_position_exclusive": 3815,
+        "events": 231,
+        "fnr": 0.2966101694915254,
+        "fpr": 0.061946902654867256,
+        "normal_events": 113,
+        "partial_tail": true,
+        "start_position": 3584
+      }
+    ],
+    "G1024-Frozen": [
+      {
+        "accuracy": 0.994140625,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 3,
+          "tn": 509,
+          "tp": 0
+        },
+        "end_position_exclusive": 512,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.005859375,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 0
+      },
+      {
+        "accuracy": 1.0,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 0,
+          "tn": 512,
+          "tp": 0
+        },
+        "end_position_exclusive": 1024,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.0,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 512
+      },
+      {
+        "accuracy": 0.765625,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.5588235294117647,
+        "confusion": {
+          "fn": 120,
+          "fp": 0,
+          "tn": 376,
+          "tp": 16
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.8823529411764706,
+        "fpr": 0.0,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      {
+        "accuracy": 0.515625,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.5338345864661654,
+        "confusion": {
+          "fn": 248,
+          "fp": 0,
+          "tn": 246,
+          "tp": 18
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.9323308270676691,
+        "fpr": 0.0,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      {
+        "accuracy": 0.55859375,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.5313500022967035,
+        "confusion": {
+          "fn": 225,
+          "fp": 1,
+          "tn": 270,
+          "tp": 16
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.9336099585062241,
+        "fpr": 0.0036900369003690036,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      },
+      {
+        "accuracy": 0.529296875,
+        "anomalous_events": 263,
+        "balanced_accuracy": 0.5418250950570342,
+        "confusion": {
+          "fn": 241,
+          "fp": 0,
+          "tn": 249,
+          "tp": 22
+        },
+        "end_position_exclusive": 3072,
+        "events": 512,
+        "fnr": 0.9163498098859315,
+        "fpr": 0.0,
+        "normal_events": 249,
+        "partial_tail": false,
+        "start_position": 2560
+      },
+      {
+        "accuracy": 0.5078125,
+        "anomalous_events": 272,
+        "balanced_accuracy": 0.5365196078431372,
+        "confusion": {
+          "fn": 251,
+          "fp": 1,
+          "tn": 239,
+          "tp": 21
+        },
+        "end_position_exclusive": 3584,
+        "events": 512,
+        "fnr": 0.9227941176470589,
+        "fpr": 0.004166666666666667,
+        "normal_events": 240,
+        "partial_tail": false,
+        "start_position": 3072
+      },
+      {
+        "accuracy": 0.5238095238095238,
+        "anomalous_events": 118,
+        "balanced_accuracy": 0.5338983050847458,
+        "confusion": {
+          "fn": 110,
+          "fp": 0,
+          "tn": 113,
+          "tp": 8
+        },
+        "end_position_exclusive": 3815,
+        "events": 231,
+        "fnr": 0.9322033898305084,
+        "fpr": 0.0,
+        "normal_events": 113,
+        "partial_tail": true,
+        "start_position": 3584
+      }
+    ],
+    "GC1024-B3": [
+      {
+        "accuracy": 0.9375,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 32,
+          "tn": 480,
+          "tp": 0
+        },
+        "end_position_exclusive": 512,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.0625,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 0
+      },
+      {
+        "accuracy": 0.888671875,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 57,
+          "tn": 455,
+          "tp": 0
+        },
+        "end_position_exclusive": 1024,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.111328125,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 512
+      },
+      {
+        "accuracy": 0.765625,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.737171464330413,
+        "confusion": {
+          "fn": 44,
+          "fp": 76,
+          "tn": 300,
+          "tp": 92
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.3235294117647059,
+        "fpr": 0.20212765957446807,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      {
+        "accuracy": 0.693359375,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.691897426493062,
+        "confusion": {
+          "fn": 72,
+          "fp": 85,
+          "tn": 161,
+          "tp": 194
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.2706766917293233,
+        "fpr": 0.34552845528455284,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      {
+        "accuracy": 0.716796875,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.7161657301220314,
+        "confusion": {
+          "fn": 71,
+          "fp": 74,
+          "tn": 197,
+          "tp": 170
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.2946058091286307,
+        "fpr": 0.2730627306273063,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      },
+      {
+        "accuracy": 0.724609375,
+        "anomalous_events": 263,
+        "balanced_accuracy": 0.7253118939636874,
+        "confusion": {
+          "fn": 79,
+          "fp": 62,
+          "tn": 187,
+          "tp": 184
+        },
+        "end_position_exclusive": 3072,
+        "events": 512,
+        "fnr": 0.30038022813688214,
+        "fpr": 0.24899598393574296,
+        "normal_events": 249,
+        "partial_tail": false,
+        "start_position": 2560
+      },
+      {
+        "accuracy": 0.720703125,
+        "anomalous_events": 272,
+        "balanced_accuracy": 0.7261029411764706,
+        "confusion": {
+          "fn": 98,
+          "fp": 45,
+          "tn": 195,
+          "tp": 174
+        },
+        "end_position_exclusive": 3584,
+        "events": 512,
+        "fnr": 0.3602941176470588,
+        "fpr": 0.1875,
+        "normal_events": 240,
+        "partial_tail": false,
+        "start_position": 3072
+      },
+      {
+        "accuracy": 0.8008658008658008,
+        "anomalous_events": 118,
+        "balanced_accuracy": 0.8032098395080246,
+        "confusion": {
+          "fn": 36,
+          "fp": 10,
+          "tn": 103,
+          "tp": 82
+        },
+        "end_position_exclusive": 3815,
+        "events": 231,
+        "fnr": 0.3050847457627119,
+        "fpr": 0.08849557522123894,
+        "normal_events": 113,
+        "partial_tail": true,
+        "start_position": 3584
+      }
+    ],
+    "GC1024-Frozen": [
+      {
+        "accuracy": 0.99609375,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 2,
+          "tn": 510,
+          "tp": 0
+        },
+        "end_position_exclusive": 512,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.00390625,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 0
+      },
+      {
+        "accuracy": 1.0,
+        "anomalous_events": 0,
+        "balanced_accuracy": null,
+        "confusion": {
+          "fn": 0,
+          "fp": 0,
+          "tn": 512,
+          "tp": 0
+        },
+        "end_position_exclusive": 1024,
+        "events": 512,
+        "fnr": null,
+        "fpr": 0.0,
+        "normal_events": 512,
+        "partial_tail": false,
+        "start_position": 512
+      },
+      {
+        "accuracy": 0.751953125,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.5495150187734669,
+        "confusion": {
+          "fn": 120,
+          "fp": 7,
+          "tn": 369,
+          "tp": 16
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.8823529411764706,
+        "fpr": 0.018617021276595744,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      {
+        "accuracy": 0.57421875,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.5897671006785256,
+        "confusion": {
+          "fn": 215,
+          "fp": 3,
+          "tn": 243,
+          "tp": 51
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.8082706766917294,
+        "fpr": 0.012195121951219513,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      {
+        "accuracy": 0.599609375,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.5758371484129778,
+        "confusion": {
+          "fn": 200,
+          "fp": 5,
+          "tn": 266,
+          "tp": 41
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.8298755186721992,
+        "fpr": 0.01845018450184502,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      },
+      {
+        "accuracy": 0.59375,
+        "anomalous_events": 263,
+        "balanced_accuracy": 0.6043489547543788,
+        "confusion": {
+          "fn": 206,
+          "fp": 2,
+          "tn": 247,
+          "tp": 57
+        },
+        "end_position_exclusive": 3072,
+        "events": 512,
+        "fnr": 0.7832699619771863,
+        "fpr": 0.008032128514056224,
+        "normal_events": 249,
+        "partial_tail": false,
+        "start_position": 2560
+      },
+      {
+        "accuracy": 0.55078125,
+        "anomalous_events": 272,
+        "balanced_accuracy": 0.5762254901960784,
+        "confusion": {
+          "fn": 226,
+          "fp": 4,
+          "tn": 236,
+          "tp": 46
+        },
+        "end_position_exclusive": 3584,
+        "events": 512,
+        "fnr": 0.8308823529411765,
+        "fpr": 0.016666666666666666,
+        "normal_events": 240,
+        "partial_tail": false,
+        "start_position": 3072
+      },
+      {
+        "accuracy": 0.5800865800865801,
+        "anomalous_events": 118,
+        "balanced_accuracy": 0.5886080695965201,
+        "confusion": {
+          "fn": 95,
+          "fp": 2,
+          "tn": 111,
+          "tp": 23
+        },
+        "end_position_exclusive": 3815,
+        "events": 231,
+        "fnr": 0.8050847457627118,
+        "fpr": 0.017699115044247787,
+        "normal_events": 113,
+        "partial_tail": true,
+        "start_position": 3584
+      }
+    ]
+  },
+  "fpsa_final_diagnostics": {
+    "actual_negative_occupancy": 661,
+    "actual_positive_occupancy": 363,
+    "last_feedback_step": 3778,
+    "native_cross_sign_replaced_total": 34,
+    "native_inserted_total": 1024,
+    "native_merged_total": 2,
+    "native_replaced_total": 340,
+    "native_same_sign_merge_total": 2,
+    "native_same_sign_replaced_total": 306,
+    "native_skipped_total": 2282,
+    "queried_anomalous_source_groups": 40,
+    "queried_normal_source_groups": 74,
+    "queried_source_groups_total": 114,
+    "quota_borrow_opportunities": 702,
+    "quota_borrow_rejected": 668,
+    "quota_cross_sign_replacements": 34,
+    "target_negative_capacity": 665,
+    "target_positive_capacity": 359,
+    "zero_sign_occupancy": 0
+  },
+  "fpsa_mechanism_activated": true,
+  "fpsa_mechanism_not_activated": false,
+  "full_stream_metrics": {
+    "FPSA1024-B3": {
+      "accuracy": 0.782175622542595,
+      "anomalous_events": 1296,
+      "auroc": 0.8364202125574033,
+      "average_precision": 0.7480378395230396,
+      "balanced_accuracy": 0.7603165019922662,
+      "confusion": {
+        "fn": 399,
+        "fp": 432,
+        "tn": 2087,
+        "tp": 897
+      },
+      "events": 3815,
+      "fnr": 0.30787037037037035,
+      "fpr": 0.17149662564509727,
+      "normal_events": 2519,
+      "score_ranking_source": "GC-FPSA"
+    },
+    "FPSA1024-Frozen": {
+      "accuracy": 0.7171690694626475,
+      "anomalous_events": 1296,
+      "auroc": 0.8364202125574033,
+      "average_precision": 0.7480378395230396,
+      "balanced_accuracy": 0.5882145999049202,
+      "confusion": {
+        "fn": 1055,
+        "fp": 24,
+        "tn": 2495,
+        "tp": 241
+      },
+      "events": 3815,
+      "fnr": 0.8140432098765432,
+      "fpr": 0.009527590313616514,
+      "normal_events": 2519,
+      "score_ranking_source": "GC-FPSA"
+    },
+    "G1024-B3": {
+      "accuracy": 0.800524246395806,
+      "anomalous_events": 1296,
+      "auroc": 0.6987659222011479,
+      "average_precision": 0.5843117248349617,
+      "balanced_accuracy": 0.7592260241914536,
+      "confusion": {
+        "fn": 479,
+        "fp": 282,
+        "tn": 2237,
+        "tp": 817
+      },
+      "events": 3815,
+      "fnr": 0.36959876543209874,
+      "fpr": 0.11194918618499404,
+      "normal_events": 2519,
+      "score_ranking_source": "G"
+    },
+    "G1024-Frozen": {
+      "accuracy": 0.6854521625163827,
+      "anomalous_events": 1296,
+      "auroc": 0.6987659222011479,
+      "average_precision": 0.5843117248349617,
+      "balanced_accuracy": 0.537973592058381,
+      "confusion": {
+        "fn": 1195,
+        "fp": 5,
+        "tn": 2514,
+        "tp": 101
+      },
+      "events": 3815,
+      "fnr": 0.9220679012345679,
+      "fpr": 0.001984914648670107,
+      "normal_events": 2519,
+      "score_ranking_source": "G"
+    },
+    "GC1024-B3": {
+      "accuracy": 0.7795543905635649,
+      "anomalous_events": 1296,
+      "auroc": 0.8337358299148692,
+      "average_precision": 0.7438910485031829,
+      "balanced_accuracy": 0.7581442763393273,
+      "confusion": {
+        "fn": 400,
+        "fp": 441,
+        "tn": 2078,
+        "tp": 896
+      },
+      "events": 3815,
+      "fnr": 0.30864197530864196,
+      "fpr": 0.17506947201270345,
+      "normal_events": 2519,
+      "score_ranking_source": "GC"
+    },
+    "GC1024-Frozen": {
+      "accuracy": 0.7150720838794233,
+      "anomalous_events": 1296,
+      "auroc": 0.8337358299148692,
+      "average_precision": 0.7438910485031829,
+      "balanced_accuracy": 0.5853154911561025,
+      "confusion": {
+        "fn": 1062,
+        "fp": 25,
+        "tn": 2494,
+        "tp": 234
+      },
+      "events": 3815,
+      "fnr": 0.8194444444444444,
+      "fpr": 0.009924573243350537,
+      "normal_events": 2519,
+      "score_ranking_source": "GC"
+    }
+  },
+  "greedy_capacity": 1024,
+  "greedy_occupancy_by_layer_final": [
+    608
+  ],
+  "greedy_occupancy_history": [
+    {
+      "fpsa_correction_occupancy": 5,
+      "fpsa_sign_occupancy": {
+        "negative": 5,
+        "positive": 0,
+        "total": 5,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 5,
+      "gc_sign_occupancy": {
+        "negative": 5,
+        "positive": 0,
+        "total": 5,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        8
+      ],
+      "position": 35
+    },
+    {
+      "fpsa_correction_occupancy": 30,
+      "fpsa_sign_occupancy": {
+        "negative": 30,
+        "positive": 0,
+        "total": 30,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 30,
+      "gc_sign_occupancy": {
+        "negative": 30,
+        "positive": 0,
+        "total": 30,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        32
+      ],
+      "position": 55
+    },
+    {
+      "fpsa_correction_occupancy": 36,
+      "fpsa_sign_occupancy": {
+        "negative": 36,
+        "positive": 0,
+        "total": 36,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 36,
+      "gc_sign_occupancy": {
+        "negative": 36,
+        "positive": 0,
+        "total": 36,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        40
+      ],
+      "position": 72
+    },
+    {
+      "fpsa_correction_occupancy": 45,
+      "fpsa_sign_occupancy": {
+        "negative": 45,
+        "positive": 0,
+        "total": 45,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 45,
+      "gc_sign_occupancy": {
+        "negative": 45,
+        "positive": 0,
+        "total": 45,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        48
+      ],
+      "position": 116
+    },
+    {
+      "fpsa_correction_occupancy": 50,
+      "fpsa_sign_occupancy": {
+        "negative": 50,
+        "positive": 0,
+        "total": 50,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 50,
+      "gc_sign_occupancy": {
+        "negative": 50,
+        "positive": 0,
+        "total": 50,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        56
+      ],
+      "position": 159
+    },
+    {
+      "fpsa_correction_occupancy": 54,
+      "fpsa_sign_occupancy": {
+        "negative": 54,
+        "positive": 0,
+        "total": 54,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 54,
+      "gc_sign_occupancy": {
+        "negative": 54,
+        "positive": 0,
+        "total": 54,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        64
+      ],
+      "position": 162
+    },
+    {
+      "fpsa_correction_occupancy": 64,
+      "fpsa_sign_occupancy": {
+        "negative": 64,
+        "positive": 0,
+        "total": 64,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 64,
+      "gc_sign_occupancy": {
+        "negative": 64,
+        "positive": 0,
+        "total": 64,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        72
+      ],
+      "position": 189
+    },
+    {
+      "fpsa_correction_occupancy": 69,
+      "fpsa_sign_occupancy": {
+        "negative": 69,
+        "positive": 0,
+        "total": 69,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 69,
+      "gc_sign_occupancy": {
+        "negative": 69,
+        "positive": 0,
+        "total": 69,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        80
+      ],
+      "position": 268
+    },
+    {
+      "fpsa_correction_occupancy": 73,
+      "fpsa_sign_occupancy": {
+        "negative": 73,
+        "positive": 0,
+        "total": 73,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 73,
+      "gc_sign_occupancy": {
+        "negative": 73,
+        "positive": 0,
+        "total": 73,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        88
+      ],
+      "position": 297
+    },
+    {
+      "fpsa_correction_occupancy": 76,
+      "fpsa_sign_occupancy": {
+        "negative": 76,
+        "positive": 0,
+        "total": 76,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 76,
+      "gc_sign_occupancy": {
+        "negative": 76,
+        "positive": 0,
+        "total": 76,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        96
+      ],
+      "position": 302
+    },
+    {
+      "fpsa_correction_occupancy": 80,
+      "fpsa_sign_occupancy": {
+        "negative": 80,
+        "positive": 0,
+        "total": 80,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 80,
+      "gc_sign_occupancy": {
+        "negative": 80,
+        "positive": 0,
+        "total": 80,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        104
+      ],
+      "position": 349
+    },
+    {
+      "fpsa_correction_occupancy": 108,
+      "fpsa_sign_occupancy": {
+        "negative": 108,
+        "positive": 0,
+        "total": 108,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 108,
+      "gc_sign_occupancy": {
+        "negative": 108,
+        "positive": 0,
+        "total": 108,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        112
+      ],
+      "position": 367
+    },
+    {
+      "fpsa_correction_occupancy": 116,
+      "fpsa_sign_occupancy": {
+        "negative": 116,
+        "positive": 0,
+        "total": 116,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 116,
+      "gc_sign_occupancy": {
+        "negative": 116,
+        "positive": 0,
+        "total": 116,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        120
+      ],
+      "position": 375
+    },
+    {
+      "fpsa_correction_occupancy": 127,
+      "fpsa_sign_occupancy": {
+        "negative": 127,
+        "positive": 0,
+        "total": 127,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 127,
+      "gc_sign_occupancy": {
+        "negative": 127,
+        "positive": 0,
+        "total": 127,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        128
+      ],
+      "position": 395
+    },
+    {
+      "fpsa_correction_occupancy": 136,
+      "fpsa_sign_occupancy": {
+        "negative": 136,
+        "positive": 0,
+        "total": 136,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 136,
+      "gc_sign_occupancy": {
+        "negative": 136,
+        "positive": 0,
+        "total": 136,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        136
+      ],
+      "position": 413
+    },
+    {
+      "fpsa_correction_occupancy": 141,
+      "fpsa_sign_occupancy": {
+        "negative": 141,
+        "positive": 0,
+        "total": 141,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 141,
+      "gc_sign_occupancy": {
+        "negative": 141,
+        "positive": 0,
+        "total": 141,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        144
+      ],
+      "position": 488
+    },
+    {
+      "fpsa_correction_occupancy": 147,
+      "fpsa_sign_occupancy": {
+        "negative": 147,
+        "positive": 0,
+        "total": 147,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 147,
+      "gc_sign_occupancy": {
+        "negative": 147,
+        "positive": 0,
+        "total": 147,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        152
+      ],
+      "position": 501
+    },
+    {
+      "fpsa_correction_occupancy": 149,
+      "fpsa_sign_occupancy": {
+        "negative": 149,
+        "positive": 0,
+        "total": 149,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 149,
+      "gc_sign_occupancy": {
+        "negative": 149,
+        "positive": 0,
+        "total": 149,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        160
+      ],
+      "position": 532
+    },
+    {
+      "fpsa_correction_occupancy": 158,
+      "fpsa_sign_occupancy": {
+        "negative": 158,
+        "positive": 0,
+        "total": 158,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 158,
+      "gc_sign_occupancy": {
+        "negative": 158,
+        "positive": 0,
+        "total": 158,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        168
+      ],
+      "position": 550
+    },
+    {
+      "fpsa_correction_occupancy": 168,
+      "fpsa_sign_occupancy": {
+        "negative": 168,
+        "positive": 0,
+        "total": 168,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 168,
+      "gc_sign_occupancy": {
+        "negative": 168,
+        "positive": 0,
+        "total": 168,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        176
+      ],
+      "position": 601
+    },
+    {
+      "fpsa_correction_occupancy": 173,
+      "fpsa_sign_occupancy": {
+        "negative": 173,
+        "positive": 0,
+        "total": 173,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 173,
+      "gc_sign_occupancy": {
+        "negative": 173,
+        "positive": 0,
+        "total": 173,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        184
+      ],
+      "position": 631
+    },
+    {
+      "fpsa_correction_occupancy": 205,
+      "fpsa_sign_occupancy": {
+        "negative": 205,
+        "positive": 0,
+        "total": 205,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 205,
+      "gc_sign_occupancy": {
+        "negative": 205,
+        "positive": 0,
+        "total": 205,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        192
+      ],
+      "position": 697
+    },
+    {
+      "fpsa_correction_occupancy": 208,
+      "fpsa_sign_occupancy": {
+        "negative": 208,
+        "positive": 0,
+        "total": 208,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 208,
+      "gc_sign_occupancy": {
+        "negative": 208,
+        "positive": 0,
+        "total": 208,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        200
+      ],
+      "position": 708
+    },
+    {
+      "fpsa_correction_occupancy": 214,
+      "fpsa_sign_occupancy": {
+        "negative": 214,
+        "positive": 0,
+        "total": 214,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 214,
+      "gc_sign_occupancy": {
+        "negative": 214,
+        "positive": 0,
+        "total": 214,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        208
+      ],
+      "position": 780
+    },
+    {
+      "fpsa_correction_occupancy": 215,
+      "fpsa_sign_occupancy": {
+        "negative": 215,
+        "positive": 0,
+        "total": 215,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 215,
+      "gc_sign_occupancy": {
+        "negative": 215,
+        "positive": 0,
+        "total": 215,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        216
+      ],
+      "position": 803
+    },
+    {
+      "fpsa_correction_occupancy": 225,
+      "fpsa_sign_occupancy": {
+        "negative": 225,
+        "positive": 0,
+        "total": 225,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 225,
+      "gc_sign_occupancy": {
+        "negative": 225,
+        "positive": 0,
+        "total": 225,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        224
+      ],
+      "position": 808
+    },
+    {
+      "fpsa_correction_occupancy": 257,
+      "fpsa_sign_occupancy": {
+        "negative": 257,
+        "positive": 0,
+        "total": 257,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 257,
+      "gc_sign_occupancy": {
+        "negative": 257,
+        "positive": 0,
+        "total": 257,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        232
+      ],
+      "position": 859
+    },
+    {
+      "fpsa_correction_occupancy": 289,
+      "fpsa_sign_occupancy": {
+        "negative": 289,
+        "positive": 0,
+        "total": 289,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 289,
+      "gc_sign_occupancy": {
+        "negative": 289,
+        "positive": 0,
+        "total": 289,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        240
+      ],
+      "position": 872
+    },
+    {
+      "fpsa_correction_occupancy": 291,
+      "fpsa_sign_occupancy": {
+        "negative": 291,
+        "positive": 0,
+        "total": 291,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 291,
+      "gc_sign_occupancy": {
+        "negative": 291,
+        "positive": 0,
+        "total": 291,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        248
+      ],
+      "position": 885
+    },
+    {
+      "fpsa_correction_occupancy": 299,
+      "fpsa_sign_occupancy": {
+        "negative": 299,
+        "positive": 0,
+        "total": 299,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 299,
+      "gc_sign_occupancy": {
+        "negative": 299,
+        "positive": 0,
+        "total": 299,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        256
+      ],
+      "position": 950
+    },
+    {
+      "fpsa_correction_occupancy": 318,
+      "fpsa_sign_occupancy": {
+        "negative": 318,
+        "positive": 0,
+        "total": 318,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 318,
+      "gc_sign_occupancy": {
+        "negative": 318,
+        "positive": 0,
+        "total": 318,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        264
+      ],
+      "position": 1007
+    },
+    {
+      "fpsa_correction_occupancy": 329,
+      "fpsa_sign_occupancy": {
+        "negative": 329,
+        "positive": 0,
+        "total": 329,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 329,
+      "gc_sign_occupancy": {
+        "negative": 329,
+        "positive": 0,
+        "total": 329,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        272
+      ],
+      "position": 1013
+    },
+    {
+      "fpsa_correction_occupancy": 336,
+      "fpsa_sign_occupancy": {
+        "negative": 336,
+        "positive": 0,
+        "total": 336,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 336,
+      "gc_sign_occupancy": {
+        "negative": 336,
+        "positive": 0,
+        "total": 336,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        280
+      ],
+      "position": 1025
+    },
+    {
+      "fpsa_correction_occupancy": 355,
+      "fpsa_sign_occupancy": {
+        "negative": 355,
+        "positive": 0,
+        "total": 355,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 355,
+      "gc_sign_occupancy": {
+        "negative": 355,
+        "positive": 0,
+        "total": 355,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        288
+      ],
+      "position": 1108
+    },
+    {
+      "fpsa_correction_occupancy": 387,
+      "fpsa_sign_occupancy": {
+        "negative": 387,
+        "positive": 0,
+        "total": 387,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 387,
+      "gc_sign_occupancy": {
+        "negative": 387,
+        "positive": 0,
+        "total": 387,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        296
+      ],
+      "position": 1121
+    },
+    {
+      "fpsa_correction_occupancy": 404,
+      "fpsa_sign_occupancy": {
+        "negative": 404,
+        "positive": 0,
+        "total": 404,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 404,
+      "gc_sign_occupancy": {
+        "negative": 404,
+        "positive": 0,
+        "total": 404,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        304
+      ],
+      "position": 1139
+    },
+    {
+      "fpsa_correction_occupancy": 430,
+      "fpsa_sign_occupancy": {
+        "negative": 430,
+        "positive": 0,
+        "total": 430,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 430,
+      "gc_sign_occupancy": {
+        "negative": 430,
+        "positive": 0,
+        "total": 430,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        312
+      ],
+      "position": 1184
+    },
+    {
+      "fpsa_correction_occupancy": 432,
+      "fpsa_sign_occupancy": {
+        "negative": 432,
+        "positive": 0,
+        "total": 432,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 432,
+      "gc_sign_occupancy": {
+        "negative": 432,
+        "positive": 0,
+        "total": 432,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        320
+      ],
+      "position": 1255
+    },
+    {
+      "fpsa_correction_occupancy": 437,
+      "fpsa_sign_occupancy": {
+        "negative": 437,
+        "positive": 0,
+        "total": 437,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 1024,
+        "target_positive_capacity": 0
+      },
+      "gc_correction_occupancy": 437,
+      "gc_sign_occupancy": {
+        "negative": 437,
+        "positive": 0,
+        "total": 437,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        328
+      ],
+      "position": 1300
+    },
+    {
+      "fpsa_correction_occupancy": 449,
+      "fpsa_sign_occupancy": {
+        "negative": 437,
+        "positive": 12,
+        "total": 449,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 998,
+        "target_positive_capacity": 26
+      },
+      "gc_correction_occupancy": 449,
+      "gc_sign_occupancy": {
+        "negative": 437,
+        "positive": 12,
+        "total": 449,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        328
+      ],
+      "position": 1305
+    },
+    {
+      "fpsa_correction_occupancy": 481,
+      "fpsa_sign_occupancy": {
+        "negative": 437,
+        "positive": 44,
+        "total": 481,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 974,
+        "target_positive_capacity": 50
+      },
+      "gc_correction_occupancy": 481,
+      "gc_sign_occupancy": {
+        "negative": 437,
+        "positive": 44,
+        "total": 481,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        328
+      ],
+      "position": 1317
+    },
+    {
+      "fpsa_correction_occupancy": 484,
+      "fpsa_sign_occupancy": {
+        "negative": 440,
+        "positive": 44,
+        "total": 484,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 975,
+        "target_positive_capacity": 49
+      },
+      "gc_correction_occupancy": 484,
+      "gc_sign_occupancy": {
+        "negative": 440,
+        "positive": 44,
+        "total": 484,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        336
+      ],
+      "position": 1334
+    },
+    {
+      "fpsa_correction_occupancy": 486,
+      "fpsa_sign_occupancy": {
+        "negative": 440,
+        "positive": 46,
+        "total": 486,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 953,
+        "target_positive_capacity": 71
+      },
+      "gc_correction_occupancy": 486,
+      "gc_sign_occupancy": {
+        "negative": 440,
+        "positive": 46,
+        "total": 486,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        336
+      ],
+      "position": 1340
+    },
+    {
+      "fpsa_correction_occupancy": 518,
+      "fpsa_sign_occupancy": {
+        "negative": 440,
+        "positive": 78,
+        "total": 518,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 931,
+        "target_positive_capacity": 93
+      },
+      "gc_correction_occupancy": 518,
+      "gc_sign_occupancy": {
+        "negative": 440,
+        "positive": 78,
+        "total": 518,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        336
+      ],
+      "position": 1359
+    },
+    {
+      "fpsa_correction_occupancy": 550,
+      "fpsa_sign_occupancy": {
+        "negative": 472,
+        "positive": 78,
+        "total": 550,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 933,
+        "target_positive_capacity": 91
+      },
+      "gc_correction_occupancy": 550,
+      "gc_sign_occupancy": {
+        "negative": 472,
+        "positive": 78,
+        "total": 550,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        344
+      ],
+      "position": 1433
+    },
+    {
+      "fpsa_correction_occupancy": 559,
+      "fpsa_sign_occupancy": {
+        "negative": 472,
+        "positive": 87,
+        "total": 559,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 913,
+        "target_positive_capacity": 111
+      },
+      "gc_correction_occupancy": 559,
+      "gc_sign_occupancy": {
+        "negative": 472,
+        "positive": 87,
+        "total": 559,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        344
+      ],
+      "position": 1504
+    },
+    {
+      "fpsa_correction_occupancy": 591,
+      "fpsa_sign_occupancy": {
+        "negative": 504,
+        "positive": 87,
+        "total": 591,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 915,
+        "target_positive_capacity": 109
+      },
+      "gc_correction_occupancy": 591,
+      "gc_sign_occupancy": {
+        "negative": 504,
+        "positive": 87,
+        "total": 591,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        352
+      ],
+      "position": 1518
+    },
+    {
+      "fpsa_correction_occupancy": 623,
+      "fpsa_sign_occupancy": {
+        "negative": 504,
+        "positive": 119,
+        "total": 623,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 896,
+        "target_positive_capacity": 128
+      },
+      "gc_correction_occupancy": 623,
+      "gc_sign_occupancy": {
+        "negative": 504,
+        "positive": 119,
+        "total": 623,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        352
+      ],
+      "position": 1526
+    },
+    {
+      "fpsa_correction_occupancy": 646,
+      "fpsa_sign_occupancy": {
+        "negative": 527,
+        "positive": 119,
+        "total": 646,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 899,
+        "target_positive_capacity": 125
+      },
+      "gc_correction_occupancy": 646,
+      "gc_sign_occupancy": {
+        "negative": 527,
+        "positive": 119,
+        "total": 646,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        360
+      ],
+      "position": 1612
+    },
+    {
+      "fpsa_correction_occupancy": 667,
+      "fpsa_sign_occupancy": {
+        "negative": 548,
+        "positive": 119,
+        "total": 667,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 901,
+        "target_positive_capacity": 123
+      },
+      "gc_correction_occupancy": 667,
+      "gc_sign_occupancy": {
+        "negative": 548,
+        "positive": 119,
+        "total": 667,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        368
+      ],
+      "position": 1639
+    },
+    {
+      "fpsa_correction_occupancy": 699,
+      "fpsa_sign_occupancy": {
+        "negative": 548,
+        "positive": 151,
+        "total": 699,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 883,
+        "target_positive_capacity": 141
+      },
+      "gc_correction_occupancy": 699,
+      "gc_sign_occupancy": {
+        "negative": 548,
+        "positive": 151,
+        "total": 699,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        368
+      ],
+      "position": 1653
+    },
+    {
+      "fpsa_correction_occupancy": 712,
+      "fpsa_sign_occupancy": {
+        "negative": 561,
+        "positive": 151,
+        "total": 712,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 886,
+        "target_positive_capacity": 138
+      },
+      "gc_correction_occupancy": 712,
+      "gc_sign_occupancy": {
+        "negative": 561,
+        "positive": 151,
+        "total": 712,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        376
+      ],
+      "position": 1680
+    },
+    {
+      "fpsa_correction_occupancy": 744,
+      "fpsa_sign_occupancy": {
+        "negative": 593,
+        "positive": 151,
+        "total": 744,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 889,
+        "target_positive_capacity": 135
+      },
+      "gc_correction_occupancy": 744,
+      "gc_sign_occupancy": {
+        "negative": 593,
+        "positive": 151,
+        "total": 744,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        384
+      ],
+      "position": 1690
+    },
+    {
+      "fpsa_correction_occupancy": 776,
+      "fpsa_sign_occupancy": {
+        "negative": 625,
+        "positive": 151,
+        "total": 776,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 891,
+        "target_positive_capacity": 133
+      },
+      "gc_correction_occupancy": 776,
+      "gc_sign_occupancy": {
+        "negative": 625,
+        "positive": 151,
+        "total": 776,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        392
+      ],
+      "position": 1714
+    },
+    {
+      "fpsa_correction_occupancy": 808,
+      "fpsa_sign_occupancy": {
+        "negative": 625,
+        "positive": 183,
+        "total": 808,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 875,
+        "target_positive_capacity": 149
+      },
+      "gc_correction_occupancy": 808,
+      "gc_sign_occupancy": {
+        "negative": 625,
+        "positive": 183,
+        "total": 808,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        392
+      ],
+      "position": 1732
+    },
+    {
+      "fpsa_correction_occupancy": 840,
+      "fpsa_sign_occupancy": {
+        "negative": 625,
+        "positive": 215,
+        "total": 840,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 859,
+        "target_positive_capacity": 165
+      },
+      "gc_correction_occupancy": 840,
+      "gc_sign_occupancy": {
+        "negative": 625,
+        "positive": 215,
+        "total": 840,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        392
+      ],
+      "position": 1766
+    },
+    {
+      "fpsa_correction_occupancy": 872,
+      "fpsa_sign_occupancy": {
+        "negative": 625,
+        "positive": 247,
+        "total": 872,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 844,
+        "target_positive_capacity": 180
+      },
+      "gc_correction_occupancy": 872,
+      "gc_sign_occupancy": {
+        "negative": 625,
+        "positive": 247,
+        "total": 872,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        392
+      ],
+      "position": 1805
+    },
+    {
+      "fpsa_correction_occupancy": 904,
+      "fpsa_sign_occupancy": {
+        "negative": 625,
+        "positive": 279,
+        "total": 904,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 830,
+        "target_positive_capacity": 194
+      },
+      "gc_correction_occupancy": 904,
+      "gc_sign_occupancy": {
+        "negative": 625,
+        "positive": 279,
+        "total": 904,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        392
+      ],
+      "position": 1833
+    },
+    {
+      "fpsa_correction_occupancy": 919,
+      "fpsa_sign_occupancy": {
+        "negative": 625,
+        "positive": 294,
+        "total": 919,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 816,
+        "target_positive_capacity": 208
+      },
+      "gc_correction_occupancy": 919,
+      "gc_sign_occupancy": {
+        "negative": 625,
+        "positive": 294,
+        "total": 919,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        392
+      ],
+      "position": 1929
+    },
+    {
+      "fpsa_correction_occupancy": 951,
+      "fpsa_sign_occupancy": {
+        "negative": 625,
+        "positive": 326,
+        "total": 951,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 802,
+        "target_positive_capacity": 222
+      },
+      "gc_correction_occupancy": 951,
+      "gc_sign_occupancy": {
+        "negative": 625,
+        "positive": 326,
+        "total": 951,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        392
+      ],
+      "position": 1966
+    },
+    {
+      "fpsa_correction_occupancy": 983,
+      "fpsa_sign_occupancy": {
+        "negative": 657,
+        "positive": 326,
+        "total": 983,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 806,
+        "target_positive_capacity": 218
+      },
+      "gc_correction_occupancy": 983,
+      "gc_sign_occupancy": {
+        "negative": 657,
+        "positive": 326,
+        "total": 983,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        400
+      ],
+      "position": 1999
+    },
+    {
+      "fpsa_correction_occupancy": 990,
+      "fpsa_sign_occupancy": {
+        "negative": 657,
+        "positive": 333,
+        "total": 990,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 793,
+        "target_positive_capacity": 231
+      },
+      "gc_correction_occupancy": 990,
+      "gc_sign_occupancy": {
+        "negative": 657,
+        "positive": 333,
+        "total": 990,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        400
+      ],
+      "position": 2023
+    },
+    {
+      "fpsa_correction_occupancy": 995,
+      "fpsa_sign_occupancy": {
+        "negative": 662,
+        "positive": 333,
+        "total": 995,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 0,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 0,
+        "target_negative_capacity": 796,
+        "target_positive_capacity": 228
+      },
+      "gc_correction_occupancy": 995,
+      "gc_sign_occupancy": {
+        "negative": 662,
+        "positive": 333,
+        "total": 995,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        408
+      ],
+      "position": 2026
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 2,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 800,
+        "target_positive_capacity": 224
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        416
+      ],
+      "position": 2074
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 2,
+        "quota_borrow_rejected": 0,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 788,
+        "target_positive_capacity": 236
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        416
+      ],
+      "position": 2139
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 34,
+        "quota_borrow_rejected": 32,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 791,
+        "target_positive_capacity": 233
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        424
+      ],
+      "position": 2160
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 42,
+        "quota_borrow_rejected": 40,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 795,
+        "target_positive_capacity": 229
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        432
+      ],
+      "position": 2170
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 56,
+        "quota_borrow_rejected": 54,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 798,
+        "target_positive_capacity": 226
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        440
+      ],
+      "position": 2181
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 56,
+        "quota_borrow_rejected": 54,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 787,
+        "target_positive_capacity": 237
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        440
+      ],
+      "position": 2206
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 88,
+        "quota_borrow_rejected": 86,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 790,
+        "target_positive_capacity": 234
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        448
+      ],
+      "position": 2219
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 120,
+        "quota_borrow_rejected": 118,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 793,
+        "target_positive_capacity": 231
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        456
+      ],
+      "position": 2237
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 120,
+        "quota_borrow_rejected": 118,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 782,
+        "target_positive_capacity": 242
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        456
+      ],
+      "position": 2272
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 120,
+        "quota_borrow_rejected": 118,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 772,
+        "target_positive_capacity": 252
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        456
+      ],
+      "position": 2427
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 152,
+        "quota_borrow_rejected": 150,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 775,
+        "target_positive_capacity": 249
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        464
+      ],
+      "position": 2435
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 152,
+        "quota_borrow_rejected": 150,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 765,
+        "target_positive_capacity": 259
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        464
+      ],
+      "position": 2492
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 152,
+        "quota_borrow_rejected": 150,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 755,
+        "target_positive_capacity": 269
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        464
+      ],
+      "position": 2501
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 184,
+        "quota_borrow_rejected": 182,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 758,
+        "target_positive_capacity": 266
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        472
+      ],
+      "position": 2533
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 194,
+        "quota_borrow_rejected": 192,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 761,
+        "target_positive_capacity": 263
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        480
+      ],
+      "position": 2550
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 194,
+        "quota_borrow_rejected": 192,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 752,
+        "target_positive_capacity": 272
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        480
+      ],
+      "position": 2583
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 194,
+        "quota_borrow_rejected": 192,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 742,
+        "target_positive_capacity": 282
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        480
+      ],
+      "position": 2624
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 194,
+        "quota_borrow_rejected": 192,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 733,
+        "target_positive_capacity": 291
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        480
+      ],
+      "position": 2627
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 194,
+        "quota_borrow_rejected": 192,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 724,
+        "target_positive_capacity": 300
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        480
+      ],
+      "position": 2642
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 226,
+        "quota_borrow_rejected": 224,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 728,
+        "target_positive_capacity": 296
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        488
+      ],
+      "position": 2713
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 258,
+        "quota_borrow_rejected": 256,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 731,
+        "target_positive_capacity": 293
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        496
+      ],
+      "position": 2795
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 290,
+        "quota_borrow_rejected": 288,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 735,
+        "target_positive_capacity": 289
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        504
+      ],
+      "position": 2816
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 322,
+        "quota_borrow_rejected": 320,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 738,
+        "target_positive_capacity": 286
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        512
+      ],
+      "position": 2851
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 327,
+        "quota_borrow_rejected": 325,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 742,
+        "target_positive_capacity": 282
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        520
+      ],
+      "position": 2882
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 327,
+        "quota_borrow_rejected": 325,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 733,
+        "target_positive_capacity": 291
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        520
+      ],
+      "position": 2889
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 327,
+        "quota_borrow_rejected": 325,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 725,
+        "target_positive_capacity": 299
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        520
+      ],
+      "position": 2905
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 359,
+        "quota_borrow_rejected": 357,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 728,
+        "target_positive_capacity": 296
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        528
+      ],
+      "position": 2917
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 359,
+        "quota_borrow_rejected": 357,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 720,
+        "target_positive_capacity": 304
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        528
+      ],
+      "position": 2960
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 391,
+        "quota_borrow_rejected": 389,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 723,
+        "target_positive_capacity": 301
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        536
+      ],
+      "position": 3003
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 391,
+        "quota_borrow_rejected": 389,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 716,
+        "target_positive_capacity": 308
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        536
+      ],
+      "position": 3087
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 418,
+        "quota_borrow_rejected": 416,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 719,
+        "target_positive_capacity": 305
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        544
+      ],
+      "position": 3113
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 418,
+        "quota_borrow_rejected": 416,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 711,
+        "target_positive_capacity": 313
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        544
+      ],
+      "position": 3146
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 450,
+        "quota_borrow_rejected": 448,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 715,
+        "target_positive_capacity": 309
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        552
+      ],
+      "position": 3162
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 450,
+        "quota_borrow_rejected": 448,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 707,
+        "target_positive_capacity": 317
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        552
+      ],
+      "position": 3205
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 450,
+        "quota_borrow_rejected": 448,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 700,
+        "target_positive_capacity": 324
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        552
+      ],
+      "position": 3218
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 450,
+        "quota_borrow_rejected": 448,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 693,
+        "target_positive_capacity": 331
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        552
+      ],
+      "position": 3281
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 693,
+        "positive": 331,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 482,
+        "quota_borrow_rejected": 480,
+        "quota_cross_sign_replacements": 2,
+        "target_negative_capacity": 696,
+        "target_positive_capacity": 328
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        560
+      ],
+      "position": 3302
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 689,
+        "positive": 335,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 486,
+        "quota_borrow_rejected": 480,
+        "quota_cross_sign_replacements": 6,
+        "target_negative_capacity": 689,
+        "target_positive_capacity": 335
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        560
+      ],
+      "position": 3345
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 689,
+        "positive": 335,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 518,
+        "quota_borrow_rejected": 512,
+        "quota_cross_sign_replacements": 6,
+        "target_negative_capacity": 693,
+        "target_positive_capacity": 331
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        568
+      ],
+      "position": 3392
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 689,
+        "positive": 335,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 546,
+        "quota_borrow_rejected": 540,
+        "quota_cross_sign_replacements": 6,
+        "target_negative_capacity": 696,
+        "target_positive_capacity": 328
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        576
+      ],
+      "position": 3410
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 689,
+        "positive": 335,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 546,
+        "quota_borrow_rejected": 540,
+        "quota_cross_sign_replacements": 6,
+        "target_negative_capacity": 689,
+        "target_positive_capacity": 335
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        576
+      ],
+      "position": 3458
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 683,
+        "positive": 341,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 552,
+        "quota_borrow_rejected": 540,
+        "quota_cross_sign_replacements": 12,
+        "target_negative_capacity": 683,
+        "target_positive_capacity": 341
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        576
+      ],
+      "position": 3526
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 676,
+        "positive": 348,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 559,
+        "quota_borrow_rejected": 540,
+        "quota_cross_sign_replacements": 19,
+        "target_negative_capacity": 676,
+        "target_positive_capacity": 348
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        576
+      ],
+      "position": 3539
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 670,
+        "positive": 354,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 565,
+        "quota_borrow_rejected": 540,
+        "quota_cross_sign_replacements": 25,
+        "target_negative_capacity": 670,
+        "target_positive_capacity": 354
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        576
+      ],
+      "position": 3540
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 670,
+        "positive": 354,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 597,
+        "quota_borrow_rejected": 572,
+        "quota_cross_sign_replacements": 25,
+        "target_negative_capacity": 673,
+        "target_positive_capacity": 351
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        584
+      ],
+      "position": 3581
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 667,
+        "positive": 357,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 600,
+        "quota_borrow_rejected": 572,
+        "quota_cross_sign_replacements": 28,
+        "target_negative_capacity": 667,
+        "target_positive_capacity": 357
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        584
+      ],
+      "position": 3597
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 661,
+        "positive": 363,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 606,
+        "quota_borrow_rejected": 572,
+        "quota_cross_sign_replacements": 34,
+        "target_negative_capacity": 661,
+        "target_positive_capacity": 363
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        584
+      ],
+      "position": 3625
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 661,
+        "positive": 363,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 638,
+        "quota_borrow_rejected": 604,
+        "quota_cross_sign_replacements": 34,
+        "target_negative_capacity": 664,
+        "target_positive_capacity": 360
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        592
+      ],
+      "position": 3632
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 661,
+        "positive": 363,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 670,
+        "quota_borrow_rejected": 636,
+        "quota_cross_sign_replacements": 34,
+        "target_negative_capacity": 667,
+        "target_positive_capacity": 357
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        600
+      ],
+      "position": 3655
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 661,
+        "positive": 363,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 670,
+        "quota_borrow_rejected": 636,
+        "quota_cross_sign_replacements": 34,
+        "target_negative_capacity": 662,
+        "target_positive_capacity": 362
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        600
+      ],
+      "position": 3685
+    },
+    {
+      "fpsa_correction_occupancy": 1024,
+      "fpsa_sign_occupancy": {
+        "negative": 661,
+        "positive": 363,
+        "total": 1024,
+        "zero": 0
+      },
+      "fpsa_targets_and_borrowing": {
+        "quota_borrow_opportunities": 702,
+        "quota_borrow_rejected": 668,
+        "quota_cross_sign_replacements": 34,
+        "target_negative_capacity": 665,
+        "target_positive_capacity": 359
+      },
+      "gc_correction_occupancy": 1024,
+      "gc_sign_occupancy": {
+        "negative": 691,
+        "positive": 333,
+        "total": 1024,
+        "zero": 0
+      },
+      "greedy_occupancy_by_layer": [
+        608
+      ],
+      "position": 3778
+    }
+  ],
+  "greedy_writer_parity": {
+    "events_checked_before_capacity_divergence": 30,
+    "first_capacity_dependent_divergence": {
+      "capacity_source": "shared Greedy normal memory",
+      "first_divergent_update_position": 1007,
+      "first_score_position_after_update": 1008,
+      "historical_capacity": 256,
+      "occupancy_after_by_layer": [
+        264
+      ],
+      "occupancy_before_by_layer": [
+        256
+      ],
+      "r3_expected_writer_action": "native_greedy_normal_update",
+      "r6_actual_writer_action": "native_greedy_normal_update",
+      "r6_capacity": 1024,
+      "reason": "R6 admitted a prototype beyond the historical full-bank boundary."
+    },
+    "post_divergence_writer_equality_claimed": false,
+    "r3_reference_total_receipt": {
+      "greedy_accepted_patch_count": 458,
+      "greedy_skipped_patch_count": 150,
+      "greedy_write_events": 74
+    },
+    "status": "MATCH_THROUGH_FIRST_CAPACITY_DIVERGENCE"
+  },
+  "illustrative_screening_criteria": {
+    "arm_flags": {
+      "FPSA1024-B3": {
+        "both_pass": false,
+        "fnr_le_20_percent": false,
+        "fpr_le_20_percent": true
+      },
+      "G1024-B3": {
+        "both_pass": false,
+        "fnr_le_20_percent": false,
+        "fpr_le_20_percent": true
+      },
+      "GC1024-B3": {
+        "both_pass": false,
+        "fnr_le_20_percent": false,
+        "fpr_le_20_percent": true
+      }
+    },
+    "criteria": {
+      "fnr_max": 0.2,
+      "fpr_max": 0.2,
+      "status": "illustrative research screen only; not factory safety or production certification"
+    }
+  },
+  "interpretation_limit": "One previously exposed development category, artificial fixed 3% label-blind query tape, frozen TEST JSON order, four deployed supports plus 64 extra protected TRAIN normals; capacity-aligned Greedy feasibility test, not an exact Hierarchy reproduction, independent production validation or factory readiness.",
+  "method": "Greedy-1024 plus native Correction-1024/FPSA-1024 with decoupled state-consistent B3",
+  "post_1305_metrics": {
+    "event_count": 2509,
+    "metrics": {
+      "FPSA1024-B3": {
+        "accuracy": 0.7206058190514149,
+        "anomalous_events": 1268,
+        "balanced_accuracy": 0.7208522815374799,
+        "confusion": {
+          "fn": 383,
+          "fp": 318,
+          "tn": 923,
+          "tp": 885
+        },
+        "events": 2509,
+        "fnr": 0.3020504731861199,
+        "fpr": 0.25624496373892025,
+        "normal_events": 1241
+      },
+      "FPSA1024-Frozen": {
+        "accuracy": 0.5815065763252292,
+        "anomalous_events": 1268,
+        "balanced_accuracy": 0.5857734044743605,
+        "confusion": {
+          "fn": 1028,
+          "fp": 22,
+          "tn": 1219,
+          "tp": 240
+        },
+        "events": 2509,
+        "fnr": 0.8107255520504731,
+        "fpr": 0.017727639000805803,
+        "normal_events": 1241
+      },
+      "G1024-B3": {
+        "accuracy": 0.749302510960542,
+        "anomalous_events": 1268,
+        "balanced_accuracy": 0.7505560540624356,
+        "confusion": {
+          "fn": 464,
+          "fp": 165,
+          "tn": 1076,
+          "tp": 804
+        },
+        "events": 2509,
+        "fnr": 0.3659305993690852,
+        "fpr": 0.13295729250604352,
+        "normal_events": 1241
+      },
+      "G1024-Frozen": {
+        "accuracy": 0.5332801913112794,
+        "anomalous_events": 1268,
+        "balanced_accuracy": 0.538232053116826,
+        "confusion": {
+          "fn": 1169,
+          "fp": 2,
+          "tn": 1239,
+          "tp": 99
+        },
+        "events": 2509,
+        "fnr": 0.9219242902208202,
+        "fpr": 0.0016116035455278,
+        "normal_events": 1241
+      },
+      "GC1024-B3": {
+        "accuracy": 0.7166201673973694,
+        "anomalous_events": 1268,
+        "balanced_accuracy": 0.7168318517934809,
+        "confusion": {
+          "fn": 384,
+          "fp": 327,
+          "tn": 914,
+          "tp": 884
+        },
+        "events": 2509,
+        "fnr": 0.3028391167192429,
+        "fpr": 0.2634971796937953,
+        "normal_events": 1241
+      },
+      "GC1024-Frozen": {
+        "accuracy": 0.5783180550019928,
+        "anomalous_events": 1268,
+        "balanced_accuracy": 0.5826102512220479,
+        "confusion": {
+          "fn": 1035,
+          "fp": 23,
+          "tn": 1218,
+          "tp": 233
+        },
+        "events": 2509,
+        "fnr": 0.8162460567823344,
+        "fpr": 0.018533440773569703,
+        "normal_events": 1241
+      }
+    },
+    "positions_inclusive": [
+      1306,
+      3814
+    ]
+  },
+  "primary_endpoint": "full-stream prequential Balanced Accuracy",
+  "r5_best_b3_fnr": {
+    "arm": "GC-B3",
+    "fnr": 0.4305555555555556
+  },
+  "r5_capacity256_b3_reference_metrics": {
+    "FPSA256-B3": {
+      "accuracy": 0.7370904325032765,
+      "anomalous_events": 1296,
+      "auroc": 0.8243606308107764,
+      "average_precision": 0.7205459927702673,
+      "balanced_accuracy": 0.6832817500575871,
+      "confusion": {
+        "fn": 628,
+        "fp": 375,
+        "tn": 2144,
+        "tp": 668
+      },
+      "events": 3815,
+      "fnr": 0.4845679012345679,
+      "fpr": 0.14886859865025803,
+      "normal_events": 2519,
+      "score_ranking_source": "GC-FPSA"
+    },
+    "G256-B3": {
+      "accuracy": 0.7598951507208388,
+      "anomalous_events": 1296,
+      "auroc": 0.7279058782879744,
+      "average_precision": 0.6166821683288948,
+      "balanced_accuracy": 0.7102906797229942,
+      "confusion": {
+        "fn": 576,
+        "fp": 340,
+        "tn": 2179,
+        "tp": 720
+      },
+      "events": 3815,
+      "fnr": 0.4444444444444444,
+      "fpr": 0.1349741961095673,
+      "normal_events": 2519,
+      "score_ranking_source": "G"
+    },
+    "GC256-B3": {
+      "accuracy": 0.76435124508519,
+      "anomalous_events": 1296,
+      "auroc": 0.7169214586427105,
+      "average_precision": 0.6087578164059746,
+      "balanced_accuracy": 0.7170366327025716,
+      "confusion": {
+        "fn": 558,
+        "fp": 341,
+        "tn": 2178,
+        "tp": 738
+      },
+      "events": 3815,
+      "fnr": 0.4305555555555556,
+      "fpr": 0.13537117903930132,
+      "normal_events": 2519,
+      "score_ranking_source": "GC"
+    }
+  },
+  "r5_capacity_state_score_parity": {
+    "FPSA_checks": 860,
+    "FPSA_max_abs_error": 0.0,
+    "GC_checks": 860,
+    "GC_max_abs_error": 0.0,
+    "G_checks": 1008,
+    "G_max_abs_error": 0.0,
+    "events": 3815,
+    "first_capacity_dependent_divergence": {
+      "G": {
+        "capacity_source": "shared Greedy normal memory",
+        "first_divergent_update_position": 1007,
+        "first_score_position_after_update": 1008,
+        "historical_capacity": 256,
+        "occupancy_after_by_layer": [
+          264
+        ],
+        "occupancy_before_by_layer": [
+          256
+        ],
+        "r3_expected_writer_action": "native_greedy_normal_update",
+        "r6_actual_writer_action": "native_greedy_normal_update",
+        "r6_capacity": 1024,
+        "reason": "R6 admitted a prototype beyond the historical full-bank boundary."
+      },
+      "GC": {
+        "capacity_source": "GC Correction bank",
+        "correction_occupancy_after": 257,
+        "correction_occupancy_before": 225,
+        "first_divergent_update_position": 859,
+        "first_score_position_after_update": 860,
+        "greedy_occupancy_after_by_layer": [
+          232
+        ],
+        "greedy_occupancy_before_by_layer": [
+          224
+        ],
+        "historical_capacity": 256,
+        "r6_capacity": 1024,
+        "reason": "Native update admitted a prototype beyond the historical full-bank boundary."
+      },
+      "GC-FPSA": {
+        "capacity_source": "FPSA Correction bank",
+        "correction_occupancy_after": 257,
+        "correction_occupancy_before": 225,
+        "first_divergent_update_position": 859,
+        "first_score_position_after_update": 860,
+        "greedy_occupancy_after_by_layer": [
+          232
+        ],
+        "greedy_occupancy_before_by_layer": [
+          224
+        ],
+        "historical_capacity": 256,
+        "r6_capacity": 1024,
+        "reason": "Native update admitted a prototype beyond the historical full-bank boundary."
+      }
+    },
+    "group_query_identity_checks": 3815,
+    "reference_capacity": 256
+  },
+  "r5_reference": {
+    "capacity": 256,
+    "verified": true
+  },
+  "ranking_diagnostics_only": {
+    "auroc_and_average_precision_by_arm": {
+      "FPSA1024-B3": {
+        "auroc": 0.8364202125574033,
+        "average_precision": 0.7480378395230396
+      },
+      "FPSA1024-Frozen": {
+        "auroc": 0.8364202125574033,
+        "average_precision": 0.7480378395230396
+      },
+      "G1024-B3": {
+        "auroc": 0.6987659222011479,
+        "average_precision": 0.5843117248349617
+      },
+      "G1024-Frozen": {
+        "auroc": 0.6987659222011479,
+        "average_precision": 0.5843117248349617
+      },
+      "GC1024-B3": {
+        "auroc": 0.8337358299148692,
+        "average_precision": 0.7438910485031829
+      },
+      "GC1024-Frozen": {
+        "auroc": 0.8337358299148692,
+        "average_precision": 0.7438910485031829
+      }
+    },
+    "not_optimized": true,
+    "threshold_paired_ranking_identical": true
+  },
+  "required_decision_contrasts": {
+    "FPSA1024-B3_minus_FPSA256-B3": {
+      "accuracy_difference": 0.045085190039318435,
+      "balanced_accuracy_difference": 0.07703475193467912,
+      "fnr_difference": -0.17669753086419754,
+      "fpr_difference": 0.022628026994839234,
+      "left_arm": "FPSA1024-B3",
+      "right_arm": "R5-FPSA256-B3"
+    },
+    "FPSA1024-B3_minus_G1024-B3": {
+      "accuracy_difference": -0.01834862385321101,
+      "balanced_accuracy_difference": 0.001090477800812617,
+      "fnr_difference": -0.06172839506172839,
+      "fpr_difference": 0.05954743946010323,
+      "left_arm": "FPSA1024-B3",
+      "right_arm": "G1024-B3"
+    },
+    "FPSA1024-B3_minus_GC1024-B3": {
+      "accuracy_difference": 0.002621231979030081,
+      "balanced_accuracy_difference": 0.0021722256529388417,
+      "fnr_difference": -0.0007716049382716084,
+      "fpr_difference": -0.003572846367606186,
+      "left_arm": "FPSA1024-B3",
+      "right_arm": "GC1024-B3"
+    },
+    "G1024-B3_minus_G256-B3": {
+      "accuracy_difference": 0.0406290956749672,
+      "balanced_accuracy_difference": 0.048935344468459374,
+      "fnr_difference": -0.07484567901234568,
+      "fpr_difference": -0.02302500992457325,
+      "left_arm": "G1024-B3",
+      "right_arm": "R5-G256-B3"
+    },
+    "GC1024-B3_minus_G1024-B3": {
+      "accuracy_difference": -0.02096985583224109,
+      "balanced_accuracy_difference": -0.0010817478521262247,
+      "fnr_difference": -0.06095679012345678,
+      "fpr_difference": 0.06312028582770941,
+      "left_arm": "GC1024-B3",
+      "right_arm": "G1024-B3"
+    },
+    "GC1024-B3_minus_GC256-B3": {
+      "accuracy_difference": 0.015203145478374869,
+      "balanced_accuracy_difference": 0.041107643636755786,
+      "fnr_difference": -0.12191358024691362,
+      "fpr_difference": 0.03969829297340213,
+      "left_arm": "GC1024-B3",
+      "right_arm": "R5-GC256-B3"
+    }
+  },
+  "run_id": "r6_capacity1024_audiojack_20261102_a1",
+  "schema": "r6.audiojack.capacity1024.aggregate.v1",
+  "source_group_count": 763,
+  "source_group_paired_bootstrap": {
+    "independent_confirmation": false,
+    "intervals_2_5_97_5_percent": {
+      "FPSA1024-B3_minus_FPSA256-B3": [
+        0.062033325303121015,
+        0.09278551205299362
+      ],
+      "FPSA1024-B3_minus_G1024-B3": [
+        -0.01326777918346038,
+        0.015448952259523847
+      ],
+      "FPSA1024-B3_minus_GC1024-B3": [
+        -0.003667484775013774,
+        0.00819312698483823
+      ],
+      "G1024-B3_minus_G256-B3": [
+        0.03483715872655208,
+        0.06151253989112245
+      ],
+      "GC1024-B3_minus_G1024-B3": [
+        -0.015622610439167068,
+        0.01251217416604506
+      ],
+      "GC1024-B3_minus_GC256-B3": [
+        0.024412167247262962,
+        0.05731667955900119
+      ]
+    },
+    "replicates": 1000,
+    "seed": 20261102,
+    "status": "DESCRIPTIVE_SOURCE_GROUP_PAIRED_BOOTSTRAP",
+    "unit": "audiojack Source Group resampled with replacement; event multiplicity follows group"
+  },
+  "status": "COMPLETE",
+  "test_masks_opened": false,
+  "threshold_trajectories": {
+    "FPSA1024-B3": {
+      "final_threshold": 0.520968496799469,
+      "initial_threshold": 0.5665241479873657,
+      "maximum_threshold": 0.5665241479873657,
+      "minimum_threshold": 0.48666027188301086,
+      "movement_count": 77,
+      "movement_event_positions": [
+        36,
+        56,
+        73,
+        117,
+        160,
+        163,
+        190,
+        269,
+        298,
+        303,
+        350,
+        368,
+        376,
+        396,
+        414,
+        489,
+        502,
+        533,
+        551,
+        602,
+        632,
+        698,
+        781,
+        804,
+        809,
+        860,
+        873,
+        886,
+        951,
+        1008,
+        1014,
+        1026,
+        1109,
+        1122,
+        1140,
+        1185,
+        1301,
+        1306,
+        1318,
+        1360,
+        1434,
+        1505,
+        1527,
+        1613,
+        1640,
+        1654,
+        1681,
+        1691,
+        1715,
+        1733,
+        1767,
+        1806,
+        1834,
+        1967,
+        2000,
+        2027,
+        2075,
+        2140,
+        2161,
+        2207,
+        2273,
+        2428,
+        2493,
+        2534,
+        2796,
+        2852,
+        2883,
+        2890,
+        2906,
+        3411,
+        3459,
+        3527,
+        3540,
+        3541,
+        3626,
+        3633,
+        3686
+      ],
+      "scorer": "GC-FPSA",
+      "state_version_final": 105,
+      "total_variation": 0.17974942922592163
+    },
+    "G1024-B3": {
+      "final_threshold": 0.4883216917514801,
+      "initial_threshold": 0.5665241479873657,
+      "maximum_threshold": 0.5665241479873657,
+      "minimum_threshold": 0.4883216917514801,
+      "movement_count": 29,
+      "movement_event_positions": [
+        36,
+        56,
+        73,
+        117,
+        160,
+        163,
+        190,
+        376,
+        414,
+        489,
+        533,
+        551,
+        602,
+        781,
+        886,
+        1014,
+        1140,
+        1185,
+        1335,
+        1434,
+        1519,
+        1640,
+        2000,
+        2161,
+        2796,
+        2852,
+        3004,
+        3411,
+        3582
+      ],
+      "scorer": "G",
+      "state_version_final": 74,
+      "total_variation": 0.07820245623588562
+    },
+    "GC1024-B3": {
+      "final_threshold": 0.5177470445632935,
+      "initial_threshold": 0.5665241479873657,
+      "maximum_threshold": 0.5665241479873657,
+      "minimum_threshold": 0.48666027188301086,
+      "movement_count": 93,
+      "movement_event_positions": [
+        36,
+        56,
+        73,
+        117,
+        160,
+        163,
+        190,
+        269,
+        298,
+        303,
+        350,
+        368,
+        376,
+        396,
+        414,
+        489,
+        502,
+        533,
+        551,
+        602,
+        632,
+        698,
+        781,
+        804,
+        809,
+        860,
+        873,
+        886,
+        951,
+        1008,
+        1014,
+        1026,
+        1109,
+        1122,
+        1140,
+        1185,
+        1301,
+        1306,
+        1318,
+        1360,
+        1434,
+        1505,
+        1527,
+        1613,
+        1640,
+        1654,
+        1681,
+        1691,
+        1715,
+        1733,
+        1767,
+        1806,
+        1834,
+        1967,
+        2000,
+        2027,
+        2075,
+        2140,
+        2161,
+        2171,
+        2182,
+        2207,
+        2220,
+        2238,
+        2273,
+        2428,
+        2436,
+        2493,
+        2534,
+        2551,
+        2584,
+        2714,
+        2796,
+        2817,
+        2852,
+        2883,
+        2890,
+        2906,
+        2918,
+        3004,
+        3114,
+        3163,
+        3303,
+        3346,
+        3393,
+        3411,
+        3459,
+        3527,
+        3582,
+        3633,
+        3656,
+        3686,
+        3779
+      ],
+      "scorer": "GC",
+      "state_version_final": 104,
+      "total_variation": 0.1913914680480957
+    }
+  },
+  "worst_eligible_temporal_window": {
+    "FPSA1024-B3": {
+      "worst_complete_512_event_window": {
+        "accuracy": 0.693359375,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.691897426493062,
+        "confusion": {
+          "fn": 72,
+          "fp": 85,
+          "tn": 161,
+          "tp": 194
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.2706766917293233,
+        "fpr": 0.34552845528455284,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      "worst_defined_including_partial_tail": {
+        "accuracy": 0.693359375,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.691897426493062,
+        "confusion": {
+          "fn": 72,
+          "fp": 85,
+          "tn": 161,
+          "tp": 194
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.2706766917293233,
+        "fpr": 0.34552845528455284,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      }
+    },
+    "FPSA1024-Frozen": {
+      "worst_complete_512_event_window": {
+        "accuracy": 0.751953125,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.5495150187734669,
+        "confusion": {
+          "fn": 120,
+          "fp": 7,
+          "tn": 369,
+          "tp": 16
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.8823529411764706,
+        "fpr": 0.018617021276595744,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      "worst_defined_including_partial_tail": {
+        "accuracy": 0.751953125,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.5495150187734669,
+        "confusion": {
+          "fn": 120,
+          "fp": 7,
+          "tn": 369,
+          "tp": 16
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.8823529411764706,
+        "fpr": 0.018617021276595744,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      }
+    },
+    "G1024-B3": {
+      "worst_complete_512_event_window": {
+        "accuracy": 0.720703125,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.7237147747417324,
+        "confusion": {
+          "fn": 94,
+          "fp": 49,
+          "tn": 197,
+          "tp": 172
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.3533834586466165,
+        "fpr": 0.1991869918699187,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      "worst_defined_including_partial_tail": {
+        "accuracy": 0.720703125,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.7237147747417324,
+        "confusion": {
+          "fn": 94,
+          "fp": 49,
+          "tn": 197,
+          "tp": 172
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.3533834586466165,
+        "fpr": 0.1991869918699187,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      }
+    },
+    "G1024-Frozen": {
+      "worst_complete_512_event_window": {
+        "accuracy": 0.55859375,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.5313500022967035,
+        "confusion": {
+          "fn": 225,
+          "fp": 1,
+          "tn": 270,
+          "tp": 16
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.9336099585062241,
+        "fpr": 0.0036900369003690036,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      },
+      "worst_defined_including_partial_tail": {
+        "accuracy": 0.55859375,
+        "anomalous_events": 241,
+        "balanced_accuracy": 0.5313500022967035,
+        "confusion": {
+          "fn": 225,
+          "fp": 1,
+          "tn": 270,
+          "tp": 16
+        },
+        "end_position_exclusive": 2560,
+        "events": 512,
+        "fnr": 0.9336099585062241,
+        "fpr": 0.0036900369003690036,
+        "normal_events": 271,
+        "partial_tail": false,
+        "start_position": 2048
+      }
+    },
+    "GC1024-B3": {
+      "worst_complete_512_event_window": {
+        "accuracy": 0.693359375,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.691897426493062,
+        "confusion": {
+          "fn": 72,
+          "fp": 85,
+          "tn": 161,
+          "tp": 194
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.2706766917293233,
+        "fpr": 0.34552845528455284,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      },
+      "worst_defined_including_partial_tail": {
+        "accuracy": 0.693359375,
+        "anomalous_events": 266,
+        "balanced_accuracy": 0.691897426493062,
+        "confusion": {
+          "fn": 72,
+          "fp": 85,
+          "tn": 161,
+          "tp": 194
+        },
+        "end_position_exclusive": 2048,
+        "events": 512,
+        "fnr": 0.2706766917293233,
+        "fpr": 0.34552845528455284,
+        "normal_events": 246,
+        "partial_tail": false,
+        "start_position": 1536
+      }
+    },
+    "GC1024-Frozen": {
+      "worst_complete_512_event_window": {
+        "accuracy": 0.751953125,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.5495150187734669,
+        "confusion": {
+          "fn": 120,
+          "fp": 7,
+          "tn": 369,
+          "tp": 16
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.8823529411764706,
+        "fpr": 0.018617021276595744,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      },
+      "worst_defined_including_partial_tail": {
+        "accuracy": 0.751953125,
+        "anomalous_events": 136,
+        "balanced_accuracy": 0.5495150187734669,
+        "confusion": {
+          "fn": 120,
+          "fp": 7,
+          "tn": 369,
+          "tp": 16
+        },
+        "end_position_exclusive": 1536,
+        "events": 512,
+        "fnr": 0.8823529411764706,
+        "fpr": 0.018617021276595744,
+        "normal_events": 376,
+        "partial_tail": false,
+        "start_position": 1024
+      }
+    }
+  }
+}
