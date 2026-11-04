@@ -26,6 +26,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 import uuid
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -101,6 +102,39 @@ GLOBAL_SEAL_SCHEMA = "recovery.e123.stage_a_global_seal.v1"
 
 class E123Error(RuntimeError):
     """E123 input, causal protocol, or execution integrity failure."""
+
+
+def _exception_diagnostic(exc: BaseException) -> dict[str, Any]:
+    """Return a compact source location plus the complete formatted traceback."""
+    frames = traceback.extract_tb(exc.__traceback__)
+    source = frames[-1] if frames else None
+    return {
+        "error_type": type(exc).__name__,
+        "error": str(exc),
+        "traceback": "".join(traceback.format_exception(
+            type(exc), exc, exc.__traceback__)),
+        "source_file": source.filename if source is not None else None,
+        "source_line": source.lineno if source is not None else None,
+        "source_function": source.name if source is not None else None,
+        "source_text": source.line if source is not None else None,
+    }
+
+
+def _condition_failure_receipt(
+        exc: BaseException, *, run_id: str, condition_id: str,
+        source_commit_sha: str, last_completed_event_position: int,
+        failing_event_position: int | None) -> dict[str, Any]:
+    return {
+        "schema": "recovery.e123.condition_failure.v1",
+        "run_id": run_id,
+        "condition_id": condition_id,
+        **_exception_diagnostic(exc),
+        "source_commit_sha": source_commit_sha,
+        "last_completed_event_position": int(last_completed_event_position),
+        "failing_event_position": (None if failing_event_position is None
+                                   else int(failing_event_position)),
+        "stage_a_status": "INCOMPLETE_PRESERVE_PARTIAL_DO_NOT_RESUME",
+    }
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -1580,6 +1614,38 @@ def _score_c64(torch: Any, impl: Any, bank: Any,
     return scores
 
 
+def _native_shared_top8_candidates(static_map: Any, static_ids: Any,
+                                   static_summary: Any,
+                                   features: Sequence[Any]) -> dict[int, list[int]]:
+    """Select the first eight native Top-32 IDs without re-ranking the dense map."""
+    import numpy as np
+
+    dense = np.asarray(static_map)
+    ids = np.asarray(static_ids)
+    if dense.shape != (784,) or not np.isfinite(dense).all():
+        raise E123Error("Static native dense map must contain 784 finite patches")
+    if (ids.shape != (32,) or ids.dtype.kind not in "iu" or
+            len(set(ids.tolist())) != 32):
+        raise E123Error("Static native Top-32 IDs must be 32 unique integers")
+    if not isinstance(static_summary, Mapping):
+        raise E123Error("Static native score summary must be a mapping")
+    layer0 = static_summary.get("layer0")
+    if not isinstance(layer0, Mapping):
+        raise E123Error("Static native score summary lacks layer0 mapping")
+    summary_ids = np.asarray(layer0.get("topk_patch_idx"))
+    if (summary_ids.shape != (32,) or summary_ids.dtype.kind not in "iu" or
+            not np.array_equal(ids, summary_ids)):
+        raise E123Error("Static Top-32 IDs differ from the native layer0 summary")
+    if len(features) != 1:
+        raise E123Error("Static native candidate contract requires one fused feature layer")
+    feature_shape = tuple(getattr(features[0], "shape", ()))
+    if len(feature_shape) != 2 or int(feature_shape[0]) != 784:
+        raise E123Error("Static native candidate features must contain 784 patches")
+    if int(ids.min()) < 0 or int(ids.max()) >= feature_shape[0]:
+        raise E123Error("Static native Top-32 ID is outside the feature tensor")
+    return {0: [int(value) for value in ids[:8]]}
+
+
 def _stage05_c64_receipt(category: str) -> tuple[dict[str, Any], list[float]]:
     import numpy as np
     from experiments.calibration.r3_fullstream_2x2 import STAGE05
@@ -1668,6 +1734,8 @@ def _run_stage_a_condition(run_id: str, condition_id: str) -> int:
     log_sink = BudgetedTextLog(budget, f"logs/{condition_id}.log")
     from contextlib import redirect_stderr, redirect_stdout
     started = time.perf_counter()
+    last_completed_event_position = -1
+    failing_event_position: int | None = None
     try:
         with redirect_stdout(log_sink), redirect_stderr(log_sink):
             torch, impl, backbone, native = _native_profile()
@@ -1783,6 +1851,7 @@ def _run_stage_a_condition(run_id: str, condition_id: str) -> int:
             initial_reference_parity: dict[str, Any] | None = None
             try:
                 for position, event in enumerate(condition.events):
+                    failing_event_position = position
                     event_start = time.perf_counter()
                     image_path = Path(event.image_path)
                     image_hash = sha256_file(image_path)
@@ -1811,11 +1880,8 @@ def _run_stage_a_condition(run_id: str, condition_id: str) -> int:
                             "map_max_abs_error": float(np.max(np.abs(static_map - ref_map))),
                             "top32_ids_equal": True,
                         }
-                    patch_map = impl.layer_to_topk_from_amap(static_map)
-                    candidate_ids = {
-                        int(layer): [int(value) for value in values[:8]]
-                        for layer, values in patch_map.items() if values[:8]
-                    }
+                    candidate_ids = _native_shared_top8_candidates(
+                        static_map, static_ids, _static_summary, features)
                     if not candidate_ids:
                         raise E123Error("Static map produced no shared candidate patches")
                     candidate_digest = sha256_json({str(k): v for k, v in candidate_ids.items()})
@@ -1953,6 +2019,8 @@ def _run_stage_a_condition(run_id: str, condition_id: str) -> int:
                         })
                         progress_out.flush(sync=False)
                     del image, features, static_map
+                    last_completed_event_position = position
+                    failing_event_position = None
                 scores_out.flush(sync=True)
                 snapshots_out.flush(sync=True)
                 feedback_out.flush(sync=True)
@@ -2077,13 +2145,13 @@ def _run_stage_a_condition(run_id: str, condition_id: str) -> int:
         except Exception:
             pass
         log_sink.flush()
-        budget.failure(f"stage_a/conditions/{condition_id}/failure.json", {
-            "schema": "recovery.e123.condition_failure.v1",
-            "run_id": run_id, "condition_id": condition_id,
-            "error_type": type(exc).__name__, "error": str(exc),
-            "source_commit_sha": contract["source_identity"]["commit_sha"],
-            "stage_a_status": "INCOMPLETE_PRESERVE_PARTIAL_DO_NOT_RESUME",
-        })
+        budget.failure(
+            f"stage_a/conditions/{condition_id}/failure.json",
+            _condition_failure_receipt(
+                exc, run_id=run_id, condition_id=condition_id,
+                source_commit_sha=contract["source_identity"]["commit_sha"],
+                last_completed_event_position=last_completed_event_position,
+                failing_event_position=failing_event_position))
         return 1
 
 
@@ -2919,11 +2987,13 @@ def _run_campaign(run_id: str) -> int:
     contract["contract_sha256"] = sha256_json(contract)
     budget = OutputBudget(run_path, create=True)
     completed: list[str] = []
+    first_failed_condition: str | None = None
     try:
         budget.write_once("E123_contract.json", canonical_bytes(contract))
         budget.write_once("E123_cpu_verification.json", canonical_bytes(cpu_verification))
         from experiments.calibration.r1_runtime_supervisor import run_supervised_child
         for condition in conditions:
+            first_failed_condition = condition.condition_id
             if _preflight_disk(run_path)["free_bytes"] < MIN_FREE_BYTES:
                 raise E123Error("Free disk space fell below the 10 GiB launch threshold")
             child_env = dict(os.environ)
@@ -2975,6 +3045,7 @@ def _run_campaign(run_id: str) -> int:
                 "completed_event_count": sum(len(c.events) for c in conditions
                                               if c.condition_id in completed),
             }), sync=True)
+            first_failed_condition = None
         global_seal = _seal_all_stage_a(run_path, run_id, conditions)
         global_seal["seal_sha256"] = sha256_json(global_seal)
         budget.write_once("stage_a/global_seal.json", canonical_bytes(global_seal))
@@ -2985,7 +3056,8 @@ def _run_campaign(run_id: str) -> int:
     except Exception as exc:
         budget.failure("stage_a/failure.json", {
             "schema": "recovery.e123.run_failure.v1", "run_id": run_id,
-            "error_type": type(exc).__name__, "error": str(exc),
+            **_exception_diagnostic(exc),
+            "first_failed_condition": first_failed_condition,
             "completed_conditions": list(completed),
             "stage_b_authorized": (run_path / "stage_a" / "global_seal.json").is_file(),
             "automatic_restart": False,

@@ -631,3 +631,136 @@ def test_native_profile_hashes_underlying_dino_model_and_restores_hub(
     assert all(target is model for target in hash_targets)
     assert expected_receipt["loaded_model_state_sha256"] == expected_state
     assert restored == [True]
+
+
+def _synthetic_native_candidate_inputs():
+    import numpy as np
+
+    # Deliberately non-sorted native order to catch accidental re-ranking.
+    ids = np.asarray([(index * 73) % 784 for index in range(32)], dtype=np.int64)
+    dense_map = np.linspace(-1.0, 1.0, 784, dtype=np.float32)
+    summary = {"layer0": {"topk_patch_idx": ids.tolist()}}
+    features = [torch.arange(784 * 4, dtype=torch.float32).reshape(784, 4)]
+    return dense_map, ids, summary, features
+
+
+def test_native_candidate_helper_uses_ordered_top8_without_dense_map_conversion(
+        monkeypatch):
+    import numpy as np
+
+    import experiments.p0_protocol_audit as p0
+
+    dense_map, ids, summary, features = _synthetic_native_candidate_inputs()
+    dense_before = dense_map.copy()
+    ids_before = ids.copy()
+    summary_before = {"layer0": {"topk_patch_idx": list(summary["layer0"]["topk_patch_idx"])}}
+    features_before = features[0].clone()
+    impl = p0.require_sources()
+    original = impl.layer_to_topk_from_amap
+    converter_inputs = []
+
+    def checked_converter(value):
+        assert isinstance(value, dict), "dense NumPy maps must not reach the summary converter"
+        converter_inputs.append(value)
+        return original(value)
+
+    monkeypatch.setattr(impl, "layer_to_topk_from_amap", checked_converter)
+    selected = e123._native_shared_top8_candidates(dense_map, ids, summary, features)
+    assert selected == {0: [int(value) for value in ids[:8]]}
+    assert converter_inputs == []
+
+    # The historical conversion agrees when it receives its required A_map_stats mapping.
+    structured = {"per_layer_summary": {"layer0": {
+        "topk_patch_idx": ids.tolist()}}}
+    reference = impl.layer_to_topk_from_amap(structured)
+    assert selected[0] == reference[0][:8]
+    assert converter_inputs == [structured]
+    assert np.array_equal(dense_map, dense_before)
+    assert np.array_equal(ids, ids_before)
+    assert summary == summary_before
+    assert torch.equal(features[0], features_before)
+
+
+@pytest.mark.parametrize("case", [
+    "duplicate", "missing", "inconsistent", "negative", "out_of_range",
+    "missing_summary", "wrong_feature_count",
+])
+def test_native_candidate_helper_rejects_invalid_top32_contract(case):
+    import numpy as np
+
+    dense_map, ids, summary, features = _synthetic_native_candidate_inputs()
+    if case == "duplicate":
+        ids[1] = ids[0]
+        summary["layer0"]["topk_patch_idx"] = ids.tolist()
+    elif case == "missing":
+        ids = ids[:31]
+        summary["layer0"]["topk_patch_idx"] = ids.tolist()
+    elif case == "inconsistent":
+        summary["layer0"]["topk_patch_idx"] = ids[::-1].tolist()
+    elif case == "negative":
+        ids[0] = -1
+        summary["layer0"]["topk_patch_idx"] = ids.tolist()
+    elif case == "out_of_range":
+        ids[-1] = 784
+        summary["layer0"]["topk_patch_idx"] = ids.tolist()
+    elif case == "missing_summary":
+        summary = {}
+    elif case == "wrong_feature_count":
+        features = [torch.zeros((783, 4), dtype=torch.float32)]
+    assert isinstance(dense_map, np.ndarray)
+    with pytest.raises(e123.E123Error):
+        e123._native_shared_top8_candidates(dense_map, ids, summary, features)
+
+
+def test_native_top8_candidates_are_shared_across_mutable_arms_only():
+    import numpy as np
+
+    dense_map, ids, summary, features = _synthetic_native_candidate_inputs()
+    selected = e123._native_shared_top8_candidates(dense_map, ids, summary, features)
+    static_feature_before = features[0].clone()
+    common = e123.prepare_common_candidates(
+        FakeImpl, features, selected, device="cpu")
+    seen = []
+
+    class WriterSpy:
+        def observe(self, **kwargs):
+            seen.append(kwargs["common_candidates"])
+            return False
+
+    arm_ids = e123.CONFIGURATION_IDS[1:]
+    states = {arm_id: WriterSpy() for arm_id in arm_ids}
+    e123.dispatch_common_write(
+        states, eligible=True,
+        observe_kwargs={"common_candidates": common},
+    )
+    assert tuple(states) == arm_ids
+    assert "STATIC" not in states
+    assert len(seen) == len(arm_ids)
+    assert all(candidate is common for candidate in seen)
+    assert common[0][0] == [int(value) for value in ids[:8]]
+    expected = torch.nn.functional.normalize(
+        static_feature_before[ids[:8]].float(), dim=1)
+    assert torch.equal(common[0][1], expected)
+    assert torch.equal(features[0], static_feature_before)
+    assert np.array_equal(ids, np.asarray(summary["layer0"]["topk_patch_idx"]))
+
+
+def test_condition_failure_receipt_preserves_traceback_and_event_context():
+    def synthetic_failure():
+        raise RuntimeError("synthetic traceback sentinel")
+
+    with pytest.raises(RuntimeError) as caught:
+        synthetic_failure()
+    receipt = e123._condition_failure_receipt(
+        caught.value, run_id="synthetic_run", condition_id="audiojack_s0_json",
+        source_commit_sha="a" * 40, last_completed_event_position=12,
+        failing_event_position=13)
+    assert receipt["error_type"] == "RuntimeError"
+    assert receipt["error"] == "synthetic traceback sentinel"
+    assert "synthetic_failure" in receipt["traceback"]
+    assert "synthetic traceback sentinel" in receipt["traceback"]
+    assert receipt["source_file"].endswith("test_e123_recovery.py")
+    assert receipt["source_line"] > 0
+    assert "raise RuntimeError" in receipt["source_text"]
+    assert receipt["last_completed_event_position"] == 12
+    assert receipt["failing_event_position"] == 13
