@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import subprocess
+import sys
 
 import pytest
 import torch
@@ -764,3 +766,462 @@ def test_condition_failure_receipt_preserves_traceback_and_event_context():
     assert "raise RuntimeError" in receipt["source_text"]
     assert receipt["last_completed_event_position"] == 12
     assert receipt["failing_event_position"] == 13
+
+
+def test_supervisor_result_success_requires_all_tree_completion_fields():
+    result = e123.SupervisorResult(
+        status="COMPLETED", child_pid=4321, child_exit_code=0,
+        elapsed_seconds=1.25, timeout_seconds=7200.0,
+        termination_confirmed=True, active_job_processes=0)
+    verified = e123._verify_supervisor_result(result)
+    assert verified.status == "COMPLETED"
+    assert verified.child_exit_code == 0
+    assert verified.termination_confirmed is True
+    assert verified.active_job_processes == 0
+    assert e123._supervisor_result_payload(result) == {
+        "status": "COMPLETED", "child_pid": 4321, "child_exit_code": 0,
+        "elapsed_seconds": 1.25, "timeout_seconds": 7200.0,
+        "termination_confirmed": True, "active_job_processes": 0,
+    }
+
+
+@pytest.mark.parametrize("result, message", [
+    (e123.SupervisorResult("FAILED_NONZERO_EXIT", 4321, 9, 1.0, 7200.0,
+                           True, 0), "did not complete successfully"),
+    (e123.SupervisorResult("TIMED_OUT_TERMINATED", 4321, 1, 7200.0, 7200.0,
+                           True, 0), "did not complete successfully"),
+    (e123.SupervisorResult("FAILED_DESCENDANTS_TERMINATED", 4321, 0, 2.0,
+                           7200.0, True, 0), "did not complete successfully"),
+])
+def test_supervisor_result_failures_are_rejected_after_coherence_check(result, message):
+    with pytest.raises(e123.E123Error, match=message):
+        e123._verify_supervisor_result(result)
+
+
+def test_supervisor_result_missing_fields_and_contradictions_fail_closed():
+    payload = e123._supervisor_result_payload(e123.SupervisorResult(
+        "COMPLETED", 4321, 0, 1.0, 7200.0, True, 0))
+    del payload["child_exit_code"]
+    with pytest.raises(e123.E123Error, match="missing=.*child_exit_code"):
+        e123._verify_supervisor_result(payload)
+
+    contradictory = e123.SupervisorResult(
+        "COMPLETED", 4321, 7, 1.0, 7200.0, True, 0)
+    with pytest.raises(e123.E123Error, match="Contradictory SupervisorResult"):
+        e123._verify_supervisor_result(contradictory)
+
+    malformed = e123.SupervisorResult(
+        "COMPLETED", 4321, 0, float("nan"), 7200.0, True, 0)
+    with pytest.raises(e123.E123Error, match="Malformed SupervisorResult"):
+        e123._verify_supervisor_result(malformed)
+
+
+def test_module_execution_defines_final_report_helpers_before_entrypoint():
+    source = (e123.ROOT / "experiments/calibration/e123_recovery.py").read_text(
+        encoding="utf-8")
+    assert source.rfind("def _scientific_claims(") < source.rfind(
+        'if __name__ == "__main__":')
+    assert source.rfind("def _render_unresolved_claims(") < source.rfind(
+        'if __name__ == "__main__":')
+    assert source.rfind("def _render_combined_report(") < source.rfind(
+        'if __name__ == "__main__":')
+    probe = """
+import argparse, inspect, runpy, sys
+original = argparse.ArgumentParser.parse_args
+def checking_parse_args(self, *args, **kwargs):
+    module_globals = inspect.currentframe().f_back.f_globals
+    required = ("_scientific_claims", "_render_unresolved_claims",
+                "_render_combined_report")
+    assert all(callable(module_globals.get(name)) for name in required)
+    return original(self, *args, **kwargs)
+argparse.ArgumentParser.parse_args = checking_parse_args
+sys.argv = ["e123_recovery", "--help"]
+try:
+    runpy.run_module("experiments.calibration.e123_recovery", run_name="__main__")
+except SystemExit as exc:
+    assert exc.code == 0
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", probe], cwd=e123.ROOT, text=True,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+    assert completed.returncode == 0, completed.stdout
+    assert "--stage-a-child" in completed.stdout
+
+
+def test_synthetic_campaign_exercises_parent_global_seal_and_real_stage_b(
+        tmp_path, monkeypatch):
+    from experiments.calibration import r1_runtime_supervisor as supervisor
+    from experiments.calibration import r3_fullstream_2x2 as r3
+
+    output_base = tmp_path / "outputs" / "calibration"
+    output_base.mkdir(parents=True)
+    json_root = tmp_path / "synthetic-json"
+    json_root.mkdir()
+    source_digests = {}
+    for category in e123.CATEGORIES:
+        category_outcomes = [int(position % 2 == 1) for position in range(17)]
+        document = {
+            "meta": {"normal_class": "good"}, "train": [],
+            "test": [{"image_path": f"{category}-{position}.png",
+                      "anomaly_class": "scratch" if label else "good"}
+                     for position, label in enumerate(category_outcomes)],
+        }
+        path = json_root / f"{category}.json"
+        path.write_text(json.dumps(document), encoding="utf-8")
+        source_digests[category] = e123.sha256_file(path)
+
+    conditions = []
+    for category in e123.CATEGORIES:
+        for seed in e123.SUPPORT_SEEDS:
+            for order in e123.STREAM_ORDERS:
+                condition_id = f"{category}_s{seed}_{order}"
+                events = []
+                for position in range(17):
+                    original_position = (position if order == "json"
+                                         else 16 - position)
+                    sample_key = f"{category}-sample-{original_position}"
+                    group = e123.sha256_bytes(
+                        ("official-sample-group\0" + sample_key).encode("utf-8"))
+                    events.append(e123.E123Event(
+                        position=position, original_position=original_position,
+                        relative_id=f"{category}/{original_position}.png",
+                        image_identity_sha256=e123.sha256_bytes(
+                            f"image:{category}:{original_position}".encode()),
+                        source_group_sha256=group, camera_id=1,
+                        timestamp="synthetic", image_path="synthetic-no-image-read",
+                        sample_key=sample_key))
+                conditions.append(e123.Condition(
+                    category=category, support_seed=seed, order=order,
+                    events=tuple(events), query_positions=frozenset({0}),
+                    query_tape_sha256=e123.sha256_bytes(
+                        f"tape:{condition_id}".encode()),
+                    stream_identity_sha256=e123.sha256_bytes(
+                        f"stream:{condition_id}".encode()),
+                    support_images=tuple(f"support-{i}" for i in range(4)),
+                    support_groups=tuple(f"support-group-{i}" for i in range(4)),
+                    c64_images=tuple(f"c64-{i}" for i in range(64)),
+                    c64_groups=tuple(f"c64-group-{i}" for i in range(64)),
+                    class_json_sha256=source_digests[category]))
+
+    synthetic_source = {
+        "branch": e123.EXPECTED_BRANCH, "commit_sha": "a" * 40,
+        "requested_parent_sha": e123.REQUESTED_PARENT,
+        "actual_parent_sha": "b" * 40,
+        "requested_parent_is_ancestor": True,
+        "source_sha256": {"synthetic": "c" * 64},
+        "source_fingerprint_sha256": e123.sha256_json({"synthetic": "c" * 64}),
+    }
+    fixed_offsets = {
+        "schema": "recovery.e123.fixed_offset_selection.v1",
+        "selection_by_target_category": {
+            category: {"coefficient": -1.0,
+                       "selection_status": "SYNTHETIC_ONLY"}
+            for category in e123.CATEGORIES
+        },
+    }
+    monkeypatch.setattr(e123, "OUTPUT_BASE", output_base)
+    monkeypatch.setattr(e123, "EXPECTED_COUNTS",
+                        {category: 17 for category in e123.CATEGORIES})
+    monkeypatch.setattr(e123, "source_identity", lambda: dict(synthetic_source))
+    monkeypatch.setattr(e123, "_build_conditions", lambda: (conditions, {
+        "synthetic_identity_only": True}))
+    monkeypatch.setattr(e123, "select_fixed_offsets", lambda: fixed_offsets)
+    monkeypatch.setattr(e123, "_historical_evidence_receipts", lambda: [])
+    monkeypatch.setattr(e123, "_preflight_disk", lambda _path: {
+        "free_bytes": e123.MIN_FREE_BYTES + 1, "required_free_bytes": e123.MIN_FREE_BYTES,
+        "total_bytes": e123.MIN_FREE_BYTES + 1,
+    })
+    monkeypatch.setattr(e123, "_run_focused_cpu_tests", lambda: {
+        "status": "PASS", "passed_test_count": 1,
+        "dino_loaded": False, "cuda_executed": False,
+        "real_dataset_read": False,
+    })
+    monkeypatch.setattr(r3, "JSON_ROOT", json_root)
+    monkeypatch.setattr(r3, "_get_verified_model_receipt", lambda: {
+        "status": "SYNTHETIC_MODEL_RECEIPT", "dino_loaded": False,
+    })
+    monkeypatch.setattr(e123, "_stage1a_k256_evidence", lambda: {
+        "classification": "SYNTHETIC_ONLY", "trajectory_count": 0,
+        "event_count": 0, "native_or_gpu_rerun": False,
+        "per_method_macro": {}, "per_category_macro": {},
+        "source_sha256": "d" * 64, "source_file": "synthetic",
+        "labels_already_exposed_historically": True,
+    })
+
+    probe_contract, probe_conditions = e123.build_contract("synthetic_contract")
+    e123._verify_contract(probe_contract, expected_run_id="synthetic_contract")
+    assert len(probe_conditions) == 16
+    assert all(len(condition.events) == 17 for condition in probe_conditions)
+
+    stage_a_decodes = []
+    stage_b_label_reads = []
+    original_label_call = e123.RandomAccessQueriedLabelReader.__call__
+    original_stage_b_read = e123.RandomAccessQueriedLabelReader.stage_b_all_labels
+
+    def record_stage_a_decode(reader, category, position, source_key):
+        stage_a_decodes.append((category, position))
+        return original_label_call(reader, category, position, source_key)
+
+    global_seal_barrier = {"passed": False, "stage_b_calls": 0}
+
+    def record_stage_b_read(reader, *, global_seal):
+        assert global_seal_barrier["passed"] is True
+        assert global_seal["status"] == "SEALED_COMPLETE"
+        stage_b_label_reads.append(reader.category)
+        return original_stage_b_read(reader, global_seal=global_seal)
+
+    monkeypatch.setattr(e123.RandomAccessQueriedLabelReader, "__call__",
+                        record_stage_a_decode)
+    monkeypatch.setattr(e123.RandomAccessQueriedLabelReader, "stage_b_all_labels",
+                        record_stage_b_read)
+
+    original_verify_condition = e123._verify_condition_seal
+    validated_condition_ids = []
+
+    def record_condition_validation(*args, **kwargs):
+        seal = original_verify_condition(*args, **kwargs)
+        validated_condition_ids.append(seal["condition_id"])
+        return seal
+
+    monkeypatch.setattr(e123, "_verify_condition_seal", record_condition_validation)
+
+    report_calls = []
+    original_claims = e123._scientific_claims
+    original_unresolved = e123._render_unresolved_claims
+    original_combined = e123._render_combined_report
+
+    def record_claims(*args, **kwargs):
+        report_calls.append("claims")
+        return original_claims(*args, **kwargs)
+
+    def record_unresolved(*args, **kwargs):
+        report_calls.append("unresolved")
+        return original_unresolved(*args, **kwargs)
+
+    def record_combined(*args, **kwargs):
+        report_calls.append("combined")
+        return original_combined(*args, **kwargs)
+
+    monkeypatch.setattr(e123, "_scientific_claims", record_claims)
+    monkeypatch.setattr(e123, "_render_unresolved_claims", record_unresolved)
+    monkeypatch.setattr(e123, "_render_combined_report", record_combined)
+    original_run_stage_b = e123._run_stage_b
+
+    def require_global_before_stage_b(run_path, run_id, contract, run_conditions,
+                                      global_seal):
+        seal_path = run_path / "stage_a" / "global_seal.json"
+        assert seal_path.is_file()
+        e123.require_complete_stage_a(e123.read_json(seal_path))
+        assert global_seal_barrier["passed"] is False
+        global_seal_barrier["passed"] = True
+        global_seal_barrier["stage_b_calls"] += 1
+        return original_run_stage_b(run_path, run_id, contract, run_conditions,
+                                    global_seal)
+
+    monkeypatch.setattr(e123, "_run_stage_b", require_global_before_stage_b)
+
+    def write_synthetic_condition(run_id, condition, env):
+        run_path = output_base / f"recovery_e123_{run_id}"
+        contract = e123.read_json(run_path / "E123_contract.json")
+        e123._verify_contract(contract, expected_run_id=run_id)
+        launch_token = env["E123_SUPERVISOR_LAUNCH_TOKEN"]
+        assert e123.sha256_bytes(launch_token.encode("ascii")) == contract[
+            "supervisor_launch_token_sha256"]
+        budget = e123.OutputBudget(run_path)
+        e123._condition_manifest(budget, condition, contract, source={
+            "synthetic_only": True, "official_group_disjointness": True,
+        })
+        condition_dir = f"stage_a/conditions/{condition.condition_id}"
+        scores_rel = f"{condition_dir}/scores.jsonl"
+        snapshots_rel = f"{condition_dir}/c64_snapshots.jsonl"
+        feedback_rel = f"{condition_dir}/query_feedback.private.jsonl"
+        progress_rel = f"{condition_dir}/progress.jsonl"
+        scores_out = e123.BufferedJsonl(budget, scores_rel, flush_every=64)
+        snapshots_out = e123.BufferedJsonl(budget, snapshots_rel, flush_every=1)
+        feedback_out = e123.BufferedJsonl(budget, feedback_rel, flush_every=1)
+        progress_out = e123.BufferedJsonl(budget, progress_rel, flush_every=1)
+        memory_digest = e123.sha256_bytes(
+            f"memory:{condition.condition_id}".encode())
+        c64_scores = [0.40 + index * 0.001 for index in range(64)]
+        snapshots_out.add({
+            "schema": "recovery.e123.c64_snapshot.v1", "memory_version": 0,
+            "memory_state_sha256": memory_digest, "c64_scores": c64_scores,
+            "theta_before": 0.5, "theta_after": 0.5,
+            "snapshot_source": "C64 scored against fixed support bank at M0",
+        })
+        snapshots_out.flush(sync=True)
+        query_original_positions = [condition.events[position].original_position
+                                    for position in condition.query_positions]
+        query_groups = {
+            event.original_position: event.source_group_sha256
+            for event in condition.events if event.position in condition.query_positions
+        }
+        reader = e123.RandomAccessQueriedLabelReader(
+            category=condition.category,
+            path=json_root / f"{condition.category}.json",
+            expected_source_sha256=condition.class_json_sha256,
+            allowed_positions=query_original_positions,
+            group_sha256_by_position=query_groups)
+        query_label = None
+        try:
+            for position, event in enumerate(condition.events):
+                queried = position in condition.query_positions
+                event_id = e123.sha256_json({
+                    "condition_id": condition.condition_id, "position": position,
+                    "image_identity_sha256": event.image_identity_sha256,
+                    "source_group_sha256": event.source_group_sha256,
+                })
+                scores = {
+                    arm: 0.20 + position * 0.001 + arm_index * 0.0001
+                    for arm_index, arm in enumerate(e123.CONFIGURATION_IDS)
+                }
+                scores_out.add({
+                    "schema": e123.SCORE_SCHEMA,
+                    "condition_id": condition.condition_id,
+                    "position": position,
+                    "original_position": event.original_position,
+                    "event_id_sha256": event_id,
+                    "image_identity_sha256": event.image_identity_sha256,
+                    "source_group_sha256": event.source_group_sha256,
+                    "camera_id": event.camera_id,
+                    "query_tape_decision": queried,
+                    "query_tape_sha256": condition.query_tape_sha256,
+                    "scores": scores, "theta0": 0.5, "sigma0": 0.1,
+                    "b3_greedy1024_threshold_before": 0.5,
+                    "greedy1024_memory_version_before": 0,
+                    "greedy1024_transition_sha256_before": memory_digest,
+                })
+                if queried:
+                    query_label = e123.disclose_after_score_seal(
+                        scores_out, queried=True, label_reader=reader,
+                        category=condition.category,
+                        original_position=event.original_position,
+                        source_key=event.sample_key)
+                    feedback_out.add({
+                        "schema": "recovery.e123.private_query_feedback.v1",
+                        "condition_id": condition.condition_id,
+                        "position": position, "original_position": event.original_position,
+                        "event_id_sha256": event_id,
+                        "source_group_sha256": event.source_group_sha256,
+                        "label": query_label,
+                    })
+                    feedback_out.flush(sync=True)
+                progress_out.add({"position": position, "sealed": True})
+            scores_out.flush(sync=True)
+            snapshots_out.flush(sync=True)
+            feedback_out.flush(sync=True)
+            progress_out.flush(sync=True)
+        finally:
+            reader.close()
+        mutable = {}
+        for arm in e123.CONFIGURATION_IDS[1:]:
+            capacity = int(arm.rsplit("K", 1)[1])
+            mutable[arm] = {
+                "prototype_tensor_bytes": capacity * 2 * 4,
+                "metadata_runtime_bytes_estimate": 16,
+                "metadata_tensor_bytes": 8,
+                "allocated_persistent_tensor_bytes": capacity * 2 * 4 + 8,
+                "python_metadata_bytes_estimate": 16,
+                "persistent_mutable_bytes_estimate": capacity * 2 * 4 + 24,
+                "layers": [{"occupied_slots": 1, "capacity": capacity}],
+                "dtype": "float32", "accepted_patches": 1,
+                "rejected_patches": 0, "replaced_patches": 0,
+                "candidate_patches": 1,
+            }
+        resource_summary = {"mutable_arms": mutable}
+        feedback_rows = e123._read_jsonl(run_path / f"{feedback_rel}")
+        seal = {
+            "schema": e123.CONDITION_SEAL_SCHEMA,
+            "status": "SEALED_COMPLETE", "run_id": run_id,
+            "condition_id": condition.condition_id,
+            "category": condition.category,
+            "support_seed": condition.support_seed,
+            "stream_order": condition.order,
+            "event_count": len(condition.events),
+            "query_count": len(condition.query_positions),
+            "query_normal_count": int(query_label == 0),
+            "query_defect_count": int(query_label == 1),
+            "score_configurations": list(e123.CONFIGURATION_IDS),
+            "score_rows_sha256": e123.sha256_file(run_path / scores_rel),
+            "score_row_count": len(condition.events),
+            "c64_snapshots_sha256": e123.sha256_file(run_path / snapshots_rel),
+            "private_query_feedback_sha256": e123.sha256_file(
+                run_path / feedback_rel),
+            "feedback_count": len(feedback_rows),
+            "query_tape_sha256": condition.query_tape_sha256,
+            "resource_summary": resource_summary,
+            "support_self_scores": [{"score": 0.55 + index * 0.01}
+                                    for index in range(4)],
+            "static_native_reference_parity": {"status": "SYNTHETIC_PASS"},
+            "fixed_bank": {"historical_match": True},
+            "c64": {"max_abs_error_to_historical_receipt": 0.0},
+        }
+        seal["seal_sha256"] = e123.sha256_json(seal)
+        budget.write_once(
+            f"{condition_dir}/condition_seal.json", e123.canonical_bytes(seal))
+        budget.verify_complete_namespace()
+
+    def fake_supervisor(command, *, timeout_seconds, env, cwd, output_dir=None):
+        assert timeout_seconds == e123.SUPERVISOR_TIMEOUT_SECONDS
+        run_id = command[command.index("--run-id") + 1]
+        condition_id = command[command.index("--condition-id") + 1]
+        assert cwd == e123.ROOT
+        if run_id == "synthetic_fail_01":
+            return e123.SupervisorResult(
+                "FAILED_NONZERO_EXIT", 4321, 7, 1.0, timeout_seconds, True, 0)
+        condition = next(row for row in conditions if row.condition_id == condition_id)
+        write_synthetic_condition(run_id, condition, env)
+        return e123.SupervisorResult(
+            "COMPLETED", 4321, 0, 1.0, timeout_seconds, True, 0)
+
+    monkeypatch.setattr(supervisor, "run_supervised_child", fake_supervisor)
+
+    assert e123._run_campaign("synthetic_success_01") == 0
+    success_root = output_base / "recovery_e123_synthetic_success_01"
+    assert global_seal_barrier == {"passed": True, "stage_b_calls": 1}
+    assert len(stage_a_decodes) == 16
+    for category in e123.CATEGORIES:
+        assert sorted(position for decoded_category, position in stage_a_decodes
+                      if decoded_category == category) == [0, 0, 16, 16]
+    assert len(stage_b_label_reads) == 16
+    assert len(validated_condition_ids) >= 16
+    assert set(report_calls) == {"claims", "unresolved", "combined"}
+    assert len(report_calls) == 3
+    assert len(conditions) == 16
+    for name in (
+            "stage_a/global_seal.json", "stage_b/aggregate.json",
+            "E1_failure_decomposition.json", "E2_memory_comparison.json",
+            "E3_calibration_comparison.json", "E123_protocol_parity.json",
+            "E123_unresolved_claims.md", "E123_combined_report.md",
+            "E123_provenance.json"):
+        assert (success_root / name).is_file(), name
+    global_seal = e123.read_json(success_root / "stage_a/global_seal.json")
+    e123.require_complete_stage_a(global_seal)
+    aggregate = e123.read_json(success_root / "stage_b/aggregate.json")
+    assert aggregate["status"] == "COMPLETE_AFTER_GLOBAL_STAGE_A_SEAL"
+    assert aggregate["image_level_outcome_label_vectors_written"] is False
+    assert aggregate["e1"]["by_condition"]
+    assert aggregate["e2"]["resource_aggregate"]
+    assert aggregate["e3"]["category_equal_metrics"]
+    for name in ("stage_b/aggregate.json", "E1_failure_decomposition.json",
+                 "E2_memory_comparison.json", "E3_calibration_comparison.json",
+                 "E123_protocol_parity.json", "E123_provenance.json"):
+        artifact = e123.read_json(success_root / name)
+        claimed = artifact.pop("artifact_sha256")
+        assert claimed == e123.sha256_json(artifact), name
+    assert e123.OutputBudget(success_root).verify_complete_namespace()[
+        "unaccounted_files"] == 0
+
+    assert e123._run_campaign("synthetic_fail_01") == 1
+    failure_root = output_base / "recovery_e123_synthetic_fail_01"
+    failed_receipt = e123.read_json(
+        failure_root / "stage_a/conditions/audiojack_s0_json/supervisor.json")
+    assert failed_receipt["result"] == {
+        "status": "FAILED_NONZERO_EXIT", "child_pid": 4321,
+        "child_exit_code": 7, "elapsed_seconds": 1.0,
+        "timeout_seconds": float(e123.SUPERVISOR_TIMEOUT_SECONDS),
+        "termination_confirmed": True, "active_job_processes": 0,
+    }
+    assert (failure_root / "stage_a/failure.json").is_file()
+    assert not (failure_root / "stage_a/global_seal.json").exists()
+    assert global_seal_barrier["stage_b_calls"] == 1

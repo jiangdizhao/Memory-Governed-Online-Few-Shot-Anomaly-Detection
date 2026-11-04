@@ -30,6 +30,8 @@ import traceback
 import uuid
 from typing import Any, Iterable, Mapping, Sequence
 
+from experiments.calibration.r1_runtime_supervisor import SupervisorResult
+
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_BASE = ROOT / "outputs" / "calibration"
 EXPECTED_BRANCH = "calibration-stage0-contract-20261029"
@@ -102,6 +104,97 @@ GLOBAL_SEAL_SCHEMA = "recovery.e123.stage_a_global_seal.v1"
 
 class E123Error(RuntimeError):
     """E123 input, causal protocol, or execution integrity failure."""
+
+
+@dataclass(frozen=True)
+class E123SupervisorResult:
+    """Validated, typed view of the unchanged R1 supervisor receipt."""
+
+    status: str
+    child_pid: int
+    child_exit_code: int | None
+    elapsed_seconds: float
+    timeout_seconds: float
+    termination_confirmed: bool
+    active_job_processes: int
+
+
+_SUPERVISOR_RESULT_FIELDS = frozenset({
+    "status", "child_pid", "child_exit_code", "elapsed_seconds",
+    "timeout_seconds", "termination_confirmed", "active_job_processes",
+})
+_SUPERVISOR_STATUSES = frozenset({
+    "COMPLETED", "FAILED_NONZERO_EXIT", "TIMED_OUT_TERMINATED",
+    "FAILED_DESCENDANTS_TERMINATED", "BLOCKING_TERMINATION_FAILURE",
+})
+
+
+def _supervisor_result_payload(
+        result: SupervisorResult | Mapping[str, Any]) -> dict[str, Any]:
+    """Return the actual supervisor fields without renaming or defaulting them."""
+    if isinstance(result, SupervisorResult):
+        return asdict(result)
+    if isinstance(result, Mapping):
+        return dict(result)
+    raise E123Error("Supervisor returned an unsupported result object")
+
+
+def _verify_supervisor_result(
+        result: SupervisorResult | Mapping[str, Any]) -> E123SupervisorResult:
+    """Validate field types, status coherence, and successful tree termination."""
+    payload = _supervisor_result_payload(result)
+    missing = _SUPERVISOR_RESULT_FIELDS - payload.keys()
+    extra = payload.keys() - _SUPERVISOR_RESULT_FIELDS
+    if missing or extra:
+        raise E123Error(
+            "Malformed SupervisorResult fields: "
+            f"missing={sorted(missing)}; unexpected={sorted(extra)}")
+    status = payload["status"]
+    child_pid = payload["child_pid"]
+    exit_code = payload["child_exit_code"]
+    elapsed = payload["elapsed_seconds"]
+    timeout = payload["timeout_seconds"]
+    termination = payload["termination_confirmed"]
+    active = payload["active_job_processes"]
+    if (not isinstance(status, str) or status not in _SUPERVISOR_STATUSES or
+            isinstance(child_pid, bool) or not isinstance(child_pid, int) or child_pid <= 0 or
+            (exit_code is not None and
+             (isinstance(exit_code, bool) or not isinstance(exit_code, int))) or
+            isinstance(elapsed, bool) or not isinstance(elapsed, (int, float)) or
+            not math.isfinite(float(elapsed)) or elapsed < 0 or
+            isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or
+            not math.isfinite(float(timeout)) or timeout <= 0 or
+            type(termination) is not bool or
+            isinstance(active, bool) or not isinstance(active, int) or active < 0):
+        raise E123Error("Malformed SupervisorResult field value or type")
+
+    coherent = True
+    if status == "COMPLETED":
+        coherent = exit_code == 0 and termination and active == 0
+    elif status == "FAILED_NONZERO_EXIT":
+        coherent = exit_code is not None and exit_code != 0 and termination and active == 0
+    elif status in {"TIMED_OUT_TERMINATED", "FAILED_DESCENDANTS_TERMINATED"}:
+        coherent = exit_code is not None and termination and active == 0
+    elif status == "BLOCKING_TERMINATION_FAILURE":
+        coherent = not termination or active > 0
+    if not coherent:
+        raise E123Error(
+            "Contradictory SupervisorResult status/termination fields: "
+            f"status={status}; child_exit_code={exit_code}; "
+            f"termination_confirmed={termination}; active_job_processes={active}")
+    verified = E123SupervisorResult(
+        status=status, child_pid=child_pid, child_exit_code=exit_code,
+        elapsed_seconds=float(elapsed), timeout_seconds=float(timeout),
+        termination_confirmed=termination, active_job_processes=active)
+    if (verified.status != "COMPLETED" or verified.child_exit_code != 0 or
+            verified.termination_confirmed is not True or
+            verified.active_job_processes != 0):
+        raise E123Error(
+            "Stage A child did not complete successfully under supervision: "
+            f"status={verified.status}; child_exit_code={verified.child_exit_code}; "
+            f"termination_confirmed={verified.termination_confirmed}; "
+            f"active_job_processes={verified.active_job_processes}")
+    return verified
 
 
 def _exception_diagnostic(exc: BaseException) -> dict[str, Any]:
@@ -229,6 +322,7 @@ class OutputBudget:
 
     _ALLOWED_RE = re.compile(
         r"^(?:E123_[A-Za-z0-9_.-]+\.json|E123_[A-Za-z0-9_.-]+\.md|"
+        r"E[123]_[A-Za-z0-9_.-]+\.json|"
         r"budget\.lock|stage_a/conditions/[a-z0-9_]+/"
         r"(?:condition_manifest\.json|scores\.jsonl|c64_snapshots\.jsonl|query_feedback\.private\.jsonl|"
         r"progress\.jsonl|condition_seal\.json|failure\.json|supervisor\.json)|"
@@ -3010,9 +3104,7 @@ def _run_campaign(run_id: str) -> int:
             supervisor_result = run_supervised_child(
                 command, timeout_seconds=SUPERVISOR_TIMEOUT_SECONDS,
                 env=child_env, cwd=ROOT, output_dir=None)
-            result_data = (asdict(supervisor_result)
-                           if hasattr(supervisor_result, "__dataclass_fields__")
-                           else dict(vars(supervisor_result)))
+            result_data = _supervisor_result_payload(supervisor_result)
             supervisor_rel = (
                 f"stage_a/conditions/{condition.condition_id}/supervisor.json")
             budget.write_once(supervisor_rel, canonical_bytes({
@@ -3022,20 +3114,7 @@ def _run_campaign(run_id: str) -> int:
                 "automatic_restart": False,
                 "result": result_data,
             }))
-            exit_code = result_data.get("exit_code")
-            timed_out = bool(result_data.get("timed_out", False))
-            termination_confirmed = bool(result_data.get("termination_confirmed", False))
-            blocking_failure = result_data.get("blocking_failure")
-            if exit_code != 0 or timed_out or not termination_confirmed or blocking_failure:
-                detail = {
-                    "condition_id": condition.condition_id,
-                    "exit_code": exit_code,
-                    "timed_out": timed_out,
-                    "termination_confirmed": termination_confirmed,
-                    "blocking_failure": blocking_failure,
-                    "supervisor_result": result_data,
-                }
-                raise E123Error(f"Stage A child failed or exceeded supervision: {detail}")
+            _verify_supervisor_result(result_data)
             _verify_condition_seal(run_path, condition, run_id)
             completed.append(condition.condition_id)
             budget.append("stage_a/progress.jsonl", canonical_bytes({
@@ -3088,10 +3167,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"E123 failed before or during supervised campaign: {type(exc).__name__}: {exc}",
               file=sys.stderr)
         return 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
 
 
 def _scientific_claims(e1: Mapping[str, Any], e2: Mapping[str, Any],
@@ -3280,3 +3355,7 @@ def _render_combined_report(run_id: str, contract: Mapping[str, Any],
         lines.append(f"- **{claim['status']}** — {claim['claim']}")
     lines += ["", "The run does not complete the broader paper recovery or establish independent generalization.", ""]
     return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
