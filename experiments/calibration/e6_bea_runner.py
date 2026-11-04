@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import random
 import sys
 import time
 from pathlib import Path
@@ -28,6 +29,7 @@ from experiments.calibration.e6_bea_closed_loop import (
     R7FrozenFeatureEncoder,
     ScoreLedger,
     StageAClosedLoop,
+    MAX_SMOKE_TEST_EVENTS,
     _assert_module_source,
     _canonical_json,
     _reject_reparse_ancestors,
@@ -36,6 +38,8 @@ from experiments.calibration.e6_bea_closed_loop import (
     create_e6_output_namespace,
     make_e6_event_stream,
     verify_e6_execution_identity,
+    validate_smoke_event_prefix,
+    validate_test_image_prefix_projection,
 )
 from experiments.calibration.e6_bea_policy import QueryController
 
@@ -55,10 +59,14 @@ def _group_sha256(value: str) -> str:
 
 
 def load_e6_stage05_category(category: str, *, repository_root: Path,
-                             verify_image_paths: bool = True) -> dict[str, Any]:
+                             verify_image_paths: bool = True,
+                             smoke_prefix_events: int | None = None) -> dict[str, Any]:
     """Adapt frozen Stage 0.5 identities without opening or consuming its query tape."""
     if category not in E6_REGISTERED_CATEGORIES:
         raise E6ClosedLoopError("E6 category is outside the registered development set")
+    if smoke_prefix_events is not None and (
+            category != "audiojack" or int(smoke_prefix_events) != MAX_SMOKE_TEST_EVENTS):
+        raise E6ClosedLoopError("bounded smoke loader accepts audiojack and exactly 20 prefix events")
     root = Path(repository_root).resolve(strict=True)
     from experiments.calibration import r3_fullstream_2x2 as r3
     from experiments.calibration import r7_shuffled_correction_4class as r7
@@ -120,12 +128,21 @@ def load_e6_stage05_category(category: str, *, repository_root: Path,
             raise E6ClosedLoopError(f"{category}: frozen TEST Source Group digest is malformed")
         image_path = stage05._absolute_image_path(r3.DATASET_ROOT,
                                                   str(frozen_info["prefix"]), relative_id)
-        if verify_image_paths and not Path(image_path).is_file():
+        if (verify_image_paths and smoke_prefix_events is None and
+                not Path(image_path).is_file()):
             raise E6ClosedLoopError(f"{category}:{position}: frozen TEST image path is missing")
         stream_rows.append({**dict(raw), "relative_id": relative_id,
                             "image_path": str(image_path)})
-    events = make_e6_event_stream(stream_rows)
-    r7.validate_image_projection(category_json, category, events)
+    full_events = make_e6_event_stream(stream_rows)
+    if smoke_prefix_events is None:
+        events = full_events
+        r7.validate_image_projection(category_json, category, events)
+    else:
+        events = validate_smoke_event_prefix(full_events[:MAX_SMOKE_TEST_EVENTS])
+        validate_test_image_prefix_projection(
+            category_json, category, events, full_event_count=len(full_events))
+        if verify_image_paths and any(not Path(event.image_path).is_file() for event in events):
+            raise E6ClosedLoopError("a selected prefix TEST image is missing")
 
     support_paths = [str(stage05._absolute_image_path(
         r3.DATASET_ROOT, str(frozen_info["prefix"]), str(relative).replace("\\", "/")))
@@ -210,6 +227,65 @@ def _support_cls_features(impl: Any, backbone: Any, support_paths: list[str],
     if len(rows) != 4 or len({row.shape for row in rows}) != 1:
         raise E6ClosedLoopError("E6 Coverage Memory requires four compatible support CLS vectors")
     return np.stack(rows)
+
+
+def _support_features_batched(impl: Any, p0: Any, backbone: Any,
+                              support_paths: list[str], cfg: Any
+                              ) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Batch each Support's frozen augmentation refs into one backbone forward.
+
+    The same registered P0 transforms, deterministic per-image seeds, fused
+    patch features, and fp16 CPU cache are retained. Native fixed-bank digest
+    verification remains the final fail-closed parity gate.
+    """
+    import torch
+
+    if len(support_paths) != 4:
+        raise E6ClosedLoopError("bounded smoke requires exactly four Support images")
+    augmentation = impl.SupportAugConfig()
+    cache: dict[str, Any] = {}
+    forward_counts: list[int] = []
+    refs_per_support: list[int] = []
+    for path in support_paths:
+        image_seed = int(p0.deterministic_subseed(cfg.augmentation_seed, path))
+        random.seed(image_seed)
+        np.random.seed(image_seed % (2**32 - 1))
+        torch.manual_seed(image_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(image_seed)
+        image = impl.load_rgb(path)
+        refs = impl.make_support_refs(
+            image, backbone, augmentation, cfg.augmentations,
+            baseline_compat=False, include_identity=cfg.include_identity)
+        if not refs:
+            raise E6ClosedLoopError("native Support augmentation produced no reference views")
+        # One model forward per Support, with all registered refs in its batch.
+        layer_batches, _global_batch = backbone.encode_batch(refs)
+        entries = []
+        for ref_index in range(len(refs)):
+            per_layer = [layer[ref_index].detach() for layer in layer_batches]
+            fused = impl.fuse_patch_features(per_layer, cfg.feature_fuse)
+            entries.append([
+                impl.l2_normalize(t).detach().to("cpu", dtype=torch.float16)
+                for t in fused
+            ])
+        cache[path] = entries
+        forward_counts.append(1)
+        refs_per_support.append(len(refs))
+    receipt = {
+        "support_images": 4,
+        "support_batch_forwards": int(sum(forward_counts)),
+        "support_refs_per_image": refs_per_support,
+        "support_augmentation_view_inputs": int(sum(refs_per_support)),
+        "support_cls_forwards": 4,
+        "support_cls_image_inputs": 4,
+        "support_fresh_backbone_invocations": int(sum(forward_counts) + 4),
+        "support_invocation_limit": 8,
+        "batching_contract": "registered P0 augmentation refs batched per Support; original native bank digest must match",
+    }
+    if receipt["support_fresh_backbone_invocations"] > receipt["support_invocation_limit"]:
+        raise E6ClosedLoopError("Support encoding budget exceeds eight fresh backbone forwards")
+    return cache, receipt
 
 
 def _write_failure(run_dir: Path, stage: str, error: BaseException) -> None:
@@ -315,6 +391,181 @@ def execute_real_stage_a(*, category: str, run_id: str,
         for sink in sinks:
             sink.close()
         _write_failure(run_dir, "stage_a", exc)
+        raise
+
+
+def execute_bounded_smoke_stage_a(*, run_id: str, approved_commit: str,
+                                  authorization_id: str, repository_root: Path,
+                                  output_budget: Any) -> Any:
+    """Run exactly one bounded smoke through the shared E6 StageA coordinator."""
+    root = Path(repository_root).resolve(strict=True)
+    if not authorization_id or not approved_commit:
+        raise E6ClosedLoopError("bounded E6 smoke requires separate explicit authorization")
+    identity = verify_e6_execution_identity(approved_commit, root=root)
+    from experiments.calibration.e6_bea_smoke import _verify_pinned_supervisor_source
+    supervisor_sha = _verify_pinned_supervisor_source(root)
+    info = load_e6_stage05_category(
+        "audiojack", repository_root=root, smoke_prefix_events=MAX_SMOKE_TEST_EVENTS)
+    run_dir = Path(output_budget.root).resolve(strict=True)
+    if (run_dir.parent != (root / "outputs" / "calibration").resolve(strict=True) or
+            run_dir.name != f"e6_gpu_smoke_{run_id}"):
+        raise E6ClosedLoopError("bounded smoke OutputBudget is not bound to its unique output namespace")
+
+    import importlib
+    import torch
+    from experiments import p0_protocol_audit as p0
+    from experiments.calibration import r1_matched_correction_pilot as r1
+    from experiments.calibration import r3_fullstream_2x2 as r3
+    from experiments.calibration import r6_capacity1024_audiojack_runner as r6
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+    from experiments.calibration import r2_exp2a_c1_strength as exp2a
+    from experiments.calibration import native
+    from experiments.calibration import profiles
+
+    impl = p0.require_sources()
+    visionad = importlib.import_module("vmb_visionad_new")
+    properties = torch.cuda.get_device_properties(0)
+    total_gpu_bytes = int(properties.total_memory)
+    memory_fraction = min(1.0, (22 * 1024**3) / max(1, total_gpu_bytes))
+    torch.cuda.set_per_process_memory_fraction(memory_fraction, 0)
+    backbone, model_receipt, runtime_info = __import__(
+        "experiments.calibration.e6_bea_closed_loop", fromlist=["load_r7_frozen_backbone"]
+    ).load_r7_frozen_backbone(
+        impl=impl, visionad=visionad, r1=r1, r3=r3,
+        approved_e6_commit=identity["head"], repository_root=root)
+    backbone.model.eval()
+    for parameter in backbone.model.parameters():
+        parameter.requires_grad_(False)
+    if backbone.model.training or any(parameter.requires_grad for parameter in backbone.model.parameters()):
+        raise E6ClosedLoopError("bounded smoke requires a frozen evaluation-mode DINO model")
+
+    cfg, _native_profile = r3._native_config(p0, profiles, r1)
+    support_features, support_encoding_receipt = _support_features_batched(
+        impl, p0, backbone, list(info["support_paths"]), cfg)
+    support_cls = _support_cls_features(
+        impl, backbone, list(info["support_paths"]), cfg.feature_fuse)
+    c64_items, c64_cache_receipt = r7._make_c64_items(
+        "audiojack", info, p0, impl, backbone, cfg)
+    c64_encodings = int((c64_cache_receipt or {}).get("new_c64_dino_encodings", 0))
+    if (int((c64_cache_receipt or {}).get("count", 0)) != 64 or
+            not 0 <= c64_encodings <= 64):
+        raise E6ClosedLoopError("bounded smoke C64 receipt violates the 64-encoding limit")
+    engines = build_r7_native_arm_engines(
+        category="audiojack", info=info, impl=impl, visionad=visionad,
+        p0=p0, r1=r1, r3=r3, r6=r6, r7=r7, exp2a=exp2a,
+        native_module=native, cfg=cfg, support_features=support_features,
+        support_paths=info["support_paths"], c64_items=c64_items,
+        approved_e6_commit=identity["head"], repository_root=root)
+    events = tuple(info["events"])
+    from experiments.calibration.e6_bea_closed_loop import _canonical_json
+    stream_identities = [{
+        "position": event.position,
+        "original_json_position": event.original_position,
+        "event_id_sha256": event.event_id_sha256,
+        "image_identity_sha256": event.image_identity_sha256,
+        "source_group_sha256": event.source_group_sha256,
+        "camera_id": event.camera_id,
+    } for event in events]
+    prefix_sha256 = hashlib.sha256(_canonical_json(stream_identities)).hexdigest()
+    q0_engine = engines["Q0"]
+    manifest = {
+        "schema": "e6.bea_v2.smoke_manifest.v1",
+        "artifact_kind": "bounded_engineering_smoke",
+        "status_at_creation": "INCOMPLETE",
+        "run_id": run_id,
+        "category": "audiojack",
+        "event_count": MAX_SMOKE_TEST_EVENTS,
+        "stream_prefix_sha256": prefix_sha256,
+        "stream_source": "R7 deterministic group shuffle, seed 0, first four complete Source Groups",
+        "category_json_sha256": info["contract"]["category_json_sha256"],
+        "stage05_receipts": dict(info["stage05_receipts"]),
+        "support_and_c64_identity": dict(q0_engine.input_identity),
+        "c64_cache_receipt": dict(c64_cache_receipt or {}),
+        "support_encoding_receipt": support_encoding_receipt,
+        "model_identity": {
+            "loaded_model_state_sha256": model_receipt.get("loaded_model_state_sha256"),
+            "hub_source_tree_sha256": model_receipt.get("hub_source_tree_sha256"),
+            "checkpoint_sha256": model_receipt.get("checkpoint_sha256"),
+            "runtime_profile": runtime_info.get("runtime_profile"),
+            "allocator_fraction": memory_fraction,
+            "allocator_limit_bytes": 22 * 1024**3,
+        },
+        "approved_commit": identity["head"],
+        "execution_authorization_id": str(authorization_id),
+        "r7_helper_source_sha256": dict(identity["r7_helper_source_sha256"]),
+        "windows_job_supervisor_source_sha256": supervisor_sha,
+        "configuration": {
+            "support_images": 4, "c64_images": 64, "test_events": 20,
+            "query_arms": list(ARM_IDS), "support_regime": "four deployed Supports plus independent C64",
+            "query_seed": 37, "stream_shuffle_seed": 0,
+            "controller_knows_smoke_horizon": False,
+            "existing_stage05_query_tape_used": False,
+            "stage_b_enabled": False,
+        },
+        "fresh_backbone_encoding_caps": {
+            "support": 8, "support_actual": support_encoding_receipt["support_fresh_backbone_invocations"],
+            "cap_unit": "backbone encode_batch forward calls; Support augmentation views are batched per registered image",
+            "support_augmentation_view_inputs": support_encoding_receipt["support_augmentation_view_inputs"],
+            "support_cls_image_inputs": support_encoding_receipt["support_cls_image_inputs"],
+            "c64": 64, "c64_actual": c64_encodings,
+            "test": 20, "test_actual_max": MAX_SMOKE_TEST_EVENTS,
+            "total": 92,
+        },
+        "output_files": ["smoke_manifest.json", "smoke_scores.jsonl",
+                         *[f"smoke_feedback_{arm}.jsonl" for arm in ARM_IDS],
+                         "smoke_seal.json", "smoke_failure.json", ".output_budget.lock"],
+        "output_budget": {"max_bytes": 2 * 1024**3, "failure_reserve_bytes": 64 * 1024,
+                          "prewrite_accounting": True},
+        "scientific_stage_a_complete": False,
+        "stage_b_enabled": False,
+    }
+    ledger = None
+    readers: list[OnDemandLabelReader] = []
+    sinks: list[PrivateFeedbackSink] = []
+    try:
+        output_budget.write_json_once("smoke_manifest.json", manifest)
+        ledger = ScoreLedger(
+            run_dir / "smoke_scores.jsonl", output_budget=output_budget,
+            artifact_kind="bounded_engineering_smoke")
+        arms: dict[str, ArmRuntime] = {}
+        for arm_id in ARM_IDS:
+            reader = OnDemandLabelReader(
+                info["json_path"], "audiojack", info["contract"]["category_json_sha256"],
+                events, arm_id, ledger, prefix_only=True)
+            readers.append(reader)
+            sink = PrivateFeedbackSink(
+                run_dir / f"smoke_feedback_{arm_id}.jsonl", arm_id,
+                output_budget=output_budget)
+            sinks.append(sink)
+            arms[arm_id] = ArmRuntime(
+                arm_id=arm_id, engine=engines[arm_id],
+                controller=QueryController(arm_id, seed=37),
+                coverage=NormalCoverageMemory(support_cls),
+                label_reader=reader, private_feedback=sink)
+        encoder = R7FrozenFeatureEncoder(
+            impl=impl, visionad=visionad, repository_root=root, backbone=backbone,
+            feature_fuse=cfg.feature_fuse, r1=r1,
+            expected_model_state_sha256=str(model_receipt["loaded_model_state_sha256"]),
+            runtime_info=runtime_info)
+        coordinator = StageAClosedLoop(
+            category="audiojack", events=events, feature_encoder=encoder,
+            arms=arms, ledger=ledger, execution_authorization_id=authorization_id,
+            smoke_mode=True, output_budget=output_budget)
+        return coordinator.run()
+    except BaseException as exc:
+        if ledger is not None:
+            ledger.close()
+        for reader in readers:
+            reader.close()
+        for sink in sinks:
+            sink.close()
+        output_budget.write_failure({
+            "schema": "e6.bea_v2.smoke_failure.v1", "status": "SMOKE_FAILED",
+            "artifact_kind": "bounded_engineering_smoke", "stage": "smoke_stage_a",
+            "failure_type": type(exc).__name__, "message": str(exc)[:2000],
+            "automatic_restart": False, "stage_b_enabled": False,
+            "finished_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        })
         raise
 
 

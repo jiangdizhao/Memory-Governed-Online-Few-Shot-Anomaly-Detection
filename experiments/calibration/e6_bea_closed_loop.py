@@ -46,11 +46,14 @@ EXPECTED_BRANCH = "calibration-stage0-contract-20261029"
 E6_REGISTERED_CATEGORIES = ("audiojack", "regulator", "switch", "rolled_strip_base")
 E6_EXECUTION_SOURCE_PATHS = (
     "experiments/calibration/e6_bea_runner.py",
+    "experiments/calibration/e6_bea_smoke.py",
     "experiments/calibration/e6_bea_policy.py",
     "experiments/calibration/e6_bea_closed_loop.py",
     "tests/calibration/test_e6_bea_policy.py",
     "tests/calibration/test_e6_bea_closed_loop.py",
+    "tests/calibration/test_e6_bea_smoke.py",
 )
+MAX_SMOKE_TEST_EVENTS = 20
 R7_HELPER_SOURCE_SHA256 = MappingProxyType({
     "experiments/calibration/r1_matched_correction_pilot.py":
         "3208e2c52277ad76351eb86968e362aa315effe9e3c734bfe2b6ff7bab0db448",
@@ -320,15 +323,20 @@ def _validate_real_output_namespace(*, ledger: Any, arms: Mapping[str, Any],
             "namespace_sha256": _sha256_file(namespace_path), "run_dir": run_dir}
 
 
-def _write_json_once(path: Path, value: Mapping[str, Any]) -> str:
+def _write_json_once(path: Path, value: Mapping[str, Any], *, output_budget: Any = None) -> str:
     path = Path(path)
     _reject_reparse_ancestors(path)
     _reject_public_label_fields(value)
     payload = _canonical_json(value)
-    with path.open("xb") as stream:
-        stream.write(payload)
-        stream.flush()
-        os.fsync(stream.fileno())
+    if output_budget is None:
+        with path.open("xb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+    else:
+        if Path(output_budget.root).resolve(strict=True) != path.parent.resolve(strict=True):
+            raise E6ClosedLoopError("budgeted JSON write escaped the active smoke namespace")
+        output_budget.write_json_once(path.name, value)
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -348,6 +356,61 @@ def create_e6_output_namespace(run_id: str, *, repository_root: Path) -> Path:
         "status_at_creation": "INCOMPLETE",
     })
     return run_dir
+
+
+def _validate_smoke_output_namespace(*, ledger: Any, arms: Mapping[str, Any],
+                                     output_parent: Path, output_budget: Any) -> dict[str, Any]:
+    if (not isinstance(ledger, ScoreLedger) or
+            ledger.artifact_kind != "bounded_engineering_smoke" or
+            output_budget is None):
+        raise E6ClosedLoopError("smoke requires a budgeted smoke-specific score ledger")
+    output_parent = Path(output_parent).resolve(strict=True)
+    run_dir = ledger.path.parent.resolve(strict=True)
+    if (run_dir.parent != output_parent or
+            not re.fullmatch(r"e6_gpu_smoke_[A-Za-z0-9][A-Za-z0-9_-]{0,63}", run_dir.name) or
+            ledger.path.name != "smoke_scores.jsonl"):
+        raise E6ClosedLoopError("smoke requires a unique e6_gpu_smoke_ output namespace")
+    _reject_reparse_ancestors(run_dir)
+    if Path(output_budget.root).resolve(strict=True) != run_dir:
+        raise E6ClosedLoopError("smoke OutputBudget is not bound to the run namespace")
+    require_registered = getattr(output_budget, "require_registered", None)
+    if not callable(require_registered):
+        raise E6ClosedLoopError("smoke outputs require the registered pre-write OutputBudget")
+    require_registered()
+    expected_names = {".output_budget.lock", "smoke_manifest.json", "smoke_scores.jsonl"}
+    private_paths: list[Path] = []
+    for arm_id in ARM_IDS:
+        sink = getattr(arms.get(arm_id), "private_feedback", None)
+        if (not isinstance(sink, PrivateFeedbackSink) or sink.arm_id != arm_id or
+                sink.output_budget is not output_budget):
+            raise E6ClosedLoopError("each smoke arm requires a budgeted private-feedback file")
+        path = Path(sink.path)
+        _reject_reparse_ancestors(path)
+        resolved = path.resolve(strict=True)
+        if resolved.parent != run_dir or resolved.name != f"smoke_feedback_{arm_id}.jsonl":
+            raise E6ClosedLoopError("smoke feedback outputs must be separate files named by arm")
+        private_paths.append(resolved)
+        expected_names.add(resolved.name)
+    if ledger.output_budget is not output_budget or len(set(private_paths)) != len(ARM_IDS):
+        raise E6ClosedLoopError("smoke score and feedback writers must share one OutputBudget")
+    actual_names = {path.name for path in run_dir.iterdir()}
+    if actual_names != expected_names:
+        raise E6ClosedLoopError("smoke namespace contains unaccounted files or is missing a writer")
+    if any((run_dir / name).exists() for name in (
+            "run_manifest.json", "stage_a_seal.json", "sealed_scores.jsonl")):
+        raise E6ClosedLoopError("smoke cannot create or reuse scientific Stage A artifacts")
+    manifest_path = run_dir / "smoke_manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise E6ClosedLoopError("smoke manifest is missing or malformed") from exc
+    if (manifest.get("schema") != "e6.bea_v2.smoke_manifest.v1" or
+            manifest.get("status_at_creation") != "INCOMPLETE" or
+            manifest.get("artifact_kind") != "bounded_engineering_smoke"):
+        raise E6ClosedLoopError("smoke namespace does not carry an incomplete smoke manifest")
+    return {"run_id": run_dir.name.removeprefix("e6_gpu_smoke_"),
+            "manifest_path": manifest_path,
+            "manifest_sha256": _sha256_file(manifest_path), "run_dir": run_dir}
 
 
 def _reject_public_label_fields(value: Any, path: str = "record") -> None:
@@ -537,6 +600,19 @@ def validate_five_view_groups(events: Sequence[EventIdentity]) -> dict[str, int]
     return {"source_groups": len(groups), "events": len(events), "views_per_group": 5}
 
 
+def validate_smoke_event_prefix(events: Sequence[EventIdentity]) -> tuple[EventIdentity, ...]:
+    """Require exactly the first 20 events: four intact groups of five views."""
+    selected = tuple(events)
+    if len(selected) != MAX_SMOKE_TEST_EVENTS:
+        raise E6ClosedLoopError("bounded smoke requires exactly 20 TEST events")
+    if tuple(event.position for event in selected) != tuple(range(MAX_SMOKE_TEST_EVENTS)):
+        raise E6ClosedLoopError("bounded smoke must receive the first contiguous R7 prefix")
+    validate_five_view_groups(selected)
+    if len({event.source_group_sha256 for event in selected}) != 4:
+        raise E6ClosedLoopError("bounded smoke must contain exactly four complete Source Groups")
+    return selected
+
+
 def validate_data_role_group_disjointness(
     events: Sequence[EventIdentity], support_groups: Sequence[str],
     c64_groups: Sequence[str],
@@ -571,6 +647,46 @@ def validate_test_image_projection(path: Path, category: str,
     r7.validate_image_projection(Path(path), str(category), events)
 
 
+def validate_test_image_prefix_projection(path: Path, category: str,
+                                          events: Sequence[EventIdentity], *,
+                                          full_event_count: int) -> None:
+    """Validate selected image identities without decoding any TEST outcome or mask."""
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+
+    raw = Path(path).read_bytes()
+    try:
+        bounds = r7._test_array_boundaries(raw)
+        if len(bounds) != int(full_event_count):
+            raise E6ClosedLoopError("TEST JSON array length differs from the frozen full stream")
+        for event in events:
+            if not 0 <= event.original_position < len(bounds):
+                raise E6ClosedLoopError("bounded TEST event maps outside the indexed JSON array")
+            start, stop = bounds[event.original_position]
+            fields = r7._object_fields(raw, start, stop)
+            image_bounds = fields.get("image_path")
+            if image_bounds is None:
+                raise E6ClosedLoopError("selected TEST record lacks image_path metadata")
+            image_path = r7._decode_field(raw, image_bounds)
+            if not isinstance(image_path, str):
+                raise E6ClosedLoopError("selected TEST image_path metadata is malformed")
+            from experiments.risk_safe.preflight import parse_image_name
+            parsed = parse_image_name(image_path, expected_class=str(category))
+            relative_id = str(parsed.rel_path).replace("\\", "/")
+            group_digest = hashlib.sha256((
+                "official-sample-group\0" + str(parsed.official_sample_key)
+            ).encode("utf-8")).hexdigest()
+            if (relative_id != event.relative_id or
+                    r7._identity_hash(relative_id) != event.image_identity_sha256 or
+                    int(parsed.camera_id) != int(event.camera_id) or
+                    str(parsed.timestamp) != event.timestamp or
+                    group_digest != event.source_group_sha256):
+                raise E6ClosedLoopError("selected TEST image identity differs from frozen prefix")
+    except E6ClosedLoopError:
+        raise
+    except Exception as exc:
+        raise E6ClosedLoopError("TEST prefix image metadata is malformed") from exc
+
+
 @dataclass(frozen=True)
 class SealedQueryReceipt:
     arm_id: str
@@ -585,14 +701,27 @@ class SealedQueryReceipt:
 class ScoreLedger:
     """Append-only, fsynced Stage A score ledger with no-overwrite creation."""
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, *, output_budget: Any = None,
+                 artifact_kind: str = "scientific_stage_a"):
         self.path = Path(path)
+        self.output_budget = output_budget
+        if artifact_kind not in {"scientific_stage_a", "bounded_engineering_smoke"}:
+            raise E6ClosedLoopError("score-ledger artifact kind is not registered")
+        if (artifact_kind == "bounded_engineering_smoke") != (output_budget is not None):
+            raise E6ClosedLoopError("smoke score ledgers require their active output budget")
+        self.artifact_kind = artifact_kind
         _reject_reparse_ancestors(self.path)
         if not self.path.parent.is_dir() or self.path.parent.is_symlink():
             raise E6ClosedLoopError("score ledger parent must be an existing plain directory")
         if self.path.exists() or self.path.is_symlink():
             raise FileExistsError(f"E6 score ledger already exists: {self.path}")
-        self._stream = self.path.open("xb")
+        self._stream = None
+        if self.output_budget is None:
+            self._stream = self.path.open("xb")
+        else:
+            if Path(self.output_budget.root).resolve(strict=True) != self.path.parent.resolve(strict=True):
+                raise E6ClosedLoopError("smoke score ledger and OutputBudget roots differ")
+            self.output_budget.create_empty(self.path.name)
         self._token = object()
         self._last_position = -1
         self._receipts: dict[tuple[int, str], SealedQueryReceipt] = {}
@@ -607,7 +736,8 @@ class ScoreLedger:
         if set(arm_rows) != set(ARM_IDS):
             raise E6ClosedLoopError("every event must seal all seven arm decisions together")
         row = {
-            "schema": "e6.bea_v2.stage_a_score.v1",
+            "schema": ("e6.bea_v2.stage_a_score.v1" if self.artifact_kind == "scientific_stage_a"
+                       else "e6.bea_v2.bounded_smoke_score.v1"),
             "position": event.position,
             "original_json_position": event.original_position,
             "event_id_sha256": event.event_id_sha256,
@@ -617,9 +747,12 @@ class ScoreLedger:
         }
         _reject_public_label_fields(row)
         payload = _canonical_json(row)
-        self._stream.write(payload)
-        self._stream.flush()
-        os.fsync(self._stream.fileno())
+        if self.output_budget is None:
+            self._stream.write(payload)
+            self._stream.flush()
+            os.fsync(self._stream.fileno())
+        else:
+            self.output_budget.append_bytes(self.path.name, payload)
         self._last_position = event.position
         for arm_id, arm_row in row["arm_rows"].items():
             if arm_row.get("query_executed") is True:
@@ -659,10 +792,12 @@ class ScoreLedger:
         return 0 <= int(position) <= self._last_position
 
     def close(self) -> None:
-        if not self._closed:
+        if not self._closed and self._stream is not None:
             self._stream.flush()
             os.fsync(self._stream.fileno())
             self._stream.close()
+            self._closed = True
+        elif not self._closed:
             self._closed = True
 
     def __del__(self) -> None:
@@ -687,7 +822,8 @@ class OnDemandLabelReader:
     """
 
     def __init__(self, path: Path, category: str, expected_sha256: str,
-                 events: Sequence[EventIdentity], arm_id: str, ledger: ScoreLedger):
+                 events: Sequence[EventIdentity], arm_id: str, ledger: ScoreLedger,
+                 *, prefix_only: bool = False):
         if arm_id not in ARM_IDS:
             raise E6ClosedLoopError("label reader arm identity is not registered")
         self.path = Path(path)
@@ -696,6 +832,7 @@ class OnDemandLabelReader:
         self.events = tuple(events)
         self.arm_id = arm_id
         self.ledger = ledger
+        self.prefix_only = bool(prefix_only)
         self.decoded_positions: list[int] = []
         self._decoded: set[int] = set()
         self._data_file = self.path.open("rb")
@@ -706,8 +843,12 @@ class OnDemandLabelReader:
             self._r7 = r7
             self._mapping = mmap.mmap(self._data_file.fileno(), 0, access=mmap.ACCESS_READ)
             self._bounds = r7._test_array_boundaries(self._mapping)
-            if len(self._bounds) != len(self.events):
+            if (not self.prefix_only and len(self._bounds) != len(self.events)):
                 raise E6ClosedLoopError("TEST JSON record count differs from frozen event identities")
+            if (self.prefix_only and
+                    (not self.events or any(event.original_position >= len(self._bounds)
+                                            for event in self.events))):
+                raise E6ClosedLoopError("bounded TEST identity maps outside the indexed JSON array")
             top_fields = r7._object_fields(self._mapping, 0, len(self._mapping))
             meta_bounds = top_fields.get("meta")
             if meta_bounds is None:
@@ -781,15 +922,22 @@ class OnDemandLabelReader:
 class PrivateFeedbackSink:
     """Separate append-only per-arm queried feedback; never part of score JSONL."""
 
-    def __init__(self, path: Path, arm_id: str):
+    def __init__(self, path: Path, arm_id: str, *, output_budget: Any = None):
         if arm_id not in ARM_IDS:
             raise E6ClosedLoopError("private feedback sink arm is not registered")
         self.arm_id = arm_id
         self.path = Path(path)
+        self.output_budget = output_budget
         _reject_reparse_ancestors(self.path)
         if self.path.exists() or self.path.is_symlink():
             raise FileExistsError(f"private feedback file already exists: {self.path}")
-        self._stream = self.path.open("xb")
+        if self.output_budget is None:
+            self._stream = self.path.open("xb")
+        else:
+            if Path(self.output_budget.root).resolve(strict=True) != self.path.parent.resolve(strict=True):
+                raise E6ClosedLoopError("smoke private feedback and OutputBudget roots differ")
+            self.output_budget.create_empty(self.path.name)
+            self._stream = None
 
     def write(self, event: EventIdentity, label: int, update: FeedbackUpdate) -> None:
         if label not in (0, 1):
@@ -803,12 +951,15 @@ class PrivateFeedbackSink:
             "label": int(label), "update": dict(update.diagnostics),
         }
         payload = _canonical_json(row)
-        self._stream.write(payload)
-        self._stream.flush()
-        os.fsync(self._stream.fileno())
+        if self.output_budget is None:
+            self._stream.write(payload)
+            self._stream.flush()
+            os.fsync(self._stream.fileno())
+        else:
+            self.output_budget.append_bytes(self.path.name, payload)
 
     def close(self) -> None:
-        if not self._stream.closed:
+        if self._stream is not None and not self._stream.closed:
             self._stream.flush()
             os.fsync(self._stream.fileno())
             self._stream.close()
@@ -840,6 +991,9 @@ class StageASeal:
     seal_path: str | None = None
     seal_sha256: str | None = None
     category_json_sha256: str | None = None
+    artifact_kind: str = "scientific_stage_a"
+    smoke_status: str | None = None
+    smoke_coverage: Mapping[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -867,11 +1021,22 @@ class StageAClosedLoop:
                  feature_encoder: Callable[[EventIdentity], EncodedEvent],
                  arms: Mapping[str, ArmRuntime], ledger: ScoreLedger,
                  synthetic_test_only: bool = False,
-                 execution_authorization_id: str | None = None):
+                 execution_authorization_id: str | None = None,
+                 smoke_mode: bool = False, output_budget: Any = None):
         self.category = str(category)
         if self.category not in E6_REGISTERED_CATEGORIES:
             raise E6ClosedLoopError("Stage A category is outside the registered development set")
         self.events = tuple(events)
+        if not isinstance(smoke_mode, bool):
+            raise E6ClosedLoopError("smoke_mode must be an explicit boolean")
+        self.smoke_mode = smoke_mode
+        self.output_budget = output_budget
+        if self.smoke_mode:
+            if self.category != "audiojack":
+                raise E6ClosedLoopError("bounded smoke is registered for audiojack only")
+            self.events = validate_smoke_event_prefix(self.events)
+        elif output_budget is not None:
+            raise E6ClosedLoopError("OutputBudget is accepted only by the bounded smoke coordinator")
         self.feature_encoder = feature_encoder
         self.arms = dict(arms)
         self.ledger = ledger
@@ -887,11 +1052,18 @@ class StageAClosedLoop:
                 raise E6ClosedLoopError("real Stage A requires the append-only fsynced score ledger")
             repo_root = Path(__file__).resolve().parents[2]
             output_parent = (repo_root / "outputs" / "calibration").resolve(strict=True)
-            namespace = _validate_real_output_namespace(
-                ledger=self.ledger, arms=self.arms, output_parent=output_parent)
+            if self.smoke_mode:
+                if self.ledger.output_budget is not self.output_budget:
+                    raise E6ClosedLoopError("smoke ledger is not registered with the active OutputBudget")
+                namespace = _validate_smoke_output_namespace(
+                    ledger=self.ledger, arms=self.arms, output_parent=output_parent,
+                    output_budget=self.output_budget)
+            else:
+                namespace = _validate_real_output_namespace(
+                    ledger=self.ledger, arms=self.arms, output_parent=output_parent)
             self.run_id = namespace["run_id"]
-            self.namespace_path = namespace["namespace_path"]
-            self.namespace_sha256 = namespace["namespace_sha256"]
+            self.namespace_path = namespace.get("namespace_path", namespace.get("manifest_path"))
+            self.namespace_sha256 = namespace.get("namespace_sha256", namespace.get("manifest_sha256"))
             if not isinstance(self.feature_encoder, R7FrozenFeatureEncoder):
                 raise E6ClosedLoopError("real Stage A requires the pinned R7 frozen feature encoder")
             if not self.feature_encoder.verified_model_identity:
@@ -930,17 +1102,28 @@ class StageAClosedLoop:
             if any(arm.label_reader.category != self.category or
                    arm.label_reader.events != self.events for arm in self.arms.values()):
                 raise E6ClosedLoopError("real per-arm label readers must bind the exact Stage A event identity")
+            if any(arm.label_reader.prefix_only != self.smoke_mode for arm in self.arms.values()):
+                raise E6ClosedLoopError("label readers must match the selected full-stream or smoke prefix role")
             expected_test_sha = str(self.arms["Q0"].engine.input_identity["category_json_sha256"])
             if any(arm.label_reader.source_sha256 != expected_test_sha
                    for arm in self.arms.values()):
                 raise E6ClosedLoopError("on-demand label readers differ from the frozen category JSON digest")
-            validate_test_image_projection(
-                self.arms["Q0"].label_reader.path, self.category, self.events)
+            if self.smoke_mode:
+                validate_test_image_prefix_projection(
+                    self.arms["Q0"].label_reader.path, self.category, self.events,
+                    full_event_count=len(self.arms["Q0"].label_reader._bounds))
+            else:
+                validate_test_image_projection(
+                    self.arms["Q0"].label_reader.path, self.category, self.events)
             if any(not Path(event.image_path).is_file() for event in self.events):
                 raise E6ClosedLoopError("a frozen TEST image path is missing before Stage A")
             if any(not isinstance(arm.private_feedback, PrivateFeedbackSink)
                    for arm in self.arms.values()):
                 raise E6ClosedLoopError("real Stage A requires one separate private feedback file per arm")
+            if self.smoke_mode and any(
+                    arm.private_feedback.output_budget is not self.output_budget
+                    for arm in self.arms.values()):
+                raise E6ClosedLoopError("all smoke feedback writers must share the active OutputBudget")
             for arm_id, arm in self.arms.items():
                 controller = arm.controller
                 if (controller.seed != 37 or controller.events_observed != 0 or
@@ -1002,14 +1185,55 @@ class StageAClosedLoop:
                 for path in private_paths)):
             raise E6ClosedLoopError("all E6 outputs must stay directly inside the unique run directory")
         if not synthetic_test_only:
-            self.manifest_path = self.ledger.path.parent / "run_manifest.json"
-            self.seal_path = self.ledger.path.parent / "stage_a_seal.json"
-            self.manifest_sha256 = _write_json_once(
-                self.manifest_path, self._manifest_record())
+            if self.smoke_mode:
+                self.manifest_path = self.ledger.path.parent / "smoke_manifest.json"
+                self.seal_path = self.ledger.path.parent / "smoke_seal.json"
+                self.manifest_sha256 = _sha256_file(self.manifest_path)
+                self._validate_smoke_manifest_binding()
+            else:
+                self.manifest_path = self.ledger.path.parent / "run_manifest.json"
+                self.seal_path = self.ledger.path.parent / "stage_a_seal.json"
+                self.manifest_sha256 = _write_json_once(
+                    self.manifest_path, self._manifest_record())
         else:
             self.manifest_path = None
             self.seal_path = None
             self.manifest_sha256 = None
+
+    def _stream_identity_sha256(self) -> str:
+        identities = [{
+            "position": event.position,
+            "original_json_position": event.original_position,
+            "event_id_sha256": event.event_id_sha256,
+            "image_identity_sha256": event.image_identity_sha256,
+            "source_group_sha256": event.source_group_sha256,
+            "camera_id": event.camera_id,
+        } for event in self.events]
+        return hashlib.sha256(_canonical_json(identities)).hexdigest()
+
+    def _validate_smoke_manifest_binding(self) -> None:
+        try:
+            manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise E6ClosedLoopError("smoke manifest is unreadable") from exc
+        engine = self.arms["Q0"].engine
+        if (manifest.get("schema") != "e6.bea_v2.smoke_manifest.v1" or
+                manifest.get("artifact_kind") != "bounded_engineering_smoke" or
+                manifest.get("status_at_creation") != "INCOMPLETE" or
+                manifest.get("category") != "audiojack" or
+                manifest.get("run_id") != self.run_id or
+                manifest.get("event_count") != MAX_SMOKE_TEST_EVENTS or
+                manifest.get("stream_prefix_sha256") != self._stream_identity_sha256() or
+                manifest.get("category_json_sha256") !=
+                engine.input_identity.get("category_json_sha256") or
+                manifest.get("approved_commit") != engine.execution_identity.get("head")):
+            raise E6ClosedLoopError("smoke manifest does not match the selected prefix and native identities")
+        output_files = set(manifest.get("output_files", ()))
+        expected = {"smoke_manifest.json", "smoke_scores.jsonl",
+                    *[f"smoke_feedback_{arm}.jsonl" for arm in ARM_IDS],
+                    "smoke_seal.json", "smoke_failure.json", ".output_budget.lock"}
+        if output_files != expected or manifest.get("stage_b_enabled") is not False:
+            raise E6ClosedLoopError("smoke manifest output contract is incomplete or enables Stage B")
 
     def _manifest_record(self) -> dict[str, Any]:
         engine = self.arms["Q0"].engine
@@ -1065,6 +1289,41 @@ class StageAClosedLoop:
             "stage_b_enabled": False,
         }
 
+    def _validate_smoke_manifest_binding(self) -> None:
+        try:
+            manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise E6ClosedLoopError("smoke manifest is unreadable") from exc
+        engine = self.arms["Q0"].engine
+        if (manifest.get("schema") != "e6.bea_v2.smoke_manifest.v1" or
+                manifest.get("artifact_kind") != "bounded_engineering_smoke" or
+                manifest.get("status_at_creation") != "INCOMPLETE" or
+                manifest.get("category") != "audiojack" or
+                manifest.get("run_id") != self.run_id or
+                manifest.get("event_count") != MAX_SMOKE_TEST_EVENTS or
+                manifest.get("stream_prefix_sha256") != self._stream_identity_sha256() or
+                manifest.get("category_json_sha256") !=
+                engine.input_identity.get("category_json_sha256") or
+                manifest.get("approved_commit") != engine.execution_identity.get("head")):
+            raise E6ClosedLoopError("smoke manifest does not match the selected prefix and native identities")
+        expected = {"smoke_manifest.json", "smoke_scores.jsonl",
+                    *[f"smoke_feedback_{arm}.jsonl" for arm in ARM_IDS],
+                    "smoke_seal.json", "smoke_failure.json", ".output_budget.lock"}
+        if (set(manifest.get("output_files", ())) != expected or
+                manifest.get("stage_b_enabled") is not False):
+            raise E6ClosedLoopError("smoke manifest output contract is incomplete or enables Stage B")
+
+    def _stream_identity_sha256(self) -> str:
+        identities = [{
+            "position": event.position,
+            "original_json_position": event.original_position,
+            "event_id_sha256": event.event_id_sha256,
+            "image_identity_sha256": event.image_identity_sha256,
+            "source_group_sha256": event.source_group_sha256,
+            "camera_id": event.camera_id,
+        } for event in self.events]
+        return hashlib.sha256(_canonical_json(identities)).hexdigest()
+
     def run(self) -> StageASeal:
         """Run Stage A and close all durable writers even after an execution error."""
         try:
@@ -1080,15 +1339,37 @@ class StageAClosedLoop:
 
     def _run_body(self) -> StageASeal:
         query_counts = {arm: 0 for arm in ARM_IDS}
+        smoke_coverage = {
+            "normal_queried_feedback_update": False,
+            "defect_queried_feedback_update": False,
+            "c1_state_mutation": False,
+            "greedy_normal_memory_mutation": False,
+            "b3_current_state_refresh": False,
+            "source_group_query_suppression": False,
+        }
         last_event = -1
         for event in self.events:
             if event.position != last_event + 1:
                 raise E6ClosedLoopError("Stage A event stream is not contiguous")
             encode_started = time.perf_counter()
+            encoding_peak_gpu_bytes = None
+            smoke_torch = None
+            if self.smoke_mode and not self.synthetic_test_only:
+                try:
+                    import torch as smoke_torch
+                    if smoke_torch.cuda.is_available():
+                        smoke_torch.cuda.reset_peak_memory_stats(0)
+                except Exception as exc:
+                    raise E6ClosedLoopError("smoke GPU memory telemetry could not be sampled") from exc
             encoded = self.feature_encoder(event)
             if not isinstance(encoded, EncodedEvent):
                 raise E6ClosedLoopError("feature encoder must return one EncodedEvent per image")
             encode_elapsed = max(float(encoded.encoding_seconds), time.perf_counter() - encode_started)
+            if self.smoke_mode and not self.synthetic_test_only:
+                if smoke_torch is None or not smoke_torch.cuda.is_available():
+                    raise E6ClosedLoopError("real bounded smoke requires CUDA memory telemetry")
+                smoke_torch.cuda.synchronize(0)
+                encoding_peak_gpu_bytes = int(smoke_torch.cuda.max_memory_allocated(0))
             scored: dict[str, tuple[NativePreEventScore, BEAComponents]] = {}
             proposals: dict[str, QueryProposal] = {}
             suppressed: dict[str, bool] = {}
@@ -1109,8 +1390,14 @@ class StageAClosedLoop:
                 proposal = arm.controller.propose(
                     position=event.position, event_id_sha256=event.event_id_sha256,
                     components=components)
+                if (ARM_POLICIES[arm_id].objective_terms and
+                        not math.isclose(float(proposal.objective), components.objective(arm_id),
+                                         rel_tol=0.0, abs_tol=1e-12)):
+                    raise E6ClosedLoopError(f"{arm_id}: query proposal differs from registered BEA components")
                 group_suppressed = bool(
                     proposal.proposed and event.source_group_sha256 in arm.queried_groups)
+                if self.smoke_mode and group_suppressed:
+                    smoke_coverage["source_group_query_suppression"] = True
                 executed = bool(proposal.proposed and not group_suppressed)
                 scored[arm_id] = (pre, components)
                 proposals[arm_id] = proposal
@@ -1135,10 +1422,28 @@ class StageAClosedLoop:
                     "query_random_u": proposal.random_u,
                     "utility_history_count": proposal.history_count,
                     "encoding_seconds": encode_elapsed,
+                    "encoding_peak_gpu_bytes": encoding_peak_gpu_bytes,
                     "native_score_seconds": score_seconds[arm_id],
                     "novelty_info": novelty_info,
                     "components": components.as_dict(),
                 }
+            if self.smoke_mode and event.position == 0:
+                reference = scored["Q0"][0]
+                tolerance = self.arms["Q0"].engine.input_identity.get(
+                    "c64_score_tolerance", {})
+                atol = float(tolerance.get("atol", -1.0))
+                rtol = float(tolerance.get("rtol", -1.0))
+                if atol < 0 or rtol < 0:
+                    raise E6ClosedLoopError("initial smoke parity lacks registered native tolerances")
+                for arm_id in ARM_IDS:
+                    candidate = scored[arm_id][0]
+                    if not math.isclose(candidate.gc_score, reference.gc_score,
+                                        rel_tol=rtol, abs_tol=atol):
+                        raise E6ClosedLoopError("initial seven-arm GC scores exceed native parity tolerance")
+                    if not math.isclose(float(self.arms[arm_id].engine.current_threshold),
+                                        float(self.arms["Q0"].engine.current_threshold),
+                                        rel_tol=rtol, abs_tol=atol):
+                        raise E6ClosedLoopError("initial seven-arm B3 thresholds exceed native parity tolerance")
             self.ledger.seal_event(event, arm_rows)
 
             # No outcome is requested until the joint seven-arm score row is fsynced.
@@ -1152,6 +1457,12 @@ class StageAClosedLoop:
                     update = arm.engine.apply_feedback(event, encoded, pre, label)
                     if update.label != label:
                         raise E6ClosedLoopError("engine feedback receipt differs from authorized label")
+                    if self.smoke_mode:
+                        smoke_coverage["normal_queried_feedback_update"] |= label == 0
+                        smoke_coverage["defect_queried_feedback_update"] |= label == 1
+                        smoke_coverage["c1_state_mutation"] |= bool(update.c1_changed)
+                        smoke_coverage["greedy_normal_memory_mutation"] |= bool(update.greedy_changed)
+                        smoke_coverage["b3_current_state_refresh"] |= bool(update.scorer_state_changed)
                     if label == 0:
                         arm.coverage.observe_normal(encoded.global_cls)
                     if arm.private_feedback is not None:
@@ -1179,6 +1490,11 @@ class StageAClosedLoop:
             for arm in ARM_IDS if self.arms[arm].private_feedback is not None}
         controller_diagnostics = {
             arm: self.arms[arm].controller.diagnostics() for arm in ARM_IDS}
+        smoke_coverage_status = {
+            key: ("EXERCISED" if exercised else "NOT_EXERCISED")
+            for key, exercised in smoke_coverage.items()}
+        smoke_status = ("SMOKE_PASS" if all(smoke_coverage.values())
+                        else "SMOKE_INCOMPLETE_COVERAGE") if self.smoke_mode else None
         seal_sha256 = None
         if not self.synthetic_test_only:
             final_arm_state = {
@@ -1190,39 +1506,71 @@ class StageAClosedLoop:
                 }
                 for arm in ARM_IDS
             }
-            seal_record = {
-                "schema": "e6.bea_v2.stage_a_seal.v1",
-                "status": "COMPLETE",
-                "category": self.category,
-                "event_count": last_event + 1,
-                "category_json_sha256": str(
-                    self.arms["Q0"].engine.input_identity["category_json_sha256"]),
-                "manifest_sha256": self.manifest_sha256,
-                "score_log": {"file": self.ledger.path.name,
-                              "sha256": score_log_sha256},
-                "feedback_artifacts": {
-                    arm: {"file": Path(self.arms[arm].private_feedback.path).name,
-                          "sha256": private_feedback_sha256[arm]}
-                    for arm in ARM_IDS
-                },
-                "arm_query_counts": query_counts,
-                "arm_controller_diagnostics": controller_diagnostics,
-                "final_arm_state": final_arm_state,
-            }
-            seal_sha256 = _write_json_once(self.seal_path, seal_record)
+            if self.smoke_mode:
+                seal_record = {
+                    "schema": "e6.bea_v2.bounded_smoke_seal.v1",
+                    "artifact_kind": "bounded_engineering_smoke",
+                    "status": smoke_status,
+                    "category": "audiojack",
+                    "event_count": last_event + 1,
+                    "stream_prefix_sha256": self._stream_identity_sha256(),
+                    "category_json_sha256": str(
+                        self.arms["Q0"].engine.input_identity["category_json_sha256"]),
+                    "smoke_manifest_sha256": self.manifest_sha256,
+                    "score_log": {"file": self.ledger.path.name,
+                                  "sha256": score_log_sha256},
+                    "private_feedback_artifacts": {
+                        arm: {"file": Path(self.arms[arm].private_feedback.path).name,
+                              "sha256": private_feedback_sha256[arm]}
+                        for arm in ARM_IDS
+                    },
+                    "coverage": smoke_coverage_status,
+                    "arm_query_counts": query_counts,
+                    "arm_controller_diagnostics": controller_diagnostics,
+                    "final_arm_state": final_arm_state,
+                    "scientific_stage_a_complete": False,
+                    "stage_b_enabled": False,
+                }
+                seal_sha256 = _write_json_once(
+                    self.seal_path, seal_record, output_budget=self.output_budget)
+            else:
+                seal_record = {
+                    "schema": "e6.bea_v2.stage_a_seal.v1",
+                    "status": "COMPLETE",
+                    "category": self.category,
+                    "event_count": last_event + 1,
+                    "category_json_sha256": str(
+                        self.arms["Q0"].engine.input_identity["category_json_sha256"]),
+                    "manifest_sha256": self.manifest_sha256,
+                    "score_log": {"file": self.ledger.path.name,
+                                  "sha256": score_log_sha256},
+                    "feedback_artifacts": {
+                        arm: {"file": Path(self.arms[arm].private_feedback.path).name,
+                              "sha256": private_feedback_sha256[arm]}
+                        for arm in ARM_IDS
+                    },
+                    "arm_query_counts": query_counts,
+                    "arm_controller_diagnostics": controller_diagnostics,
+                    "final_arm_state": final_arm_state,
+                }
+                seal_sha256 = _write_json_once(self.seal_path, seal_record)
         return StageASeal(
             category=self.category, event_count=last_event + 1,
             score_log_path=str(self.ledger.path), score_log_sha256=score_log_sha256,
             private_feedback_sha256=private_feedback_sha256,
             arm_query_counts=query_counts,
             arm_controller_diagnostics=controller_diagnostics,
-            complete=True,
+            complete=not self.smoke_mode,
             manifest_path=str(self.manifest_path) if self.manifest_path else None,
             manifest_sha256=self.manifest_sha256,
             seal_path=str(self.seal_path) if self.seal_path else None,
             seal_sha256=seal_sha256,
             category_json_sha256=(str(self.arms["Q0"].engine.input_identity["category_json_sha256"])
-                                  if not self.synthetic_test_only else None))
+                                  if not self.synthetic_test_only else None),
+            artifact_kind=("bounded_engineering_smoke" if self.smoke_mode
+                           else "scientific_stage_a"),
+            smoke_status=smoke_status,
+            smoke_coverage=smoke_coverage_status if self.smoke_mode else None)
 
 
 class R7FrozenFeatureEncoder:
@@ -2039,6 +2387,8 @@ def stage_b_evaluate(*, stage_a_seals: Mapping[str, StageASeal],
         seal = stage_a_seals[category]
         if seal.category != category:
             raise E6ClosedLoopError("Stage A category key and seal identity disagree")
+        if seal.artifact_kind != "scientific_stage_a" or not seal.complete:
+            raise E6ClosedLoopError("bounded smoke receipts cannot be promoted to scientific Stage A")
         logs[category] = _read_sealed_score_log(Path(seal.score_log_path), seal)
         _manifest_path, manifest_digests[category] = _stage_b_manifest_identity(seal)
     for category in categories:
