@@ -107,3 +107,7 @@ pass except G2, which remains `BLOCKED` because the original Actual-B3
 `complete.json` checksum and file count disagree with its current checksum
 manifest. Overall status is `BLOCKED_WIP`; no Stage 0.75-C, Stage 1/2,
 confirmation outcomes, or masks were accessed.
+
+## D3-P0 external dataset feasibility audit (2026-11-05; metadata only)
+
+The [VisA / MVTec AD 2 D3-P0 audit summary](audit/d3_p0_local_dataset_feasibility_20261105/REPORT.md) records local split and mask counts, strict-4 versus 4+C64 *count-only* feasibility, short official TEST streams, the 256-event query-history limit, partial cross-partition duplicate checking, and unresolved confirmation eligibility. This is a **documentation-only follow-up** to the [2026-11-01 MVTec AD 2 P0 decision](audit/p0_benchmark_integrity_and_exposure_20261101/P0_AUDIT_DECISION.md); it does not authorize D3 or any new feedback access. The full Codex audit remains local under `outputs/calibration/d3_dataset_audit_20261105_6c1d3aa4/`. The supervisor's Recovery E1/E2/E3 completion takes priority.
