@@ -1231,7 +1231,8 @@ class StageAClosedLoop:
         output_files = set(manifest.get("output_files", ()))
         expected = {"smoke_manifest.json", "smoke_scores.jsonl",
                     *[f"smoke_feedback_{arm}.jsonl" for arm in ARM_IDS],
-                    "smoke_seal.json", "smoke_failure.json", ".output_budget.lock"}
+                    "smoke_seal.json", "smoke_failure.json",
+                    "smoke_gpu_monitoring.json", ".output_budget.lock"}
         if output_files != expected or manifest.get("stage_b_enabled") is not False:
             raise E6ClosedLoopError("smoke manifest output contract is incomplete or enables Stage B")
 
@@ -1308,7 +1309,8 @@ class StageAClosedLoop:
             raise E6ClosedLoopError("smoke manifest does not match the selected prefix and native identities")
         expected = {"smoke_manifest.json", "smoke_scores.jsonl",
                     *[f"smoke_feedback_{arm}.jsonl" for arm in ARM_IDS],
-                    "smoke_seal.json", "smoke_failure.json", ".output_budget.lock"}
+                    "smoke_seal.json", "smoke_failure.json",
+                    "smoke_gpu_monitoring.json", ".output_budget.lock"}
         if (set(manifest.get("output_files", ())) != expected or
                 manifest.get("stage_b_enabled") is not False):
             raise E6ClosedLoopError("smoke manifest output contract is incomplete or enables Stage B")

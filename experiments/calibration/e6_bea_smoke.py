@@ -29,13 +29,18 @@ MAX_GPU_MEMORY_BYTES = 22 * 1024**3
 MAX_OUTPUT_BYTES = 2 * 1024**3
 FAILURE_RESERVE_BYTES = 64 * 1024
 MIN_FREE_DISK_BYTES = 10 * 1024**3
-MAX_OUTPUT_FILES = 12
+MAX_OUTPUT_FILES = 13
 EXPECTED_PYTHON_EXECUTABLE = Path(r"D:\anaconda3\envs\torch\python.exe")
+GPU_MEMORY_FALLBACK_POLICY = (
+    "When process VRAM is unavailable, count all device-level used VRAM as smoke usage "
+    "and enforce min(22 GiB, device total); the child PyTorch allocator remains capped "
+    "at 22 GiB. This overcounts desktop/other non-compute allocations by design."
+)
 _RUN_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
 _OUTPUT_NAMES = frozenset({
     ".output_budget.lock", "smoke_manifest.json", "smoke_scores.jsonl",
     *{f"smoke_feedback_Q{i}.jsonl" for i in range(7)},
-    "smoke_seal.json", "smoke_failure.json",
+    "smoke_seal.json", "smoke_failure.json", "smoke_gpu_monitoring.json",
 })
 R1_SUPERVISOR_SOURCE_SHA256 = "e6254a82d8dd24156cea65380b41b04cb1372744da64a085043aa6dd74df5bab"
 
@@ -61,9 +66,45 @@ class SmokeSupervisorResult:
     timeout_seconds: float
     termination_confirmed: bool
     active_job_processes: int
-    peak_process_gpu_bytes: int
+    peak_process_gpu_bytes: int | None
+    supervisor_pid: int
+    authorized_worker_pid: int
+    observed_compute_pids: tuple[int, ...]
+    foreign_compute_pids: tuple[int, ...]
+    process_specific_vram_available: bool | None
+    process_specific_vram_unavailable_reasons: tuple[str, ...]
+    monitoring_mode: str
+    monitor_sample_count: int
+    peak_device_used_bytes: int | None
+    configured_gpu_memory_limit_bytes: int
     termination_reason: str | None = None
     monitor_error: str | None = None
+
+
+@dataclass(frozen=True)
+class GPUProcessInventory:
+    """Compute PIDs plus optional per-process VRAM; unknown is never zero."""
+
+    process_ids: tuple[int, ...]
+    memory_bytes_by_pid: Mapping[int, int] | None
+    memory_unavailable_reason: str | None = None
+
+    @property
+    def process_memory_available(self) -> bool:
+        return self.memory_bytes_by_pid is not None
+
+
+@dataclass(frozen=True)
+class GPUDeviceMemory:
+    used_bytes: int
+    free_bytes: int
+    total_bytes: int
+
+
+@dataclass(frozen=True)
+class GPUMonitorSample:
+    processes: GPUProcessInventory
+    device_memory: GPUDeviceMemory
 
 
 def _reject_reparse_ancestors(path: Path) -> None:
@@ -260,27 +301,153 @@ def create_smoke_output_namespace(run_id: str, *, repository_root: Path) -> tupl
     return run_dir, SmokeOutputBudget(run_dir, initialize=True)
 
 
-def _query_gpu_processes(*, runner: Callable[..., Any] = subprocess.run) -> dict[int, int]:
+def _run_nvidia_smi_query(arguments: Sequence[str], *,
+                          runner: Callable[..., Any]) -> Any:
     try:
-        result = runner(
-            ["nvidia-smi", "--query-compute-apps=pid,used_memory",
-             "--format=csv,noheader,nounits"],
+        return runner(
+            ["nvidia-smi", *arguments],
             check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, encoding="utf-8", timeout=10)
     except (OSError, subprocess.SubprocessError) as exc:
-        raise SmokeError("nvidia-smi compute-process query failed") from exc
-    if int(result.returncode) != 0:
-        raise SmokeError("nvidia-smi could not verify active compute processes")
-    processes: dict[int, int] = {}
-    for line in str(result.stdout).splitlines():
+        raise SmokeError("nvidia-smi GPU monitoring query failed") from exc
+
+
+def _query_gpu_processes(*, runner: Callable[..., Any] = subprocess.run) -> GPUProcessInventory:
+    """Query compute PIDs separately from optional per-process memory telemetry."""
+    pid_result = _run_nvidia_smi_query(
+        ["--query-compute-apps=pid", "--format=csv,noheader,nounits"], runner=runner)
+    if int(pid_result.returncode) != 0:
+        raise SmokeError("nvidia-smi could not verify compute-process PIDs")
+    process_ids: set[int] = set()
+    for line in str(pid_result.stdout).splitlines():
+        value = line.strip()
+        if not value:
+            continue
+        if not value.isdigit() or int(value) <= 0:
+            raise SmokeError("nvidia-smi returned an unaccountable compute-process PID")
+        process_ids.add(int(value))
+
+    try:
+        memory_result = _run_nvidia_smi_query(
+            ["--query-compute-apps=pid,used_memory", "--format=csv,noheader,nounits"],
+            runner=runner)
+    except SmokeError:
+        return GPUProcessInventory(tuple(sorted(process_ids)), None,
+                                   "per_process_memory_query_failed")
+    if int(memory_result.returncode) != 0:
+        return GPUProcessInventory(tuple(sorted(process_ids)), None,
+                                   "per_process_memory_query_failed")
+
+    memory_rows: dict[int, int] = {}
+    observed_memory_pids: set[int] = set()
+    unavailable_reason: str | None = None
+    for line in str(memory_result.stdout).splitlines():
         if not line.strip():
             continue
         fields = [field.strip() for field in line.split(",", 1)]
-        if len(fields) != 2 or not fields[0].isdigit() or not fields[1].isdigit():
-            raise SmokeError("nvidia-smi returned unaccountable GPU process memory")
-        pid, memory_mib = int(fields[0]), int(fields[1])
-        processes[pid] = processes.get(pid, 0) + memory_mib * 1024**2
-    return processes
+        if len(fields) != 2 or not fields[0].isdigit() or int(fields[0]) <= 0:
+            unavailable_reason = "per_process_memory_response_unparseable"
+            continue
+        pid = int(fields[0])
+        observed_memory_pids.add(pid)
+        value = fields[1]
+        normalized_value = value.strip().strip("[]").upper()
+        if normalized_value in {"N/A", "NA", "NOT SUPPORTED", "NOT AVAILABLE", "UNKNOWN"}:
+            unavailable_reason = "driver_reports_per_process_memory_NA"
+            continue
+        if not value.isdigit():
+            unavailable_reason = "per_process_memory_response_unparseable"
+            continue
+        memory_rows[pid] = memory_rows.get(pid, 0) + int(value) * 1024**2
+
+    all_observed_pids = process_ids | observed_memory_pids
+    if observed_memory_pids != process_ids:
+        unavailable_reason = unavailable_reason or "process_list_changed_between_queries"
+    if unavailable_reason is not None:
+        # Never map N/A (or a missing row) to zero. The caller must use the
+        # device-level conservative fallback and record this status.
+        return GPUProcessInventory(tuple(sorted(all_observed_pids)), None, unavailable_reason)
+    return GPUProcessInventory(tuple(sorted(process_ids)), memory_rows, None)
+
+
+def _query_gpu_device_memory(*, torch_module: Any = None,
+                             runner: Callable[..., Any] = subprocess.run) -> GPUDeviceMemory:
+    """Require device-wide used/free/total telemetry for process-memory fallback.
+
+    Prefer CUDA's device-level memory API when available so a single visible
+    CUDA device is unambiguous even when the host has other physical adapters.
+    The nvidia-smi device query is retained as a testable fallback.
+    """
+    if torch_module is not None:
+        try:
+            free_bytes, total_bytes = torch_module.cuda.mem_get_info(0)
+            free_bytes, total_bytes = int(free_bytes), int(total_bytes)
+        except Exception as exc:
+            raise SmokeError("CUDA device-level GPU memory telemetry is unavailable") from exc
+        used_bytes = total_bytes - free_bytes
+        if total_bytes <= 0 or free_bytes < 0 or used_bytes < 0 or free_bytes > total_bytes:
+            raise SmokeError("CUDA device-level memory telemetry is outside valid bounds")
+        return GPUDeviceMemory(used_bytes, free_bytes, total_bytes)
+    result = _run_nvidia_smi_query(
+        ["--query-gpu=memory.used,memory.free,memory.total",
+         "--format=csv,noheader,nounits"], runner=runner)
+    if int(result.returncode) != 0:
+        raise SmokeError("nvidia-smi could not verify device-level GPU memory")
+    rows = [line.strip() for line in str(result.stdout).splitlines() if line.strip()]
+    if len(rows) != 1:
+        raise SmokeError("GPU device-level memory telemetry is missing or ambiguous")
+    fields = [field.strip() for field in rows[0].split(",")]
+    if len(fields) != 3 or any(not field.isdigit() for field in fields):
+        raise SmokeError("GPU device-level used/free/total memory is unavailable")
+    used_mib, free_mib, total_mib = map(int, fields)
+    if (total_mib <= 0 or used_mib > total_mib or free_mib > total_mib):
+        raise SmokeError("GPU device-level memory telemetry is outside valid bounds")
+    return GPUDeviceMemory(used_mib * 1024**2, free_mib * 1024**2,
+                           total_mib * 1024**2)
+
+
+def _query_gpu_monitor_sample(*, torch_module: Any = None,
+                              runner: Callable[..., Any] = subprocess.run) -> GPUMonitorSample:
+    return GPUMonitorSample(
+        processes=_query_gpu_processes(runner=runner),
+        device_memory=_query_gpu_device_memory(torch_module=torch_module, runner=runner))
+
+
+def _foreign_compute_pids(process_ids: Sequence[int], *, supervisor_pid: int,
+                          authorized_worker_pid: int | None) -> tuple[int, ...]:
+    allowed = {int(supervisor_pid)}
+    if authorized_worker_pid is not None:
+        allowed.add(int(authorized_worker_pid))
+    return tuple(sorted({int(pid) for pid in process_ids} - allowed))
+
+
+def _gpu_monitoring_profile(sample: GPUMonitorSample, *, supervisor_pid: int,
+                            authorized_worker_pid: int | None) -> dict[str, Any]:
+    foreign = _foreign_compute_pids(
+        sample.processes.process_ids, supervisor_pid=supervisor_pid,
+        authorized_worker_pid=authorized_worker_pid)
+    memory_available = sample.processes.process_memory_available
+    if authorized_worker_pid is not None:
+        memory_available = bool(
+            memory_available and
+            int(authorized_worker_pid) in (sample.processes.memory_bytes_by_pid or {}))
+    return {
+        "supervisor_pid": int(supervisor_pid),
+        "authorized_worker_pid": (None if authorized_worker_pid is None
+                                  else int(authorized_worker_pid)),
+        "compute_process_ids": list(sample.processes.process_ids),
+        "foreign_compute_pids": list(foreign),
+        "process_memory_query_available": sample.processes.process_memory_available,
+        "process_specific_vram_available": (
+            None if authorized_worker_pid is None else bool(memory_available)),
+        "process_specific_vram_unavailable_reason": (
+            sample.processes.memory_unavailable_reason if not memory_available else None),
+        "device_memory_used_bytes": sample.device_memory.used_bytes,
+        "device_memory_free_bytes": sample.device_memory.free_bytes,
+        "device_memory_total_bytes": sample.device_memory.total_bytes,
+        "configured_process_limit_bytes": MAX_GPU_MEMORY_BYTES,
+        "fallback_policy": GPU_MEMORY_FALLBACK_POLICY,
+    }
 
 
 def preflight_gpu_smoke(*, category: str, max_test_events: int, run_id: str,
@@ -333,10 +500,17 @@ def preflight_gpu_smoke(*, category: str, max_test_events: int, run_id: str,
     if str(torch.__version__) != model_receipt.get("runtime_profile", {}).get("torch_version"):
         raise SmokeError("PyTorch version differs from the verified local model receipt")
     processes = _query_gpu_processes(runner=subprocess_runner)
-    if processes:
-        raise SmokeError("a competing CUDA compute process is present; preflight fails closed")
-    free_gpu_bytes, _total = torch.cuda.mem_get_info(0)
-    if int(free_gpu_bytes) < min(MAX_GPU_MEMORY_BYTES, total_gpu_bytes):
+    device_memory = _query_gpu_device_memory(torch_module=torch, runner=subprocess_runner)
+    supervisor_pid = os.getpid()
+    foreign = _foreign_compute_pids(
+        processes.process_ids, supervisor_pid=supervisor_pid,
+        authorized_worker_pid=None)
+    if foreign:
+        raise SmokeError(f"foreign CUDA compute processes are present: {list(foreign)}")
+    effective_total = min(total_gpu_bytes, device_memory.total_bytes)
+    required_free = min(MAX_GPU_MEMORY_BYTES, effective_total)
+    conservative_free = device_memory.free_bytes
+    if conservative_free < required_free:
         raise SmokeError("available GPU memory is below the registered 22 GiB process ceiling")
     hub_root = Path(torch.hub.get_dir())
     hub_path, hub_sha = r1._hub_source_sha256(hub_root)
@@ -379,20 +553,24 @@ def preflight_gpu_smoke(*, category: str, max_test_events: int, run_id: str,
         "model_loaded_state_sha256": model_receipt.get("loaded_model_state_sha256"),
         "windows_job_supervisor_source_sha256": supervisor_sha,
         "cuda_device_name": device_name, "cuda_device_total_bytes": total_gpu_bytes,
-        "cuda_free_bytes": int(free_gpu_bytes), "gpu_processes": processes,
+        "cuda_free_bytes": conservative_free,
+        "gpu_monitoring": _gpu_monitoring_profile(
+            GPUMonitorSample(processes, device_memory), supervisor_pid=supervisor_pid,
+            authorized_worker_pid=None),
         "free_disk_bytes": free_disk, "output_dir": str(output_path),
         "model_source_location": str(hub_path),
         "python_executable": str(actual_python),
     }
 
 
-def _gpu_process_memory_for_child(pid: int) -> Mapping[int, int]:
-    return _query_gpu_processes()
+def _gpu_process_memory_for_child(pid: int) -> GPUMonitorSample:
+    import torch
+    return _query_gpu_monitor_sample(torch_module=torch)
 
 
 def supervise_smoke_child(command: Sequence[str], *, environment: Mapping[str, str],
                           working_directory: Path,
-                          gpu_process_probe: Callable[[int], Mapping[int, int]] =
+                          gpu_process_probe: Callable[[int], GPUMonitorSample] =
                           _gpu_process_memory_for_child,
                           timeout_seconds: float = MAX_WALL_SECONDS,
                           poll_interval_seconds: float = 1.0) -> SmokeSupervisorResult:
@@ -417,7 +595,15 @@ def supervise_smoke_child(command: Sequence[str], *, environment: Mapping[str, s
     active = 0
     root_exited_at = None
     exit_code = None
-    peak_gpu_bytes = 0
+    supervisor_pid = os.getpid()
+    peak_process_gpu_bytes: int | None = None
+    peak_device_used_bytes: int | None = None
+    monitor_sample_count = 0
+    process_specific_sample_count = 0
+    process_memory_unavailable_reasons: set[str] = set()
+    observed_compute_pids: set[int] = set()
+    foreign_compute_pids: set[int] = set()
+    monitoring_modes: set[str] = set()
     try:
         process_handle, child_pid = r1_supervisor._create_child_suspended(
             command, dict(environment), Path(working_directory), job)
@@ -427,7 +613,8 @@ def supervise_smoke_child(command: Sequence[str], *, environment: Mapping[str, s
             if termination_reason is None and now >= deadline:
                 termination_reason = "wall_clock_deadline"
                 job.terminate()
-            wait_ms = max(1, min(1000, int(max(0.0, deadline - now) * 1000)))
+            wait_ms = max(1, min(1000, int(float(poll_interval_seconds) * 1000),
+                                int(max(0.0, deadline - now) * 1000)))
             wait_state = kernel32.WaitForSingleObject(process_handle, wait_ms)
             active = job.active_processes()
             if wait_state not in (r1_supervisor.WAIT_OBJECT_0, r1_supervisor.WAIT_TIMEOUT):
@@ -438,14 +625,52 @@ def supervise_smoke_child(command: Sequence[str], *, environment: Mapping[str, s
                 root_exited_at = root_exited_at or time.monotonic()
             elif termination_reason is None:
                 try:
-                    processes = dict(gpu_process_probe(child_pid))
-                    foreign_pids = set(processes) - {child_pid}
-                    if foreign_pids:
+                    sample = gpu_process_probe(child_pid)
+                    if not isinstance(sample, GPUMonitorSample):
+                        raise SmokeError("GPU monitor did not provide PID and device-memory telemetry")
+                    monitor_sample_count += 1
+                    process_ids = set(sample.processes.process_ids)
+                    observed_compute_pids.update(process_ids)
+                    foreign = set(_foreign_compute_pids(
+                        process_ids, supervisor_pid=supervisor_pid,
+                        authorized_worker_pid=child_pid))
+                    foreign_compute_pids.update(foreign)
+                    device_memory = sample.device_memory
+                    if (device_memory.total_bytes <= 0 or device_memory.used_bytes < 0 or
+                            device_memory.free_bytes < 0 or
+                            device_memory.used_bytes > device_memory.total_bytes or
+                            device_memory.free_bytes > device_memory.total_bytes):
+                        raise SmokeError("device-level GPU memory telemetry is invalid")
+                    peak_device_used_bytes = max(
+                        peak_device_used_bytes or 0, int(device_memory.used_bytes))
+                    if foreign:
                         termination_reason = "competing_gpu_process_detected"
-                    child_gpu_bytes = int(processes.get(child_pid, 0))
-                    peak_gpu_bytes = max(peak_gpu_bytes, child_gpu_bytes)
-                    if child_gpu_bytes > MAX_GPU_MEMORY_BYTES:
-                        termination_reason = "gpu_memory_ceiling_exceeded"
+                    memory_by_pid = sample.processes.memory_bytes_by_pid
+                    worker_memory_available = bool(
+                        memory_by_pid is not None and child_pid in process_ids and
+                        child_pid in memory_by_pid)
+                    if worker_memory_available:
+                        process_specific_sample_count += 1
+                        child_gpu_bytes = int(memory_by_pid[child_pid])
+                        if child_gpu_bytes < 0:
+                            raise SmokeError("per-process GPU memory telemetry is invalid")
+                        peak_process_gpu_bytes = max(
+                            peak_process_gpu_bytes or 0, child_gpu_bytes)
+                        monitoring_modes.add("process_specific")
+                        if child_gpu_bytes > MAX_GPU_MEMORY_BYTES:
+                            termination_reason = "gpu_memory_ceiling_exceeded"
+                    else:
+                        reason = (sample.processes.memory_unavailable_reason or
+                                  "authorized_worker_pid_not_reported")
+                        process_memory_unavailable_reasons.add(reason)
+                        monitoring_modes.add("device_level_conservative_fallback")
+                        conservative_limit = min(
+                            MAX_GPU_MEMORY_BYTES, int(device_memory.total_bytes))
+                        # With no child-specific value, count all used device VRAM
+                        # against the smoke. This intentionally overcounts display
+                        # and other non-compute usage and never treats N/A as zero.
+                        if int(device_memory.used_bytes) > conservative_limit:
+                            termination_reason = "device_memory_ceiling_exceeded"
                 except Exception as exc:
                     termination_reason = "gpu_memory_monitor_failed"
                     monitor_error = f"{type(exc).__name__}: {str(exc)[:500]}"
@@ -488,6 +713,19 @@ def supervise_smoke_child(command: Sequence[str], *, environment: Mapping[str, s
             kernel32.CloseHandle(process_handle)
 
     elapsed = time.monotonic() - started
+    if exit_code == 0 and monitor_sample_count == 0 and termination_reason is None:
+        termination_reason = "gpu_monitoring_unavailable"
+        monitor_error = "completed child had no runtime GPU process/device telemetry samples"
+    if monitor_sample_count == 0:
+        process_specific_available: bool | None = None
+    else:
+        process_specific_available = process_specific_sample_count == monitor_sample_count
+    if not monitoring_modes:
+        monitoring_mode = "unavailable"
+    elif len(monitoring_modes) == 1:
+        monitoring_mode = next(iter(monitoring_modes))
+    else:
+        monitoring_mode = "mixed"
     if termination_reason == "wall_clock_deadline":
         status = "TIMED_OUT_TERMINATED"
     elif termination_reason is not None:
@@ -500,7 +738,15 @@ def supervise_smoke_child(command: Sequence[str], *, environment: Mapping[str, s
         status=status, child_pid=child_pid, child_exit_code=exit_code,
         elapsed_seconds=elapsed, timeout_seconds=float(timeout_seconds),
         termination_confirmed=termination_confirmed,
-        active_job_processes=active, peak_process_gpu_bytes=peak_gpu_bytes,
+        active_job_processes=active, peak_process_gpu_bytes=peak_process_gpu_bytes,
+        supervisor_pid=supervisor_pid, authorized_worker_pid=child_pid,
+        observed_compute_pids=tuple(sorted(observed_compute_pids)),
+        foreign_compute_pids=tuple(sorted(foreign_compute_pids)),
+        process_specific_vram_available=process_specific_available,
+        process_specific_vram_unavailable_reasons=tuple(sorted(process_memory_unavailable_reasons)),
+        monitoring_mode=monitoring_mode, monitor_sample_count=monitor_sample_count,
+        peak_device_used_bytes=peak_device_used_bytes,
+        configured_gpu_memory_limit_bytes=MAX_GPU_MEMORY_BYTES,
         termination_reason=termination_reason, monitor_error=monitor_error)
 
 
@@ -513,14 +759,32 @@ def _validate_smoke_outputs(budget: SmokeOutputBudget, run_id: str) -> dict[str,
         raise SmokeError("smoke produced a scientific Stage A artifact")
     manifest = json.loads((root / "smoke_manifest.json").read_text(encoding="utf-8"))
     seal = json.loads((root / "smoke_seal.json").read_text(encoding="utf-8"))
+    monitoring = json.loads((root / "smoke_gpu_monitoring.json").read_text(encoding="utf-8"))
     if (manifest.get("artifact_kind") != "bounded_engineering_smoke" or
             manifest.get("stage_b_enabled") is not False or
             seal.get("artifact_kind") != "bounded_engineering_smoke" or
             seal.get("scientific_stage_a_complete") is not False or
             seal.get("stage_b_enabled") is not False or
             seal.get("status") not in {"SMOKE_PASS", "SMOKE_INCOMPLETE_COVERAGE"} or
-            seal.get("event_count") != MAX_SMOKE_TEST_EVENTS):
+            seal.get("event_count") != MAX_SMOKE_TEST_EVENTS or
+            monitoring.get("schema") != "e6.bea_v2.smoke_gpu_monitoring.v1" or
+            monitoring.get("status") != "MONITORING_COMPLETE" or
+            monitoring.get("configured_process_limit_bytes") != MAX_GPU_MEMORY_BYTES or
+            monitoring.get("process_specific_vram_available") not in (True, False) or
+            int(monitoring.get("monitor_sample_count", 0)) <= 0 or
+            monitoring.get("foreign_compute_pids") != []):
         raise SmokeError("smoke-specific durable receipt is missing or malformed")
+    if monitoring["process_specific_vram_available"] is False:
+        mode = monitoring.get("monitoring_mode")
+        if (mode not in {"device_level_conservative_fallback", "mixed"} or
+                (mode == "device_level_conservative_fallback" and
+                 monitoring.get("peak_process_gpu_bytes") is not None) or
+                monitoring.get("peak_device_used_bytes") is None or
+                monitoring.get("fallback_policy") != GPU_MEMORY_FALLBACK_POLICY):
+            raise SmokeError("WDDM fallback receipt misreports unavailable per-process VRAM")
+    elif (monitoring.get("monitoring_mode") != "process_specific" or
+          monitoring.get("peak_process_gpu_bytes") is None):
+        raise SmokeError("per-process VRAM receipt omits its measured peak or mode")
     score_rows = (root / "smoke_scores.jsonl").read_bytes().splitlines()
     if len(score_rows) != MAX_SMOKE_TEST_EVENTS:
         raise SmokeError("smoke score ledger does not contain exactly 20 sealed events")
@@ -573,6 +837,7 @@ def execute_gpu_smoke(*, category: str, max_test_events: int, run_id: str,
         category=category, max_test_events=max_test_events, run_id=run_id,
         approved_commit=approved_commit, authorization_id=authorization_id,
         human_authorized=human_authorized, repository_root=root)
+    import torch as torch_module
     output_dir, budget = create_smoke_output_namespace(run_id, repository_root=root)
     command = [
         sys.executable, "-m", "experiments.calibration.e6_bea_smoke", "--_worker",
@@ -584,7 +849,28 @@ def execute_gpu_smoke(*, category: str, max_test_events: int, run_id: str,
     try:
         result = supervise_smoke_child(
             command, environment=os.environ.copy(), working_directory=root,
-            timeout_seconds=MAX_WALL_SECONDS)
+            timeout_seconds=MAX_WALL_SECONDS,
+            gpu_process_probe=lambda _pid: _query_gpu_monitor_sample(
+                torch_module=torch_module))
+        budget.write_json_once("smoke_gpu_monitoring.json", {
+            "schema": "e6.bea_v2.smoke_gpu_monitoring.v1",
+            "status": "MONITORING_COMPLETE" if result.monitor_sample_count else "MONITORING_UNAVAILABLE",
+            "preflight": preflight["gpu_monitoring"],
+            "supervisor_pid": result.supervisor_pid,
+            "authorized_worker_pid": result.authorized_worker_pid,
+            "observed_compute_pids": list(result.observed_compute_pids),
+            "foreign_compute_pids": list(result.foreign_compute_pids),
+            "process_specific_vram_available": result.process_specific_vram_available,
+            "process_specific_vram_unavailable_reasons": list(
+                result.process_specific_vram_unavailable_reasons),
+            "monitoring_mode": result.monitoring_mode,
+            "monitor_sample_count": result.monitor_sample_count,
+            "peak_process_gpu_bytes": result.peak_process_gpu_bytes,
+            "peak_device_used_bytes": result.peak_device_used_bytes,
+            "configured_process_limit_bytes": result.configured_gpu_memory_limit_bytes,
+            "fallback_policy": GPU_MEMORY_FALLBACK_POLICY,
+            "monitor_error": result.monitor_error,
+        })
         if result.status != "COMPLETED" or not result.termination_confirmed:
             budget.write_failure({
                 "schema": "e6.bea_v2.smoke_failure.v1", "status": "SMOKE_FAILED",

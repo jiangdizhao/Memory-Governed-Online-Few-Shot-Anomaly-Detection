@@ -63,6 +63,22 @@ def _new_budget(tmp_path: Path, run_id: str = "unit-a"):
     return run_dir, smoke.SmokeOutputBudget(run_dir, initialize=True)
 
 
+def _gpu_sample(worker_pid: int, *, process_memory: dict[int, int] | None = None,
+                process_ids: tuple[int, ...] | None = None,
+                used_bytes: int = 3 * 1024**3,
+                free_bytes: int = 21 * 1024**3,
+                total_bytes: int = 24 * 1024**3,
+                unavailable_reason: str | None = None):
+    if process_ids is None:
+        process_ids = (worker_pid,) if process_memory is not None else ()
+    return smoke.GPUMonitorSample(
+        processes=smoke.GPUProcessInventory(
+            process_ids=process_ids, memory_bytes_by_pid=process_memory,
+            memory_unavailable_reason=unavailable_reason),
+        device_memory=smoke.GPUDeviceMemory(
+            used_bytes=used_bytes, free_bytes=free_bytes, total_bytes=total_bytes))
+
+
 class _Reader:
     prefix_only = True
 
@@ -192,6 +208,67 @@ def test_preflight_requires_the_registered_python_environment(tmp_path, monkeypa
             category="audiojack", max_test_events=20, run_id="a1",
             approved_commit="a" * 40, authorization_id="auth-1", human_authorized=True,
             repository_root=tmp_path)
+
+
+def test_wddm_na_keeps_compute_pid_and_marks_process_memory_unavailable():
+    commands = []
+
+    def runner(command, **_kwargs):
+        commands.append(command)
+        if "--query-compute-apps=pid" in command:
+            return SimpleNamespace(returncode=0, stdout="1234\n")
+        if "--query-compute-apps=pid,used_memory" in command:
+            return SimpleNamespace(returncode=0, stdout="1234, [N/A]\n")
+        pytest.fail(f"unexpected nvidia-smi query: {command}")
+
+    inventory = smoke._query_gpu_processes(runner=runner)
+    assert commands[0][1] == "--query-compute-apps=pid"
+    assert inventory.process_ids == (1234,)
+    assert inventory.memory_bytes_by_pid is None
+    assert inventory.process_memory_available is False
+    assert inventory.memory_unavailable_reason == "driver_reports_per_process_memory_NA"
+
+
+def test_numeric_per_process_memory_is_parsed_in_mib():
+    def runner(command, **_kwargs):
+        if "--query-compute-apps=pid" in command:
+            return SimpleNamespace(returncode=0, stdout="1234\n")
+        return SimpleNamespace(returncode=0, stdout="1234, 768\n")
+
+    inventory = smoke._query_gpu_processes(runner=runner)
+    assert inventory.process_ids == (1234,)
+    assert inventory.memory_bytes_by_pid == {1234: 768 * 1024**2}
+    assert inventory.process_memory_available is True
+
+
+def test_compute_pid_classification_allows_supervisor_and_worker_only():
+    foreign = smoke._foreign_compute_pids(
+        (os.getpid(), 4321, 8765), supervisor_pid=os.getpid(),
+        authorized_worker_pid=4321)
+    assert foreign == (8765,)
+    assert smoke._foreign_compute_pids(
+        (os.getpid(), 4321), supervisor_pid=os.getpid(),
+        authorized_worker_pid=4321) == ()
+
+
+def test_required_gpu_monitoring_failures_fail_closed():
+    with pytest.raises(smoke.SmokeError, match="compute-process PIDs"):
+        smoke._query_gpu_processes(runner=lambda *_a, **_k:
+                                   SimpleNamespace(returncode=1, stdout=""))
+
+    def invalid_device_query(command, **_kwargs):
+        return SimpleNamespace(returncode=0, stdout="N/A, N/A, N/A\n")
+
+    with pytest.raises(smoke.SmokeError, match="device-level used/free/total"):
+        smoke._query_gpu_device_memory(runner=invalid_device_query)
+
+
+def test_device_level_gpu_memory_telemetry_is_parsed_in_mib():
+    sample = smoke._query_gpu_device_memory(runner=lambda *_a, **_k:
+        SimpleNamespace(returncode=0, stdout="4096, 20480, 24576\n"))
+    assert sample == smoke.GPUDeviceMemory(
+        used_bytes=4096 * 1024**2, free_bytes=20480 * 1024**2,
+        total_bytes=24576 * 1024**2)
 
 
 def test_prefix_is_exactly_four_complete_five_view_groups():
@@ -481,13 +558,17 @@ def test_wrong_supervisor_source_fingerprint_fails_closed(tmp_path, monkeypatch)
 @pytest.mark.skipif(os.name != "nt", reason="Windows Job Object process-tree containment")
 def test_windows_job_watchdog_completes_and_records_child_failure():
     ok = smoke.supervise_smoke_child(
-        [sys.executable, "-c", "pass"], environment=os.environ.copy(),
-        working_directory=Path.cwd(), gpu_process_probe=lambda _pid: {},
+        [sys.executable, "-c", "import time; time.sleep(0.2)"], environment=os.environ.copy(),
+        working_directory=Path.cwd(),
+        gpu_process_probe=lambda pid: _gpu_sample(pid, process_memory={pid: 32 * 1024**2}),
         timeout_seconds=5, poll_interval_seconds=0.05)
     assert ok.status == "COMPLETED" and ok.termination_confirmed
+    assert ok.process_specific_vram_available is True
+    assert ok.monitoring_mode == "process_specific"
     failure = smoke.supervise_smoke_child(
-        [sys.executable, "-c", "raise SystemExit(7)"], environment=os.environ.copy(),
-        working_directory=Path.cwd(), gpu_process_probe=lambda _pid: {},
+        [sys.executable, "-c", "import time; time.sleep(0.2); raise SystemExit(7)"],
+        environment=os.environ.copy(), working_directory=Path.cwd(),
+        gpu_process_probe=lambda pid: _gpu_sample(pid, process_memory={pid: 32 * 1024**2}),
         timeout_seconds=5, poll_interval_seconds=0.05)
     assert failure.status == "FAILED_NONZERO_EXIT" and failure.child_exit_code == 7
     assert failure.termination_confirmed
@@ -503,7 +584,8 @@ def test_windows_job_watchdog_kills_timeout_and_spawned_descendant(tmp_path):
     )
     result = smoke.supervise_smoke_child(
         [sys.executable, "-c", code], environment=os.environ.copy(),
-        working_directory=Path.cwd(), gpu_process_probe=lambda _pid: {},
+        working_directory=Path.cwd(),
+        gpu_process_probe=lambda pid: _gpu_sample(pid, process_memory={pid: 32 * 1024**2}),
         timeout_seconds=0.5, poll_interval_seconds=0.05)
     assert result.status == "TIMED_OUT_TERMINATED"
     assert result.termination_confirmed and result.active_job_processes == 0
@@ -519,8 +601,17 @@ def test_windows_job_watchdog_kills_timeout_and_spawned_descendant(tmp_path):
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows Job Object process-tree containment")
 @pytest.mark.parametrize("probe,expected", [
-    (lambda pid: {pid: smoke.MAX_GPU_MEMORY_BYTES + 1}, "gpu_memory_ceiling_exceeded"),
-    (lambda pid: {pid: 0, pid + 100000: 1}, "competing_gpu_process_detected"),
+    (lambda pid: _gpu_sample(pid, process_memory={pid: smoke.MAX_GPU_MEMORY_BYTES + 1}),
+     "gpu_memory_ceiling_exceeded"),
+    (lambda pid: _gpu_sample(
+        pid, process_memory={pid: 1024, pid + 100000: 1024},
+        process_ids=(pid, pid + 100000)), "competing_gpu_process_detected"),
+    (lambda pid: _gpu_sample(
+        pid, process_memory=None, process_ids=(pid,),
+        used_bytes=smoke.MAX_GPU_MEMORY_BYTES + 1,
+        free_bytes=1024**3,
+        unavailable_reason="driver_reports_per_process_memory_NA"),
+     "device_memory_ceiling_exceeded"),
 ])
 def test_windows_job_watchdog_kills_gpu_resource_or_competing_pid(probe, expected):
     result = smoke.supervise_smoke_child(
@@ -530,6 +621,40 @@ def test_windows_job_watchdog_kills_gpu_resource_or_competing_pid(probe, expecte
     assert result.status == "RESOURCE_LIMIT_TERMINATED"
     assert result.termination_reason == expected
     assert result.termination_confirmed
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows Job Object process-tree containment")
+def test_windows_job_watchdog_fails_closed_when_gpu_monitoring_is_unavailable():
+    result = smoke.supervise_smoke_child(
+        [sys.executable, "-c", "import time; time.sleep(30)"],
+        environment=os.environ.copy(), working_directory=Path.cwd(),
+        gpu_process_probe=lambda _pid: (_ for _ in ()).throw(
+            smoke.SmokeError("device telemetry unavailable")),
+        timeout_seconds=5, poll_interval_seconds=0.05)
+    assert result.status == "RESOURCE_LIMIT_TERMINATED"
+    assert result.termination_reason == "gpu_memory_monitor_failed"
+    assert result.monitor_error and "device telemetry unavailable" in result.monitor_error
+    assert result.termination_confirmed
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows Job Object process-tree containment")
+def test_windows_job_watchdog_uses_conservative_device_fallback_for_wddm_na():
+    result = smoke.supervise_smoke_child(
+        [sys.executable, "-c", "import time; time.sleep(0.2)"],
+        environment=os.environ.copy(), working_directory=Path.cwd(),
+        gpu_process_probe=lambda pid: _gpu_sample(
+            pid, process_memory=None, process_ids=(pid,),
+            used_bytes=8 * 1024**3, free_bytes=16 * 1024**3,
+            unavailable_reason="driver_reports_per_process_memory_NA"),
+        timeout_seconds=5, poll_interval_seconds=0.05)
+    assert result.status == "COMPLETED" and result.termination_confirmed
+    assert result.process_specific_vram_available is False
+    assert result.peak_process_gpu_bytes is None
+    assert result.peak_device_used_bytes == 8 * 1024**3
+    assert result.monitoring_mode == "device_level_conservative_fallback"
+    assert result.configured_gpu_memory_limit_bytes == smoke.MAX_GPU_MEMORY_BYTES
+    assert result.process_specific_vram_unavailable_reasons == (
+        "driver_reports_per_process_memory_NA",)
 
 
 def test_preflight_rejects_wrong_visible_gpu_count_before_launch(tmp_path, monkeypatch):
@@ -582,7 +707,10 @@ def test_preflight_rejects_model_source_or_checkpoint_sha_mismatch(tmp_path, mon
     monkeypatch.setattr(r3, "KNOWN_CHECKPOINT_SHA256", "e" * 64)
     monkeypatch.setattr(r3, "sha256_file", lambda _path: "wrong")
     monkeypatch.setattr(r1, "_hub_source_sha256", lambda _root: ("local", "d" * 64))
-    monkeypatch.setattr(smoke, "_query_gpu_processes", lambda **_kwargs: {})
+    monkeypatch.setattr(smoke, "_query_gpu_processes", lambda **_kwargs:
+                        smoke.GPUProcessInventory((), {}, None))
+    monkeypatch.setattr(smoke, "_query_gpu_device_memory", lambda **_kwargs:
+                        smoke.GPUDeviceMemory(0, 24 * 1024**3, 24 * 1024**3))
 
     class FakeCuda:
         @staticmethod
@@ -631,7 +759,10 @@ def test_preflight_rejects_less_than_ten_gibibytes_free_disk(tmp_path, monkeypat
     monkeypatch.setattr(r3, "KNOWN_CHECKPOINT_SHA256", "e" * 64)
     monkeypatch.setattr(r3, "sha256_file", lambda _path: "e" * 64)
     monkeypatch.setattr(r1, "_hub_source_sha256", lambda _root: ("local", "d" * 64))
-    monkeypatch.setattr(smoke, "_query_gpu_processes", lambda **_kwargs: {})
+    monkeypatch.setattr(smoke, "_query_gpu_processes", lambda **_kwargs:
+                        smoke.GPUProcessInventory((), {}, None))
+    monkeypatch.setattr(smoke, "_query_gpu_device_memory", lambda **_kwargs:
+                        smoke.GPUDeviceMemory(0, 24 * 1024**3, 24 * 1024**3))
     monkeypatch.setattr(smoke.shutil, "disk_usage",
                         lambda _path: SimpleNamespace(free=9 * 1024**3))
 
