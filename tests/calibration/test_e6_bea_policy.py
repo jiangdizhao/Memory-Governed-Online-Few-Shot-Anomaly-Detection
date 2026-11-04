@@ -135,6 +135,7 @@ def test_q6_matches_original_v22_action_and_q6_minus_q5_is_c():
     assert comp.objective("Q6") == pytest.approx(v22_priority, abs=1e-12)
     q6_proposed = comp.objective("Q6") > 0.91
     assert q6_proposed is (action == v22.AIFAction.QUERY_LABEL)
+    assert comp.objective("Q5") - comp.objective("Q4") == pytest.approx(comp.N + comp.D)
     assert comp.objective("Q6") - comp.objective("Q5") == pytest.approx(comp.C)
     assert comp.D > 0.0
     assert ARM_POLICIES["Q5"].objective_terms == ("B", "N", "D")

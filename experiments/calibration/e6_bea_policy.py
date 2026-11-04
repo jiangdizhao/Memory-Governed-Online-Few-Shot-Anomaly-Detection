@@ -276,6 +276,8 @@ class QueryController:
     last_observed_position: int = -1
     query_positions: list[int] = field(default_factory=list)
     query_gaps: list[int] = field(default_factory=list)
+    quantile_comparisons: int = 0
+    quantile_ties: int = 0
 
     def __post_init__(self) -> None:
         if self.arm_id not in ARM_POLICIES:
@@ -312,6 +314,8 @@ class QueryController:
             threshold = float(np.quantile(np.asarray(prior, dtype=np.float64), 0.97))
             # Strict comparison is the frozen tie rule: values tied at the
             # previous-history percentile do not create a tie-driven query burst.
+            self.quantile_comparisons += 1
+            self.quantile_ties += int(float(utility) == threshold)
             proposed = float(utility) > threshold
             return QueryProposal(self.arm_id, proposed, float(utility), threshold,
                                  float(utility), None,
@@ -369,6 +373,13 @@ class QueryController:
         return next_cost
 
     def diagnostics(self) -> dict[str, Any]:
+        inactivity_intervals = ([self.query_positions[0]] if self.query_positions else [])
+        inactivity_intervals.extend(max(0, gap - 1) for gap in self.query_gaps)
+        if self.query_positions:
+            inactivity_intervals.append(max(
+                0, self.events_observed - 1 - self.query_positions[-1]))
+        else:
+            inactivity_intervals.append(self.events_observed)
         return {
             "arm_id": self.arm_id,
             "events_observed": self.events_observed,
@@ -377,7 +388,13 @@ class QueryController:
             "realised_query_rate": self.executed_queries / self.events_observed
             if self.events_observed else 0.0,
             "group_suppressed": self.group_suppressed,
+            "quantile_comparisons": self.quantile_comparisons,
+            "quantile_ties": self.quantile_ties,
+            "quantile_tie_rate": (self.quantile_ties / self.quantile_comparisons
+                                  if self.quantile_comparisons else None),
             "query_cost_runtime": self.query_cost_runtime
             if ARM_POLICIES[self.arm_id].adaptive_price else None,
             "query_gaps": list(self.query_gaps),
+            "max_query_gap": max(self.query_gaps, default=None),
+            "max_inactivity_events": max(inactivity_intervals, default=0),
         }

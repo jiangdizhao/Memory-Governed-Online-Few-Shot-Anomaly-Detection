@@ -45,6 +45,7 @@ _FORBIDDEN_PUBLIC_KEYS = frozenset({
 EXPECTED_BRANCH = "calibration-stage0-contract-20261029"
 E6_REGISTERED_CATEGORIES = ("audiojack", "regulator", "switch", "rolled_strip_base")
 E6_EXECUTION_SOURCE_PATHS = (
+    "experiments/calibration/e6_bea_runner.py",
     "experiments/calibration/e6_bea_policy.py",
     "experiments/calibration/e6_bea_closed_loop.py",
     "tests/calibration/test_e6_bea_policy.py",
@@ -159,6 +160,49 @@ def _canonical_json(value: Any) -> bytes:
                       ensure_ascii=False, allow_nan=False).encode("utf-8") + b"\n"
 
 
+def _c64_parity_receipt(expected: Sequence[float], base: Sequence[float],
+                        empty_gc: Sequence[float], tolerance: Callable[[float, float], bool],
+                        *, atol: float, rtol: float
+                        ) -> dict[str, Any]:
+    """Verify source identities exactly and recomputed score values by R3 tolerance."""
+    expected_values = [float(value) for value in expected]
+    base_values = [float(value) for value in base]
+    gc_values = [float(value) for value in empty_gc]
+    if (not callable(tolerance) or not math.isfinite(float(atol)) or
+            not math.isfinite(float(rtol)) or float(atol) < 0 or float(rtol) < 0 or
+            any(len(values) != 64 for values in
+                                        (expected_values, base_values, gc_values)) or
+            not all(math.isfinite(value) for values in
+                    (expected_values, base_values, gc_values) for value in values)):
+        raise E6ClosedLoopError("C64 parity requires three finite 64-score vectors")
+    base_match = [bool(tolerance(actual, source))
+                  for actual, source in zip(base_values, expected_values)]
+    gc_match = [bool(tolerance(actual, reference))
+                for actual, reference in zip(gc_values, base_values)]
+    if not all(base_match):
+        raise E6ClosedLoopError("recomputed native base C64 scores fail the frozen R3 tolerance")
+    if not all(gc_match):
+        raise E6ClosedLoopError("empty-GC C64 scores fail the frozen R3 tolerance against base")
+    max_base_error = max(abs(actual - source)
+                         for actual, source in zip(base_values, expected_values))
+    max_gc_error = max(abs(actual - reference)
+                       for actual, reference in zip(gc_values, base_values))
+    return {
+        "tolerance_contract": "r3._score_tolerance",
+        "tolerance_atol": float(atol),
+        "tolerance_rtol": float(rtol),
+        "expected_score_vector_sha256": hashlib.sha256(
+            _canonical_json(expected_values)).hexdigest(),
+        "base_score_vector_sha256": hashlib.sha256(_canonical_json(base_values)).hexdigest(),
+        "empty_gc_score_vector_sha256": hashlib.sha256(_canonical_json(gc_values)).hexdigest(),
+        "base_score_count": len(base_values),
+        "base_expected_matches": sum(base_match),
+        "empty_gc_base_matches": sum(gc_match),
+        "max_abs_base_expected_error": max_base_error,
+        "max_abs_empty_gc_base_error": max_gc_error,
+    }
+
+
 def _config_record(value: Any, name: str) -> dict[str, Any]:
     if is_dataclass(value):
         record = asdict(value)
@@ -170,6 +214,100 @@ def _config_record(value: Any, name: str) -> dict[str, Any]:
         raise E6ClosedLoopError(f"{name} cannot be represented as a configuration receipt")
     _canonical_json(record)
     return record
+
+
+def _row_value(row: Any, name: str, default: Any = None) -> Any:
+    if isinstance(row, Mapping):
+        return row.get(name, default)
+    return getattr(row, name, default)
+
+
+def _assert_module_source(module: Any, relative: str, *, root: Path, role: str) -> None:
+    expected = (Path(root).resolve(strict=True) / relative).resolve(strict=True)
+    module_path = getattr(module, "__file__", None)
+    if module_path is None or Path(module_path).resolve(strict=True) != expected:
+        raise E6ClosedLoopError(f"{role} module is not loaded from pinned source: {relative}")
+
+
+def _assert_native_module_pair(impl: Any, visionad: Any, *, root: Path) -> None:
+    """Bind v22 as the native entry point and VMB as its separate backend."""
+    _assert_module_source(impl, "test_phase3_AIF_simplified_v22.py",
+                          root=root, role="v22 native implementation")
+    _assert_module_source(visionad, "vmb_visionad_new.py", root=root,
+                          role="VisionAD backend")
+    if getattr(impl, "DINOv2MultiLayerBackbone", None) is not getattr(
+            visionad, "DINOv2MultiLayerBackbone", None):
+        raise E6ClosedLoopError("v22 and VisionAD modules do not share the pinned backbone class")
+    backbone_class = getattr(impl, "DINOv2MultiLayerBackbone", None)
+    if getattr(backbone_class, "__module__", None) != getattr(visionad, "__name__", None):
+        raise E6ClosedLoopError("DINO backbone implementation is not owned by the pinned VisionAD module")
+    for name in ("set_seed", "load_rgb", "encode_pil", "l2_normalize",
+                 "select_informative_normal_write"):
+        function = getattr(impl, name, None)
+        if (not callable(function) or
+                getattr(function, "__module__", None) != getattr(impl, "__name__", None)):
+            raise E6ClosedLoopError(f"native function {name} is not owned by the pinned v22 module")
+
+
+def _validate_real_output_namespace(*, ledger: Any, arms: Mapping[str, Any],
+                                    output_parent: Path) -> dict[str, Any]:
+    """Validate the actual pre-manifest output namespace used by real Stage A."""
+    if not isinstance(ledger, ScoreLedger):
+        raise E6ClosedLoopError("real Stage A requires the append-only fsynced score ledger")
+    output_parent = Path(output_parent).resolve(strict=True)
+    run_dir = ledger.path.parent.resolve(strict=True)
+    if (run_dir.parent != output_parent or
+            not re.fullmatch(r"e6_bea_v2_[A-Za-z0-9_-]+", run_dir.name) or
+            ledger.path.name != "sealed_scores.jsonl"):
+        raise E6ClosedLoopError("real Stage A requires a unique e6_bea_v2_ output namespace")
+    _reject_reparse_ancestors(run_dir)
+    namespace_path = run_dir / "run_namespace.json"
+    _reject_reparse_ancestors(namespace_path)
+    try:
+        namespace = json.loads(namespace_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise E6ClosedLoopError("real Stage A requires its exclusive namespace identity marker") from exc
+    run_id = run_dir.name.removeprefix("e6_bea_v2_")
+    if (namespace.get("schema") != "e6.bea_v2.run_namespace.v1" or
+            namespace.get("status_at_creation") != "INCOMPLETE" or
+            namespace.get("run_id") != run_id):
+        raise E6ClosedLoopError("real Stage A namespace marker does not match its output directory")
+
+    try:
+        public_path = ledger.path.resolve(strict=True)
+    except OSError as exc:
+        raise E6ClosedLoopError("real Stage A score ledger is not present in its namespace") from exc
+    private_paths: list[Path] = []
+    for arm_id in ARM_IDS:
+        runtime = arms.get(arm_id)
+        sink = getattr(runtime, "private_feedback", None)
+        if not isinstance(sink, PrivateFeedbackSink) or sink.arm_id != arm_id:
+            raise E6ClosedLoopError("each arm requires exactly one correctly named private-feedback file")
+        path = Path(sink.path)
+        _reject_reparse_ancestors(path)
+        try:
+            resolved = path.resolve(strict=True)
+        except OSError as exc:
+            raise E6ClosedLoopError("private feedback output file is missing or inaccessible") from exc
+        if resolved == public_path:
+            raise E6ClosedLoopError("private feedback cannot alias the public score ledger")
+        if resolved.parent != run_dir or resolved.name != f"private_feedback_{arm_id}.jsonl":
+            raise E6ClosedLoopError("private feedback files must be distinct direct children named by arm")
+        private_paths.append(resolved)
+    if len(set(private_paths)) != len(ARM_IDS):
+        raise E6ClosedLoopError("each arm must have a distinct private-feedback file")
+    expected_names = {"run_namespace.json", "sealed_scores.jsonl"} | {
+        f"private_feedback_{arm}.jsonl" for arm in ARM_IDS}
+    if {path.name for path in private_paths} != expected_names - {
+            "run_namespace.json", "sealed_scores.jsonl"}:
+        raise E6ClosedLoopError("private feedback output filenames do not match arm identities")
+    actual_names = {path.name for path in run_dir.iterdir()}
+    if actual_names != expected_names:
+        raise E6ClosedLoopError("real E6 output namespace contains unaccounted files")
+    if (run_dir / "run_manifest.json").exists() or (run_dir / "stage_a_seal.json").exists():
+        raise E6ClosedLoopError("an existing E6 manifest or seal cannot be overwritten or reused")
+    return {"run_id": run_id, "namespace_path": namespace_path,
+            "namespace_sha256": _sha256_file(namespace_path), "run_dir": run_dir}
 
 
 def _write_json_once(path: Path, value: Mapping[str, Any]) -> str:
@@ -281,6 +419,7 @@ class FeedbackUpdate:
     scorer_state_version: int
     scorer_state_sha256: str
     diagnostics: Mapping[str, Any] = field(default_factory=dict)
+    scorer_state_changed: bool = False
 
 
 class ArmEngine(Protocol):
@@ -690,6 +829,25 @@ class StageASeal:
     manifest_sha256: str | None = None
     seal_path: str | None = None
     seal_sha256: str | None = None
+    category_json_sha256: str | None = None
+
+
+@dataclass(frozen=True)
+class StageBLabelSource:
+    """A hashed TEST JSON source; outcomes are decoded only after all Stage A seals verify."""
+
+    path: Path
+    source_sha256: str
+
+
+@dataclass(frozen=True)
+class EvaluationLabelRecord:
+    position: int
+    original_json_position: int
+    event_id_sha256: str
+    image_identity_sha256: str
+    source_group_sha256: str
+    label: int
 
 
 class StageAClosedLoop:
@@ -698,7 +856,8 @@ class StageAClosedLoop:
     def __init__(self, *, category: str, events: Sequence[EventIdentity],
                  feature_encoder: Callable[[EventIdentity], EncodedEvent],
                  arms: Mapping[str, ArmRuntime], ledger: ScoreLedger,
-                 synthetic_test_only: bool = False):
+                 synthetic_test_only: bool = False,
+                 execution_authorization_id: str | None = None):
         self.category = str(category)
         if self.category not in E6_REGISTERED_CATEGORIES:
             raise E6ClosedLoopError("Stage A category is outside the registered development set")
@@ -709,34 +868,26 @@ class StageAClosedLoop:
         if not isinstance(synthetic_test_only, bool):
             raise E6ClosedLoopError("synthetic_test_only must be an explicit boolean")
         self.synthetic_test_only = synthetic_test_only
+        self.execution_authorization_id = execution_authorization_id
         if not synthetic_test_only:
+            if (not isinstance(execution_authorization_id, str) or
+                    not execution_authorization_id.strip()):
+                raise E6ClosedLoopError("real Stage A requires a separate authorization identifier")
             if not isinstance(self.ledger, ScoreLedger):
                 raise E6ClosedLoopError("real Stage A requires the append-only fsynced score ledger")
             repo_root = Path(__file__).resolve().parents[2]
             output_parent = (repo_root / "outputs" / "calibration").resolve(strict=True)
-            run_dir = self.ledger.path.parent.resolve(strict=True)
-            if (run_dir.parent != output_parent or
-                    not re.fullmatch(r"e6_bea_v2_[A-Za-z0-9_-]+", run_dir.name) or
-                    self.ledger.path.name != "sealed_scores.jsonl"):
-                raise E6ClosedLoopError("real Stage A requires a unique e6_bea_v2_ output namespace")
-            namespace_path = run_dir / "run_namespace.json"
-            _reject_reparse_ancestors(namespace_path)
-            try:
-                namespace = json.loads(namespace_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
-                raise E6ClosedLoopError("real Stage A requires its exclusive namespace identity marker") from exc
-            run_id = run_dir.name.removeprefix("e6_bea_v2_")
-            if (namespace.get("schema") != "e6.bea_v2.run_namespace.v1" or
-                    namespace.get("status_at_creation") != "INCOMPLETE" or
-                    namespace.get("run_id") != run_id):
-                raise E6ClosedLoopError("real Stage A namespace marker does not match its output directory")
-            self.run_id = run_id
-            self.namespace_path = namespace_path
-            self.namespace_sha256 = _sha256_file(namespace_path)
+            namespace = _validate_real_output_namespace(
+                ledger=self.ledger, arms=self.arms, output_parent=output_parent)
+            self.run_id = namespace["run_id"]
+            self.namespace_path = namespace["namespace_path"]
+            self.namespace_sha256 = namespace["namespace_sha256"]
             if not isinstance(self.feature_encoder, R7FrozenFeatureEncoder):
                 raise E6ClosedLoopError("real Stage A requires the pinned R7 frozen feature encoder")
             if not self.feature_encoder.verified_model_identity:
                 raise E6ClosedLoopError("real Stage A requires a verified frozen DINO weight fingerprint")
+            if self.feature_encoder.visionad is None:
+                raise E6ClosedLoopError("real Stage A requires the separately pinned VisionAD backend")
             if any(not isinstance(arm.engine, R7NativeArmEngine) for arm in self.arms.values()):
                 raise E6ClosedLoopError("real Stage A requires seven independently initialized R7 native engines")
             input_identities = [getattr(arm.engine, "input_identity", None)
@@ -757,7 +908,9 @@ class StageAClosedLoop:
                 self.events,
                 input_identities[0].get("support_source_group_sha256", ()),
                 input_identities[0].get("c64_source_group_sha256", ()))
-            if any(arm.engine.impl is not self.feature_encoder.impl for arm in self.arms.values()):
+            if any(arm.engine.impl is not self.feature_encoder.impl or
+                   arm.engine.visionad is not self.feature_encoder.visionad
+                   for arm in self.arms.values()):
                 raise E6ClosedLoopError("feature encoder and native scorers must share the pinned implementation")
             if any(not isinstance(arm.label_reader, OnDemandLabelReader)
                    for arm in self.arms.values()):
@@ -780,7 +933,7 @@ class StageAClosedLoop:
                 raise E6ClosedLoopError("real Stage A requires one separate private feedback file per arm")
             for arm_id, arm in self.arms.items():
                 controller = arm.controller
-                if (controller.seed != 0 or controller.events_observed != 0 or
+                if (controller.seed != 37 or controller.events_observed != 0 or
                         controller.proposals != 0 or controller.executed_queries != 0 or
                         controller.group_suppressed != 0 or controller.last_observed_position != -1 or
                         controller.executed_flags or controller.utility_history or
@@ -839,13 +992,6 @@ class StageAClosedLoop:
                 for path in private_paths)):
             raise E6ClosedLoopError("all E6 outputs must stay directly inside the unique run directory")
         if not synthetic_test_only:
-            expected_names = {"run_namespace.json", "sealed_scores.jsonl"} | {
-                f"private_feedback_{arm}.jsonl" for arm in ARM_IDS}
-            if {path.name for path in private_paths} != expected_names - {"sealed_scores.jsonl"}:
-                raise E6ClosedLoopError("private feedback output filenames do not match arm identities")
-            actual_names = {path.name for path in self.ledger.path.parent.iterdir()}
-            if actual_names != expected_names:
-                raise E6ClosedLoopError("real E6 output namespace contains unaccounted files")
             self.manifest_path = self.ledger.path.parent / "run_manifest.json"
             self.seal_path = self.ledger.path.parent / "stage_a_seal.json"
             self.manifest_sha256 = _write_json_once(
@@ -879,6 +1025,7 @@ class StageAClosedLoop:
             "stream_event_count": len(self.events),
             "stream_identity_sha256": hashlib.sha256(_canonical_json(identities)).hexdigest(),
             "source_identity": source_identity,
+            "execution_authorization_id": self.execution_authorization_id,
             "model_state_sha256": self.feature_encoder.runtime_info.get(
                 "loaded_model_state_sha256"),
             "runtime_profile": self.feature_encoder.runtime_info.get("runtime_profile"),
@@ -889,6 +1036,7 @@ class StageAClosedLoop:
                 "c1_correction": dict(engine.correction_config_record),
             },
             "support_and_c64_identity": dict(getattr(engine, "input_identity", {})),
+            "initial_c64_numerical_parity": dict(getattr(engine, "c64_parity_receipt", {})),
             "initial_complete_scorer_state_sha256": engine.initial_state_sha256,
             "greedy_capacity": 1024,
             "c1_full_capacity": 1024,
@@ -896,7 +1044,8 @@ class StageAClosedLoop:
             "query_policies": {
                 arm: {"kind": ARM_POLICIES[arm].kind,
                       "objective_terms": list(ARM_POLICIES[arm].objective_terms),
-                      "adaptive_price": ARM_POLICIES[arm].adaptive_price}
+                      "adaptive_price": ARM_POLICIES[arm].adaptive_price,
+                      "seed": int(self.arms[arm].controller.seed)}
                 for arm in ARM_IDS},
             "output_files": ["run_namespace.json", "run_manifest.json", "sealed_scores.jsonl",
                              *[f"private_feedback_{arm}.jsonl" for arm in ARM_IDS],
@@ -1034,6 +1183,8 @@ class StageAClosedLoop:
                 "status": "COMPLETE",
                 "category": self.category,
                 "event_count": last_event + 1,
+                "category_json_sha256": str(
+                    self.arms["Q0"].engine.input_identity["category_json_sha256"]),
                 "manifest_sha256": self.manifest_sha256,
                 "score_log": {"file": self.ledger.path.name,
                               "sha256": score_log_sha256},
@@ -1057,16 +1208,24 @@ class StageAClosedLoop:
             manifest_path=str(self.manifest_path) if self.manifest_path else None,
             manifest_sha256=self.manifest_sha256,
             seal_path=str(self.seal_path) if self.seal_path else None,
-            seal_sha256=seal_sha256)
+            seal_sha256=seal_sha256,
+            category_json_sha256=(str(self.arms["Q0"].engine.input_identity["category_json_sha256"])
+                                  if not self.synthetic_test_only else None))
 
 
 class R7FrozenFeatureEncoder:
     """Encode one identity-view image once and retain both R7 patches and CLS."""
 
     def __init__(self, *, impl: Any, backbone: Any, feature_fuse: str,
+                 visionad: Any = None, repository_root: Path | None = None,
                  r1: Any = None, expected_model_state_sha256: str | None = None,
                  runtime_info: Mapping[str, Any] | None = None):
         self.impl = impl
+        self.visionad = visionad
+        if visionad is not None:
+            if repository_root is None:
+                raise E6ClosedLoopError("paired v22/VisionAD modules require a repository root")
+            _assert_native_module_pair(impl, visionad, root=repository_root)
         self.backbone = backbone
         self.feature_fuse = str(feature_fuse)
         self.runtime_info = dict(runtime_info or {})
@@ -1100,7 +1259,7 @@ class R7FrozenFeatureEncoder:
                             global_cls=cls, encoding_seconds=time.perf_counter() - started)
 
 
-def load_r7_frozen_backbone(*, impl: Any, r1: Any, r3: Any,
+def load_r7_frozen_backbone(*, impl: Any, visionad: Any, r1: Any, r3: Any,
                             approved_e6_commit: str, repository_root: Path
                             ) -> tuple[Any, dict[str, Any], dict[str, Any]]:
     """Load only the pinned local DINO source/weights after E6 review identity.
@@ -1110,6 +1269,7 @@ def load_r7_frozen_backbone(*, impl: Any, r1: Any, r3: Any,
     """
     identity = verify_e6_execution_identity(approved_e6_commit, root=repository_root)
     root = Path(repository_root).resolve(strict=True)
+    _assert_native_module_pair(impl, visionad, root=root)
     for module, relative in ((impl, "test_phase3_AIF_simplified_v22.py"),
                              (r1, "experiments/calibration/r1_matched_correction_pilot.py"),
                              (r3, "experiments/calibration/r3_fullstream_2x2.py")):
@@ -1144,7 +1304,7 @@ class R7NativeArmEngine:
     support/C64 receipts. This adapter does not load inputs or a model.
     """
 
-    def __init__(self, *, impl: Any, bank: Any, r1: Any, r7: Any, exp2a: Any,
+    def __init__(self, *, impl: Any, visionad: Any, bank: Any, r1: Any, r7: Any, exp2a: Any,
                  cfg: Any, writer: Any, correction_cfg: Any, correction_cb: Any,
                  source_groups: dict[int, set[str]], fixed_support_sha256: str,
                  theta0: float, sigma0: float, c64_items: Sequence[Mapping[str, Any]],
@@ -1154,20 +1314,23 @@ class R7NativeArmEngine:
                  native_profile_config: Mapping[str, Any],
                  correction_config_record: Mapping[str, Any],
                  greedy_settings_record: Mapping[str, Any],
+                 c64_parity_receipt: Mapping[str, Any],
                  b3_controller: Any,
                  approved_e6_commit: str, repository_root: Path):
         self.execution_identity = verify_e6_execution_identity(
             approved_e6_commit, root=repository_root)
+        root = Path(repository_root).resolve(strict=True)
+        _assert_native_module_pair(impl, visionad, root=root)
         for module, relative in (
-                (impl, "vmb_visionad_new.py"),
                 (r1, "experiments/calibration/r1_matched_correction_pilot.py"),
                 (r7, "experiments/calibration/r7_shuffled_correction_4class.py"),
                 (exp2a, "experiments/calibration/r2_exp2a_c1_strength.py")):
             module_path = getattr(module, "__file__", None)
-            expected_path = (Path(repository_root).resolve(strict=True) / relative).resolve(strict=True)
+            expected_path = (root / relative).resolve(strict=True)
             if module_path is None or Path(module_path).resolve(strict=True) != expected_path:
                 raise E6ClosedLoopError(f"native helper module is not loaded from pinned source: {relative}")
-        self.impl, self.bank, self.r1, self.r7, self.exp2a = impl, bank, r1, r7, exp2a
+        self.impl, self.visionad = impl, visionad
+        self.bank, self.r1, self.r7, self.exp2a = bank, r1, r7, exp2a
         self.cfg, self.writer = cfg, writer
         self.correction_cfg, self.correction_cb = correction_cfg, correction_cb
         self.source_groups = source_groups
@@ -1182,6 +1345,7 @@ class R7NativeArmEngine:
         self.native_profile_config = dict(native_profile_config)
         self.correction_config_record = dict(correction_config_record)
         self.greedy_settings_record = dict(greedy_settings_record)
+        self.c64_parity_receipt = dict(c64_parity_receipt)
         self.b3_controller = b3_controller
         if len(self.c64_items) != 64 or len(self.c64_scores) != 64:
             raise E6ClosedLoopError("R7 adapter requires the 64 registered C64 commissioning items")
@@ -1200,10 +1364,20 @@ class R7NativeArmEngine:
                                          for codebook in greedy_codebooks)):
             raise E6ClosedLoopError("R7 E6 Greedy normal-memory layers must each have capacity K=1024")
         if (self.fixed_support_sha256 != self.input_identity.get("fixed_bank_sha256") or
-                self.c64_group_sha256 != self.input_identity.get("c64_group_sha256") or
-                hashlib.sha256(_canonical_json(self.c64_scores)).hexdigest() !=
-                self.input_identity.get("c64_score_vector_sha256")):
+                self.c64_group_sha256 != self.input_identity.get("c64_group_sha256")):
             raise E6ClosedLoopError("R7 E6 arm inputs differ from their fixed-support/C64 receipts")
+        if (self.c64_parity_receipt.get("expected_score_vector_sha256") !=
+                self.input_identity.get("c64_expected_score_vector_sha256") or
+                self.c64_parity_receipt.get("tolerance_atol") !=
+                self.input_identity.get("c64_score_tolerance", {}).get("atol") or
+                self.c64_parity_receipt.get("tolerance_rtol") !=
+                self.input_identity.get("c64_score_tolerance", {}).get("rtol") or
+                self.c64_parity_receipt.get("empty_gc_score_vector_sha256") !=
+                hashlib.sha256(_canonical_json(self.c64_scores)).hexdigest() or
+                self.c64_parity_receipt.get("base_expected_matches") != 64 or
+                self.c64_parity_receipt.get("empty_gc_base_matches") != 64 or
+                self.c64_parity_receipt.get("tolerance_contract") != "r3._score_tolerance"):
+            raise E6ClosedLoopError("R7 E6 numerical C64 parity receipt is incomplete or inconsistent")
         if (not math.isclose(max(float(np.std(self.c64_scores, ddof=1)), 0.02), self.sigma0,
                             rel_tol=0.0, abs_tol=1e-12) or
                 not math.isclose(float(np.quantile(self.c64_scores, 0.90, method="higher")),
@@ -1272,6 +1446,8 @@ class R7NativeArmEngine:
         if label not in (0, 1):
             raise E6ClosedLoopError("R7 adapter accepts only verified binary queried feedback")
         before = self._digests()
+        greedy_before = self.r1._memory_content_sha256(self.bank)
+        correction_before = self.r1._correction_state_sha256(self.bank, self.source_groups)
         if score.scorer_state_sha256 != before["GC"] or score.scorer_state_version != self.state_version:
             raise E6ClosedLoopError("feedback arrived after this arm's pre-event state changed")
         c0_prediction = int(score.c0_score >= self.theta0)
@@ -1286,9 +1462,12 @@ class R7NativeArmEngine:
             self.source_groups, event.source_group_sha256)
         writer_receipt = self._common_writer(event, score, queried=True, label=label)
         after = self._digests()
-        c1_changed = before["GC"] != after["GC"]
-        greedy_changed = before["G"] != after["G"]
-        if c1_changed or greedy_changed:
+        greedy_after = self.r1._memory_content_sha256(self.bank)
+        correction_after = self.r1._correction_state_sha256(self.bank, self.source_groups)
+        c1_changed = correction_before != correction_after
+        greedy_changed = greedy_before != greedy_after
+        scorer_state_changed = before["GC"] != after["GC"]
+        if scorer_state_changed:
             previous_version = self.state_version
             new_digest = after["GC"]
             if greedy_changed:
@@ -1314,9 +1493,15 @@ class R7NativeArmEngine:
             scorer_state_version=self.state_version,
             scorer_state_sha256=self.state_digest,
             diagnostics={"frozen_c0_outcome": outcome, "c1_sign": sign,
+                         "scorer_state_changed": scorer_state_changed,
+                         "state_component_digests": {
+                             "greedy_before": greedy_before, "greedy_after": greedy_after,
+                             "c1_before": correction_before, "c1_after": correction_after,
+                             "complete_before": before["GC"], "complete_after": after["GC"]},
                          "correction_trace": correction_trace,
                          "greedy_writer": writer_receipt,
-                         "b3_transition_for_next_event": transition})
+                         "b3_transition_for_next_event": transition},
+            scorer_state_changed=scorer_state_changed)
 
     def _common_writer(self, event: EventIdentity, score: NativePreEventScore,
                        *, queried: bool, label: int | None) -> Mapping[str, Any]:
@@ -1354,7 +1539,7 @@ class R7NativeArmEngine:
 
 
 def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
-                                impl: Any, p0: Any, r1: Any, r3: Any, r6: Any,
+                                impl: Any, visionad: Any, p0: Any, r1: Any, r3: Any, r6: Any,
                                 r7: Any, exp2a: Any, native_module: Any,
                                 cfg: Any, support_features: Mapping[str, Any],
                                 support_paths: Sequence[str],
@@ -1372,8 +1557,8 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
     execution_identity = verify_e6_execution_identity(
         approved_e6_commit, root=repository_root)
     root = Path(repository_root).resolve(strict=True)
+    _assert_native_module_pair(impl, visionad, root=root)
     modules = (
-        (impl, "test_phase3_AIF_simplified_v22.py"),
         (p0, "experiments/p0_protocol_audit.py"),
         (r1, "experiments/calibration/r1_matched_correction_pilot.py"),
         (r3, "experiments/calibration/r3_fullstream_2x2.py"),
@@ -1450,16 +1635,18 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
         "c64_source_group_sha256": list(c64_groups),
         "c64_ordered_group_list_sha256": hashlib.sha256(_canonical_json(list(c64_groups))).hexdigest(),
         "c64_score_archive_sha256": c64_score_archive_sha256,
-        "c64_score_vector_sha256": hashlib.sha256(_canonical_json(
+        "c64_expected_score_vector_sha256": hashlib.sha256(_canonical_json(
             [float(value) for value in info["c64_scores"]])).hexdigest(),
+        "c64_score_tolerance": {"source": "r3._score_tolerance",
+                                 "atol": float(r3.ATOL), "rtol": float(r3.RTOL)},
     }
     if not _HEX64.fullmatch(input_identity["fixed_bank_sha256"]):
         raise E6ClosedLoopError("fixed-support bank identity is not a SHA-256 digest")
+    stream_groups = {str(_row_value(event, "opaque_group", ""))
+                     for event in info["contract"]["stream_rows"]}
     if (set(support_group_sha256) & set(c64_groups) or
-            set(support_group_sha256) & set(str(event.get("opaque_group", ""))
-                                            for event in info["contract"]["stream_rows"]) or
-            set(c64_groups) & set(str(event.get("opaque_group", ""))
-                                  for event in info["contract"]["stream_rows"])):
+            set(support_group_sha256) & stream_groups or
+            set(c64_groups) & stream_groups):
         raise E6ClosedLoopError("authenticated Support, C64, and TEST groups overlap")
 
     from types import SimpleNamespace
@@ -1515,17 +1702,16 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
         base_scores, base_cache, _ = r7._score_c64_base(
             impl, bank, c64_items, cfg, r1, category)
         expected_scores = [float(value) for value in info["c64_scores"]]
-        if len(base_scores) != 64 or len(expected_scores) != 64 or any(
-               not r3._score_tolerance(actual, expected)
-               for actual, expected in zip(base_scores, expected_scores)):
-            raise E6ClosedLoopError(f"{arm_id}: native frozen C64 base scores changed")
         source_groups: dict[int, set[str]] = {}
         gc_scores, _ = r7._score_c64_corrected(
             impl, bank, c64_items, base_cache, cfg, r1, source_groups,
             category, event_position=0)
-        if any(not r3._score_tolerance(actual, base)
-               for actual, base in zip(gc_scores, base_scores)):
-            raise E6ClosedLoopError(f"{arm_id}: empty C1 GC C64 scores differ from G")
+        try:
+            c64_receipt = _c64_parity_receipt(
+                expected_scores, base_scores, gc_scores, r3._score_tolerance,
+                atol=r3.ATOL, rtol=r3.RTOL)
+        except E6ClosedLoopError as exc:
+            raise E6ClosedLoopError(f"{arm_id}: {exc}") from exc
         measured_sigma0 = max(float(np.std(expected_scores, ddof=1)), 0.02)
         if not math.isclose(measured_sigma0, sigma0, rel_tol=0.0, abs_tol=1e-12):
             raise E6ClosedLoopError(f"{arm_id}: frozen C0 writer sigma receipt is inconsistent")
@@ -1535,7 +1721,7 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
         b3 = StateConsistentQuantile(theta0, delta=0.01, min_normals=16,
                                      name=f"E6-{arm_id}-GC-B3")
         engines[arm_id] = R7NativeArmEngine(
-            impl=impl, bank=bank, r1=r1, r7=r7, exp2a=exp2a, cfg=cfg,
+            impl=impl, visionad=visionad, bank=bank, r1=r1, r7=r7, exp2a=exp2a, cfg=cfg,
             writer=writer, correction_cfg=correction_cfg,
             correction_cb=correction_cb, source_groups=source_groups,
             fixed_support_sha256=fixed_sha, theta0=theta0, sigma0=sigma0,
@@ -1546,6 +1732,7 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
             native_profile_config=native_profile_record,
             correction_config_record=correction_config_record,
             greedy_settings_record=greedy_settings_record,
+            c64_parity_receipt=c64_receipt,
             b3_controller=b3, approved_e6_commit=approved_e6_commit,
             repository_root=root)
     if len({engine.initial_state_sha256 for engine in engines.values()}) != 1:
@@ -1620,6 +1807,12 @@ def _read_sealed_score_log(path: Path, seal: StageASeal) -> list[dict[str, Any]]
             manifest_record.get("status_at_creation") != "INCOMPLETE" or
             manifest_record.get("stage_b_enabled") is not False):
         raise E6ClosedLoopError(f"{seal.category}: run manifest identity/status is invalid")
+    source_identity = manifest_record.get("support_and_c64_identity", {})
+    category_json_sha256 = source_identity.get("category_json_sha256")
+    if (not isinstance(category_json_sha256, str) or
+            not _HEX64.fullmatch(category_json_sha256) or
+            seal.category_json_sha256 != category_json_sha256):
+        raise E6ClosedLoopError(f"{seal.category}: Stage A category JSON identity is missing or inconsistent")
     namespace_path = run_dir / "run_namespace.json"
     _reject_reparse_ancestors(namespace_path)
     namespace_sha256 = manifest_record.get("namespace_record_sha256")
@@ -1647,6 +1840,7 @@ def _read_sealed_score_log(path: Path, seal: StageASeal) -> list[dict[str, Any]]
             seal_record.get("status") != "COMPLETE" or
             seal_record.get("category") != seal.category or
             seal_record.get("event_count") != seal.event_count or
+            seal_record.get("category_json_sha256") != category_json_sha256 or
             seal_record.get("manifest_sha256") != seal.manifest_sha256 or
             seal_record.get("score_log") != {
                 "file": "sealed_scores.jsonl", "sha256": seal.score_log_sha256} or
@@ -1664,15 +1858,109 @@ def _read_sealed_score_log(path: Path, seal: StageASeal) -> list[dict[str, Any]]
     return rows
 
 
+def _stage_b_manifest_identity(seal: StageASeal) -> tuple[Path, str]:
+    if seal.manifest_path is None:
+        raise E6ClosedLoopError(f"{seal.category}: Stage A manifest is unavailable")
+    manifest = json.loads(Path(seal.manifest_path).read_text(encoding="utf-8"))
+    identity = manifest.get("support_and_c64_identity", {})
+    digest = identity.get("category_json_sha256")
+    if not isinstance(digest, str) or not _HEX64.fullmatch(digest):
+        raise E6ClosedLoopError(f"{seal.category}: Stage A category JSON digest is invalid")
+    return Path(seal.manifest_path), digest
+
+
+def _load_stage_b_identity_records(source: StageBLabelSource, category: str,
+                                   score_rows: Sequence[Mapping[str, Any]]) -> tuple[EvaluationLabelRecord, ...]:
+    """Decode outcomes offline and bind each one to a sealed R7 event identity."""
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+    from experiments.risk_safe.preflight import parse_image_name
+    from experiments.calibration.stage1a_p12_label_provider import _decode_selected_label
+
+    path = Path(source.path)
+    _reject_reparse_ancestors(path)
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise E6ClosedLoopError(f"{category}: TEST JSON source cannot be read") from exc
+    if hashlib.sha256(raw).hexdigest() != source.source_sha256:
+        raise E6ClosedLoopError(f"{category}: TEST JSON digest differs from its Stage A identity")
+    bounds = r7._test_array_boundaries(raw)
+    if len(bounds) != len(score_rows):
+        raise E6ClosedLoopError(f"{category}: TEST identity map length differs from its sealed stream")
+    top_fields = r7._object_fields(raw, 0, len(raw))
+    meta_bounds = top_fields.get("meta")
+    if meta_bounds is None:
+        raise E6ClosedLoopError(f"{category}: TEST JSON lacks label-blind normal-class metadata")
+    metadata = r7._decode_field(raw, meta_bounds)
+    normal_class = metadata.get("normal_class") if isinstance(metadata, dict) else None
+    if not isinstance(normal_class, str) or not normal_class:
+        raise E6ClosedLoopError(f"{category}: TEST normal-class identity is invalid")
+
+    records: list[EvaluationLabelRecord] = []
+    for position, score_row in enumerate(score_rows):
+        original = score_row.get("original_json_position")
+        if isinstance(original, bool) or not isinstance(original, int) or not 0 <= original < len(bounds):
+            raise E6ClosedLoopError(f"{category}: sealed original JSON position is invalid")
+        start, stop = bounds[original]
+        fields = r7._object_fields(raw, start, stop)
+        image_bounds = fields.get("image_path")
+        if image_bounds is None or "anomaly_class" not in fields:
+            raise E6ClosedLoopError(f"{category}: TEST record lacks its image/outcome fields")
+        image_path = r7._decode_field(raw, image_bounds)
+        if not isinstance(image_path, str):
+            raise E6ClosedLoopError(f"{category}: TEST image identity is malformed")
+        try:
+            parsed = parse_image_name(image_path, expected_class=category)
+            relative_id = str(parsed.rel_path).replace("\\", "/")
+            image_sha = r7._identity_hash(relative_id)
+            group_sha = hashlib.sha256((
+                "official-sample-group\0" + str(parsed.official_sample_key)).encode("utf-8")).hexdigest()
+            event_sha = hashlib.sha256(
+                f"r7-event\0{position}\0{image_sha}\0{group_sha}".encode("utf-8")).hexdigest()
+            label = int(_decode_selected_label(raw, start, stop, normal_class))
+        except Exception as exc:
+            raise E6ClosedLoopError(f"{category}: TEST outcome identity could not be verified") from exc
+        if label not in (0, 1):
+            raise E6ClosedLoopError(f"{category}: TEST outcome is not binary")
+        records.append(EvaluationLabelRecord(
+            position=position, original_json_position=original,
+            event_id_sha256=event_sha, image_identity_sha256=image_sha,
+            source_group_sha256=group_sha, label=label))
+    return tuple(records)
+
+
+def _validate_stage_b_identity_records(
+        score_rows: Sequence[Mapping[str, Any]],
+        records: Sequence[EvaluationLabelRecord]) -> np.ndarray:
+    if len(score_rows) != len(records):
+        raise E6ClosedLoopError("Stage B identity map is missing or has extra event records")
+    seen_original: set[int] = set()
+    labels: list[int] = []
+    for position, (score_row, record) in enumerate(zip(score_rows, records)):
+        if (record.position != position or score_row.get("position") != position or
+                record.original_json_position != score_row.get("original_json_position") or
+                record.original_json_position in seen_original or
+                record.event_id_sha256 != score_row.get("event_id_sha256") or
+                record.image_identity_sha256 != score_row.get("image_identity_sha256") or
+                record.source_group_sha256 != score_row.get("source_group_sha256") or
+                record.label not in (0, 1)):
+            raise E6ClosedLoopError("Stage B label records are reordered, duplicated, or identity-mismatched")
+        seen_original.add(record.original_json_position)
+        labels.append(int(record.label))
+    if seen_original != {int(row["original_json_position"]) for row in score_rows}:
+        raise E6ClosedLoopError("Stage B original JSON identity map is incomplete")
+    return np.asarray(labels, dtype=np.int8)
+
+
 def stage_b_evaluate(*, stage_a_seals: Mapping[str, StageASeal],
                      expected_categories: Sequence[str],
-                     labels_for_category: Callable[[str], Sequence[int]],
+                     label_sources: Mapping[str, StageBLabelSource],
                      stage_b_authorized: bool = False,
                      authorization_id: str | None = None) -> dict[str, Any]:
-    """Evaluate only after every registered Stage A category/arm seal verifies.
+    """Evaluate only after all durable Stage A seals and source identities verify.
 
-    No online engine/state is accepted by this API, so Stage B outcomes cannot
-    flow back into online scoring or updates. The default call is disabled.
+    This API accepts hashed source descriptors, never a detached label vector or
+    online state. TEST outcomes are decoded only after all four seals pass.
     """
     if stage_b_authorized is not True or not authorization_id:
         raise E6ClosedLoopError("Stage B is disabled without separate explicit authorization")
@@ -1681,19 +1969,37 @@ def stage_b_evaluate(*, stage_a_seals: Mapping[str, StageASeal],
             len(categories) != len(E6_REGISTERED_CATEGORIES) or
             set(categories) != set(stage_a_seals)):
         raise E6ClosedLoopError("Stage B requires seals for all four registered categories")
+    if (not isinstance(label_sources, Mapping) or set(label_sources) != set(categories) or
+            any(not isinstance(label_sources[category], StageBLabelSource) or
+                not isinstance(label_sources[category].source_sha256, str) or
+                not _HEX64.fullmatch(label_sources[category].source_sha256)
+                for category in categories)):
+        raise E6ClosedLoopError("Stage B requires one hashed TEST source descriptor per category")
+
+    # Seal and checksum every category before reading any evaluation labels.
     logs: dict[str, list[dict[str, Any]]] = {}
+    manifest_digests: dict[str, str] = {}
     for category in categories:
         seal = stage_a_seals[category]
         if seal.category != category:
             raise E6ClosedLoopError("Stage A category key and seal identity disagree")
         logs[category] = _read_sealed_score_log(Path(seal.score_log_path), seal)
-    # Outcome access begins only after all category logs and seals passed.
-    outcomes = {category: np.asarray(labels_for_category(category), dtype=np.int8)
-                for category in categories}
-    for category, rows in logs.items():
-        y = outcomes[category]
-        if y.shape != (len(rows),) or not np.isin(y, (0, 1)).all():
-            raise E6ClosedLoopError(f"{category}: Stage B outcomes are not one binary value per event")
+        _manifest_path, manifest_digests[category] = _stage_b_manifest_identity(seal)
+    for category in categories:
+        source = label_sources[category]
+        if source.source_sha256 != manifest_digests[category]:
+            raise E6ClosedLoopError(f"{category}: label source differs from the frozen Stage A JSON identity")
+        path = Path(source.path)
+        _reject_reparse_ancestors(path)
+        if _sha256_file(path) != source.source_sha256:
+            raise E6ClosedLoopError(f"{category}: TEST JSON source digest mismatch")
+
+    outcomes: dict[str, np.ndarray] = {}
+    for category in categories:
+        records = _load_stage_b_identity_records(
+            label_sources[category], category, logs[category])
+        outcomes[category] = _validate_stage_b_identity_records(logs[category], records)
+
     per_category: dict[str, dict[str, Any]] = {}
     for category, rows in logs.items():
         y = outcomes[category]
@@ -1711,6 +2017,7 @@ def stage_b_evaluate(*, stage_a_seals: Mapping[str, StageASeal],
     macro: dict[str, Any] = {}
     for arm in ARM_IDS:
         metrics = [per_category[category][arm] for category in categories]
+        worst_values = [item["worst_256_window_ber"] for item in metrics]
         macro[arm] = {
             "macro_ber": float(np.mean([item["ber"] for item in metrics])),
             "macro_ba": float(np.mean([item["ba"] for item in metrics])),
@@ -1718,6 +2025,9 @@ def stage_b_evaluate(*, stage_a_seals: Mapping[str, StageASeal],
             "macro_fnr": float(np.mean([item["fnr"] for item in metrics])),
             "macro_auroc": float(np.mean([item["auroc"] for item in metrics])),
             "macro_ap": float(np.mean([item["ap"] for item in metrics])),
+            "macro_worst_256_window_ber": (
+                None if any(value is None for value in worst_values)
+                else float(np.mean(worst_values))),
             "realised_query_rate": float(np.mean([item["realised_query_rate"] for item in metrics])),
         }
     return {"schema": "e6.bea_v2.stage_b_metrics.v1", "authorization_id": authorization_id,
@@ -1772,15 +2082,16 @@ def _average_precision(y: np.ndarray, score: np.ndarray) -> float:
     return float(total / positives)
 
 
-def _worst_window_ber(y: np.ndarray, pred: np.ndarray, width: int = 256) -> float:
-    if len(y) != len(pred) or not len(y):
+def _worst_window_ber(y: np.ndarray, pred: np.ndarray, width: int = 256) -> float | None:
+    if len(y) != len(pred) or not len(y) or width <= 0:
         raise E6ClosedLoopError("worst-window metric requires paired nonempty vectors")
-    best = 0.0
-    for start in range(0, len(y), width):
-        stop = min(len(y), start + width)
+    best: float | None = None
+    for start in range(0, len(y) - width + 1, width):
+        stop = start + width
         local_y, local_pred = y[start:stop], pred[start:stop]
         if np.any(local_y == 0) and np.any(local_y == 1):
             fpr = float(np.mean(local_pred[local_y == 0] == 1))
             fnr = float(np.mean(local_pred[local_y == 1] == 0))
-            best = max(best, (fpr + fnr) / 2.0)
+            candidate = (fpr + fnr) / 2.0
+            best = candidate if best is None else max(best, candidate)
     return best
