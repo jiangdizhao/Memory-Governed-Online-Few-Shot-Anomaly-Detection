@@ -1489,9 +1489,12 @@ def _native_profile() -> tuple[Any, Any, Any, dict[str, Any]]:
         backbone = impl.DINOv2MultiLayerBackbone(device="cuda")
     finally:
         restore_hub()
-    actual_model_state = r1._model_state_sha256(backbone)
+    actual_model_state = r1._model_state_sha256(backbone.model)
     if actual_model_state != expected_model.get("loaded_model_state_sha256"):
-        raise E123Error("Loaded DINO state fingerprint differs from the verified model receipt")
+        raise E123Error(
+            "Loaded DINO state fingerprint differs from the verified model receipt: "
+            f"expected={expected_model.get('loaded_model_state_sha256')}; "
+            f"actual={actual_model_state}")
     cfg, scorer = r3._native_config(p0, profiles, r1)
     runtime = {
         **model_source,

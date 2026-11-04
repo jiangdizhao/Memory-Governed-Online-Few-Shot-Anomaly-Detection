@@ -536,3 +536,98 @@ def test_incomplete_or_modified_global_seal_cannot_promote_stage_b():
     payload["query_count"] = 15
     with pytest.raises(e123.E123Error):
         e123.require_complete_stage_a(payload)
+
+
+@pytest.mark.parametrize("load_behavior,digest_behavior", [
+    ("success", "match"), ("success", "mismatch"), ("failure", "unused"),
+])
+def test_native_profile_hashes_underlying_dino_model_and_restores_hub(
+        monkeypatch, load_behavior, digest_behavior):
+    from dataclasses import dataclass
+    from types import SimpleNamespace
+
+    import experiments.p0_protocol_audit as p0
+    from experiments.calibration import r1_matched_correction_pilot as r1
+    from experiments.calibration import r3_fullstream_2x2 as r3
+
+    expected_state = "1f26464ba4055403e550f1d5c1333fb012631d98661df6993cabea730d17e3f9"
+    expected_hub = "b7c0037f90671c4932393bd56de8c8a205b29a6eb22dea563b6c8a88c471da15"
+    expected_checkpoint = "36e4deffbaef061a2576705b0c36f93621e2ae20bf6274694821b0b492551b51"
+    fake_torch_version = str(torch.__version__)
+    expected_receipt = {
+        "status": "ENGINEERING_PASS", "task": "R1",
+        "profile_id": "r1_switch_s0_512_digest_contract_v1",
+        "hub_source_tree_sha256": expected_hub,
+        "checkpoint_sha256": expected_checkpoint,
+        "loaded_model_state_sha256": expected_state,
+        "runtime_profile": {"cuda_device_name": "mock-verified-device",
+                             "torch_version": fake_torch_version},
+    }
+    model_source = {
+        "runtime_profile": {"cuda_device_name": "mock-verified-device",
+                             "torch_version": fake_torch_version},
+        "hub_source_tree_sha256": expected_hub,
+        "checkpoint_sha256": expected_checkpoint,
+    }
+    model = object()
+    wrapper = SimpleNamespace(model=model)
+    events = []
+    hash_targets = []
+
+    class FakeImpl:
+        def set_seed(self, seed):
+            events.append(("seed", seed))
+
+        def DINOv2MultiLayerBackbone(self, *, device):
+            events.append(("load", device))
+            if load_behavior == "failure":
+                raise RuntimeError("synthetic model construction failure")
+            return wrapper
+
+    @dataclass
+    class FakeNativeConfig:
+        identity: str = "synthetic"
+
+    impl = FakeImpl()
+    restored = []
+    monkeypatch.setattr(p0, "require_sources", lambda: impl)
+    monkeypatch.setattr(r3, "_get_verified_model_receipt", lambda: expected_receipt)
+    monkeypatch.setattr(r3, "_runtime_and_native_setup", lambda *_args: (
+        lambda: restored.append(True), model_source))
+    monkeypatch.setattr(r3, "_native_config", lambda *_args: (
+        FakeNativeConfig(), FakeNativeConfig()))
+    monkeypatch.setattr(e123, "sha256_file", lambda _path: "a" * 64)
+    monkeypatch.setattr(r1, "_model_state_sha256", lambda value: (
+        hash_targets.append(value) or
+        (expected_state if digest_behavior == "match" else "0" * 64)))
+
+    monkeypatch.setattr(torch.backends.cuda, "enable_flash_sdp", lambda _enabled: None)
+    monkeypatch.setattr(torch.backends.cuda, "enable_mem_efficient_sdp", lambda _enabled: None)
+    monkeypatch.setattr(torch.backends.cuda, "enable_math_sdp", lambda _enabled: None)
+    monkeypatch.setattr(torch.backends.cuda, "flash_sdp_enabled", lambda: False)
+    monkeypatch.setattr(torch.backends.cuda, "mem_efficient_sdp_enabled", lambda: False)
+    monkeypatch.setattr(torch.backends.cuda, "math_sdp_enabled", lambda: True)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+    monkeypatch.setattr(torch.cuda, "get_device_name", lambda _index: "mock-verified-device")
+
+    if load_behavior == "failure":
+        with pytest.raises(RuntimeError, match="synthetic model construction failure"):
+            e123._native_profile()
+        assert hash_targets == []
+    elif digest_behavior == "mismatch":
+        with pytest.raises(e123.E123Error, match="fingerprint differs") as error:
+            e123._native_profile()
+        assert hash_targets == [model]
+        assert f"expected={expected_state}" in str(error.value)
+        assert f"actual={'0' * 64}" in str(error.value)
+    else:
+        _fake_torch, _fake_impl, loaded_wrapper, native = e123._native_profile()
+        assert loaded_wrapper is wrapper
+        assert native["runtime"]["loaded_model_state_sha256"] == expected_state
+        assert native["runtime"]["hub_source_tree_sha256"] == expected_hub
+        assert native["runtime"]["checkpoint_sha256"] == expected_checkpoint
+        assert hash_targets == [model]
+    assert all(target is model for target in hash_targets)
+    assert expected_receipt["loaded_model_state_sha256"] == expected_state
+    assert restored == [True]
