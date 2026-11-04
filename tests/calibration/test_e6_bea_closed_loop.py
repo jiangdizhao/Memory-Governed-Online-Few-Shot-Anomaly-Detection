@@ -310,6 +310,7 @@ def test_c64_source_score_digest_is_distinct_from_tolerance_parity_receipt():
     receipt = _c64_parity_receipt(expected, base, empty_gc, r3._score_tolerance,
                                   atol=r3.ATOL, rtol=r3.RTOL)
     assert receipt["base_expected_matches"] == 64
+    assert receipt["empty_gc_expected_matches"] == 64
     assert receipt["empty_gc_base_matches"] == 64
     assert receipt["expected_score_vector_sha256"] != receipt["base_score_vector_sha256"]
     with pytest.raises(E6ClosedLoopError, match="frozen R3 tolerance"):
@@ -318,7 +319,9 @@ def test_c64_source_score_digest_is_distinct_from_tolerance_parity_receipt():
 
 
 def _build_synthetic_native_engines(monkeypatch, category_json_sha256, *,
-                                    incompatible_profile=False):
+                                    incompatible_profile=False,
+                                    recomputed_base_scores=None,
+                                    recomputed_gc_scores=None):
     import importlib
     from dataclasses import dataclass
     from experiments.calibration import e6_bea_closed_loop as e6
@@ -392,10 +395,14 @@ def _build_synthetic_native_engines(monkeypatch, category_json_sha256, *,
     monkeypatch.setattr(r6, "_configure_r6_correction_capacity", lambda bank: (
         bank.corr_cfg, [bank.corr_cb["p0"]["id"][0]]))
     expected_scores = np.linspace(0.0, 1.0, 64).tolist()
+    base_replay = list(expected_scores if recomputed_base_scores is None
+                       else recomputed_base_scores)
+    gc_replay = list(expected_scores if recomputed_gc_scores is None
+                     else recomputed_gc_scores)
     monkeypatch.setattr(r7, "_score_c64_base", lambda *_a, **_k:
-                        (list(expected_scores), [None] * 64, 0.0))
+                        (list(base_replay), [None] * 64, 0.0))
     monkeypatch.setattr(r7, "_score_c64_corrected", lambda *_a, **_k:
-                        (list(expected_scores), 0.0))
+                        (list(gc_replay), 0.0))
     fixed_digest = native._fixed_bank_digest(make_bank())
     support_paths = [f"synthetic/support-{index}.jpg" for index in range(4)]
     support_groups = [f"support-source-{index}" for index in range(4)]
@@ -467,6 +474,21 @@ def test_real_native_factory_and_real_stage_a_initialization_use_synthetic_input
     assert len({engine.initial_state_sha256 for engine in engines.values()}) == 1
     assert all(engine.c64_parity_receipt["base_expected_matches"] == 64
                for engine in engines.values())
+    for engine in engines.values():
+        expected = tuple(info["c64_scores"])
+        assert tuple(engine.c64_initial_scores) == expected
+        assert tuple(engine.c64_scores) == expected
+        assert tuple(engine.c64_recomputed_base_scores) == expected
+        assert tuple(engine.c64_recomputed_gc_scores) == expected
+        assert tuple(engine.b3_controller.normal_scores) == expected
+        assert engine.b3_controller.evidence_version == engine.state_version == 0
+        assert engine.b3_controller.theta == engine.theta0
+        assert engine.b3_controller._r7_state_digest == engine.state_digest
+        assert engine.initial_b3_c64_initialization["frozen_reference_source"] == (
+            "authenticated_stage05_c64_score_archive")
+        assert engine.initial_b3_c64_initialization["frozen_reference_archive_sha256"] == (
+            engine.input_identity["c64_score_archive_sha256"])
+        assert engine.initial_b3_c64_initialization["scorer_state_sha256"] == engine.state_digest
 
     source_events, _ = _real_iad_synthetic_events()
     image_dir = tmp_path / "images"
@@ -530,6 +552,12 @@ def test_real_native_factory_and_real_stage_a_initialization_use_synthetic_input
     manifest = json.loads(Path(stage_a.manifest_path).read_text(encoding="utf-8"))
     assert manifest["query_policies"]["Q0"]["seed"] == 37
     assert manifest["execution_authorization_id"] == "cpu-synthetic-review"
+    b3_init = manifest["initial_b3_c64_initialization"]
+    assert b3_init["b3_evidence_version"] == 0
+    assert b3_init["active_initial_b3_normal_scores_sha256"] == (
+        b3_init["frozen_reference_score_vector_sha256"])
+    assert b3_init["scorer_state_sha256"] == manifest[
+        "initial_complete_scorer_state_sha256"]
     assert set(path.name for path in run_dir.iterdir()) == {
         "run_namespace.json", "sealed_scores.jsonl", "run_manifest.json",
         *(f"private_feedback_{arm}.jsonl" for arm in ARM_IDS)}
@@ -539,6 +567,60 @@ def test_real_native_factory_and_real_stage_a_initialization_use_synthetic_input
         reader.close()
     for sink in sink_list:
         sink.close()
+
+
+@pytest.mark.parametrize("perturbation", ["uniform_plus_1e6", "mixed_within_tolerance"])
+def test_native_engine_initial_b3_uses_frozen_c64_reference_after_tolerated_replay(
+        monkeypatch, perturbation):
+    from experiments.calibration import r3_fullstream_2x2 as r3
+
+    reference = np.linspace(0.0, 1.0, 64, dtype=np.float64)
+    if perturbation == "uniform_plus_1e6":
+        recomputed = reference + 1e-6
+    else:
+        signs = np.where(np.arange(64) % 2 == 0, 1.0, -1.0)
+        recomputed = reference + signs * 1e-6
+    assert all(r3._score_tolerance(float(actual), float(expected))
+               for actual, expected in zip(recomputed, reference))
+    recomputed_q90 = float(np.quantile(recomputed, 0.90, method="higher"))
+    recomputed_sigma = max(float(np.std(recomputed, ddof=1)), 0.02)
+    reference_q90 = float(np.quantile(reference, 0.90, method="higher"))
+    reference_sigma = max(float(np.std(reference, ddof=1)), 0.02)
+    assert recomputed_q90 != reference_q90
+    if perturbation == "mixed_within_tolerance":
+        assert recomputed_sigma != reference_sigma
+
+    engines, info, *_ = _build_synthetic_native_engines(
+        monkeypatch, _sha("synthetic-category-json"),
+        recomputed_base_scores=recomputed.tolist(),
+        recomputed_gc_scores=recomputed.tolist())
+    expected = tuple(info["c64_scores"])
+    for engine in engines.values():
+        assert tuple(engine.c64_recomputed_base_scores) == tuple(recomputed)
+        assert tuple(engine.c64_recomputed_gc_scores) == tuple(recomputed)
+        assert tuple(engine.c64_scores) == expected
+        assert tuple(engine.b3_controller.normal_scores) == expected
+        assert engine.theta0 == reference_q90
+        assert engine.sigma0 == reference_sigma
+        assert engine.b3_controller.theta == engine.current_threshold == engine.theta0
+        assert engine.b3_controller.evidence_version == engine.state_version == 0
+        assert engine.b3_controller._r7_state_digest == engine.state_digest
+        assert engine.initial_b3_c64_initialization[
+            "recomputed_native_empty_gc_score_vector_sha256"] == (
+                engine.c64_parity_receipt["empty_gc_score_vector_sha256"])
+
+
+@pytest.mark.parametrize("component", ["base", "empty_gc"])
+def test_native_engine_rejects_out_of_tolerance_c64_replay(monkeypatch, component):
+    reference = np.linspace(0.0, 1.0, 64, dtype=np.float64)
+    out_of_tolerance = reference + 0.01
+    replay = {"recomputed_base_scores": reference.tolist(),
+              "recomputed_gc_scores": reference.tolist()}
+    replay["recomputed_base_scores" if component == "base" else
+           "recomputed_gc_scores"] = out_of_tolerance.tolist()
+    with pytest.raises(E6ClosedLoopError, match="frozen R3 tolerance"):
+        _build_synthetic_native_engines(
+            monkeypatch, _sha("synthetic-category-json"), **replay)
 
 
 def test_real_native_factory_rejects_swapped_backend(monkeypatch):
@@ -609,21 +691,30 @@ def test_native_feedback_change_attribution_and_b3_refresh(monkeypatch, tmp_path
 
     monkeypatch.setattr(engine.exp2a, "_capture_update", capture)
     monkeypatch.setattr(engine, "_common_writer", writer)
-    monkeypatch.setattr(engine.r7, "_score_c64_base", lambda *_a, **_k:
-                        (list(engine.c64_scores), list(engine.c64_base_cache), 0.0))
+    base_rescore_calls = []
+    rescored_c64 = [value + 0.005 for value in engine.c64_scores]
+
+    def rescore_base(*_args, **_kwargs):
+        base_rescore_calls.append(True)
+        return list(engine.c64_initial_scores), list(engine.c64_base_cache), 0.0
+
+    monkeypatch.setattr(engine.r7, "_score_c64_base", rescore_base)
     monkeypatch.setattr(engine.r7, "_score_c64_corrected", lambda *_a, **_k:
-                        (list(engine.c64_scores), 0.0))
+                        (list(rescored_c64), 0.0))
     before = engine._digests()["GC"]
     engine.state_digest = before
     engine.b3_controller._r7_state_digest = before
     event = _events(1)[0]
+    threshold_before_event = engine.current_threshold
     score = NativePreEventScore(
-        gc_score=0.4, c0_score=0.4, c64_scores=engine.c64_scores,
+        gc_score=threshold_before_event + 0.002, c0_score=0.4,
+        c64_scores=engine.c64_scores,
         correction_top32=(), correction_bank_size=0,
         topk_dN_max=0.5, topk_dN_mean=0.2,
         scorer_state_version=0, scorer_state_sha256=before,
         context={"features": [], "top_ids": np.asarray([], dtype=np.int64),
                  "candidate_features": np.empty((0, 4), dtype=np.float32)})
+    current_event_prediction = int(score.gc_score >= threshold_before_event)
     update = engine.apply_feedback(
         event, EncodedEvent(None, (), np.asarray([1, 0, 0, 0], dtype=np.float32)),
         score, 0)
@@ -632,6 +723,14 @@ def test_native_feedback_change_attribution_and_b3_refresh(monkeypatch, tmp_path
     assert update.scorer_state_changed
     assert update.scorer_state_version == 1
     assert update.diagnostics["b3_transition_for_next_event"] is not None
+    assert len(base_rescore_calls) == int(change in ("greedy", "both"))
+    assert tuple(engine.c64_scores) == tuple(rescored_c64)
+    assert tuple(engine.b3_controller.normal_scores) == tuple(rescored_c64)
+    assert engine.b3_controller._r7_state_digest == engine.state_digest
+    assert engine.current_threshold == pytest.approx(threshold_before_event + 0.005)
+    assert score.scorer_state_sha256 == before
+    assert int(score.gc_score >= threshold_before_event) == current_event_prediction == 1
+    assert int(score.gc_score >= engine.current_threshold) == 0
 
 
 def test_utility_ties_and_query_inactivity_are_recorded_without_changing_strict_q97():
@@ -1233,6 +1332,7 @@ def test_execution_identity_requires_reviewed_commit_branch_and_pinned_sources(m
     receipt = verify_e6_execution_identity(expected, root=root)
     assert receipt["approved_e6_commit"] == expected
     assert receipt["r7_helper_source_sha256"] == dict(R7_HELPER_SOURCE_SHA256)
+    assert len(receipt["r7_helper_source_sha256"]) == 18
     assert len(calls) == 3
 
     with pytest.raises(E6ClosedLoopError, match="branch/HEAD"):
@@ -1269,6 +1369,48 @@ def test_execution_identity_requires_reviewed_commit_branch_and_pinned_sources(m
 
     monkeypatch.setattr(subprocess, "run", dirty_source)
     with pytest.raises(E6ClosedLoopError, match="uncommitted changes"):
+        verify_e6_execution_identity(expected, root=root)
+
+
+def test_stage05_source_is_pinned_and_mismatched_module_or_digest_fails_closed(monkeypatch):
+    import experiments.calibration.e6_bea_closed_loop as e6
+    from experiments.calibration import stage05
+
+    root = Path(__file__).resolve().parents[2]
+    expected = "a" * 40
+    relative = "experiments/calibration/stage05.py"
+    source_path = root / relative
+    expected_sha = "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e"
+    assert e6.R7_HELPER_SOURCE_SHA256[relative] == expected_sha
+    assert _sha256_file(source_path) == expected_sha
+
+    def fake_run(args, **_kwargs):
+        if args[1:] == ["branch", "--show-current"]:
+            output = "calibration-stage0-contract-20261029\n"
+        elif args[1:] == ["rev-parse", "HEAD"]:
+            output = expected + "\n"
+        else:
+            output = ""
+        return SimpleNamespace(stdout=output)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    receipt = verify_e6_execution_identity(expected, root=root)
+    assert receipt["r7_helper_source_sha256"][relative] == expected_sha
+    e6._assert_module_source(stage05, relative, root=root, role="Stage 0.5 helper")
+    with pytest.raises(E6ClosedLoopError, match="pinned source"):
+        e6._assert_module_source(
+            SimpleNamespace(__file__=str(root / "experiments/calibration/r7_shuffled_correction_4class.py")),
+            relative, root=root, role="Stage 0.5 helper")
+
+    original_sha_file = e6._sha256_file
+
+    def mismatched_stage05(path):
+        if Path(path).resolve() == source_path.resolve():
+            return "0" * 64
+        return original_sha_file(path)
+
+    monkeypatch.setattr(e6, "_sha256_file", mismatched_stage05)
+    with pytest.raises(E6ClosedLoopError, match="stage05.py"):
         verify_e6_execution_identity(expected, root=root)
 
 

@@ -56,6 +56,8 @@ R7_HELPER_SOURCE_SHA256 = MappingProxyType({
         "3208e2c52277ad76351eb86968e362aa315effe9e3c734bfe2b6ff7bab0db448",
     "experiments/calibration/r7_shuffled_correction_4class.py":
         "0e2b0bc468cdcc1a8d72082487b1618817a45342fe93b99a00052ecb50f85b3a",
+    "experiments/calibration/stage05.py":
+        "4b8aae252f5f1e096b127906794064da269aa79f7cd5514f6f738cda585c017e",
     "experiments/calibration/r3_fullstream_2x2.py":
         "0a67d893df6fe73399726f4cc60caa5967a6e3c2eb93535f23f7089350986741",
     "experiments/calibration/r6_capacity1024_audiojack_runner.py":
@@ -164,7 +166,7 @@ def _c64_parity_receipt(expected: Sequence[float], base: Sequence[float],
                         empty_gc: Sequence[float], tolerance: Callable[[float, float], bool],
                         *, atol: float, rtol: float
                         ) -> dict[str, Any]:
-    """Verify source identities exactly and recomputed score values by R3 tolerance."""
+    """Verify both recomputed vectors against the frozen source and each other."""
     expected_values = [float(value) for value in expected]
     base_values = [float(value) for value in base]
     gc_values = [float(value) for value in empty_gc]
@@ -177,16 +179,22 @@ def _c64_parity_receipt(expected: Sequence[float], base: Sequence[float],
         raise E6ClosedLoopError("C64 parity requires three finite 64-score vectors")
     base_match = [bool(tolerance(actual, source))
                   for actual, source in zip(base_values, expected_values)]
+    gc_expected_match = [bool(tolerance(actual, source))
+                         for actual, source in zip(gc_values, expected_values)]
     gc_match = [bool(tolerance(actual, reference))
                 for actual, reference in zip(gc_values, base_values)]
     if not all(base_match):
         raise E6ClosedLoopError("recomputed native base C64 scores fail the frozen R3 tolerance")
+    if not all(gc_expected_match):
+        raise E6ClosedLoopError("recomputed native empty-GC C64 scores fail the frozen R3 tolerance")
     if not all(gc_match):
         raise E6ClosedLoopError("empty-GC C64 scores fail the frozen R3 tolerance against base")
     max_base_error = max(abs(actual - source)
                          for actual, source in zip(base_values, expected_values))
     max_gc_error = max(abs(actual - reference)
                        for actual, reference in zip(gc_values, base_values))
+    max_gc_expected_error = max(abs(actual - source)
+                                for actual, source in zip(gc_values, expected_values))
     return {
         "tolerance_contract": "r3._score_tolerance",
         "tolerance_atol": float(atol),
@@ -197,8 +205,10 @@ def _c64_parity_receipt(expected: Sequence[float], base: Sequence[float],
         "empty_gc_score_vector_sha256": hashlib.sha256(_canonical_json(gc_values)).hexdigest(),
         "base_score_count": len(base_values),
         "base_expected_matches": sum(base_match),
+        "empty_gc_expected_matches": sum(gc_expected_match),
         "empty_gc_base_matches": sum(gc_match),
         "max_abs_base_expected_error": max_base_error,
+        "max_abs_empty_gc_expected_error": max_gc_expected_error,
         "max_abs_empty_gc_base_error": max_gc_error,
     }
 
@@ -1037,6 +1047,8 @@ class StageAClosedLoop:
             },
             "support_and_c64_identity": dict(getattr(engine, "input_identity", {})),
             "initial_c64_numerical_parity": dict(getattr(engine, "c64_parity_receipt", {})),
+            "initial_b3_c64_initialization": dict(
+                getattr(engine, "initial_b3_c64_initialization", {})),
             "initial_complete_scorer_state_sha256": engine.initial_state_sha256,
             "greedy_capacity": 1024,
             "c1_full_capacity": 1024,
@@ -1308,7 +1320,8 @@ class R7NativeArmEngine:
                  cfg: Any, writer: Any, correction_cfg: Any, correction_cb: Any,
                  source_groups: dict[int, set[str]], fixed_support_sha256: str,
                  theta0: float, sigma0: float, c64_items: Sequence[Mapping[str, Any]],
-                 c64_base_cache: Sequence[Any], c64_gc_scores: Sequence[float],
+                 c64_base_cache: Sequence[Any], c64_initial_scores: Sequence[float],
+                 c64_base_scores: Sequence[float], c64_gc_scores: Sequence[float],
                  c64_group_sha256: str, input_identity: Mapping[str, Any],
                  native_scorer_config: Mapping[str, Any],
                  native_profile_config: Mapping[str, Any],
@@ -1338,7 +1351,13 @@ class R7NativeArmEngine:
         self.theta0, self.sigma0 = float(theta0), float(sigma0)
         self.c64_items = tuple(c64_items)
         self.c64_base_cache = list(c64_base_cache)
-        self.c64_scores = [float(value) for value in c64_gc_scores]
+        # Stage 0.5's authenticated C64 archive is the canonical version-zero
+        # B3 evidence. Fresh native scores are retained separately as parity
+        # evidence; they become active B3 evidence only after a scorer change.
+        self.c64_initial_scores = [float(value) for value in c64_initial_scores]
+        self.c64_recomputed_base_scores = [float(value) for value in c64_base_scores]
+        self.c64_recomputed_gc_scores = [float(value) for value in c64_gc_scores]
+        self.c64_scores = list(self.c64_initial_scores)
         self.c64_group_sha256 = str(c64_group_sha256)
         self.input_identity = dict(input_identity)
         self.native_scorer_config = dict(native_scorer_config)
@@ -1347,7 +1366,12 @@ class R7NativeArmEngine:
         self.greedy_settings_record = dict(greedy_settings_record)
         self.c64_parity_receipt = dict(c64_parity_receipt)
         self.b3_controller = b3_controller
-        if len(self.c64_items) != 64 or len(self.c64_scores) != 64:
+        if (len(self.c64_items) != 64 or len(self.c64_scores) != 64 or
+                len(self.c64_recomputed_base_scores) != 64 or
+                len(self.c64_recomputed_gc_scores) != 64 or
+                not all(math.isfinite(value) for values in (
+                    self.c64_initial_scores, self.c64_recomputed_base_scores,
+                    self.c64_recomputed_gc_scores) for value in values)):
             raise E6ClosedLoopError("R7 adapter requires the 64 registered C64 commissioning items")
         if len(self.c64_base_cache) != 64:
             raise E6ClosedLoopError("R7 adapter requires the matching 64-item native base cache")
@@ -1366,31 +1390,61 @@ class R7NativeArmEngine:
         if (self.fixed_support_sha256 != self.input_identity.get("fixed_bank_sha256") or
                 self.c64_group_sha256 != self.input_identity.get("c64_group_sha256")):
             raise E6ClosedLoopError("R7 E6 arm inputs differ from their fixed-support/C64 receipts")
-        if (self.c64_parity_receipt.get("expected_score_vector_sha256") !=
+        if (hashlib.sha256(_canonical_json(self.c64_initial_scores)).hexdigest() !=
                 self.input_identity.get("c64_expected_score_vector_sha256") or
+                self.c64_parity_receipt.get("expected_score_vector_sha256") !=
+                self.input_identity.get("c64_expected_score_vector_sha256") or
+                self.c64_parity_receipt.get("base_score_vector_sha256") !=
+                hashlib.sha256(_canonical_json(self.c64_recomputed_base_scores)).hexdigest() or
                 self.c64_parity_receipt.get("tolerance_atol") !=
                 self.input_identity.get("c64_score_tolerance", {}).get("atol") or
                 self.c64_parity_receipt.get("tolerance_rtol") !=
                 self.input_identity.get("c64_score_tolerance", {}).get("rtol") or
                 self.c64_parity_receipt.get("empty_gc_score_vector_sha256") !=
-                hashlib.sha256(_canonical_json(self.c64_scores)).hexdigest() or
+                hashlib.sha256(_canonical_json(self.c64_recomputed_gc_scores)).hexdigest() or
                 self.c64_parity_receipt.get("base_expected_matches") != 64 or
+                self.c64_parity_receipt.get("empty_gc_expected_matches") != 64 or
                 self.c64_parity_receipt.get("empty_gc_base_matches") != 64 or
                 self.c64_parity_receipt.get("tolerance_contract") != "r3._score_tolerance"):
             raise E6ClosedLoopError("R7 E6 numerical C64 parity receipt is incomplete or inconsistent")
-        if (not math.isclose(max(float(np.std(self.c64_scores, ddof=1)), 0.02), self.sigma0,
+        # theta0 and sigma0 are frozen Stage 0.5 statistics. Do not derive
+        # version-zero calibration from a merely tolerance-equivalent replay.
+        if (not math.isclose(max(float(np.std(self.c64_initial_scores, ddof=1)), 0.02), self.sigma0,
                             rel_tol=0.0, abs_tol=1e-12) or
-                not math.isclose(float(np.quantile(self.c64_scores, 0.90, method="higher")),
+                not math.isclose(float(np.quantile(self.c64_initial_scores, 0.90, method="higher")),
                                  self.theta0, rel_tol=0.0, abs_tol=1e-12)):
             raise E6ClosedLoopError("R7 E6 C64 scores differ from frozen theta0/sigma0 receipts")
         self.state_digest = self._digests()["GC"]
         self.state_version = int(getattr(b3_controller, "evidence_version", 0))
-        self.r7._initialize_b3(
+        self.initial_b3_receipt = self.r7._initialize_b3(
             self.b3_controller, self.c64_scores, self.c64_group_sha256,
             self.state_digest, self.theta0)
         self.current_threshold = float(self.b3_controller.theta)
-        if self.b3_controller.evidence_version != 0:
+        if (self.b3_controller.evidence_version != 0 or
+                tuple(self.b3_controller.normal_scores) != tuple(self.c64_initial_scores) or
+                self.current_threshold != self.theta0 or
+                getattr(self.b3_controller, "_r7_state_digest", None) != self.state_digest):
             raise E6ClosedLoopError("R7 initial C64 calibration did not establish state version zero")
+        initial_vector_sha = hashlib.sha256(_canonical_json(self.c64_initial_scores)).hexdigest()
+        self.initial_b3_c64_initialization = {
+            "contract": "authenticated_stage05_scores_are_version_zero_b3_evidence_after_r3_parity",
+            "frozen_reference_source": "authenticated_stage05_c64_score_archive",
+            "frozen_reference_archive_sha256":
+                self.input_identity["c64_score_archive_sha256"],
+            "frozen_reference_score_vector_sha256": initial_vector_sha,
+            "recomputed_native_base_score_vector_sha256":
+                self.c64_parity_receipt["base_score_vector_sha256"],
+            "recomputed_native_empty_gc_score_vector_sha256":
+                self.c64_parity_receipt["empty_gc_score_vector_sha256"],
+            "active_initial_b3_normal_scores_sha256": initial_vector_sha,
+            "active_initial_b3_normal_score_count": len(self.c64_initial_scores),
+            "registered_theta0": self.theta0,
+            "registered_sigma0": self.sigma0,
+            "b3_initial_threshold": self.current_threshold,
+            "b3_evidence_version": self.b3_controller.evidence_version,
+            "scorer_state_sha256": self.state_digest,
+            "r7_initialization_receipt": dict(self.initial_b3_receipt),
+        }
         self.state_version = 0
         self.initial_state_sha256 = self.state_digest
         self.owned_mutable_state_ids = frozenset({
@@ -1471,13 +1525,14 @@ class R7NativeArmEngine:
             previous_version = self.state_version
             new_digest = after["GC"]
             if greedy_changed:
-                self.c64_scores, self.c64_base_cache, _ = self.r7._score_c64_base(
+                (self.c64_recomputed_base_scores, self.c64_base_cache, _) = self.r7._score_c64_base(
                     self.impl, self.bank, self.c64_items, self.cfg, self.r1,
                     "e6_per_arm")
             self.c64_scores, _ = self.r7._score_c64_corrected(
                 self.impl, self.bank, self.c64_items, self.c64_base_cache,
                 self.cfg, self.r1, self.source_groups, "e6_per_arm",
                 event_position=event.position + 1)
+            self.c64_recomputed_gc_scores = [float(value) for value in self.c64_scores]
             self.state_version += 1
             transition = self.r7._refresh_b3(
                 self.b3_controller, self.c64_scores, self.c64_group_sha256,
@@ -1726,6 +1781,7 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
             correction_cb=correction_cb, source_groups=source_groups,
             fixed_support_sha256=fixed_sha, theta0=theta0, sigma0=sigma0,
             c64_items=c64_items, c64_base_cache=base_cache,
+            c64_initial_scores=expected_scores, c64_base_scores=base_scores,
             c64_gc_scores=gc_scores, c64_group_sha256=c64_group_sha,
             input_identity=input_identity,
             native_scorer_config=scorer_config_record,

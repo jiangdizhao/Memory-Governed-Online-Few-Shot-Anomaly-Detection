@@ -28,6 +28,7 @@ from experiments.calibration.e6_bea_closed_loop import (
     R7FrozenFeatureEncoder,
     ScoreLedger,
     StageAClosedLoop,
+    _assert_module_source,
     _canonical_json,
     _reject_reparse_ancestors,
     _sha256_file,
@@ -63,6 +64,8 @@ def load_e6_stage05_category(category: str, *, repository_root: Path,
     from experiments.calibration import r7_shuffled_correction_4class as r7
     from experiments.calibration import stage05
 
+    _assert_module_source(stage05, "experiments/calibration/stage05.py",
+                          root=root, role="Stage 0.5 identity/path helper")
     stage05_dir = Path(r3.STAGE05).resolve(strict=True)
     run_path = stage05_dir / "run_manifest.json"
     frozen_path = stage05_dir / "frozen_inputs.json"
