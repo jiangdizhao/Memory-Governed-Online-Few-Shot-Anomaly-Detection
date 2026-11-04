@@ -22,6 +22,10 @@ from typing import Any, Mapping
 
 import numpy as np
 
+from experiments.calibration.e6_bea_policy import (
+    UTILITY_COLD_START_EVENTS,
+    UTILITY_HISTORY_WINDOW,
+)
 from experiments.calibration import e6_bea_closed_loop as e6
 from experiments.calibration.e6_bea_d2 import (
     D2_ARM_IDS,
@@ -73,7 +77,7 @@ from experiments.calibration.e6_bea_closed_loop import (
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_BRANCH = "calibration-stage0-contract-20261029"
-RUN_ID = "20261104_a1"
+RUN_ID = "20261104_b1"
 STAGE_A_AUTHORIZATION_ID = "E6-BEA-D2-STAGEA-20261104-A1"
 STAGE_B_AUTHORIZATION_ID = D2_STAGE_B_AUTHORIZATION_ID
 OUTPUT_BASE = REPOSITORY_ROOT / "outputs" / "calibration"

@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from experiments.calibration import e6_bea_d2 as d2
+from experiments.calibration import e6_bea_d2_runner as d2_runner
 from experiments.calibration.e6_bea_closed_loop import (
     ArmRuntime,
     EncodedEvent,
@@ -69,6 +70,57 @@ def test_d2_registry_and_weighted_objective_subsets_are_exact():
     assert (comp.B, comp.N, comp.C, comp.D) == pytest.approx(
         (comp.R + 0.30 * comp.H, 0.35 * comp.U_N,
          0.15 * comp.U_C, 0.35 * comp.U_D))
+
+
+def test_d2_contract_generation_serializes_registered_policy_constants(
+        tmp_path, monkeypatch):
+    import torch
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("contract generation must not load a model, CUDA, or TEST outcomes")
+
+    monkeypatch.setattr(torch.cuda, "is_available", forbidden)
+    monkeypatch.setattr(torch.cuda, "init", forbidden)
+    monkeypatch.setattr(d2_runner, "load_r7_frozen_backbone", forbidden)
+    monkeypatch.setattr(d2_runner, "_load_stage_b_identity_records", forbidden)
+    receipts = {
+        category: {"event_count": count, "category_json_sha256": _sha(category)}
+        for category, count in d2.D2_EXPECTED_COUNTS.items()
+    }
+    contract = d2_runner._build_contract(
+        run_id="20261104_b1", approved_commit="a" * 40,
+        authorization_id="E6-BEA-D2-STAGEA-20261104-A1",
+        source_hashes={"synthetic_source.py": _sha("source")},
+        model_receipt={"synthetic_model_receipt": True},
+        category_receipts=receipts,
+    )
+    output = tmp_path / "D2_contract.json"
+    d2_runner._write_json_once(output, contract)
+    recorded = json.loads(output.read_text(encoding="utf-8"))
+
+    assert recorded["run_id"] == "20261104_b1"
+    assert recorded["simple_policies"]["percentile_policies"]["cold_start_events"] == 64
+    assert recorded["arm_registry"] == list(d2.D2_ARM_IDS)
+    assert len(recorded["arm_registry"]) == 10
+    assert {arm: row["objective_terms"]
+            for arm, row in recorded["bea_arms"].items()} == {
+                arm: list(terms) for arm, terms in d2.D2_BEA_TERMS.items()}
+    assert set(recorded["bea_arms"]) == {"B", "BN", "BD", "BND", "BNCD"}
+    policies = recorded["simple_policies"]
+    assert policies["RAND37"]["query_rate_target"] == pytest.approx(0.037)
+    assert policies["RAND37"]["per_view_probability"] == pytest.approx(
+        d2.D2_RANDOM_VIEW_PROBABILITY)
+    assert policies["PERIOD27"]["proposal_rule"] == (
+        "(position + 1) modulo 27 equals zero")
+    assert policies["MARGIN37"]["target_rate"] == pytest.approx(0.037)
+    assert policies["ENTROPY37"]["target_rate"] == pytest.approx(0.037)
+    assert policies["NOVELTY_NN37"]["target_rate"] == pytest.approx(0.037)
+    percentile = policies["percentile_policies"]
+    assert percentile["cold_start_events"] == 64
+    assert percentile["past_only_history_window"] == 256
+    assert percentile["percentile"] == pytest.approx(0.963)
+    assert not recorded["runtime"]["gpu_monitoring"]
+    assert output.is_file()
 
 
 @pytest.mark.parametrize(
