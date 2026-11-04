@@ -37,6 +37,23 @@ class E6ClosedLoopError(RuntimeError):
     """Raised when E6 identity, causal order, or sealing contracts fail."""
 
 
+def _decode_selected_e6_label(data: bytes | mmap.mmap, start: int, stop: int,
+                             normal_class: str) -> int:
+    """Decode one already-authorized TEST object within its own byte boundary.
+
+    The historical decoder performs its final whitespace scan over the whole
+    byte buffer. Give it only the selected object so whitespace after that
+    object cannot be mistaken for bytes inside the record.
+    """
+    if (isinstance(start, bool) or isinstance(stop, bool) or
+            not isinstance(start, int) or not isinstance(stop, int) or
+            not 0 <= start <= stop <= len(data)):
+        raise E6ClosedLoopError("selected TEST record bounds are invalid")
+    record = data[start:stop]
+    from experiments.calibration.stage1a_p12_label_provider import _decode_selected_label
+    return int(_decode_selected_label(record, 0, len(record), normal_class))
+
+
 _HEX64 = re.compile(r"[0-9a-f]{64}")
 _FORBIDDEN_PUBLIC_KEYS = frozenset({
     "label", "anomaly_class", "mask", "mask_path", "ground_truth",
@@ -891,9 +908,9 @@ class OnDemandLabelReader:
                 str(parsed.timestamp) != event.timestamp or
                 group_digest != event.source_group_sha256):
             raise E6ClosedLoopError("selected outcome record does not match the sealed event identity")
-        from experiments.calibration.stage1a_p12_label_provider import _decode_selected_label
         try:
-            label = int(_decode_selected_label(self._mapping, start, stop, self._normal_class))
+            label = _decode_selected_e6_label(
+                self._mapping, start, stop, self._normal_class)
         except Exception as exc:
             raise E6ClosedLoopError("selected queried anomaly_class could not be decoded") from exc
         if label not in (0, 1):
@@ -2280,8 +2297,6 @@ def _load_stage_b_identity_records(source: StageBLabelSource, category: str,
     """Decode outcomes offline and bind each one to a sealed R7 event identity."""
     from experiments.calibration import r7_shuffled_correction_4class as r7
     from experiments.risk_safe.preflight import parse_image_name
-    from experiments.calibration.stage1a_p12_label_provider import _decode_selected_label
-
     path = Path(source.path)
     _reject_reparse_ancestors(path)
     try:
@@ -2323,7 +2338,7 @@ def _load_stage_b_identity_records(source: StageBLabelSource, category: str,
                 "official-sample-group\0" + str(parsed.official_sample_key)).encode("utf-8")).hexdigest()
             event_sha = hashlib.sha256(
                 f"r7-event\0{position}\0{image_sha}\0{group_sha}".encode("utf-8")).hexdigest()
-            label = int(_decode_selected_label(raw, start, stop, normal_class))
+            label = _decode_selected_e6_label(raw, start, stop, normal_class)
         except Exception as exc:
             raise E6ClosedLoopError(f"{category}: TEST outcome identity could not be verified") from exc
         if label not in (0, 1):

@@ -38,6 +38,7 @@ from experiments.calibration.e6_bea_closed_loop import (
     create_e6_output_namespace,
     _validate_real_output_namespace,
     _validate_stage_b_identity_records,
+    _decode_selected_e6_label,
     _c64_parity_receipt,
     _assert_native_module_pair,
     _row_value,
@@ -1247,6 +1248,129 @@ def _real_iad_synthetic_events():
         records.append({"image_path": relative, "anomaly_class": "OK",
                         "mask_path": {"this": "is skipped, never decoded"}})
     return tuple(events), {"meta": {"normal_class": "OK"}, "test": records}
+
+
+def _write_final_record_whitespace_json(tmp_path, *, malformed_first_label=False):
+    events, payload = _real_iad_synthetic_events()
+    if malformed_first_label:
+        # Stage A must not inspect this unqueried outcome.
+        payload["test"][0]["anomaly_class"] = {"not": "a selected label"}
+    encoded = json.dumps(payload, separators=(",", ":"))
+    close_array = encoded.rfind("]")
+    assert close_array >= 0
+    encoded = encoded[:close_array] + "   " + encoded[close_array:]
+    path = tmp_path / "synthetic_test_with_final_record_whitespace.json"
+    path.write_text(encoded, encoding="utf-8")
+    return path, events
+
+
+def test_e6_bounded_label_decode_fixes_final_record_whitespace_and_preserves_mapping(tmp_path):
+    import mmap
+
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+    from experiments.calibration.stage1a_p12_label_provider import (
+        QueriedLabelAccessError,
+        _decode_selected_label,
+    )
+
+    path, _events_value = _write_final_record_whitespace_json(tmp_path)
+    raw = path.read_bytes()
+    bounds = r7._test_array_boundaries(raw)
+    start, stop = bounds[-1]
+    with path.open("rb") as stream, mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as mapping:
+        # Reproduce the historical failure: its final whitespace scan crosses
+        # the selected object's stop and reaches whitespace before the array close.
+        with pytest.raises(QueriedLabelAccessError, match="Unexpected bytes after"):
+            _decode_selected_label(mapping, start, stop, "OK")
+        assert _decode_selected_e6_label(mapping, start, stop, "OK") == 0
+
+    normal = b'{"anomaly_class":"OK"}'
+    assert _decode_selected_e6_label(normal, 0, len(normal), "OK") == 0
+    defect = b'{"anomaly_class":"TS"}'
+    assert _decode_selected_e6_label(defect, 0, len(defect), "OK") == 1
+
+
+@pytest.mark.parametrize("record", [b'{"other":"value"}', b'{"anomaly_class":7}'])
+def test_e6_bounded_label_decode_rejects_missing_or_malformed_outcome(record):
+    from experiments.calibration.stage1a_p12_label_provider import QueriedLabelAccessError
+
+    with pytest.raises(QueriedLabelAccessError):
+        _decode_selected_e6_label(record, 0, len(record), "OK")
+
+
+def test_stage_a_decodes_only_queried_record_after_sealed_receipt(tmp_path, monkeypatch):
+    from experiments.calibration.e6_bea_closed_loop import SealedQueryReceipt
+    from experiments.calibration import stage1a_p12_label_provider as historical
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+
+    path, events = _write_final_record_whitespace_json(
+        tmp_path, malformed_first_label=True)
+    raw = path.read_bytes()
+    bounds = r7._test_array_boundaries(raw)
+    decoded_records = []
+    original_decoder = historical._decode_selected_label
+
+    def observe_decoder(data, start, stop, normal_class):
+        decoded_records.append((data, start, stop))
+        return original_decoder(data, start, stop, normal_class)
+
+    monkeypatch.setattr(historical, "_decode_selected_label", observe_decoder)
+    ledger = ScoreLedger(tmp_path / "stage_a_scores.jsonl")
+    reader = OnDemandLabelReader(path, "audiojack", _sha_file(path), events, "Q4", ledger)
+    try:
+        forged = SealedQueryReceipt(
+            "Q4", events[-1].position, events[-1].original_position,
+            events[-1].event_id_sha256, events[-1].image_identity_sha256,
+            events[-1].source_group_sha256, object())
+        with pytest.raises(E6ClosedLoopError, match="authorized durable query seal"):
+            reader.label_for(events[-1], forged)
+        assert decoded_records == []
+
+        for event in events:
+            arm_rows = {arm: {"query_executed": arm == "Q4" and event.position == 4}
+                        for arm in ARM_IDS}
+            ledger.seal_event(event, arm_rows)
+        receipt = ledger.query_receipt("Q4", events[-1])
+        assert reader.label_for(events[-1], receipt) == 0
+        assert reader.decoded_positions == [events[-1].position]
+        assert len(decoded_records) == 1
+        decoded_data, decoded_start, decoded_stop = decoded_records[0]
+        assert isinstance(decoded_data, bytes)
+        assert decoded_data == raw[bounds[-1][0]:bounds[-1][1]]
+        assert (decoded_start, decoded_stop) == (0, len(decoded_data))
+    finally:
+        reader.close()
+        ledger.close()
+
+
+def test_stage_b_identity_loader_decodes_final_original_record_with_trailing_array_space(
+        tmp_path, monkeypatch):
+    from experiments.calibration import stage1a_p12_label_provider as historical
+    from experiments.calibration.e6_bea_closed_loop import _load_stage_b_identity_records
+
+    path, events = _write_final_record_whitespace_json(tmp_path)
+    source = StageBLabelSource(path, _sha_file(path))
+    score_rows = [{
+        "position": event.position,
+        "original_json_position": event.original_position,
+        "event_id_sha256": event.event_id_sha256,
+        "image_identity_sha256": event.image_identity_sha256,
+        "source_group_sha256": event.source_group_sha256,
+    } for event in events]
+    decoded_records = []
+    original_decoder = historical._decode_selected_label
+
+    def observe_decoder(data, start, stop, normal_class):
+        decoded_records.append(data)
+        return original_decoder(data, start, stop, normal_class)
+
+    monkeypatch.setattr(historical, "_decode_selected_label", observe_decoder)
+    records = _load_stage_b_identity_records(source, "audiojack", score_rows)
+    assert [record.position for record in records] == list(range(len(events)))
+    assert [record.original_json_position for record in records] == list(range(len(events)))
+    assert [record.label for record in records] == [0] * len(events)
+    assert len(decoded_records) == len(events)
+    assert all(isinstance(record, bytes) for record in decoded_records)
 
 
 def test_on_demand_label_gate_requires_seal_identity_and_discloses_once(tmp_path):
