@@ -840,8 +840,11 @@ class OnDemandLabelReader:
 
     def __init__(self, path: Path, category: str, expected_sha256: str,
                  events: Sequence[EventIdentity], arm_id: str, ledger: ScoreLedger,
-                 *, prefix_only: bool = False):
-        if arm_id not in ARM_IDS:
+                 *, prefix_only: bool = False,
+                 registered_arm_ids: Sequence[str] = ARM_IDS):
+        allowed_arms = tuple(str(value) for value in registered_arm_ids)
+        if (not allowed_arms or len(set(allowed_arms)) != len(allowed_arms) or
+                arm_id not in allowed_arms):
             raise E6ClosedLoopError("label reader arm identity is not registered")
         self.path = Path(path)
         self.category = str(category)
@@ -1966,14 +1969,21 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
                                 cfg: Any, support_features: Mapping[str, Any],
                                 support_paths: Sequence[str],
                                 c64_items: Sequence[Mapping[str, Any]],
-                                approved_e6_commit: str, repository_root: Path
+                                approved_e6_commit: str, repository_root: Path,
+                                arm_ids: Sequence[str] = ARM_IDS
                                 ) -> dict[str, R7NativeArmEngine]:
-    """Create seven independent same-support R7 Greedy+C1+B3 states.
+    """Create independent same-support R7 Greedy+C1+B3 states.
 
     Support and C64 features are immutable shared inputs and must already be
     encoded from their verified identities. This factory never reads TEST
-    outcomes and never constructs or consults a fixed query tape.
+    outcomes and never constructs or consults a fixed query tape. ``arm_ids``
+    defaults to the frozen E6 seven-arm registry; explicit custom registries
+    are used only by versioned experiment coordinators such as D2.
     """
+    arm_ids = tuple(str(value) for value in arm_ids)
+    if (not arm_ids or len(set(arm_ids)) != len(arm_ids) or
+            any(not value or len(value) > 64 for value in arm_ids)):
+        raise E6ClosedLoopError("native arm factory requires unique nonempty arm identities")
     if category not in E6_REGISTERED_CATEGORIES:
         raise E6ClosedLoopError("native E6 arm factory received an unregistered category")
     execution_identity = verify_e6_execution_identity(
@@ -2099,7 +2109,7 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
     settings = SimpleNamespace(flat=1024, stm=1024, ltm=0, buffer=0,
                                min_events=2, promote_every=16,
                                cap_bytes=2 * 1024**3)
-    for arm_id in ARM_IDS:
+    for arm_id in arm_ids:
         impl.set_seed(0)
         bank = p0.build_vmb(impl, support_features, list(support_paths), cfg)
         r3._validate_correction_config(bank)
@@ -2158,10 +2168,11 @@ def build_r7_native_arm_engines(*, category: str, info: Mapping[str, Any],
             c64_parity_receipt=c64_receipt,
             b3_controller=b3, approved_e6_commit=approved_e6_commit,
             repository_root=root)
-    if len({engine.initial_state_sha256 for engine in engines.values()}) != 1:
-        raise E6ClosedLoopError("seven independently built E6 native arms do not share initial state")
-    if len({id(engine.bank) for engine in engines.values()}) != len(ARM_IDS):
-        raise E6ClosedLoopError("E6 native arm factory reused a mutable native bank")
+    if (set(engines) != set(arm_ids) or
+            len({engine.initial_state_sha256 for engine in engines.values()}) != 1):
+        raise E6ClosedLoopError("independently built native arms do not share the registered initial state")
+    if len({id(engine.bank) for engine in engines.values()}) != len(arm_ids):
+        raise E6ClosedLoopError("native arm factory reused a mutable native bank")
     return engines
 
 
