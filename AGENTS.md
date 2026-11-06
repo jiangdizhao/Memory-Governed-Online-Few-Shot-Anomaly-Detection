@@ -27,3 +27,9 @@ Scope: applies to this repository. For the calibration workstream, **first read*
 - Run compilation and tests; commit/push only if Stage-0 critical gates pass, or clearly mark the commit as `WIP / STAGE0_BLOCKED` with blockers. Do not claim PASS when a mandatory test was skipped.
 - For math ambiguity, missing source, fidelity failure, dirty unrelated worktree, or unexpected protected-file changes: stop affected action and report the exact blocker. Do not relax a test to make it pass.
 - When finished, push branch only if authorized by the task prompt and report: branch, commit SHA, PASS/FAIL/SKIP matrix, changed files, commands, unverified claims, and blockers.
+
+## Experiment A Scoped Authorization — 2026-11-06
+
+The historical Stage 0 contract remains in force for its original research stage. Experiment A is a separately authorized follow-up study under `docs/calibration/EXPERIMENT_A_AUTHORIZATION_20261106.md` and its frozen protocol. The Stage-0-only execution limit does not block the specifically scoped Experiment A work described there: A1, A2, A3a, and A3b may use the authorized development data and perform their registered empirical analyses.
+
+This exception is limited to `audiojack`, `regulator`, `switch`, and `rolled_strip_base`, with the exact data roles, causal event order, group identity checks, and output protections in the authorization document and Experiment A protocol. It does not authorize historical Stage 1/Stage 2 programs, independent confirmation categories or outcomes, Experiments B/C, other Real-IAD categories, pixel masks, unrestricted experimentation, or any relaxation of the scientific invariants above. Queried labels remain unavailable until the registered query action; unqueried outcomes remain evaluator-only after a valid Stage A seal. Any calibration-coupled learning trajectory must be separately identified from calibration-isolated comparisons.
