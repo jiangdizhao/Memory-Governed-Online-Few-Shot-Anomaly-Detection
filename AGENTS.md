@@ -37,3 +37,7 @@ This exception is limited to `audiojack`, `regulator`, `switch`, and `rolled_str
 ## Experiment A4 scoped exception — 2026-11-07
 
 The separate `docs/calibration/EXPERIMENT_A4_EB68_AUTHORIZATION.md` authorizes only A4_EB68_v1: P0 on the same four Experiment A development categories, using exact A1 S4+C64 identities, draw-0 C32/R32 split, four registered equal-fixed-storage arms, native VisionAD scoring/Greedy, Q-A-TS-v1, and post-seal Stage B evaluation. This narrow follow-up may use its stated development TRAIN/TEST access and empirical analyses; the historical Stage-0-only limit remains in force for all other work. All other scientific invariants above remain unchanged. Do not run other categories, confirmation outcomes, masks, B/C, historical Stage 1/2, new query policies, or unregistered optimization.
+
+## FS4 selection-aware threshold implementation authorization
+
+`docs/calibration/FS4_THRESHOLD_IMPLEMENTATION_AUTHORIZATION.md` authorizes the separate `FS4_SELECTION_AWARE_THRESHOLD_IMPLEMENTATION_V1` implementation and CPU synthetic verification only. It covers the new C64-free stochastic group-slot query design, the historical-score and source-excluded current-state threshold controllers, and their new provenance adapters. It does not authorize scientific data scoring, Real-IAD TEST labels or masks, model-weight downloads, historical-source modifications, or a future experiment. Scientific execution requires a later explicit authorization following independent review.

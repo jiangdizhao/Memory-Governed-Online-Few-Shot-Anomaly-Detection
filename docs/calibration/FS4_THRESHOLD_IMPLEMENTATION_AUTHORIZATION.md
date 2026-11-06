@@ -1,0 +1,7 @@
+# FS4 selection-aware threshold implementation authorization
+
+`FS4_SELECTION_AWARE_THRESHOLD_IMPLEMENTATION_V1` is a separately authorized implementation-only follow-up. The task permits new calibration source, tests, mathematical/provenance documentation, CPU synthetic execution and a local commit. It does not authorize a scientific experiment, TEST-label or mask access, DINO inference on scientific data, extra predeployment normal images, dependency upgrades, or a push. Frozen source and historical results remain read-only. This authorization does not establish scientific validity or approve a future study.
+
+The fixed reference is the native four-Support bank. Greedy K=1024 and C1 K=1024 use only legally queried feedback, with verified normals alone entering Greedy. The new stochastic BEA group-slot design and the two threshold controllers must retain genuine query probabilities, causal ordering and explicit source provenance. Where native fidelity or provenance cannot be established, fail closed and report `IMPLEMENTATION_BLOCKED`.
+
+Permitted changes are exactly `AGENTS.md`, this authorization, the new `experiments/calibration/fs4_*.py` paths explicitly enumerated by the FS4 audit module, `tests/calibration/test_fs4_threshold.py`, and the seven named documents under `docs/calibration/fs4_threshold/`. This scoped allowlist does not permit edits to historical files or outputs.
