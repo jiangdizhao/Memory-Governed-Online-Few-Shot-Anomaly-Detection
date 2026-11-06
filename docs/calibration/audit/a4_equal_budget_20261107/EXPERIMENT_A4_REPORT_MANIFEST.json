@@ -1,0 +1,22 @@
+{
+  "created_utc": "2026-11-06T18:47:31Z",
+  "decision": "A4_SUPPORTS_36_PLUS_32",
+  "figures": {
+    "figure_1_static_prequential_auroc.png": "ab6ae055248e086aaa84599f0d94666bdd9bfefe2b32dd872e76a0e2b6ce54c8",
+    "figure_2_prequential_error_tradeoffs.png": "5d5f33a1c4ce2b2303cac2cff52cb6a4dd4802395670afade6e74e79ce9e58f0",
+    "figure_3_registered_contrast_decomposition.png": "b08c1b5ccc110d96452ab2ab54791a7bf1431c7dc6d9f6778a292feb017a2a87",
+    "figure_4_equal_budget_memory_accounting.png": "acdeb5c02397f5beba6832558fd6c387fa0f6e6761cacda6161a1658f080f8c3"
+  },
+  "files": {
+    "EXPERIMENT_A4_AGGREGATE.json": "c96a6760c621c37d6cc2d6bb4237d0339ba9b2121b9600c224c06cea1a4d191f",
+    "EXPERIMENT_A4_FINAL_DECISION.md": "c71546b1d7ebf9c79812a715b35634c48410bc859b5c3d481ed154be2c6af4a4",
+    "EXPERIMENT_A4_INTEGRATED_REPORT.md": "4b8be0450e0d8612df60ea3d1736aa1f0eb937d961703700b3bca10c1f89a99d",
+    "EXPERIMENT_A4_PROVENANCE_AUDIT.md": "6df7717779b977e7a053cc29730e14d28c9f2dafaa1485cdefc9a0582ef3179d",
+    "EXPERIMENT_A4_RESOURCE_ACCOUNTING.json": "6248087f2517432bbd9fff47eaf680c75630455cb344a49b44546d40cfa1b0e8",
+    "EXPERIMENT_A4_RESULTS.csv": "4781261dda90743e4971f7a2acc70860c3dcc0300ed7316918b5a151f98a2718",
+    "EXPERIMENT_A4_REVIEWER_RESPONSE_CANDIDATE.md": "94b949c2cdc581d15c57f7ab0f86b6489e727d641d5de2b8c6bbcfa0bf95240d"
+  },
+  "renderer_invocation_note": "Frozen renderer resumed with runtime bindings for run_root and the A4 SHA-256 helper; no source changed after freeze.",
+  "run_id": "a4_eb68_20261107_full05",
+  "schema": "A4_EB68_v1.report_manifest.v1"
+}

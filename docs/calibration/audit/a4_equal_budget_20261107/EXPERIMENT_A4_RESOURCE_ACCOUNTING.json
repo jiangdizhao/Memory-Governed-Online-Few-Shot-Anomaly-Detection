@@ -1,0 +1,1128 @@
+{
+  "additional_memory_components": {
+    "maximum_D_candidate_matrix_bytes_per_category": 536870912,
+    "maximum_D_cuda_fp32_candidate_copy_bytes_per_category": 1073741824,
+    "maximum_support_augmentation_feature_bytes_per_category": 102760448,
+    "maximum_test_query_feature_bytes_per_event": 12845056,
+    "maximum_unique_calibration_image_bytes_per_category": 201326592,
+    "report_namespace_metadata_bytes_before_final_artifacts": 1276510,
+    "retained_output_limit_bytes": 4294967296,
+    "retained_run_output_bytes": 30965663,
+    "static_M0_shadow_bank_bytes_per_category": 201326592,
+    "temporary_test_feature_cache_bytes": 0,
+    "unique_online_fixed_bank_bytes_per_category": 201326592
+  },
+  "arms": {
+    "A": {
+      "fixed_reference_bytes": 67108864,
+      "logical_calibration_feature_reference_bytes": 822083584,
+      "online_greedy_bytes_by_category": {
+        "audiojack": {
+          "accepted_patches": 616,
+          "allocated_state_bytes": 5062720,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 616,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 616,
+          "update_seconds": 0.043553201016038656
+        },
+        "regulator": {
+          "accepted_patches": 696,
+          "allocated_state_bytes": 5718080,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 696,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 696,
+          "update_seconds": 0.0512216011993587
+        },
+        "rolled_strip_base": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.025278200395405293
+        },
+        "switch": {
+          "accepted_patches": 488,
+          "allocated_state_bytes": 4014144,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 488,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 488,
+          "update_seconds": 0.034562900429591537
+        }
+      },
+      "unique_shared_calibration_feature_pool_bytes": 822083584
+    },
+    "B": {
+      "fixed_reference_bytes": 67108864,
+      "logical_calibration_feature_reference_bytes": 411041792,
+      "online_greedy_bytes_by_category": {
+        "audiojack": {
+          "accepted_patches": 616,
+          "allocated_state_bytes": 5062720,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 616,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 616,
+          "update_seconds": 0.043553201016038656
+        },
+        "regulator": {
+          "accepted_patches": 696,
+          "allocated_state_bytes": 5718080,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 696,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 696,
+          "update_seconds": 0.0512216011993587
+        },
+        "rolled_strip_base": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.025278200395405293
+        },
+        "switch": {
+          "accepted_patches": 488,
+          "allocated_state_bytes": 4014144,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 488,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 488,
+          "update_seconds": 0.034562900429591537
+        }
+      },
+      "unique_shared_calibration_feature_pool_bytes": 822083584
+    },
+    "C": {
+      "fixed_reference_bytes": 67108864,
+      "logical_calibration_feature_reference_bytes": 411041792,
+      "online_greedy_bytes_by_category": {
+        "audiojack": {
+          "accepted_patches": 616,
+          "allocated_state_bytes": 5062720,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 616,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 616,
+          "update_seconds": 0.04547800053842366
+        },
+        "regulator": {
+          "accepted_patches": 696,
+          "allocated_state_bytes": 5718080,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 696,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 696,
+          "update_seconds": 0.05046070017851889
+        },
+        "rolled_strip_base": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.02367829973809421
+        },
+        "switch": {
+          "accepted_patches": 472,
+          "allocated_state_bytes": 3883072,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 472,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 472,
+          "update_seconds": 0.03327069734223187
+        }
+      },
+      "unique_shared_calibration_feature_pool_bytes": 822083584
+    },
+    "D": {
+      "fixed_reference_bytes": 67108864,
+      "logical_calibration_feature_reference_bytes": 411041792,
+      "online_greedy_bytes_by_category": {
+        "audiojack": {
+          "accepted_patches": 664,
+          "allocated_state_bytes": 5455936,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 664,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 664,
+          "update_seconds": 0.04651390039362013
+        },
+        "regulator": {
+          "accepted_patches": 728,
+          "allocated_state_bytes": 5980224,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 728,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 728,
+          "update_seconds": 0.05572679894976318
+        },
+        "rolled_strip_base": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.021128599997609854
+        },
+        "switch": {
+          "accepted_patches": 520,
+          "allocated_state_bytes": 4276288,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 520,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 520,
+          "update_seconds": 0.03907599998638034
+        }
+      },
+      "unique_shared_calibration_feature_pool_bytes": 822083584
+    }
+  },
+  "categories": {
+    "audiojack": {
+      "C32_calibration_images": 32,
+      "R32_complement_images": 32,
+      "additional_commissioning_C64": 64,
+      "calibration_feature_bytes_by_arm": {
+        "A": 822083584,
+        "B": 411041792,
+        "C": 411041792,
+        "D": 411041792
+      },
+      "calibration_feature_bytes_by_arm_interpretation": "logical references; B/C/D point into the shared retained C64 feature pool",
+      "cost_seconds": {
+        "C64_identity_feature_encoding": 2.191017299890518,
+        "D_R32_augmentation_encoding": 12.328657299978659,
+        "Kcenter_C_candidate_staging": 0.10394149995408952,
+        "Kcenter_C_selection_including_repeat": 18.29783260007389,
+        "Kcenter_D_candidate_staging": 0.6579169000033289,
+        "Kcenter_D_selection_including_repeat": 33.73448400013149,
+        "calibration_native_scoring": 0.6884829998016357,
+        "category_wall": 445.789906400023,
+        "online_native_scoring": 88.86220569699071,
+        "protected_reference_rescoring": 55.33304040203802,
+        "static_native_scoring": 49.277367105241865,
+        "support_augmentation_encoding": 2.3160687000490725,
+        "test_feature_encoding": 132.30394079745747,
+        "writer_updates": 61.87082720105536
+      },
+      "event_count": 3815,
+      "feature_access_roles": {
+        "C64_identity_calibration_images": 64,
+        "D_R32_augmentation_images": 32,
+        "Support4_augmentation_images": 4,
+        "other_train_image_identities": 0
+      },
+      "fixed_bank_profile_by_arm": {
+        "A": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "30b5dc834009aae8c552f35e6971f9bded50d4fe3361a39dc42200802d2c030e",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "B": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "30b5dc834009aae8c552f35e6971f9bded50d4fe3361a39dc42200802d2c030e",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "C": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "866349626170f413275d0e4c07d55ae56da407736c48d4210147b03f714ee381",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "D": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "5aea16b59b46cbb4cffad4b9906f7725b162247b42f207851b9159c756414d88",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        }
+      },
+      "fixed_bank_sha256_by_arm": {
+        "A": "837fa5153e852b617e1d0ecf563509bca037f5c0cab29c48b06befd21ce02673",
+        "B": "837fa5153e852b617e1d0ecf563509bca037f5c0cab29c48b06befd21ce02673",
+        "C": "8961c3458e06eec2587c7e535df819f81ecc42049ec018aec7edf81d683058e5",
+        "D": "f61cb12a55096f29be3128e551f21f0e999757a9f9d09eafdd600943c4682e9d"
+      },
+      "fixed_memory_components": {
+        "per_arm_deployed_fixed_reference_bytes": 67108864,
+        "static_M0_shadow_bank_bytes": 201326592,
+        "unique_online_fixed_bank_bytes": 201326592
+      },
+      "fixed_reference_bytes_by_arm": {
+        "A": 67108864,
+        "B": 67108864,
+        "C": 67108864,
+        "D": 67108864
+      },
+      "gpu_peak_allocated_bytes": 3884288000,
+      "identity_metadata_bytes_serialized": 7791,
+      "initialization_metadata_json_bytes": 64854,
+      "kcenter_C_candidate_count": 12544,
+      "kcenter_C_selection_seconds": 18.29783260007389,
+      "kcenter_D_candidate_count": 65536,
+      "kcenter_D_candidate_feature_bytes": 536870912,
+      "kcenter_D_cuda_fp32_candidate_copy_bytes": 1073741824,
+      "kcenter_D_selection_seconds": 33.73448400013149,
+      "normal_feedback_and_writes": {
+        "memory_state_changes": {
+          "A_B_SHARED": 75,
+          "C_KCENTER_S4": 75,
+          "D_KCENTER_S4_R32": 75
+        },
+        "native_normal_write_actions": 225,
+        "queried_defect": 39,
+        "queried_normal": 75
+      },
+      "normal_image_identities_authorized": 68,
+      "online_greedy_bytes_by_arm": {
+        "A": {
+          "accepted_patches": 616,
+          "allocated_state_bytes": 5062720,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 616,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 616,
+          "update_seconds": 0.043553201016038656
+        },
+        "B": {
+          "accepted_patches": 616,
+          "allocated_state_bytes": 5062720,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 616,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 616,
+          "update_seconds": 0.043553201016038656
+        },
+        "C": {
+          "accepted_patches": 616,
+          "allocated_state_bytes": 5062720,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 616,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 616,
+          "update_seconds": 0.04547800053842366
+        },
+        "D": {
+          "accepted_patches": 664,
+          "allocated_state_bytes": 5455936,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 664,
+          "feedback_events": 75,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 664,
+          "update_seconds": 0.04651390039362013
+        }
+      },
+      "query_count": 114,
+      "support_augmentation_feature_bytes": 102760448,
+      "support_images": 4,
+      "temporary_test_feature_cache": "none; streamed one encoding per event shared across four arms",
+      "temporary_test_feature_cache_bytes": 0,
+      "test_query_feature_bytes_per_event": 12845056,
+      "unique_retained_calibration_feature_bytes": 822083584,
+      "unique_retained_calibration_image_bytes": 201326592
+    },
+    "regulator": {
+      "C32_calibration_images": 32,
+      "R32_complement_images": 32,
+      "additional_commissioning_C64": 64,
+      "calibration_feature_bytes_by_arm": {
+        "A": 822083584,
+        "B": 411041792,
+        "C": 411041792,
+        "D": 411041792
+      },
+      "calibration_feature_bytes_by_arm_interpretation": "logical references; B/C/D point into the shared retained C64 feature pool",
+      "cost_seconds": {
+        "C64_identity_feature_encoding": 2.287389900069684,
+        "D_R32_augmentation_encoding": 11.767607299843803,
+        "Kcenter_C_candidate_staging": 0.10951799992471933,
+        "Kcenter_C_selection_including_repeat": 18.23718489985913,
+        "Kcenter_D_candidate_staging": 0.7296375001315027,
+        "Kcenter_D_selection_including_repeat": 33.68846960016526,
+        "calibration_native_scoring": 0.6792352998163551,
+        "category_wall": 469.133490400156,
+        "online_native_scoring": 91.96885060030036,
+        "protected_reference_rescoring": 64.76776029961184,
+        "static_native_scoring": 50.08592619281262,
+        "support_augmentation_encoding": 2.229689600178972,
+        "test_feature_encoding": 141.06400431296788,
+        "writer_updates": 73.14147290005349
+      },
+      "event_count": 3855,
+      "feature_access_roles": {
+        "C64_identity_calibration_images": 64,
+        "D_R32_augmentation_images": 32,
+        "Support4_augmentation_images": 4,
+        "other_train_image_identities": 0
+      },
+      "fixed_bank_profile_by_arm": {
+        "A": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "c7fd60e643a50fa3bba14b4214a723aa4db6679a67c7b64bb03f541c068cf2f7",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "B": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "c7fd60e643a50fa3bba14b4214a723aa4db6679a67c7b64bb03f541c068cf2f7",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "C": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "e8847fad4c78a67f7498575c6db68485d764aff5cd6f5f373728deeb512e2fcf",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "D": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "3baf9e12c14d2916ac8dc6df43d36c9a1b94b10b1fc37f0f40045f2797990ccd",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        }
+      },
+      "fixed_bank_sha256_by_arm": {
+        "A": "b162fe852cdc4c7dd5c5a25e3560263427cde588d42f12364bac0d3c79df48bb",
+        "B": "b162fe852cdc4c7dd5c5a25e3560263427cde588d42f12364bac0d3c79df48bb",
+        "C": "3b7c5e31f95be6727cec60159056a2bfe3d1f7a631cacd631434f90c5a67b82b",
+        "D": "c417ddab911ae531985a21614d70cddfb76508f4b7f77c988fd4ab007ffc351e"
+      },
+      "fixed_memory_components": {
+        "per_arm_deployed_fixed_reference_bytes": 67108864,
+        "static_M0_shadow_bank_bytes": 201326592,
+        "unique_online_fixed_bank_bytes": 201326592
+      },
+      "fixed_reference_bytes_by_arm": {
+        "A": 67108864,
+        "B": 67108864,
+        "C": 67108864,
+        "D": 67108864
+      },
+      "gpu_peak_allocated_bytes": 3886017536,
+      "identity_metadata_bytes_serialized": 7791,
+      "initialization_metadata_json_bytes": 74269,
+      "kcenter_C_candidate_count": 12544,
+      "kcenter_C_selection_seconds": 18.23718489985913,
+      "kcenter_D_candidate_count": 65536,
+      "kcenter_D_candidate_feature_bytes": 536870912,
+      "kcenter_D_cuda_fp32_candidate_copy_bytes": 1073741824,
+      "kcenter_D_selection_seconds": 33.68846960016526,
+      "normal_feedback_and_writes": {
+        "memory_state_changes": {
+          "A_B_SHARED": 87,
+          "C_KCENTER_S4": 87,
+          "D_KCENTER_S4_R32": 87
+        },
+        "native_normal_write_actions": 261,
+        "queried_defect": 29,
+        "queried_normal": 87
+      },
+      "normal_image_identities_authorized": 68,
+      "online_greedy_bytes_by_arm": {
+        "A": {
+          "accepted_patches": 696,
+          "allocated_state_bytes": 5718080,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 696,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 696,
+          "update_seconds": 0.0512216011993587
+        },
+        "B": {
+          "accepted_patches": 696,
+          "allocated_state_bytes": 5718080,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 696,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 696,
+          "update_seconds": 0.0512216011993587
+        },
+        "C": {
+          "accepted_patches": 696,
+          "allocated_state_bytes": 5718080,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 696,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 696,
+          "update_seconds": 0.05046070017851889
+        },
+        "D": {
+          "accepted_patches": 728,
+          "allocated_state_bytes": 5980224,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 728,
+          "feedback_events": 87,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 728,
+          "update_seconds": 0.05572679894976318
+        }
+      },
+      "query_count": 116,
+      "support_augmentation_feature_bytes": 102760448,
+      "support_images": 4,
+      "temporary_test_feature_cache": "none; streamed one encoding per event shared across four arms",
+      "temporary_test_feature_cache_bytes": 0,
+      "test_query_feature_bytes_per_event": 12845056,
+      "unique_retained_calibration_feature_bytes": 822083584,
+      "unique_retained_calibration_image_bytes": 201326592
+    },
+    "rolled_strip_base": {
+      "C32_calibration_images": 32,
+      "R32_complement_images": 32,
+      "additional_commissioning_C64": 64,
+      "calibration_feature_bytes_by_arm": {
+        "A": 822083584,
+        "B": 411041792,
+        "C": 411041792,
+        "D": 411041792
+      },
+      "calibration_feature_bytes_by_arm_interpretation": "logical references; B/C/D point into the shared retained C64 feature pool",
+      "cost_seconds": {
+        "C64_identity_feature_encoding": 2.4030430999118835,
+        "D_R32_augmentation_encoding": 11.29969759983942,
+        "Kcenter_C_candidate_staging": 0.10302440007217228,
+        "Kcenter_C_selection_including_repeat": 17.779817699920386,
+        "Kcenter_D_candidate_staging": 0.6856329999864101,
+        "Kcenter_D_selection_including_repeat": 33.369160200003535,
+        "calibration_native_scoring": 0.6808731001801789,
+        "category_wall": 405.61325290007517,
+        "online_native_scoring": 70.99466579547152,
+        "protected_reference_rescoring": 26.85603439854458,
+        "static_native_scoring": 49.552985101472586,
+        "support_augmentation_encoding": 2.3328105001710355,
+        "test_feature_encoding": 144.35054130619392,
+        "writer_updates": 28.707798599731177
+      },
+      "event_count": 3805,
+      "feature_access_roles": {
+        "C64_identity_calibration_images": 64,
+        "D_R32_augmentation_images": 32,
+        "Support4_augmentation_images": 4,
+        "other_train_image_identities": 0
+      },
+      "fixed_bank_profile_by_arm": {
+        "A": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "9316a771a88e8b3d204da854dcf5a0d6cbeafece447dfe01c604359a533a5822",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "B": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "9316a771a88e8b3d204da854dcf5a0d6cbeafece447dfe01c604359a533a5822",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "C": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "6b6e5652222fa1d9c6a3a83336c3339bb082798aeca3f9ebcc438fb0ec8ca154",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "D": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "256e1b5cedc9c74cff39d76162e2a707d4166e6d2d863f6a60bbbff27ca0cb6b",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        }
+      },
+      "fixed_bank_sha256_by_arm": {
+        "A": "12c1dcacba90b1f0c576480b0afddaabf2d80466845ac61f4346aebfd968d4f3",
+        "B": "12c1dcacba90b1f0c576480b0afddaabf2d80466845ac61f4346aebfd968d4f3",
+        "C": "0022136819c3a9168916ffff0c02f961016427335290a6ad9781c653f5eff6bd",
+        "D": "e9ee406f46a24c49594c4a8d4ac577ac130af3a3b8d00313a0a90d48496ebdcb"
+      },
+      "fixed_memory_components": {
+        "per_arm_deployed_fixed_reference_bytes": 67108864,
+        "static_M0_shadow_bank_bytes": 201326592,
+        "unique_online_fixed_bank_bytes": 201326592
+      },
+      "fixed_reference_bytes_by_arm": {
+        "A": 67108864,
+        "B": 67108864,
+        "C": 67108864,
+        "D": 67108864
+      },
+      "gpu_peak_allocated_bytes": 3884582912,
+      "identity_metadata_bytes_serialized": 9391,
+      "initialization_metadata_json_bytes": 43227,
+      "kcenter_C_candidate_count": 12544,
+      "kcenter_C_selection_seconds": 17.779817699920386,
+      "kcenter_D_candidate_count": 65536,
+      "kcenter_D_candidate_feature_bytes": 536870912,
+      "kcenter_D_cuda_fp32_candidate_copy_bytes": 1073741824,
+      "kcenter_D_selection_seconds": 33.369160200003535,
+      "normal_feedback_and_writes": {
+        "memory_state_changes": {
+          "A_B_SHARED": 37,
+          "C_KCENTER_S4": 37,
+          "D_KCENTER_S4_R32": 37
+        },
+        "native_normal_write_actions": 111,
+        "queried_defect": 77,
+        "queried_normal": 37
+      },
+      "normal_image_identities_authorized": 68,
+      "online_greedy_bytes_by_arm": {
+        "A": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.025278200395405293
+        },
+        "B": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.025278200395405293
+        },
+        "C": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.02367829973809421
+        },
+        "D": {
+          "accepted_patches": 312,
+          "allocated_state_bytes": 2572352,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 312,
+          "feedback_events": 37,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 312,
+          "update_seconds": 0.021128599997609854
+        }
+      },
+      "query_count": 114,
+      "support_augmentation_feature_bytes": 102760448,
+      "support_images": 4,
+      "temporary_test_feature_cache": "none; streamed one encoding per event shared across four arms",
+      "temporary_test_feature_cache_bytes": 0,
+      "test_query_feature_bytes_per_event": 12845056,
+      "unique_retained_calibration_feature_bytes": 822083584,
+      "unique_retained_calibration_image_bytes": 201326592
+    },
+    "switch": {
+      "C32_calibration_images": 32,
+      "R32_complement_images": 32,
+      "additional_commissioning_C64": 64,
+      "calibration_feature_bytes_by_arm": {
+        "A": 822083584,
+        "B": 411041792,
+        "C": 411041792,
+        "D": 411041792
+      },
+      "calibration_feature_bytes_by_arm_interpretation": "logical references; B/C/D point into the shared retained C64 feature pool",
+      "cost_seconds": {
+        "C64_identity_feature_encoding": 2.2144845000002533,
+        "D_R32_augmentation_encoding": 12.096108900150284,
+        "Kcenter_C_candidate_staging": 0.09860310005024076,
+        "Kcenter_C_selection_including_repeat": 18.06513759982772,
+        "Kcenter_D_candidate_staging": 0.6580270000267774,
+        "Kcenter_D_selection_including_repeat": 33.49341110000387,
+        "calibration_native_scoring": 0.6827265999745578,
+        "category_wall": 427.5531184000429,
+        "online_native_scoring": 82.11208039638586,
+        "protected_reference_rescoring": 43.19350519985892,
+        "static_native_scoring": 49.85138769610785,
+        "support_augmentation_encoding": 2.1326518000569195,
+        "test_feature_encoding": 135.1089206021279,
+        "writer_updates": 47.364189200568944
+      },
+      "event_count": 3820,
+      "feature_access_roles": {
+        "C64_identity_calibration_images": 64,
+        "D_R32_augmentation_images": 32,
+        "Support4_augmentation_images": 4,
+        "other_train_image_identities": 0
+      },
+      "fixed_bank_profile_by_arm": {
+        "A": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "087feded0d780bbc3a56d45404b4126991b1aeb54f1ae3724bce025caf0d380e",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "B": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "087feded0d780bbc3a56d45404b4126991b1aeb54f1ae3724bce025caf0d380e",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "C": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "10bd5f866f09f1d53a1c71e8b709695a3540f342b3b8cdd764c3e23e0252e4fe",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        },
+        "D": {
+          "layers": [
+            {
+              "bytes": 67108864,
+              "capacity": 25000,
+              "dtype": "float16",
+              "feature_dim": 4096,
+              "layer": 0,
+              "n_prototypes": 8192
+            }
+          ],
+          "sha256": "a7536f54aa8176edc2a03dda736ba7b254b8ffdc30e7fcd1cfe89d5b2e03ea4e",
+          "total_feature_bytes": 67108864,
+          "total_prototypes": 8192
+        }
+      },
+      "fixed_bank_sha256_by_arm": {
+        "A": "8a710d028509350568e976bc3ede66aa59603499cbea525bdd8579322b1a1558",
+        "B": "8a710d028509350568e976bc3ede66aa59603499cbea525bdd8579322b1a1558",
+        "C": "9f255dd84f3b3a79a96f465a3ef2eb35a87c16e2a9286f82827e25611b0f5745",
+        "D": "a05d250c8826eca6f4582293fcdc1fa89528f4ac601ab2e43d116a46f9e75835"
+      },
+      "fixed_memory_components": {
+        "per_arm_deployed_fixed_reference_bytes": 67108864,
+        "static_M0_shadow_bank_bytes": 201326592,
+        "unique_online_fixed_bank_bytes": 201326592
+      },
+      "fixed_reference_bytes_by_arm": {
+        "A": 67108864,
+        "B": 67108864,
+        "C": 67108864,
+        "D": 67108864
+      },
+      "gpu_peak_allocated_bytes": 3884173312,
+      "identity_metadata_bytes_serialized": 7191,
+      "initialization_metadata_json_bytes": 55223,
+      "kcenter_C_candidate_count": 12544,
+      "kcenter_C_selection_seconds": 18.06513759982772,
+      "kcenter_D_candidate_count": 65536,
+      "kcenter_D_candidate_feature_bytes": 536870912,
+      "kcenter_D_cuda_fp32_candidate_copy_bytes": 1073741824,
+      "kcenter_D_selection_seconds": 33.49341110000387,
+      "normal_feedback_and_writes": {
+        "memory_state_changes": {
+          "A_B_SHARED": 59,
+          "C_KCENTER_S4": 59,
+          "D_KCENTER_S4_R32": 59
+        },
+        "native_normal_write_actions": 177,
+        "queried_defect": 56,
+        "queried_normal": 59
+      },
+      "normal_image_identities_authorized": 68,
+      "online_greedy_bytes_by_arm": {
+        "A": {
+          "accepted_patches": 488,
+          "allocated_state_bytes": 4014144,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 488,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 488,
+          "update_seconds": 0.034562900429591537
+        },
+        "B": {
+          "accepted_patches": 488,
+          "allocated_state_bytes": 4014144,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 488,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 488,
+          "update_seconds": 0.034562900429591537
+        },
+        "C": {
+          "accepted_patches": 472,
+          "allocated_state_bytes": 3883072,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 472,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 472,
+          "update_seconds": 0.03327069734223187
+        },
+        "D": {
+          "accepted_patches": 520,
+          "allocated_state_bytes": 4276288,
+          "buffer": 0,
+          "byte_ceiling": 2147483648,
+          "candidate_patches": 520,
+          "feedback_events": 59,
+          "ltm": 0,
+          "promotions": 0,
+          "skipped_patches": 0,
+          "stm": 520,
+          "update_seconds": 0.03907599998638034
+        }
+      },
+      "query_count": 115,
+      "support_augmentation_feature_bytes": 102760448,
+      "support_images": 4,
+      "temporary_test_feature_cache": "none; streamed one encoding per event shared across four arms",
+      "temporary_test_feature_cache_bytes": 0,
+      "test_query_feature_bytes_per_event": 12845056,
+      "unique_retained_calibration_feature_bytes": 822083584,
+      "unique_retained_calibration_image_bytes": 201326592
+    }
+  },
+  "category_equal_macro": true,
+  "cost_means_seconds": {
+    "C64_identity_feature_encoding": 2.2739836999680847,
+    "D_R32_augmentation_encoding": 11.873017774953041,
+    "Kcenter_C_candidate_staging": 0.10377175000030547,
+    "Kcenter_C_selection_including_repeat": 18.09499319992028,
+    "Kcenter_D_candidate_staging": 0.6828036000370048,
+    "Kcenter_D_selection_including_repeat": 33.57138122507604,
+    "calibration_native_scoring": 0.6828294999431819,
+    "category_wall": 437.02244202507427,
+    "online_native_scoring": 83.48445062228711,
+    "protected_reference_rescoring": 47.53758507501334,
+    "static_native_scoring": 49.69191652390873,
+    "support_augmentation_encoding": 2.252805150114,
+    "test_feature_encoding": 138.2068517546868,
+    "writer_updates": 52.77107197535224
+  },
+  "fixed_prototype_storage_bytes": 67108864,
+  "fixed_prototype_storage_definition": "8192 x 4096 x fp16",
+  "gpu_encoding_coreset_and_scoring_costs": {
+    "audiojack": {
+      "C64_identity_feature_encoding": 2.191017299890518,
+      "D_R32_augmentation_encoding": 12.328657299978659,
+      "Kcenter_C_candidate_staging": 0.10394149995408952,
+      "Kcenter_C_selection_including_repeat": 18.29783260007389,
+      "Kcenter_D_candidate_staging": 0.6579169000033289,
+      "Kcenter_D_selection_including_repeat": 33.73448400013149,
+      "calibration_native_scoring": 0.6884829998016357,
+      "category_wall": 445.789906400023,
+      "online_native_scoring": 88.86220569699071,
+      "protected_reference_rescoring": 55.33304040203802,
+      "static_native_scoring": 49.277367105241865,
+      "support_augmentation_encoding": 2.3160687000490725,
+      "test_feature_encoding": 132.30394079745747,
+      "writer_updates": 61.87082720105536
+    },
+    "regulator": {
+      "C64_identity_feature_encoding": 2.287389900069684,
+      "D_R32_augmentation_encoding": 11.767607299843803,
+      "Kcenter_C_candidate_staging": 0.10951799992471933,
+      "Kcenter_C_selection_including_repeat": 18.23718489985913,
+      "Kcenter_D_candidate_staging": 0.7296375001315027,
+      "Kcenter_D_selection_including_repeat": 33.68846960016526,
+      "calibration_native_scoring": 0.6792352998163551,
+      "category_wall": 469.133490400156,
+      "online_native_scoring": 91.96885060030036,
+      "protected_reference_rescoring": 64.76776029961184,
+      "static_native_scoring": 50.08592619281262,
+      "support_augmentation_encoding": 2.229689600178972,
+      "test_feature_encoding": 141.06400431296788,
+      "writer_updates": 73.14147290005349
+    },
+    "rolled_strip_base": {
+      "C64_identity_feature_encoding": 2.4030430999118835,
+      "D_R32_augmentation_encoding": 11.29969759983942,
+      "Kcenter_C_candidate_staging": 0.10302440007217228,
+      "Kcenter_C_selection_including_repeat": 17.779817699920386,
+      "Kcenter_D_candidate_staging": 0.6856329999864101,
+      "Kcenter_D_selection_including_repeat": 33.369160200003535,
+      "calibration_native_scoring": 0.6808731001801789,
+      "category_wall": 405.61325290007517,
+      "online_native_scoring": 70.99466579547152,
+      "protected_reference_rescoring": 26.85603439854458,
+      "static_native_scoring": 49.552985101472586,
+      "support_augmentation_encoding": 2.3328105001710355,
+      "test_feature_encoding": 144.35054130619392,
+      "writer_updates": 28.707798599731177
+    },
+    "switch": {
+      "C64_identity_feature_encoding": 2.2144845000002533,
+      "D_R32_augmentation_encoding": 12.096108900150284,
+      "Kcenter_C_candidate_staging": 0.09860310005024076,
+      "Kcenter_C_selection_including_repeat": 18.06513759982772,
+      "Kcenter_D_candidate_staging": 0.6580270000267774,
+      "Kcenter_D_selection_including_repeat": 33.49341110000387,
+      "calibration_native_scoring": 0.6827265999745578,
+      "category_wall": 427.5531184000429,
+      "online_native_scoring": 82.11208039638586,
+      "protected_reference_rescoring": 43.19350519985892,
+      "static_native_scoring": 49.85138769610785,
+      "support_augmentation_encoding": 2.1326518000569195,
+      "test_feature_encoding": 135.1089206021279,
+      "writer_updates": 47.364189200568944
+    }
+  },
+  "note": "Per-arm calibration feature byte counts are logical references; the C32 arms share the same C64 tensors in memory. The unique C64 calibration pool, Support augmentation cache, fixed M0 scoring shadows, K-Center staging and one current TEST feature are listed separately. Greedy bytes are reported from the native writer audit. Equal fixed-bank bytes do not equalize total runtime memory.",
+  "run_id": "a4_eb68_20261107_full05",
+  "schema": "A4_EB68_v1.resource_accounting.v1",
+  "total_deployed_memory_is_not_equalized": true
+}

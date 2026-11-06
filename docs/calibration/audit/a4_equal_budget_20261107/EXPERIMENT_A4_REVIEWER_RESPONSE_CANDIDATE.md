@@ -1,0 +1,3 @@
+# Reviewer response candidate
+
+The original Experiment A allocation used four deployed normal Support images and 64 additional labelled normal commissioning images for empirical q90 calibration. In this four-category development sensitivity study, we compared that allocation with an equal 68-image alternative that placed the four Supports and the complementary 32 commissioning normals into an equal-storage K-Center reference and calibrated on the remaining 32. Under the registered P0 streams, the D−A macro prequential AUROC difference was +0.0647 (category differences: audiojack +0.0678, regulator +0.1135, switch +0.0504, rolled_strip_base +0.0270). These results support the expanded-reference allocation under the registered development-set criterion.
