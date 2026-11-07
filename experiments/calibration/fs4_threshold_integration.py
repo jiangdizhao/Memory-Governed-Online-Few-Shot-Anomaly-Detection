@@ -275,6 +275,11 @@ class SharedTrajectory:
             raise ValueError("scorer state changed before event seal")
         decisions = {name: {j: int(scored[j] >= controller.engine.theta[j]) for j in ("G", "GC")}
                      for name, controller in (("L", self.L), ("E", self.E))}
+        novelty, _distance = self.coverage.novelty(cls_feature)
+        query_inputs = {"novelty_percentile": novelty,
+            "correction_top32": np.asarray(scored["correction_top32"], dtype=np.float64).tolist(),
+            "correction_bank_size": int(scored["correction_size"]), "topk_dN_max": float(scored["dmax"]),
+            "topk_dN_mean": float(scored["dmean"]), "pre_score_scale": scale}
         feature_sha = _feature_digest(features)
         top_ids = np.asarray(scored["top_ids"], dtype=np.int64).tolist()
         threshold_state = hashlib.sha256(json.dumps({"L": self.L.engine.theta, "E": self.E.engine.theta,
@@ -285,6 +290,7 @@ class SharedTrajectory:
                    "states": states, "threshold_state": threshold_state,
                    "thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta)},
                    "query_reference_threshold": self.query_reference,
+                   "query_inputs": query_inputs,
                    "learning_reference_threshold": self._learning_reference,
                    "learning_prediction": learning_prediction,
                    "decision_learning_disagreement": {name: {j: decisions[name][j] != learning_prediction for j in ("G", "GC")} for name in decisions},
@@ -295,11 +301,7 @@ class SharedTrajectory:
             raise ValueError("prediction ledger did not seal the exact pre-feedback payload")
         pred = SealedPrediction(position, group, event, scored["G"], scored["GC"],
                                 states["G"], states["GC"], threshold_state, seal)
-        novelty, _distance = self.coverage.novelty(cls_feature)
-        receipt = self.policy.decide(pred, reference_threshold=self.query_reference,
-            novelty_percentile=novelty, correction_top32=scored["correction_top32"],
-            correction_bank_size=scored["correction_size"], topk_dN_max=scored["dmax"],
-            topk_dN_mean=scored["dmean"], pre_score_scale=scale)
+        receipt = self.policy.decide(pred, reference_threshold=self.query_reference, **query_inputs)
         receipt = self.policy.seal_query(receipt, self.seal_query(receipt))
         update = None
         if receipt.executed:
@@ -360,6 +362,11 @@ class CoupledTrajectory:
             raise ValueError("scorer state changed before event seal")
         theta = dict(self.controller.engine.theta)
         decisions = {j: int(scored[j] >= theta[j]) for j in ("G", "GC")}
+        novelty, _distance = self.coverage.novelty(cls_feature)
+        query_inputs = {"novelty_percentile": novelty,
+            "correction_top32": np.asarray(scored["correction_top32"], dtype=np.float64).tolist(),
+            "correction_bank_size": int(scored["correction_size"]), "topk_dN_max": float(scored["dmax"]),
+            "topk_dN_mean": float(scored["dmean"]), "pre_score_scale": scale}
         feature_sha = _feature_digest(features)
         top_ids = np.asarray(scored["top_ids"], dtype=np.int64).tolist()
         threshold_state = hashlib.sha256(json.dumps(theta, sort_keys=True).encode()).hexdigest()
@@ -368,6 +375,7 @@ class CoupledTrajectory:
                    "scores": {j: scored[j] for j in ("G", "GC")}, "decisions": decisions,
                    "states": states, "threshold_state": threshold_state,
                    "thresholds": theta, "query_reference_threshold": theta["GC"],
+                   "query_inputs": query_inputs,
                    "learning_reference_threshold": self._learning_reference,
                    "learning_prediction": learning_prediction,
                    "decision_learning_disagreement": {j: decisions[j] != learning_prediction for j in ("G", "GC")},
@@ -378,11 +386,7 @@ class CoupledTrajectory:
             raise ValueError("prediction ledger did not seal the exact pre-feedback payload")
         pred = SealedPrediction(position, group, event, scored["G"], scored["GC"],
                                 states["G"], states["GC"], threshold_state, seal)
-        novelty, _distance = self.coverage.novelty(cls_feature)
-        receipt = self.policy.decide(pred, reference_threshold=theta["GC"],
-            novelty_percentile=novelty, correction_top32=scored["correction_top32"],
-            correction_bank_size=scored["correction_size"], topk_dN_max=scored["dmax"],
-            topk_dN_mean=scored["dmean"], pre_score_scale=scale)
+        receipt = self.policy.decide(pred, reference_threshold=theta["GC"], **query_inputs)
         receipt = self.policy.seal_query(receipt, self.seal_query(receipt))
         update = None
         if receipt.executed:

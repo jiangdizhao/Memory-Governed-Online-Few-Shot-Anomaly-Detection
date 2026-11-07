@@ -140,7 +140,7 @@ def manifest():
     path = Path("experiments/v02_memory.py")
     return {"run_id": "synthetic", "source_commit": "3bd33076789f66f7086f8f2e165b18d789e2c7d2",
             "source_fingerprints": {str(path).replace("\\", "/"): hashlib.sha256(path.read_bytes()).hexdigest()},
-            "expected_events_by_category": {"synthetic": 5}, "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY"}
+            "expected_events_by_category": {"synthetic": 5}, "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY", "query_seed": 37}
 
 
 def test_durable_order_reopen_and_stage_a_seals(tmp_path):
@@ -195,6 +195,42 @@ def test_durable_executor_journals_complete_transitions(tmp_path):
     assert sum(row["kind"] == "TRANSITION" for row in ledger.records) == 5
     assert all(row["payload"]["transition"]["profile"] == "SHARED_TRAJECTORY_THRESHOLD_ONLY"
                for row in ledger.records if row["kind"] == "TRANSITION")
+    ledger.close()
+
+
+def test_distinct_categories_use_fresh_policies_and_global_seal(tmp_path):
+    from experiments.calibration.fs4_durable_runtime import DurableExecutor
+    m = dict(manifest(), expected_events_by_category={"one": 5, "two": 5})
+    ledger = DurableLedger(tmp_path / "run", m, create=True)
+    features = torch.zeros((784, 4096)); image = SimpleNamespace(height=28, width=28)
+    for index, category in enumerate(("one", "two")):
+        ledger.select_category(category)
+        loop = SharedTrajectory(runtime=_SyntheticRuntime(.5), coverage=CoverageMemory(np.eye(5, dtype=np.float32)[:4]),
+            theta0=.5, policy=StochasticBEAGroupSlot(start_position=5 * index), seal_prediction=prediction_digest,
+            seal_query=receipt_digest, label_provider=lambda *_: 0)
+        executor = DurableExecutor(loop, ledger, lambda *_: 0)
+        for pos in range(5 * index, 5 * index + 5):
+            executor.step(position=pos, group=hid(f"{category}-group"), event=hid(f"{category}-{pos}"), image=image,
+                features=features, cls_feature=np.eye(5, dtype=np.float32)[4], feature_convention=FEATURE_CONVENTION)
+        executor.seal_category(category)
+    ledger.seal_global_stage_a()
+    assert ledger.phase == "GLOBAL_A" and ledger.position == 10
+    ledger.close()
+
+
+def test_ledger_rejects_forged_query_utility(tmp_path):
+    from dataclasses import replace
+    m = manifest(); ledger = DurableLedger(tmp_path / "run", m, create=True); ledger.select_category("synthetic")
+    def forged(receipt):
+        return ledger.seal_query(replace(receipt, utility=receipt.utility + .001))
+    loop = SharedTrajectory(runtime=_SyntheticRuntime(.5), coverage=CoverageMemory(np.eye(5, dtype=np.float32)[:4]),
+        theta0=.5, policy=StochasticBEAGroupSlot(), seal_prediction=ledger.seal_prediction,
+        seal_query=forged, label_provider=lambda *_: pytest.fail("unsealed query cannot disclose"))
+    with pytest.raises(LedgerIntegrityError, match="query utility"):
+        loop.step(position=0, group=hid("forged-group"), event=hid("forged-event"),
+            image=SimpleNamespace(height=28, width=28), features=torch.zeros((784, 4096)),
+            cls_feature=np.eye(5, dtype=np.float32)[4], feature_convention=FEATURE_CONVENTION)
+    assert ledger.phase == "PREDICTION"
     ledger.close()
 
 
@@ -361,3 +397,81 @@ def test_native_checkpoint_boundary_restores_memory_and_policy(tmp_path):
     with pytest.raises(CheckpointError, match="checksum"):
         restore_checkpoint(checkpoint, trajectory=make(ledger_c), ledger=ledger_c)
     ledger_c.close()
+
+
+def test_native_crash_during_real_e_rescoring_replays_checkpoint(tmp_path):
+    import shutil
+    from test_fs4_threshold import native_bank_and_writer
+    from experiments.calibration.fs4_checkpoint import save_checkpoint, restore_checkpoint, begin_recovery
+    from experiments.calibration.fs4_durable_runtime import DurableExecutor, post_state_digest
+    from experiments.calibration.fs4_stochastic_bea import action_uniform, candidate_ordinal
+    from experiments.calibration.fs4_threshold_integration import NativeRuntime
+    from experiments.calibration.native import _fixed_bank_digest
+
+    m = dict(manifest(), expected_events_by_category={"synthetic": 60})
+    root = tmp_path / "run"; journal = DurableLedger(root, m, create=True); journal.select_category("synthetic")
+    def make(journal):
+        native, bank, writer = native_bank_and_writer(4096)
+        reference = {"fixed_support_sha256": _fixed_bank_digest(bank), "writer_reference": {"theta": 1., "sigma": .02}}
+        cfg = SimpleNamespace(topk_patches=32, image_aggregation="max", image_topk=64, image_quantile=.95)
+        runtime = NativeRuntime(impl=native, bank=bank, cfg=cfg, writer=writer, correction_cfg=bank.corr_cfg,
+                                correction_cb=bank.corr_cb["p0"]["id"][0], reference=reference)
+        return SharedTrajectory(runtime=runtime, coverage=CoverageMemory(np.eye(16, dtype=np.float32)[:4]), theta0=1.,
+            policy=StochasticBEAGroupSlot(), seal_prediction=journal.seal_prediction, seal_query=journal.seal_query,
+            label_provider=lambda event, pos: journal.disclose(event, pos, lambda *_: 0))
+    loop = make(journal); executor = DurableExecutor(loop, journal, lambda *_: 0)
+    def features_for(index):
+        result = torch.zeros((784, 4096)); result[:, index + 1] = 1
+        return result
+    image = SimpleNamespace(height=28, width=28)
+    group_names = []
+    for group_index in range(12):
+        events = [hid(f"real-e-event-{group_index}-{i}") for i in range(5)]
+        group = next(hid(f"real-e-group-{group_index}-{j}") for j in range(20000)
+            if (group_index != 11 or candidate_ordinal(37, hid(f"real-e-group-{group_index}-{j}")) == 1) and
+            action_uniform(37, hid(f"real-e-group-{group_index}-{j}"),
+                           events[candidate_ordinal(37, hid(f"real-e-group-{group_index}-{j}")) - 1]) < .05)
+        group_names.append((group, events))
+    for group_index, (group, events) in enumerate(group_names[:11]):
+        for ordinal, event in enumerate(events):
+            executor.step(position=group_index * 5 + ordinal, group=group, event=event, image=image,
+                features=features_for(group_index), cls_feature=np.eye(16, dtype=np.float32)[4 + group_index], feature_convention=FEATURE_CONVENTION)
+    assert len(loop.E.evidence) == 11 and loop.E.rescore_invocations == 0
+    assert all(e.receipt.design_probability == .2 for e in loop.E.evidence)
+    checkpoint = tmp_path / "checkpoint"; save_checkpoint(checkpoint, trajectory=loop, ledger=journal); journal.close()
+    reference_root = tmp_path / "reference"; shutil.copytree(root, reference_root)
+    reference_ledger = DurableLedger(reference_root, m, create=False); reference = make(reference_ledger)
+    restore_checkpoint(checkpoint, trajectory=reference, ledger=reference_ledger)
+    reference_executor = DurableExecutor(reference, reference_ledger, lambda *_: 0)
+    group, events = group_names[11]
+    args = dict(position=55, group=group, event=events[0], image=image, features=features_for(11),
+                cls_feature=np.eye(16, dtype=np.float32)[15], feature_convention=FEATURE_CONVENTION)
+    expected = reference_executor.step(**args)
+    assert reference.E.rescore_invocations == 12 and len(reference.E.evidence) == 12
+    expected_digest, expected_offset = post_state_digest(reference), reference_ledger.offset()
+    reference_ledger.close()
+
+    failed_ledger = DurableLedger(root, m, create=False); failing = make(failed_ledger)
+    restore_checkpoint(checkpoint, trajectory=failing, ledger=failed_ledger)
+    failed_executor = DurableExecutor(failing, failed_ledger, lambda *_: 0)
+    original = failing.E.scorer.score; count = [0]
+    def fail_mid_rescore(*a, **kw):
+        count[0] += 1
+        if count[0] == 6:
+            raise FS4NativeScoringIntegrityError("injected mid-rescore crash")
+        return original(*a, **kw)
+    failing.E.scorer.score = fail_mid_rescore
+    before = dict(failing.E.engine.theta)
+    with pytest.raises(FS4NativeScoringIntegrityError, match="mid-rescore"):
+        failed_executor.step(**args)
+    assert count[0] == 6 and failing.E.engine.theta == before
+    failed_ledger.close()
+    recovered_ledger = DurableLedger(root, m, create=False); recovered = make(recovered_ledger); reads = []
+    recovery = begin_recovery(checkpoint, trajectory=recovered, ledger=recovered_ledger,
+                              label_reader=lambda *a: (reads.append(a) or 0))
+    resumed = DurableExecutor(recovered, recovery).step(**args)
+    recovery.assert_caught_up()
+    assert not reads and resumed["sealed_prediction"] == expected["sealed_prediction"]
+    assert resumed["query"] == expected["query"] and post_state_digest(recovered) == expected_digest
+    assert recovered_ledger.offset() == expected_offset
+    recovered_ledger.close()

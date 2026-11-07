@@ -32,7 +32,7 @@ def post_state_digest(trajectory: Any) -> str:
     p = trajectory.policy
     state = {"profile": trajectory.mode, "native": trajectory.runtime.states(),
              "normal_version": trajectory.runtime.normal_version, "correction_version": trajectory.runtime.correction_version,
-             "query": {"seed": p.seed, "price": p.price, "groups": p.group_counts, "candidates": p.candidates,
+             "query": {"seed": p.seed, "start_position": p.start_position, "price": p.price, "groups": p.group_counts, "candidates": p.candidates,
                        "history": list(p.history), "flags": list(p.flags), "last_position": p.last_position},
              "coverage": {name: _array_digest(getattr(trajectory.coverage, name))
                           for name in ("support", "support_distances", "dynamic", "distances")},

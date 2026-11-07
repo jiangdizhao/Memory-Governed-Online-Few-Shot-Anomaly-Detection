@@ -14,7 +14,10 @@ from pathlib import Path
 import subprocess
 from typing import Any, Callable, Mapping
 
-from .fs4_stochastic_bea import QueryReceipt, action_uniform, candidate_ordinal, receipt_digest
+import numpy as np
+
+from .fs4_stochastic_bea import (QueryReceipt, action_uniform, bea_components, candidate_ordinal,
+                                 receipt_digest, TARGET_RATE)
 from .fs4_threshold_integration import prediction_digest
 
 
@@ -41,6 +44,8 @@ class DurableLedger:
         required = ("run_id", "source_commit", "source_fingerprints", "expected_events_by_category", "profile")
         if any(not self.manifest.get(k) for k in required):
             raise LedgerIntegrityError("incomplete run manifest")
+        if not isinstance(self.manifest.get("query_seed"), int) or isinstance(self.manifest["query_seed"], bool):
+            raise LedgerIntegrityError("query seed must be registered in the run manifest")
         source_root = Path(__file__).resolve().parents[2]
         source_commit = str(self.manifest["source_commit"])
         if subprocess.run(["git", "merge-base", "--is-ancestor", source_commit, "HEAD"],
@@ -94,6 +99,9 @@ class DurableLedger:
         self.category_counts = {c: 0 for c in self.manifest["expected_events_by_category"]}
         self.category_seals: dict[str, str] = {}
         self.current_category: str | None = None
+        self.query_price = .8
+        self.query_history: list[float] = []
+        self.query_flags: list[int] = []
         self.prediction: dict[str, Any] | None = None
         self.query: dict[str, Any] | None = None
         self._read_and_verify()
@@ -123,6 +131,8 @@ class DurableLedger:
         probe = copy.copy(self)
         probe.event_ids = set(self.event_ids)
         probe.group_counts = dict(self.group_counts)
+        probe.query_history = list(self.query_history)
+        probe.query_flags = list(self.query_flags)
         probe.category_counts = dict(self.category_counts)
         probe.category_seals = dict(self.category_seals)
         probe._apply(kind, payload)
@@ -143,15 +153,16 @@ class DurableLedger:
 
     def _apply(self, kind: str, p: dict[str, Any]) -> None:
         if kind == "CATEGORY":
-            if self.phase != "READY" or p["category"] not in self.category_counts or p["category"] in self.category_seals:
+            if self.phase != "READY" or self.current_category is not None or p["category"] not in self.category_counts or p["category"] in self.category_seals:
                 raise LedgerIntegrityError("invalid category transition")
             self.current_category = p["category"]
+            self.query_price = .8; self.query_history = []; self.query_flags = []
         elif kind == "PREDICTION":
             x = p["event"]
             if (self.phase != "READY" or self.current_category is None or x["position"] != self.position or
                     x["event"] in self.event_ids or x["profile"] != self.manifest["profile"] or
                     p["prediction_sha256"] != prediction_digest(x) or
-                    not all(x.get(k) for k in ("group", "event", "states", "threshold_state", "thresholds")) or
+                    not all(x.get(k) for k in ("group", "event", "states", "threshold_state", "thresholds", "query_inputs")) or
                     self.category_counts[self.current_category] >= self.manifest["expected_events_by_category"][self.current_category]):
                 raise LedgerIntegrityError("invalid or duplicate prediction")
             self.prediction = x; self.event_ids.add(x["event"]); self.phase = "PREDICTION"
@@ -170,8 +181,20 @@ class DurableLedger:
                     p["query_sha256"] != digest(q) or q["candidate"] != candidate_ordinal(q["seed"], pred["group"]) or
                     q["slot_probability"] != 0.2 or q["exploration_probability"] != 0.05 or
                     q["ordinal"] != expected_ordinal or expected_ordinal > 5 or
-                    q["policy"] != "STOCHASTIC_BEA_GROUP_SLOT_V1"):
+                    q["policy"] != "STOCHASTIC_BEA_GROUP_SLOT_V1" or q["seed"] != self.manifest["query_seed"]):
                 raise LedgerIntegrityError("invalid query receipt")
+            inputs = self.prediction["query_inputs"]
+            prior = np.asarray(self.query_history, dtype=np.float64)
+            scale = (max(1.4826 * float(np.median(np.abs(prior - np.median(prior)))), .02)
+                     if len(prior) >= 2 else .02)
+            components = bea_components(score=pred["score_gc"], threshold=self.prediction["query_reference_threshold"],
+                scale=scale, novelty_percentile=inputs["novelty_percentile"],
+                correction_top32=inputs["correction_top32"], correction_bank_size=inputs["correction_bank_size"],
+                topk_dN_max=inputs["topk_dN_max"], topk_dN_mean=inputs["topk_dN_mean"])
+            if (inputs["pre_score_scale"] != scale or q["query_scale"] != scale or
+                    q["reference_threshold"] != self.prediction["query_reference_threshold"] or
+                    q["utility"] != components["utility"] or q["cost"] != self.query_price):
+                raise LedgerIntegrityError("query utility, scale, price or reference differs from sealed policy inputs")
             eligible = q["ordinal"] == q["candidate"]
             gate = (1.0 if q["utility"] > q["cost"] else 0.05) if eligible else None
             draw = action_uniform(q["seed"], pred["group"], pred["event"]) if eligible else None
@@ -180,6 +203,10 @@ class DurableLedger:
                     q["executed"] != bool(eligible and draw < gate)):
                 raise LedgerIntegrityError("query action/probability mismatch")
             self.group_counts[key] = expected_ordinal
+            self.query_flags = (self.query_flags + [int(q["executed"])])[-256:]
+            self.query_price = min(3.0, max(.05, self.query_price + .02 *
+                (sum(self.query_flags) / len(self.query_flags) - TARGET_RATE)))
+            self.query_history = (self.query_history + [pred["score_gc"]])[-256:]
             self.query = q; self.phase = "QUERY"
         elif kind == "LABEL_INTENT":
             if self.phase != "QUERY" or self.query is None or not self.query["executed"] or p["position"] != self.position:

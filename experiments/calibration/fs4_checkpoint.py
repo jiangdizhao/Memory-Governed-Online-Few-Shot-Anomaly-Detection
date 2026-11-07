@@ -116,7 +116,7 @@ def save_checkpoint(path: Path, *, trajectory: Any, ledger: Any) -> dict[str, An
         "greedy_revision": runtime.provenance.revision, "greedy_valid": runtime.provenance.valid,
         "writer": {name: getattr(runtime.writer, name) for name in
                    ("events", "patches", "promotions", "accepted", "skipped", "update_seconds")},
-        "policy": {"seed": policy.seed, "price": policy.price, "group_counts": policy.group_counts,
+        "policy": {"seed": policy.seed, "start_position": policy.start_position, "price": policy.price, "group_counts": policy.group_counts,
                    "candidates": policy.candidates, "history": list(policy.history), "flags": list(policy.flags),
                    "receipts": [asdict(policy.receipts[p]) for p in sorted(policy.receipts)],
                    "events": sorted(policy.events), "last_position": policy.last_position},
@@ -150,14 +150,16 @@ def _verify_prefix(saved: dict[str, Any], ledger: Any) -> None:
 def _validate_saved_policy(saved: dict[str, Any], ledger: Any, record_count: int) -> None:
     """Bind restored receipts and adaptive policy history to durable records."""
     rows = ledger.records[:record_count]
-    queries = [row["payload"]["receipt"] for row in rows if row["kind"] == "QUERY"]
+    start = saved["start_position"]
+    queries = [row["payload"]["receipt"] for row in rows if row["kind"] == "QUERY" and
+               row["payload"]["receipt"]["prediction"]["position"] >= start]
     feedback = {row["payload"]["position"]: row["payload"]["label"] for row in rows if row["kind"] == "FEEDBACK"}
-    if len(queries) != len(saved["receipts"]) or len(queries) != saved["last_position"] + 1:
+    if len(queries) != len(saved["receipts"]) or len(queries) != saved["last_position"] - start + 1:
         raise CheckpointError("checkpoint query receipt count differs from ledger")
     flags: deque[int] = deque(maxlen=256)
     history: deque[tuple[float, str]] = deque(maxlen=256)
     group_counts: dict[str, int] = {}; candidates: dict[str, int] = {}; events = set(); price = .8
-    for pos, (query, row) in enumerate(zip(queries, saved["receipts"])):
+    for pos, (query, row) in enumerate(zip(queries, saved["receipts"]), start=start):
         p = query["prediction"]
         expected = dict(row); expected.update({"query_seal": None, "disclosed": False, "label": None})
         base = dict(query); base["prediction"] = SealedPrediction(**base["prediction"])
@@ -198,7 +200,7 @@ def restore_checkpoint(path: Path, *, trajectory: Any, ledger: Any, allow_advanc
         runtime, policy = trajectory.runtime, trajectory.policy
         if runtime.fixed_sha != state["fixed_sha"] or asdict(runtime._writer_reference) != state["writer_reference"]:
             raise CheckpointError("fixed Support bank or learning reference mismatch")
-        if runtime.normal_version or runtime.correction_version or policy.last_position != -1:
+        if runtime.normal_version or runtime.correction_version or policy.last_position != policy.start_position - 1:
             raise CheckpointError("restore target must be fresh")
         if runtime.states() is None:
             raise CheckpointError("invalid native runtime")
@@ -228,8 +230,8 @@ def restore_checkpoint(path: Path, *, trajectory: Any, ledger: Any, allow_advanc
             for name in ("support", "support_distances", "dynamic", "distances"):
                 setattr(trajectory.coverage, name, arrays[f"coverage_{name}"].copy())
             p = state["policy"]
-            if policy.seed != p["seed"]:
-                raise CheckpointError("query seed mismatch")
+            if policy.seed != p["seed"] or policy.start_position != p["start_position"]:
+                raise CheckpointError("query seed or category start position mismatch")
             policy.price = p["price"]; policy.group_counts = p["group_counts"]; policy.candidates = p["candidates"]
             policy.history = deque((tuple(x) for x in p["history"]), maxlen=256)
             policy.flags = deque(p["flags"], maxlen=256); policy.events = set(p["events"])

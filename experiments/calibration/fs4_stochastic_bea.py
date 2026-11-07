@@ -135,8 +135,11 @@ def receipt_digest(receipt: QueryReceipt) -> str:
 class StochasticBEAGroupSlot:
     """One label-blind sequential policy; feedback disclosure is one-shot."""
 
-    def __init__(self, seed: int = 37) -> None:
+    def __init__(self, seed: int = 37, *, start_position: int = 0) -> None:
+        if isinstance(start_position, bool) or not isinstance(start_position, int) or start_position < 0:
+            raise ValueError("start position must be a nonnegative event index")
         self.seed = int(seed)
+        self.start_position = start_position
         self.price = 0.80
         self.group_counts: dict[str, int] = {}
         self.candidates: dict[str, int] = {}
@@ -144,7 +147,7 @@ class StochasticBEAGroupSlot:
         self.flags: deque[int] = deque(maxlen=256)
         self.receipts: dict[int, QueryReceipt] = {}
         self.events: set[str] = set()
-        self.last_position = -1
+        self.last_position = start_position - 1
 
     def prior_scale(self) -> float:
         values = np.asarray([x[0] for x in self.history], dtype=np.float64)
@@ -159,7 +162,7 @@ class StochasticBEAGroupSlot:
                topk_dN_mean: float, pre_score_scale: float) -> QueryReceipt:
         if prediction.position != self.last_position + 1:
             raise ValueError("events must be sealed once in stream order")
-        if self.last_position >= 0:
+        if self.receipts:
             previous = self.receipts[self.last_position]
             if not previous.query_seal or (previous.executed and not previous.disclosed):
                 raise ValueError("previous query decision or feedback was not completed")

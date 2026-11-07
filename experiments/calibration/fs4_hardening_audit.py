@@ -13,12 +13,13 @@ START = "3bd33076789f66f7086f8f2e165b18d789e2c7d2"
 SOURCES = tuple("experiments/calibration/" + name for name in (
     "fs4_errors.py", "fs4_durable_ledger.py", "fs4_durable_runtime.py", "fs4_checkpoint.py", "fs4_resources.py",
     "fs4_query_stress.py", "fs4_hardening_audit.py", "fs4_support_preflight.py", "fs4_greedy_provenance.py",
-    "fs4_source_excluded_scorer.py", "fs4_threshold_controllers.py", "fs4_threshold_integration.py"))
+    "fs4_source_excluded_scorer.py", "fs4_stochastic_bea.py", "fs4_threshold_controllers.py", "fs4_threshold_integration.py"))
 DOCS = tuple("docs/calibration/fs4_threshold/HARDENING_R1_" + name + ".md" for name in (
     "CHANGELOG", "FATAL_ERROR_POLICY", "QUERY_STRESS_REPORT", "LEDGER_AND_RESUME_CONTRACT",
     "NATIVE_GPU_PARITY", "RESOURCE_ASSESSMENT", "TEST_MATRIX", "INDEPENDENT_REVIEW_HANDOFF"))
 ALLOWLIST = frozenset((*SOURCES, *DOCS, "AGENTS.md",
     "docs/calibration/fs4_threshold/HARDENING_R1_GPU_PARITY_MANIFEST.json",
+    "docs/calibration/fs4_threshold/HARDENING_R1_GPU_PARITY_MANIFEST_V2.json",
     "docs/calibration/fs4_threshold/HARDENING_R1_QUERY_STRESS.json",
     "docs/calibration/fs4_threshold/FS4_HARDENING_R1_AUTHORIZATION.md",
     "tests/calibration/test_fs4_hardening_r1.py", "tests/calibration/test_fs4_hardening_cuda.py"))
