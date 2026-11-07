@@ -182,19 +182,31 @@ class ProductionContext:
 
     def __init__(self, *, ledger: DurableLedger, category: str, controller: str | None = None) -> None:
         require_isolated_worker()
+        self._initialize(ledger=ledger, category=category, controller=controller)
+
+    def _initialize(self, *, ledger: Any, category: str, controller: str | None = None,
+                    research_payload: Mapping[str, Any] | None = None) -> None:
         from experiments import p0_protocol_audit as p0
         from experiments.calibration import profiles, r1_matched_correction_pilot as r1, r3_fullstream_2x2 as r3
-        if type(ledger) is not DurableLedger or category != ledger.current_category:
+        if research_payload is not None:
+            from .fs4_research_context import ResearchContext
+            from .fs4_research_ledger import ResearchLedger
+            if type(self) is not ResearchContext or type(ledger) is not ResearchLedger:
+                raise FS4BoundaryError("research initialization requires the research-only context and ledger")
+        if (research_payload is None and type(ledger) is not DurableLedger) or category != ledger.current_category:
             raise FS4BoundaryError("production context requires the active production ledger category")
         if ledger.manifest["profile"] == "SHARED_TRAJECTORY_THRESHOLD_ONLY":
             if controller is not None or ledger.manifest.get("controller") is not None:
                 raise FS4BoundaryError("shared profile cannot select a coupled controller")
         elif controller not in ("L", "E") or controller != ledger.manifest.get("controller"):
             raise FS4BoundaryError("coupled controller differs from the signed run manifest")
-        document = ledger.manifest.get("r2_execution_manifest")
-        if not isinstance(document, dict):
-            raise FS4BoundaryError("signed trusted execution manifest missing")
-        signed = verify_production_signed(document, role="experiment_manifest")
+        if research_payload is None:
+            document = ledger.manifest.get("r2_execution_manifest")
+            if not isinstance(document, dict):
+                raise FS4BoundaryError("signed trusted execution manifest missing")
+            signed = verify_production_signed(document, role="experiment_manifest")
+        else:
+            signed = research_payload
         payload = validate_execution_manifest(signed, ledger.manifest)
         if category not in payload["categories"]:
             raise FS4BoundaryError("unregistered category")

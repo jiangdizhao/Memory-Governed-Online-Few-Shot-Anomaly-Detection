@@ -49,3 +49,7 @@ The separate `docs/calibration/EXPERIMENT_A4_EB68_AUTHORIZATION.md` authorizes o
 ## FS4 hardening R2 scoped engineering authorization
 
 `docs/calibration/fs4_threshold/FS4_HARDENING_R2_AUTHORIZATION.md` authorizes only the R2 trusted execution boundary, Stage B integrity and private-storage engineering repair, plus bounded synthetic CPU/CUDA verification. It does not authorize scientific execution, Real-IAD TEST data or outcomes, masks, additional reference images, historical-source modifications, or a future campaign. The earlier R1 preflight receipts remain immutable historical evidence. All other scientific and repository invariants remain in force.
+
+## FS4 trusted local research engineering authorization
+
+`docs/calibration/fs4_threshold/FS4_TRUSTED_LOCAL_RESEARCH_AUTHORIZATION.md` authorizes only the separately named non-adversarial research execution implementation and synthetic verification. It does not authorize a scientific run, Real-IAD TEST data or outcomes, masks, historical-source changes, or a future campaign. High-security production execution remains blocked. All other scientific and repository invariants remain in force.
