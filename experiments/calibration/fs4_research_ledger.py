@@ -16,6 +16,12 @@ RESEARCH_SOURCES = frozenset({
     "experiments/calibration/fs4_research_worker.py",
     "experiments/calibration/fs4_research_evaluator.py",
     "experiments/calibration/fs4_research_stage_a_verify.py",
+    "experiments/calibration/fs4_r4_preparation.py",
+    "experiments/calibration/fs4_r4_blinded.py",
+    "experiments/calibration/fs4_r4_broker.py",
+    "experiments/calibration/fs4_r4_worker.py",
+    "experiments/calibration/fs4_r4_mapping_verify.py",
+    "experiments/calibration/fs4_r4_evaluator.py",
 })
 
 
@@ -31,7 +37,18 @@ class ResearchLedger(SyntheticTestLedger):
         execution = supplied.get("research_execution_manifest")
         if not isinstance(execution, dict):
             raise LedgerIntegrityError("research execution registration missing")
-        self.execution_manifest = validate_execution_manifest(execution, supplied)
+        if execution.get("schema") == "FS4_R4_BLINDED_EXECUTION_V1":
+            required = {"run_id", "source_commit", "source_fingerprints", "expected_events_by_category", "profile",
+                        "stream_sha256_by_category", "scientific_contract_sha256", "dataset_identity_sha256",
+                        "model_state_sha256", "support_groups_by_category", "fixed_support_sha256_by_category",
+                        "query_seed", "execution_scope", "protocol", "research_execution_manifest"}
+            if supplied.get("profile") == "COUPLED_QUERY_ONLY_FROZEN_WRITER": required.add("controller")
+            if set(supplied) != required:
+                raise LedgerIntegrityError("blinded ledger contains unregistered fields")
+            from .fs4_r4_blinded import validate_blinded_execution
+            self.execution_manifest = validate_blinded_execution(execution, supplied)
+        else:
+            self.execution_manifest = validate_execution_manifest(execution, supplied)
         self._execution_manifest = self.execution_manifest
         self._initial_manifest_digest = digest(supplied)
         self._trusted_context = None
@@ -42,6 +59,8 @@ class ResearchLedger(SyntheticTestLedger):
             self._private.write("manifest.json", canonical(supplied) + b"\n")
             self._private.write("events.jsonl", b"")
             self._private.write("writer.lock", b"0")
+            if execution.get("schema") == "FS4_R4_BLINDED_EXECUTION_V1":
+                self._private.write("INCOMPLETE.json", canonical({"status": "INCOMPLETE", "stage": "A"}) + b"\n")
         else:
             for name in ("manifest.json", "events.jsonl", "writer.lock"):
                 self._private.read(name)
@@ -97,6 +116,9 @@ class ResearchLedger(SyntheticTestLedger):
                 "model_state_sha256": self.manifest["model_state_sha256"], "feature_sha256": event.get("feature_sha256"),
                 "source_commit": self.manifest["source_commit"],
                 "fixed_support_sha256": self.manifest["fixed_support_sha256_by_category"][self.current_category]}
+            if self.execution_manifest.get("schema") == "FS4_R4_BLINDED_EXECUTION_V1":
+                expected.update({"resource_sha256": row["resource_sha256"], "pixel_sha256": row["pixel_sha256"],
+                                 "view": row["view"]})
             if (event.get("event") != row["event"] or event.get("group") != row["group"] or
                     any(p.get(key) != value for key, value in expected.items()) or
                     not isinstance(p.get("cls_sha256"), str) or len(p["cls_sha256"]) != 64 or

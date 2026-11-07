@@ -53,3 +53,7 @@ The separate `docs/calibration/EXPERIMENT_A4_EB68_AUTHORIZATION.md` authorizes o
 ## FS4 trusted local research engineering authorization
 
 `docs/calibration/fs4_threshold/FS4_TRUSTED_LOCAL_RESEARCH_AUTHORIZATION.md` authorizes only the separately named non-adversarial research execution implementation and synthetic verification. It does not authorize a scientific run, Real-IAD TEST data or outcomes, masks, historical-source changes, or a future campaign. High-security production execution remains blocked. All other scientific and repository invariants remain in force.
+
+## FS4 R4 label-blind engineering authorization
+
+`docs/calibration/fs4_threshold/FS4_R4_ENGINEERING_AUTHORIZATION.md` authorizes the FS4 R4 label-blind adapter and query-only broker implementation with synthetic verification only. It does not authorize real TEST data or outcomes, masks, scientific execution, historical-source changes, or a future campaign. The high-security production context remains blocked. All other scientific and repository invariants remain in force.

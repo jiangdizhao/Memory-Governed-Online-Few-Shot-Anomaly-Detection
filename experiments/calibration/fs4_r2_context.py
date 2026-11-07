@@ -191,7 +191,8 @@ class ProductionContext:
         if research_payload is not None:
             from .fs4_research_context import ResearchContext
             from .fs4_research_ledger import ResearchLedger
-            if type(self) is not ResearchContext or type(ledger) is not ResearchLedger:
+            from .fs4_r4_worker import BlindedResearchContext
+            if type(self) not in (ResearchContext, BlindedResearchContext) or type(ledger) is not ResearchLedger:
                 raise FS4BoundaryError("research initialization requires the research-only context and ledger")
         if (research_payload is None and type(ledger) is not DurableLedger) or category != ledger.current_category:
             raise FS4BoundaryError("production context requires the active production ledger category")
@@ -207,7 +208,11 @@ class ProductionContext:
             signed = verify_production_signed(document, role="experiment_manifest")
         else:
             signed = research_payload
-        payload = validate_execution_manifest(signed, ledger.manifest)
+        if research_payload is not None and signed.get("schema") == "FS4_R4_BLINDED_EXECUTION_V1":
+            from .fs4_r4_blinded import validate_blinded_execution
+            payload = validate_blinded_execution(signed, ledger.manifest)
+        else:
+            payload = validate_execution_manifest(signed, ledger.manifest)
         if category not in payload["categories"]:
             raise FS4BoundaryError("unregistered category")
         receipt_bytes = PREFLIGHT.read_bytes()
