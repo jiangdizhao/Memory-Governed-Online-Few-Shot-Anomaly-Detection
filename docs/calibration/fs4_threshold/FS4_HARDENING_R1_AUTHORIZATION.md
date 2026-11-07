@@ -1,0 +1,5 @@
+# FS4 hardening R1 engineering authorization
+
+The user authorizes `FS4_THRESHOLD_HARDENING_R1` on branch `calibration-stage0-contract-20261029` from parent `3bd33076789f66f7086f8f2e165b18d789e2c7d2`. This is infrastructure and non-scientific verification, not authorization to run a scientific experiment.
+
+FS4-only source, tests and reports may be added or repaired. Synthetic CPU and CUDA checks are authorized. A bounded native parity preflight may use only the previously registered four TRAIN Supports in each of the four exposed development categories after independent source-group identity verification, with the frozen model and augmentation, and only after CPU checks and a source-freeze commit. Fail closed if identities or native source fidelity cannot be established. No additional normals, historical reference scores/features, TEST images or labels, confirmation categories, masks, or scientific performance metrics are allowed. The original fixed Support bank, accepted estimators, native mechanisms and historical source/output files remain protected. This authorization does not permit pushing or a future scientific campaign.

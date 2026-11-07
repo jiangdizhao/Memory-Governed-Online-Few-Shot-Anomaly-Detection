@@ -11,6 +11,7 @@ import torch
 
 from .fs4_greedy_provenance import GreedyProvenance, _native_modules
 from .fs4_threshold_core import NormalEvidence, support_self_reference
+from .fs4_errors import FS4ProvenanceIntegrityError, FS4StateMutationError
 
 
 @dataclass(frozen=True)
@@ -109,12 +110,22 @@ class NativeSourceExcludedScorer:
         from experiments.calibration import r1_matched_correction_pilot as r1
         from experiments.calibration.native import _fixed_bank_digest
         bridge, _ = _native_modules()
-        record.evidence.validate()
+        try:
+            record.evidence.validate()
+        except (ValueError, TypeError, AttributeError) as exc:
+            raise FS4ProvenanceIntegrityError("invalid cached normal evidence") from exc
         self.provenance.verify(self.bank)
         if (record.normalization != self.normalization or record.dtype != str(record.features.dtype) or
                 _feature_digest(record.features) != record.feature_sha256 or
                 event_position <= record.evidence.position):
-            raise ValueError("CURRENT_STATE_RESCORING_UNAVAILABLE: feature convention mismatch")
+            raise FS4ProvenanceIntegrityError("CURRENT_STATE_RESCORING_UNAVAILABLE: feature convention mismatch")
+        try:
+            n = int(self.correction_cb.size())
+            r1._validate_c1_source_groups(self.correction_sources,
+                self.correction_cb.last_step[:n].detach().cpu().tolist(),
+                event_position=int(event_position), phase="pre_score", event_group=record.evidence.group)
+        except (r1.R1CausalityError, ValueError, TypeError, AttributeError) as exc:
+            raise FS4ProvenanceIntegrityError("invalid C1 source provenance") from exc
         before_fixed = _fixed_bank_digest(self.bank)
         before_g = bridge.snapshot(self.bank, version=0).sha256()
         before_provenance = self.provenance.digest()
@@ -146,4 +157,4 @@ class NativeSourceExcludedScorer:
                     bridge.snapshot(self.bank, version=0).sha256() != before_g or
                     self.provenance.digest() != before_provenance or
                     _correction_digest(r1, self.correction_cb, self.correction_sources) != before_c):
-                raise RuntimeError("source-excluded scoring mutated a live native state")
+                raise FS4StateMutationError("source-excluded scoring mutated a live native state")

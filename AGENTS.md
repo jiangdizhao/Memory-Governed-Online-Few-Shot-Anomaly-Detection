@@ -41,3 +41,7 @@ The separate `docs/calibration/EXPERIMENT_A4_EB68_AUTHORIZATION.md` authorizes o
 ## FS4 selection-aware threshold implementation authorization
 
 `docs/calibration/FS4_THRESHOLD_IMPLEMENTATION_AUTHORIZATION.md` authorizes the separate `FS4_SELECTION_AWARE_THRESHOLD_IMPLEMENTATION_V1` implementation and CPU synthetic verification only. It covers the new C64-free stochastic group-slot query design, the historical-score and source-excluded current-state threshold controllers, and their new provenance adapters. It does not authorize scientific data scoring, Real-IAD TEST labels or masks, model-weight downloads, historical-source modifications, or a future experiment. Scientific execution requires a later explicit authorization following independent review.
+
+## FS4 hardening R1 scoped engineering authorization
+
+`docs/calibration/fs4_threshold/FS4_HARDENING_R1_AUTHORIZATION.md` authorizes `FS4_THRESHOLD_HARDENING_R1`: FS4-only repairs and production infrastructure, synthetic CPU/CUDA verification, and the narrowly defined verified four-Support TRAIN-only engineering parity preflight. No scientific experiment, TEST labels or masks, other categories, historical-source edits, or additional normal-reference inputs are authorized. All other scientific and repository invariants remain in force.

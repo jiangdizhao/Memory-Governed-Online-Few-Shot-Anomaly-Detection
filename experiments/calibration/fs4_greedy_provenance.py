@@ -13,6 +13,7 @@ import torch
 
 from .fs4_threshold_core import NormalEvidence
 from .fs4_stochastic_bea import StochasticBEAGroupSlot
+from .fs4_errors import FS4ProvenanceIntegrityError
 
 
 def _native_modules() -> tuple[Any, Any]:
@@ -52,7 +53,7 @@ class GreedyProvenance:
                 bridge.snapshot(bank, version=0).sha256() != self.memory_digest or
                 any(not row.get("groups") or not row.get("history") for layer in self.rows for row in layer)):
             self.valid = False
-            raise ValueError("SOURCE_PROVENANCE_INCOMPLETE: Greedy sidecar does not match live bank")
+            raise FS4ProvenanceIntegrityError("SOURCE_PROVENANCE_INCOMPLETE: Greedy sidecar does not match live bank")
         for layer_index, (cb, rows) in enumerate(zip(cbs, self.rows)):
             active = cb.protos.detach().to("cpu").contiguous()
             for slot, row in enumerate(rows):
@@ -64,12 +65,12 @@ class GreedyProvenance:
                         for item in history) or
                         row["groups"] != sorted({item["group"] for item in history})):
                     self.valid = False
-                    raise ValueError("SOURCE_PROVENANCE_INCOMPLETE: malformed source history")
+                    raise FS4ProvenanceIntegrityError("SOURCE_PROVENANCE_INCOMPLETE: malformed source history")
                 last = history[-1]
                 if _feature_id(active[slot].reshape(1, -1), last["group"],
                                last["position"], layer_index, last["patch"]) != last["feature_id"]:
                     self.valid = False
-                    raise ValueError("SOURCE_PROVENANCE_INCOMPLETE: active prototype identity differs")
+                    raise FS4ProvenanceIntegrityError("SOURCE_PROVENANCE_INCOMPLETE: active prototype identity differs")
 
     def eligible_indices(self, bank: Any, group: str) -> list[list[int]]:
         self.verify(bank)
@@ -136,7 +137,7 @@ class GreedyProvenance:
                           evidence.position, score=float(score), theta=float(theta_ref), sigma=float(sigma_ref))
             actual = bridge.dynamic_codebooks(bank)
             if any(not torch.equal(x.protos, y.protos) for x, y in zip(actual, mirrors)):
-                raise ValueError("native writer and disposable Greedy mirror differ")
+                raise FS4ProvenanceIntegrityError("native writer and disposable Greedy mirror differ")
             self.rows = proposed
             self.memory_digest = bridge.snapshot(bank, version=0).sha256()
             self.revision += int(accepted > 0)

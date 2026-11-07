@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+from functools import wraps
 import hashlib
 import json
 import math
@@ -17,8 +18,22 @@ from .fs4_source_excluded_scorer import NativeSourceExcludedScorer, _correction_
 from .fs4_stochastic_bea import SealedPrediction, StochasticBEAGroupSlot
 from .fs4_threshold_core import NormalEvidence, _identity
 from .fs4_threshold_controllers import SelectionAwareHistoricalThreshold, SelectionAwareSourceExcludedThreshold
+from .fs4_errors import FS4FatalIntegrityError
 
 FEATURE_CONVENTION = "native_encode_pil_concat_l2_normalized_before_scorer_normalization"
+
+
+def _condition_guard(method: Callable[..., Any]) -> Callable[..., Any]:
+    @wraps(method)
+    def guarded(self: Any, *args: Any, **kwargs: Any) -> Any:
+        if getattr(self, "failed", False):
+            raise FS4FatalIntegrityError("condition was invalidated by an earlier event failure")
+        try:
+            return method(self, *args, **kwargs)
+        except Exception:
+            self.failed = True
+            raise
+    return guarded
 
 
 def prediction_digest(payload: dict[str, Any]) -> str:
@@ -221,7 +236,8 @@ class NativeRuntime:
             self.normal_version += 1
         if correction_before != _correction_digest(r1, self.correction_cb, self.sources):
             self.correction_version += 1
-        return {"before": before, "after": after, "greedy": writer_result, "outcome": outcome}
+        return {"before": before, "after": after, "greedy": writer_result, "outcome": outcome,
+                "learning_reference_threshold": self.theta_ref, "learning_prediction": pred}
 
 
 class SharedTrajectory:
@@ -233,6 +249,9 @@ class SharedTrajectory:
         self.L = SelectionAwareHistoricalThreshold(theta0)
         self.E = SelectionAwareSourceExcludedThreshold(theta0, runtime.rescorer)
         self._query_reference = float(theta0)
+        self._learning_reference = float(getattr(runtime, "theta_ref", theta0))
+        if self._learning_reference != float(theta0):
+            raise ValueError("shared learning reference must equal frozen Support initialization")
         self.seal_prediction, self.seal_query, self.label_provider = seal_prediction, seal_query, label_provider
         self.mode = "SHARED_TRAJECTORY_THRESHOLD_ONLY"
 
@@ -240,11 +259,14 @@ class SharedTrajectory:
     def query_reference(self) -> float:
         return self._query_reference
 
+    @_condition_guard
     def step(self, *, position: int, group: str, event: str, image: Any,
              features: torch.Tensor, cls_feature: Any, feature_convention: str) -> dict[str, Any]:
         if (feature_convention != FEATURE_CONVENTION or not isinstance(features, torch.Tensor) or
                 tuple(features.shape) != (784, 4096) or features.dtype != torch.float32 or not torch.isfinite(features).all()):
             raise ValueError("current event must supply the complete registered fused feature tensor")
+        if float(getattr(self.runtime, "theta_ref", self._learning_reference)) != self._learning_reference:
+            raise FS4FatalIntegrityError("frozen writer/C1 learning reference changed")
         scale = self.policy.prior_scale()  # obtained before the current score
         states = self.runtime.states()
         normal_version, correction_version = self.runtime.normal_version, self.runtime.correction_version
@@ -257,11 +279,15 @@ class SharedTrajectory:
         top_ids = np.asarray(scored["top_ids"], dtype=np.int64).tolist()
         threshold_state = hashlib.sha256(json.dumps({"L": self.L.engine.theta, "E": self.E.engine.theta,
             "query_reference": self.query_reference}, sort_keys=True).encode()).hexdigest()
-        payload = {"position": position, "group": group, "event": event,
+        learning_prediction = int(scored["G"] >= self._learning_reference)
+        payload = {"position": position, "group": group, "event": event, "profile": self.mode,
                    "scores": {j: scored[j] for j in ("G", "GC")}, "decisions": decisions,
                    "states": states, "threshold_state": threshold_state,
                    "thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta)},
                    "query_reference_threshold": self.query_reference,
+                   "learning_reference_threshold": self._learning_reference,
+                   "learning_prediction": learning_prediction,
+                   "decision_learning_disagreement": {name: {j: decisions[name][j] != learning_prediction for j in ("G", "GC")} for name in decisions},
                    "feature_sha256": feature_sha, "top32_ids": top_ids}
         expected_seal = prediction_digest(payload)
         seal = self.seal_prediction(payload)
@@ -288,6 +314,10 @@ class SharedTrajectory:
                            normalization=feature_convention)
                 self.L.add(evidence)
             update = self.runtime.feedback(receipt=receipt, evidence=evidence, policy=self.policy, scored=scored)
+            update.update({"learning_reference_threshold": self._learning_reference,
+                           "learning_prediction": learning_prediction, "controller_decisions": decisions,
+                           "controller_thresholds": payload["thresholds"],
+                           "decision_learning_disagreement": payload["decision_learning_disagreement"]})
             if evidence is not None:
                 self.coverage.observe_normal(cls_feature)
             current = self.runtime.states()
@@ -309,13 +339,19 @@ class CoupledTrajectory:
         self.controller = (SelectionAwareHistoricalThreshold(theta0) if controller == "L" else
                            SelectionAwareSourceExcludedThreshold(theta0, runtime.rescorer))
         self.seal_prediction, self.seal_query, self.label_provider = seal_prediction, seal_query, label_provider
-        self.mode = "COUPLED_CONTROLLER_SPECIFIC_QUERY"
+        self.mode = "COUPLED_QUERY_ONLY_FROZEN_WRITER"
+        self._learning_reference = float(getattr(runtime, "theta_ref", theta0))
+        if self._learning_reference != float(theta0):
+            raise ValueError("coupled learning reference must equal frozen Support initialization")
 
+    @_condition_guard
     def step(self, *, position: int, group: str, event: str, image: Any,
              features: torch.Tensor, cls_feature: Any, feature_convention: str) -> dict[str, Any]:
         if (feature_convention != FEATURE_CONVENTION or not isinstance(features, torch.Tensor) or
                 tuple(features.shape) != (784, 4096) or features.dtype != torch.float32 or not torch.isfinite(features).all()):
             raise ValueError("current event must supply the complete registered fused feature tensor")
+        if float(getattr(self.runtime, "theta_ref", self._learning_reference)) != self._learning_reference:
+            raise FS4FatalIntegrityError("frozen writer/C1 learning reference changed")
         scale = self.policy.prior_scale()
         states = self.runtime.states()
         normal_version, correction_version = self.runtime.normal_version, self.runtime.correction_version
@@ -327,10 +363,14 @@ class CoupledTrajectory:
         feature_sha = _feature_digest(features)
         top_ids = np.asarray(scored["top_ids"], dtype=np.int64).tolist()
         threshold_state = hashlib.sha256(json.dumps(theta, sort_keys=True).encode()).hexdigest()
-        payload = {"position": position, "group": group, "event": event,
+        learning_prediction = int(scored["G"] >= self._learning_reference)
+        payload = {"position": position, "group": group, "event": event, "profile": self.mode,
                    "scores": {j: scored[j] for j in ("G", "GC")}, "decisions": decisions,
                    "states": states, "threshold_state": threshold_state,
                    "thresholds": theta, "query_reference_threshold": theta["GC"],
+                   "learning_reference_threshold": self._learning_reference,
+                   "learning_prediction": learning_prediction,
+                   "decision_learning_disagreement": {j: decisions[j] != learning_prediction for j in ("G", "GC")},
                    "feature_sha256": feature_sha, "top32_ids": top_ids}
         expected_seal = prediction_digest(payload)
         seal = self.seal_prediction(payload)
@@ -359,6 +399,10 @@ class CoupledTrajectory:
                 else:
                     self.controller.add(evidence)
             update = self.runtime.feedback(receipt=receipt, evidence=evidence, policy=self.policy, scored=scored)
+            update.update({"learning_reference_threshold": self._learning_reference,
+                           "learning_prediction": learning_prediction, "controller_decisions": decisions,
+                           "controller_thresholds": theta,
+                           "decision_learning_disagreement": payload["decision_learning_disagreement"]})
             if evidence is not None:
                 self.coverage.observe_normal(cls_feature)
             if self.kind == "E":
