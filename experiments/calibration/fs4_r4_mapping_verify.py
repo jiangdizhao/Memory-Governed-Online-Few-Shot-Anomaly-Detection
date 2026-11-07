@@ -20,7 +20,7 @@ def project(private_root: Path, run_root: Path, expected_manifest_sha256: str) -
     if digest(manifest) != expected_manifest_sha256:
         raise ValueError("sealed manifest differs")
     execution = manifest["research_execution_manifest"]
-    if execution.get("schema") != "FS4_R4_BLINDED_EXECUTION_V1":
+    if execution.get("schema") not in ("FS4_R4_BLINDED_EXECUTION_V1", "FS4_JOINT_CAMPAIGN_EXECUTION_V1"):
         raise ValueError("blinded registration required")
     mapping = verified_mapping(private_root, execution)
     return {"schema": "FS4_R4_OUTCOME_PROJECTION_V1", "manifest_sha256": expected_manifest_sha256,

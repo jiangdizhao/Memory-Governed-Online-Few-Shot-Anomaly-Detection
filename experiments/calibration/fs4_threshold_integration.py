@@ -289,6 +289,7 @@ class SharedTrajectory:
             raise ValueError("scorer state changed before event seal")
         decisions = {name: {j: int(scored[j] >= controller.engine.theta[j]) for j in ("G", "GC")}
                      for name, controller in (("L", self.L), ("E", self.E))}
+        decisions["FrozenTheta"] = {j: int(scored[j] >= self._learning_reference) for j in ("G", "GC")}
         novelty, _distance = self.coverage.novelty(cls_feature)
         query_inputs = {"novelty_percentile": novelty,
             "correction_top32": np.asarray(scored["correction_top32"], dtype=np.float64).tolist(),
@@ -297,12 +298,14 @@ class SharedTrajectory:
         feature_sha = _feature_digest(features)
         top_ids = np.asarray(scored["top_ids"], dtype=np.int64).tolist()
         threshold_state = hashlib.sha256(json.dumps({"L": self.L.engine.theta, "E": self.E.engine.theta,
+            "FrozenTheta": {j: self._learning_reference for j in ("G", "GC")},
             "query_reference": self.query_reference}, sort_keys=True).encode()).hexdigest()
         learning_prediction = int(scored["G"] >= self._learning_reference)
         payload = {"position": position, "group": group, "event": event, "profile": self.mode,
                    "scores": {j: scored[j] for j in ("G", "GC")}, "decisions": decisions,
                    "states": states, "threshold_state": threshold_state,
-                   "thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta)},
+                   "thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta),
+                                  "FrozenTheta": {j: self._learning_reference for j in ("G", "GC")}},
                    "query_reference_threshold": self.query_reference,
                    "query_inputs": query_inputs,
                    "learning_reference_threshold": self._learning_reference,
@@ -347,7 +350,8 @@ class SharedTrajectory:
             current = self.runtime.states()
             self.E.refresh(state_g=current["G"], state_gc=current["GC"], event_position=position + 1)
         return {"sealed_prediction": payload, "query": receipt, "feedback_update": update,
-                "next_thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta)},
+                "next_thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta),
+                                    "FrozenTheta": {j: self._learning_reference for j in ("G", "GC")}},
                 "mode": self.mode}
 
 

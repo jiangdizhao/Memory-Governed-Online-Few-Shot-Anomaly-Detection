@@ -1,0 +1,13 @@
+# Query and feedback contract
+
+The policy is the existing `STOCHASTIC_BEA_GROUP_SLOT_V1`, seed 37. One candidate ordinal is selected uniformly in each five-view Source Group by the registered identity hash. The candidate-slot probability is 0.2. The unchanged B+N+D utility uses the current registered query reference, lagged label-blind MAD scale (floor 0.02), novelty, correction residual and native dense-score diagnostics. Exploitation probability is 1 when utility exceeds current cost; otherwise exploration probability is 0.05. The two-stage design probability at the candidate event is `0.2 × gate_probability`. At most one executed query is allowed per group.
+
+The target is 0.037 queries per image event. Initial cost is 0.8; its learning rate is 0.02, rolling window is 256 events, and bounds are [0.05, 3.0]. The target is not a guarantee. No forced early query or post-hoc catch-up is permitted.
+
+Each prediction and query input is durably sealed before a possible label intent. The broker independently replays that trajectory's private ledger and releases a label only for its matching executed query, event, group, position, query digest and durable `LABEL_INTENT`. A disclosure proof is created before release. A duplicate disclosure is refused. An intent with no durable feedback is ambiguous and cannot be retried.
+
+S, CL and CE use distinct run IDs, ledgers, disclosure directories, native states and checkpoint namespaces. The common mapping does not grant cross-arm access: the event must independently pass that branch's query receipt and intent. Only queried labels may affect the registered online update. Unqueried outcomes remain inaccessible to Stage A and are evaluator-only after all twelve category/trajectory seals pass.
+
+For each registered normal feedback item, the estimator uses `w_i=min(1/pi_i,50)`, at least 12 distinct verified-normal groups, and clipped-weight ESS at least 12. The weighted higher 0.9 quantile updates separate G and GC thresholds, clipped to ±0.01 per accepted update. L retains the genuine pre-feedback historical score and never retroactively rescales it. E recomputes full FP32 cached features against current native state with direct same-Source-Group Greedy/C1 exclusion and native Top-32 reselection. E cache capacity is 1,024 groups; no half-precision conversion, replacement or silent drop is allowed.
+
+The Stage A audit records executed-query counts, candidate and event ordinals, probabilities, costs/utilities, queried-normal evidence, clipping and ESS summaries, threshold updates/holds, threshold trajectories, query-free intervals, E rescore calls/time/cache, and Greedy/C1 versions. Realized rate and deserts are reported without intervention.

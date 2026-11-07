@@ -208,7 +208,8 @@ class ProductionContext:
             signed = verify_production_signed(document, role="experiment_manifest")
         else:
             signed = research_payload
-        if research_payload is not None and signed.get("schema") == "FS4_R4_BLINDED_EXECUTION_V1":
+        if research_payload is not None and signed.get("schema") in (
+                "FS4_R4_BLINDED_EXECUTION_V1", "FS4_JOINT_CAMPAIGN_EXECUTION_V1"):
             from .fs4_r4_blinded import validate_blinded_execution
             payload = validate_blinded_execution(signed, ledger.manifest)
         else:
@@ -278,7 +279,26 @@ class ProductionContext:
             identity_images_and_features=identities, support_cls=np.stack(globals_), feature_convention=FEATURE_CONVENTION)
         if type(runtime) is not NativeRuntime or runtime.fixed_sha != ledger.manifest["fixed_support_sha256_by_category"][category]:
             raise FS4BoundaryError("constructed native fixed bank differs from the registered receipt")
+        if signed.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1":
+            joint_reference = signed["support_preflight_reference_by_category"][category]
+            support_paths = [str(Path(payload["dataset_root"]).absolute() / item["relative_path"])
+                             for item in support_records]
+            actual_groups = [item["group"] for item in support_records]
+            actual_content = [item["content_sha256"] for item in support_records]
+            actual_scores = [float(value) for value in reference["support_scores"]]
+            if (support_paths != json.loads(Path(signed["support_preflight_receipt_path"]).read_bytes())
+                    ["categories"][category]["absolute_paths"] or
+                    actual_groups != joint_reference["support_groups"] or
+                    actual_content != joint_reference["support_content_sha256"] or
+                    actual_scores != joint_reference["support_self_scores"] or
+                    float(reference["mean"]) != joint_reference["mean"] or
+                    float(reference["sample_std_ddof1"]) != joint_reference["sample_std_ddof1"] or
+                    float(reference["theta"]) != joint_reference["theta0"] or
+                    float(reference["writer_reference"]["sigma"]) != joint_reference["writer_sigma"] or
+                    runtime.fixed_sha != joint_reference["fixed_support_sha256"]):
+                raise FS4BoundaryError("constructed native four-Support bootstrap differs from campaign receipt")
         self._runtime = runtime
+        self._support_reference = copy.deepcopy(reference)
         self._runtime_binding = (id(runtime), id(runtime.bank), id(runtime.writer), id(runtime.correction_cb),
                                  id(runtime.rescorer), id(runtime.impl), id(runtime.cfg), id(self._backbone.model))
         start = payload["categories"][category]["events"][0]["position"]

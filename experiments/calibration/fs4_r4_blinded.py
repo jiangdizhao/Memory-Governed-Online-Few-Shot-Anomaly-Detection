@@ -27,6 +27,9 @@ def _hex(value: Any) -> bool:
 
 def validate_blinded_execution(payload: Mapping[str, Any], ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Validate a label-free registration and its preparation receipt."""
+    if isinstance(payload, Mapping) and payload.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1":
+        from .fs4_joint_campaign_contract import validate_joint_execution
+        return validate_joint_execution(payload, ledger)
     from experiments.calibration.profiles import NativeScorerConfig
     required = {"schema", "run_id", "protocol", "source_commit", "query_seed", "model_state_sha256",
                 "checkpoint_sha256", "hub_source_tree_sha256", "scorer_config_sha256", "preflight_receipt_sha256",

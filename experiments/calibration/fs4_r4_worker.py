@@ -6,6 +6,7 @@ import hashlib
 import json
 import multiprocessing
 from pathlib import Path
+import time
 from typing import Any
 
 import numpy as np
@@ -23,7 +24,8 @@ class BlindedResearchContext(ResearchContext):
     def __init__(self, *, ledger: Any, category: str, controller: str | None = None) -> None:
         from .fs4_research_ledger import ResearchLedger
         if (multiprocessing.current_process().name == "MainProcess" or type(ledger) is not ResearchLedger or
-                ledger.execution_manifest.get("schema") != "FS4_R4_BLINDED_EXECUTION_V1"):
+                ledger.execution_manifest.get("schema") not in ("FS4_R4_BLINDED_EXECUTION_V1",
+                                                                  "FS4_JOINT_CAMPAIGN_EXECUTION_V1")):
             raise FS4BoundaryError("blinded context requires its registered research ledger")
         self._full_validation = True; self._freeze_pending = True
         self._initialize(ledger=ledger, category=category, controller=controller, research_payload=ledger.execution_manifest)
@@ -31,6 +33,8 @@ class BlindedResearchContext(ResearchContext):
         from experiments.risk_safe.native_bridge import dynamic_codebooks
         if any(book.size() != 0 for book in dynamic_codebooks(self._runtime.bank)) or self._runtime.correction_cb.size() != 0:
             raise FS4BoundaryError("initial Greedy and C1 memories must be empty")
+        if ledger.execution_manifest.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1":
+            self._trajectory.audit_snapshot = lambda: _campaign_audit_snapshot(self._trajectory)
 
     def _encode_event(self, position: int) -> dict[str, Any]:
         from .fs4_r4_blinded import read_blinded_image
@@ -55,13 +59,58 @@ class BlindedResearchContext(ResearchContext):
             "source_commit": self._ledger.manifest["source_commit"],
             "fixed_support_sha256": self._ledger.manifest["fixed_support_sha256_by_category"][self._category],
             "resource_sha256": row["resource_sha256"], "pixel_sha256": row["pixel_sha256"], "view": row["view"]}
+        if position == self._manifest["categories"][self._category]["events"][0]["position"]:
+            supports = self._manifest["categories"][self._category]["supports"]
+            reference = self._support_reference
+            joint = self._ledger.execution_manifest.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1"
+            provenance["support_bootstrap"] = {
+                "support_groups": [item["group"] for item in supports],
+                "support_content_sha256": [item["content_sha256"] for item in supports],
+                "support_self_scores": list(reference["support_scores"]),
+                "mean": reference["mean"], "sample_std_ddof1": reference["sample_std_ddof1"],
+                "theta0": reference["theta"], "writer_sigma": reference["writer_reference"]["sigma"],
+                "fixed_support_sha256": reference["fixed_support_sha256"],
+                "preflight_receipt_sha256": (self._ledger.execution_manifest["support_preflight_receipt_sha256"]
+                    if joint else self._ledger.execution_manifest["preflight_receipt_sha256"]),
+                "additional_normal_images": 0,
+            }
         return {"position": position, "group": row["group"], "event": row["event"], "image": image,
                 "features": features[0], "cls_feature": cls_array, "feature_convention": FEATURE_CONVENTION,
                 "event_provenance": provenance}
 
 
+def _campaign_audit_snapshot(trajectory: Any) -> dict[str, Any]:
+    """Deterministic per-event counts used for later audit and temporal summaries."""
+    from .fs4_threshold_core import weights
+    runtime = trajectory.runtime
+    controllers = ({"L": trajectory.L, "E": trajectory.E} if hasattr(trajectory, "L") else
+                   {trajectory.kind: trajectory.controller})
+    rows = {}
+    for name, controller in controllers.items():
+        probabilities = [item.receipt.design_probability for item in controller.evidence]
+        ess = weights(probabilities, controller.engine.w_max)[2] if probabilities else 0.0
+        row = {"thresholds": dict(controller.engine.theta), "status": dict(controller.engine.status),
+               "suppression": dict(controller.engine.suppression), "revision": controller.revision,
+               "normal_evidence_groups": len({item.group for item in controller.evidence}),
+               "effective_sample_size": ess, "threshold_tokens": dict(controller.engine.tokens)}
+        if hasattr(controller, "cache"):
+            row.update({"cache_groups": len(controller.cache.records),
+                        "cache_bytes": controller.cache.bytes_report()["actual_tensor_bytes"],
+                        "rescore_seconds_total": float(sum(controller.rescore_seconds)),
+                        "rescore_invocations": controller.rescore_invocations,
+                        "rescore_calls": dict(controller.rescore_calls)})
+        rows[name] = row
+    from experiments.risk_safe.native_bridge import dynamic_codebooks
+    return {"controllers": rows, "normal_version": runtime.normal_version,
+            "correction_version": runtime.correction_version,
+            "greedy_dynamic_prototypes": sum(book.size() for book in dynamic_codebooks(runtime.bank)),
+            "correction_prototypes": runtime.correction_cb.size(),
+            "scorer_states": runtime.states()}
+
+
 def _worker_main(connection: Any, broker: Any, config_path: str, broker_manifest_sha256: str) -> None:
     ledger = None
+    worker_started = time.perf_counter()
     try:
         from .fs4_checkpoint import RecoveryLedger, begin_recovery, save_checkpoint
         from .fs4_durable_runtime import _DurableCore
@@ -75,7 +124,8 @@ def _worker_main(connection: Any, broker: Any, config_path: str, broker_manifest
         manifest = json.loads(Path(config["manifest_path"]).read_text(encoding="utf-8"))
         if digest(manifest) != broker_manifest_sha256:
             raise ResearchWorkerError("broker and worker registrations differ")
-        if manifest.get("research_execution_manifest", {}).get("schema") != "FS4_R4_BLINDED_EXECUTION_V1":
+        if manifest.get("research_execution_manifest", {}).get("schema") not in (
+                "FS4_R4_BLINDED_EXECUTION_V1", "FS4_JOINT_CAMPAIGN_EXECUTION_V1"):
             raise ResearchWorkerError("worker requires a blinded execution registration")
         run_root = Path(config["run_root"])
         ledger = ResearchLedger(run_root, manifest, create=config["create"])
@@ -131,6 +181,33 @@ def _worker_main(connection: Any, broker: Any, config_path: str, broker_manifest
                 context.validate_full(); result = core.seal_category(config["category"])
             elif action == "seal_global_a" and argument is None:
                 context.validate_full(); result = ledger.seal_global_stage_a()
+            elif action == "stats" and argument is None and manifest.get("trajectory_id") in ("S", "CL", "CE"):
+                import ctypes
+                class _Counters(ctypes.Structure):
+                    _fields_ = [("cb", ctypes.c_ulong), ("PageFaultCount", ctypes.c_ulong),
+                                ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+                                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                                ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t)]
+                host_peak = None
+                try:
+                    counters = _Counters(); counters.cb = ctypes.sizeof(_Counters)
+                    process = ctypes.windll.kernel32.GetCurrentProcess()
+                    if ctypes.windll.psapi.GetProcessMemoryInfo(process, ctypes.byref(counters), counters.cb):
+                        host_peak = int(counters.PeakWorkingSetSize)
+                except Exception:
+                    pass
+                controller_map = ({"L": context._trajectory.L, "E": context._trajectory.E}
+                                  if hasattr(context._trajectory, "L") else
+                                  {context._trajectory.kind: context._trajectory.controller})
+                result = {"active_worker_seconds": time.perf_counter() - worker_started,
+                          "host_peak_working_set_bytes": host_peak,
+                          "cuda_peak_allocated_bytes": int(torch.cuda.max_memory_allocated()) if torch.cuda.is_available() else None,
+                          "cuda_peak_reserved_bytes": int(torch.cuda.max_memory_reserved()) if torch.cuda.is_available() else None,
+                          "rescore_invocations": sum(getattr(c, "rescore_invocations", 0) for c in controller_map.values()),
+                          "rescore_seconds": sum(sum(getattr(c, "rescore_seconds", ())) for c in controller_map.values()),
+                          "cache_bytes": sum(getattr(c, "cache", None).bytes_report()["actual_tensor_bytes"]
+                                             for c in controller_map.values() if hasattr(c, "cache"))}
             elif action == "close" and argument is None:
                 connection.send_bytes(canonical({"status": "CLOSED"})); break
             else:
@@ -193,6 +270,7 @@ class BlindedResearchWorker:
     def checkpoint(self, name: str) -> Any: return self._command("checkpoint", name)
     def seal_category(self) -> str: return self._command("seal_category", None)
     def seal_global_a(self) -> str: return self._command("seal_global_a", None)
+    def stats(self) -> dict[str, Any]: return self._command("stats", None)
 
     def close(self) -> None:
         if self._process.is_alive():

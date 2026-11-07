@@ -1,0 +1,352 @@
+{
+  "schema": "FS4_FINAL_JOINT_CAMPAIGN_SPEC_V1",
+  "campaign_protocol": "FS4_FINAL_JOINT_CAMPAIGN_FREEZE_V1",
+  "specification_version": 1,
+  "status": "FROZEN_ENGINEERING_SPEC_PENDING_INDEPENDENT_REVIEW",
+  "scientific_execution_authorized": false,
+  "dataset_role": "development_only_not_independent_external_validation",
+  "categories": [
+    {
+      "name": "audiojack",
+      "expected_test_events": 3815,
+      "source_groups": 763
+    },
+    {
+      "name": "regulator",
+      "expected_test_events": 3855,
+      "source_groups": 771
+    },
+    {
+      "name": "switch",
+      "expected_test_events": 3820,
+      "source_groups": 764
+    },
+    {
+      "name": "rolled_strip_base",
+      "expected_test_events": 3805,
+      "source_groups": 761
+    }
+  ],
+  "totals": {
+    "events": 15295,
+    "source_groups": 3059,
+    "views_per_group": 5
+  },
+  "source_model_support": {
+    "historical_receipt_path": "docs/calibration/fs4_threshold/HARDENING_R1_GPU_PARITY_MANIFEST_V3.json",
+    "historical_receipt_sha256": "a709e088477002ecc8690841b2cbcfc0e02929f7e7369108df9f1b19daa91482",
+    "historical_receipt_source_commit": "348c0771121313cb5eaf7b71c28aea5bd7ea8b37",
+    "historical_receipt_role": "reference_identity_only; each future campaign must independently reproduce and verify the four-Support bootstrap",
+    "support_seed": 0,
+    "support_count_per_category": 4,
+    "support_role": "four original registered TRAIN-normal Support images only; no additional normal calibration images",
+    "support_absolute_path_rule": "Resolve the four paths from the original registered seed-0 support records under the registered dataset root; preserve the original resolved absolute path strings for native path-dependent augmentation and prototype-sub-sampling seeds.",
+    "support_records_by_category": {
+      "audiojack": {
+        "support_groups_sha256": "596aace2f6446db821f5456f4ca06161d9eae5d8d0b93c810fd8b03fc7bcac5a",
+        "support_images_sha256": "0f5de47d2465fac92317207399e607bbb08990615407198d76814a8a98b24f11",
+        "support_role_receipt_sha256": "127c3eba97b9011545e8f53c74e4248410fa5c8f29773b0f8b6d15de239dd1ad",
+        "support_image_content_sha256": [
+          "70eee61de2f47a840625908d3a045a718915a141ab01b3dfbc5371349ab1ea0d",
+          "14d605e4d72565a2f94c6e0d96d56ea6104e1ead995b12543ec68866568d583c",
+          "76895d8c240af80e00fa33dd36c434422aec668473e734ececba9767b662b22e",
+          "da39a76e6cd2d072fa2162a75dae6fc5e9180602267ed49cfd2c01de9d344027"
+        ],
+        "fixed_bank_sha256": "837fa5153e852b617e1d0ecf563509bca037f5c0cab29c48b06befd21ce02673"
+      },
+      "regulator": {
+        "support_groups_sha256": "cf4ee46d1afa826d30ef85e9d14b21e850a2875dd37aa3a83473284c6aa42a5a",
+        "support_images_sha256": "4a3a651ce886b217bb64e40b74719a156775a239eeb950c33dbc2dae0e3c1f55",
+        "support_role_receipt_sha256": "58ecf6ca0f158ceb98be5ca804b311ab6cfda8b0c867d27cbc6309477c70bd6f",
+        "support_image_content_sha256": [
+          "da9105e7f80526fdf58c201e6349e2a301f92f842878967f95e3a688322244aa",
+          "b894d3b80f7e557b1961143d88648fc24af607a9f0254232ec07bab3aa5c0bf4",
+          "613273b1b0bc775671ecbe08d73fc2796ea066f7bb2875b26c48e9e97af0fbe8",
+          "d279f33cd61238b8058527479a2a8c9c56de3c1b4d1dd00debc802ec5d63c38d"
+        ],
+        "fixed_bank_sha256": "b162fe852cdc4c7dd5c5a25e3560263427cde588d42f12364bac0d3c79df48bb"
+      },
+      "switch": {
+        "support_groups_sha256": "ed48457bddd13cc15dd9199e08653f8a94d2fc1f652b14c078c92f82bdc5a83f",
+        "support_images_sha256": "6f831e8245fa4d78569c53b4c95624c420aa50dc5511c061eefdf3643409127e",
+        "support_role_receipt_sha256": "5525c97822cbda1bf4bb094b1720180a514f655688ed145646015e08de7a76ac",
+        "support_image_content_sha256": [
+          "c2cab19829dffc345dd021a831eaf7a212e9f0f6f4f7f9c9840df786edf70ff4",
+          "72d107ada010760618f8b47f51c0652478f3330830ac744a56eb8fd47dd836ca",
+          "21db8c0b072a6dea0ac629731d11125d6994616abcccb91a8c4ae051c8915b54",
+          "1f62841748ffb0e2065326b250c0cfa95b50779a69a980b18ff96ba6278c5a00"
+        ],
+        "fixed_bank_sha256": "8a710d028509350568e976bc3ede66aa59603499cbea525bdd8579322b1a1558"
+      },
+      "rolled_strip_base": {
+        "support_groups_sha256": "4f065c5059e7ab3acb66601d3556dae3ac7e20d2f5e78d36fb833ee58576f8ac",
+        "support_images_sha256": "c9b3e99d9c31a7d335a6497c1a5a79c2b4310a5b235c66ae2da05d55d6267bc5",
+        "support_role_receipt_sha256": "b03ff3cc0726955ef76fa69abf0063f0b43627a9ebbc9e44fc93ef6303fbd2d8",
+        "support_image_content_sha256": [
+          "80ff212059e11baa8c7eefa37a6cd51ac3a742968916a3b2060809d71c1c3210",
+          "2fc832ed3900aba4396387eaeb4c87c13d84dd7b2b0100e2e5226f0241531be5",
+          "b303dfeddd967b1322b28a37b247feb4c8c6012f5d84c7f4157abd7cbb4a09ba",
+          "52592f4715face0c86c611235e7652b7dffd98c8b12193f501bf04efda7504b6"
+        ],
+        "fixed_bank_sha256": "12c1dcacba90b1f0c576480b0afddaabf2d80466845ac61f4346aebfd968d4f3"
+      }
+    },
+    "native_fixed_bank": {
+      "shape": [
+        8192,
+        4096
+      ],
+      "dtype": "torch.float16",
+      "bytes": 67108864,
+      "additional_normal_images": 0,
+      "initial_greedy_empty": true,
+      "initial_c1_empty": true
+    },
+    "cold_start": {
+      "equation": "mean(four_native_support_self_scores) + 2.5 * max(sample_std_ddof1(four_scores), 1e-6)",
+      "status": "COLD_START_UNCALIBRATED",
+      "guarantees": []
+    },
+    "model": {
+      "name": "dinov2_vitl14_reg",
+      "checkpoint_file": "dinov2_vitl14_reg4_pretrain.pth",
+      "checkpoint_sha256": "36e4deffbaef061a2576705b0c36f93621e2ae20bf6274694821b0b492551b51",
+      "model_state_sha256": "1f26464ba4055403e550f1d5c1333fb012631d98661df6993cabea730d17e3f9",
+      "hub_source_tree_sha256": "b7c0037f90671c4932393bd56de8c8a205b29a6eb22dea563b6c8a88c471da15",
+      "input_size": 392,
+      "resize_size": 448,
+      "feature_layers": "four registered quarter-depth DINO layers",
+      "feature_fuse": "concat",
+      "native_config_sha256": "ba3fa736734c2c6c3789f485f3288c5ae77177c68b6b3e24de7e257e447ced87",
+      "augmentation_seed": 0,
+      "bank_seed": 0,
+      "support_augmentations": 4,
+      "include_identity": false,
+      "prototype_sampling": "existing path-dependent native seed semantics"
+    }
+  },
+  "stream_order": {
+    "name": "historical R7 Seed-0 deterministic Source Group shuffle",
+    "source": "experiments/calibration/r7_shuffled_correction_4class.py:deterministic_group_shuffle",
+    "seed": 0,
+    "unit": "official five-view Source Group",
+    "within_group_order": "registered camera view order 1,2,3,4,5",
+    "category_order": [
+      "audiojack",
+      "regulator",
+      "switch",
+      "rolled_strip_base"
+    ],
+    "validation": "reconstruct an exact bijection from each registered unshuffled source manifest; freeze R7 order receipt and opaque registration once for all arms",
+    "historical_query_positions_imported": false
+  },
+  "arms": [
+    {
+      "trajectory_id": "S",
+      "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY",
+      "controller": null,
+      "query_reference": "frozen four-Support theta0",
+      "readouts": [
+        "L",
+        "E",
+        "FrozenTheta"
+      ],
+      "scorers": [
+        "G",
+        "GC"
+      ],
+      "isolated_state": false,
+      "run_id_distinct": true,
+      "ledger_distinct": true,
+      "disclosure_namespace_distinct": true,
+      "checkpoint_namespace_distinct": true
+    },
+    {
+      "trajectory_id": "CL",
+      "profile": "COUPLED_QUERY_ONLY_FROZEN_WRITER",
+      "controller": "L",
+      "query_reference": "active L/GC threshold",
+      "readouts": [
+        "L"
+      ],
+      "scorers": [
+        "G",
+        "GC"
+      ],
+      "isolated_state": true,
+      "run_id_distinct": true,
+      "ledger_distinct": true,
+      "disclosure_namespace_distinct": true,
+      "checkpoint_namespace_distinct": true
+    },
+    {
+      "trajectory_id": "CE",
+      "profile": "COUPLED_QUERY_ONLY_FROZEN_WRITER",
+      "controller": "E",
+      "query_reference": "active E/GC threshold",
+      "readouts": [
+        "E"
+      ],
+      "scorers": [
+        "G",
+        "GC"
+      ],
+      "isolated_state": true,
+      "run_id_distinct": true,
+      "ledger_distinct": true,
+      "disclosure_namespace_distinct": true,
+      "checkpoint_namespace_distinct": true
+    }
+  ],
+  "query_and_thresholds": {
+    "policy": "STOCHASTIC_BEA_GROUP_SLOT_V1",
+    "seed": 37,
+    "target_image_rate": 0.037,
+    "target_is_guarantee": false,
+    "initial_cost": 0.8,
+    "cost_learning_rate": 0.02,
+    "cost_window_events": 256,
+    "cost_bounds": [
+      0.05,
+      3.0
+    ],
+    "score_scale": "lagged label-blind MAD; floor 0.02",
+    "candidate_slot_probability": 0.2,
+    "exploitation_probability": 1.0,
+    "exploration_probability": 0.05,
+    "design_probability": "0.2 * gate_probability at the candidate event",
+    "max_executed_queries_per_source_group": 1,
+    "weights": "min(1/pi, 50)",
+    "minimum_normal_source_groups": 12,
+    "minimum_clipped_weight_ess": 12.0,
+    "weighted_quantile": "inf{q: sum(w_i * 1[s_i <= q])/sum(w_i) >= 0.9}",
+    "quantile_probability": 0.9,
+    "threshold_step_clip": 0.01,
+    "initial_threshold_formula": "four-Support self-score mean + 2.5 * max(sample std ddof=1, 1e-6)",
+    "L": "historical pre-feedback normal scores; never retroactively rescored",
+    "E": "exact current-state full FP32 feature rescoring; exclude direct same-Source-Group Greedy and C1 matches; native Top-32 reselection; capacity 1,024 groups; no dropping, replacement or half precision",
+    "G_and_GC_thresholds_separate": true,
+    "writer_c1_reference": "frozen four-Support reference for every trajectory; no controller-dependent outcome category"
+  },
+  "evaluation": {
+    "prediction_order": "pre-event, before current-label disclosure",
+    "primary": "Shared S/E/GC BER minus S/L/GC BER, paired within category; four-category macro difference",
+    "secondary_coupled": "CE/E/GC BER minus CL/L/GC BER; whole-system contrast, not threshold-only",
+    "readout_arms": [
+      "S/L/G",
+      "S/L/GC",
+      "S/E/G",
+      "S/E/GC",
+      "S/FrozenTheta/G",
+      "S/FrozenTheta/GC",
+      "CL/L/G",
+      "CL/L/GC",
+      "CE/E/G",
+      "CE/E/GC"
+    ],
+    "confusion": [
+      "TP",
+      "TN",
+      "FP",
+      "FN"
+    ],
+    "metrics": [
+      "BER",
+      "FPR",
+      "FNR",
+      "BalancedAccuracy",
+      "AUROC",
+      "AveragePrecision"
+    ],
+    "macro_weighting": "equal weight by category; never pool category images",
+    "shared_score_ranking_sanity": "S/L and S/E AUROC/AP must match exactly for G and GC; mismatch invalidates campaign",
+    "unavailable_denominators": "NA with explicit reason; never zero-filled",
+    "c64_metric_reference": false,
+    "pixel_masks": false,
+    "uncertainty": "no inferential interval registered; four development categories and one query seed only"
+  },
+  "temporal_analysis": {
+    "segment_boundary_convention": "for n Source Groups, bounds are [0,floor(n/3)), [floor(n/3),floor(2n/3)), [floor(2n/3),n)",
+    "segment_unit": "Source Groups, preserving all five contiguous camera views",
+    "sliding_window_groups": 50,
+    "sliding_window_events": 250,
+    "sliding_stride_groups": 10,
+    "one_class_window_ber": "NA; count/report class counts and excluded windows",
+    "worst_window": "maximum valid BER; report valid count; worst FPR and FNR independently"
+  },
+  "resource_controls": {
+    "checkpoint_every_completed_events": 1000,
+    "checkpoint_at_category_start_and_end": true,
+    "immutable_checkpoint_files": true,
+    "e_cache_feature_shape": [
+      784,
+      4096
+    ],
+    "e_cache_dtype": "float32",
+    "e_cache_capacity_groups": 1024,
+    "e_cache_bytes_at_capacity": 13153337344,
+    "e_cache_bytes_at_category_group_count": "computed from registered group count",
+    "host_free_ram_minimum_bytes": 34359738368,
+    "gpu_name_required": "NVIDIA GeForce RTX 3090 Ti",
+    "gpu_total_memory_minimum_bytes": 25769803776,
+    "trajectory_wall_limit_seconds": 604800,
+    "campaign_wall_limit_seconds": 1814400,
+    "checkpoint_storage_formula": "sum over all immutable checkpoints of (max cached-normal groups at that boundary * 784 * 4096 * 4 + native/controller/checkpoint overhead); include blinded resources, ledgers, telemetry and 25 percent reserve",
+    "resource_failure_policy": "BLOCKED_RESOURCE_PREFLIGHT before Stage A; never lower checkpoint frequency or change cache/evidence rules",
+    "checkpoint_count_upper_bound": 69,
+    "checkpoint_bytes_before_reserve": 241486528512,
+    "checkpoint_bytes_with_25_percent_reserve": 301858160640,
+    "additional_ledger_mapping_and_completion_reserve_bytes": 2147483648,
+    "max_exact_e_rescore_invocations_per_e_trajectory_upper_bound": 1171243,
+    "max_exact_e_rescore_invocations_campaign_upper_bound": 2342486,
+    "resource_benchmark_required": true,
+    "resource_benchmark_schema": "FS4_SYNTHETIC_NATIVE_BENCHMARK_V1",
+    "checkpoint_non_cache_allowance_bytes_per_snapshot": 268435456,
+    "checkpoint_feature_bytes_upper_bound": 222964482048,
+    "checkpoint_native_and_controller_overhead_upper_bound": 18522046464
+  },
+  "information_firewall": {
+    "stage_a_inputs": [
+      "blinded metadata-free lossless RGB image resources",
+      "four original registered TRAIN-normal Support paths for native bootstrap",
+      "public opaque event/group/view IDs",
+      "frozen source/model/spec identity"
+    ],
+    "stage_a_forbidden": [
+      "original TEST filenames",
+      "defect codes",
+      "full TEST labels",
+      "segmentation masks",
+      "private mapping",
+      "unqueried outcomes",
+      "future event images or labels",
+      "hidden class histogram",
+      "historical scores/query positions/C64 outcomes"
+    ],
+    "stage_b_full_labels_only_after": "all 3 trajectories x all 4 category ledgers independently verified, sealed and bound to one campaign registration",
+    "broker": "one spawned query-only broker per trajectory namespace; requires that trajectory's durable verified query and LABEL_INTENT; no cross-arm disclosure"
+  },
+  "completion_and_error_policy": {
+    "required_trajectory_count": 3,
+    "required_category_count": 4,
+    "required_total_trajectory_events": 45885,
+    "subset_stage_b_forbidden": true,
+    "fatal_integrity_failure": "mark campaign INCOMPLETE; prohibit scientific finalization",
+    "ambiguous_label_intent_without_durable_feedback": "fail closed; no broker retry",
+    "existing_ledger": "never truncate or rewrite",
+    "resume": "only latest committed, exact-manifest checkpoint; deterministic replay; no duplicate feedback or memory update",
+    "resource_overrun": "stop and mark INCOMPLETE; do not modify algorithm",
+    "security_model": "trusted local researcher only; no malicious same-account isolation claim"
+  },
+  "activation_gates": [
+    "independent implementation review",
+    "separate signed authorization for real-data preparation and retention",
+    "actual source manifest/category/group/view/count verification",
+    "one-time blinded R7 order and mapping freeze",
+    "four-Support TRAIN-only bootstrap digest and theta receipt verification",
+    "measured storage/host/GPU resource preflight on the intended host",
+    "separate explicit complete Stage A authorization",
+    "separate explicit Stage B authorization after all Stage A seals"
+  ],
+  "spec_sha256": "1c96077bfdaa58f9ff93a67a9349a4cc6bc8b63578ae8915ff23762b50aee896"
+}

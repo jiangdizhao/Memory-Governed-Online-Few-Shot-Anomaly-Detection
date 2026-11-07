@@ -61,6 +61,9 @@ class _DurableCore:
         row = self.trajectory.step(**event)
         transition = {"profile": row["mode"], "query": asdict(row["query"]),
                       "feedback_update": row["feedback_update"], "next_thresholds": row["next_thresholds"]}
+        audit_snapshot = getattr(self.trajectory, "audit_snapshot", None)
+        if callable(audit_snapshot):
+            transition["audit"] = audit_snapshot()
         self.ledger.complete_event(position=event["position"], post_state_digest=post_state_digest(self.trajectory),
                                    transition=transition)
         return row

@@ -1,0 +1,54 @@
+{
+  "schema": "FS4_FINAL_JOINT_CAMPAIGN_ARM_REGISTRY_V1",
+  "campaign_spec": "CAMPAIGN_SPEC.json",
+  "arms": [
+    {
+      "trajectory_id": "S",
+      "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY",
+      "controller": null,
+      "readouts": ["L", "E", "FrozenTheta"],
+      "scorers": ["G", "GC"],
+      "query_reference": "registered four-Support theta0",
+      "learning_reference": "same frozen four-Support theta0 for Writer/C1",
+      "state_ownership": "one native encoder, Greedy bank, C1 bank, BEA policy and legal feedback history shared by L/E/FrozenTheta",
+      "branch_names": ["S/L/G", "S/L/GC", "S/E/G", "S/E/GC", "S/FrozenTheta/G", "S/FrozenTheta/GC"]
+    },
+    {
+      "trajectory_id": "CL",
+      "profile": "COUPLED_QUERY_ONLY_FROZEN_WRITER",
+      "controller": "L",
+      "readouts": ["L"],
+      "scorers": ["G", "GC"],
+      "query_reference": "current L/GC threshold",
+      "learning_reference": "same frozen four-Support theta0 for Writer/C1",
+      "state_ownership": "independent BEA, Greedy, C1, Coverage Memory and legal feedback history",
+      "branch_names": ["CL/L/G", "CL/L/GC"]
+    },
+    {
+      "trajectory_id": "CE",
+      "profile": "COUPLED_QUERY_ONLY_FROZEN_WRITER",
+      "controller": "E",
+      "readouts": ["E"],
+      "scorers": ["G", "GC"],
+      "query_reference": "current E/GC threshold",
+      "learning_reference": "same frozen four-Support theta0 for Writer/C1",
+      "state_ownership": "independent BEA, Greedy, C1, Coverage Memory and legal feedback history",
+      "branch_names": ["CE/E/G", "CE/E/GC"]
+    }
+  ],
+  "shared_registration": {
+    "registration_count": 1,
+    "opaque_event_and_group_ids_shared": true,
+    "mapping_digest_shared": true,
+    "image_sequence_shared": true,
+    "query_seed": 37,
+    "historical_query_positions_imported": false
+  },
+  "per_trajectory_separation": {
+    "run_id": true,
+    "ledger": true,
+    "broker_disclosure_namespace": true,
+    "checkpoint_namespace": true,
+    "native_memory_state": true
+  }
+}
