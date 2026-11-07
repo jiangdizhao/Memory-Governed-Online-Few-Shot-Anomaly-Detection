@@ -136,11 +136,20 @@ def test_policy_stress_has_one_candidate_and_never_invents_probability(scenario)
         assert r["verified_synthetic_normals"] == 0
 
 
-def manifest():
-    path = Path("experiments/v02_memory.py")
-    return {"run_id": "synthetic", "source_commit": "3bd33076789f66f7086f8f2e165b18d789e2c7d2",
-            "source_fingerprints": {str(path).replace("\\", "/"): hashlib.sha256(path.read_bytes()).hexdigest()},
-            "expected_events_by_category": {"synthetic": 5}, "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY", "query_seed": 37}
+def manifest(streams=None):
+    import subprocess
+    from experiments.calibration.fs4_durable_ledger import REQUIRED_SOURCE_PATHS, digest
+    if streams is None:
+        streams = {"synthetic": [(hid("group"), hid(f"event{i}")) for i in range(5)]}
+    fingerprints = {name: hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in REQUIRED_SOURCE_PATHS}
+    return {"run_id": "synthetic", "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+            "source_fingerprints": fingerprints, "scientific_contract_sha256": fingerprints["docs/calibration/fs4_threshold/SCIENTIFIC_CONTRACT.md"],
+            "dataset_identity_sha256": hid("synthetic-dataset"), "model_state_sha256": hid("synthetic-model"),
+            "support_groups_by_category": {cat: [hid(f"{cat}-support-{i}") for i in range(4)] for cat in streams},
+            "fixed_support_sha256_by_category": {cat: hid(f"{cat}-fixed") for cat in streams},
+            "stream_sha256_by_category": {cat: digest([{"group": g, "event": e} for g, e in pairs]) for cat, pairs in streams.items()},
+            "expected_events_by_category": {cat: len(pairs) for cat, pairs in streams.items()},
+            "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY", "query_seed": 37}
 
 
 def test_durable_order_reopen_and_stage_a_seals(tmp_path):
@@ -180,9 +189,50 @@ def test_corrupt_ledger_and_manifest_rejected(tmp_path):
         DurableLedger(root, wrong, create=False)
 
 
-def test_durable_executor_journals_complete_transitions(tmp_path):
+def test_manifest_rejects_missing_source_fingerprints(tmp_path):
+    m = manifest(); m["source_fingerprints"].pop("experiments/v02_memory.py")
+    with pytest.raises(LedgerIntegrityError, match="omits required"):
+        DurableLedger(tmp_path / "run", m, create=True)
+
+
+def test_stage_a_rejects_mismatched_registered_stream(tmp_path):
     from experiments.calibration.fs4_durable_runtime import DurableExecutor
     m = manifest(); ledger = DurableLedger(tmp_path / "run", m, create=True); ledger.select_category("synthetic")
+    loop = SharedTrajectory(runtime=_SyntheticRuntime(.5), coverage=CoverageMemory(np.eye(5, dtype=np.float32)[:4]),
+        theta0=.5, policy=StochasticBEAGroupSlot(), seal_prediction=prediction_digest,
+        seal_query=receipt_digest, label_provider=lambda *_: 0)
+    executor = DurableExecutor(loop, ledger, lambda *_: 0)
+    features = torch.zeros((784, 4096))
+    for pos in range(5):
+        executor.step(position=pos, group=hid("wrong-group"), event=hid(f"wrong-{pos}"),
+            image=SimpleNamespace(height=28, width=28), features=features,
+            cls_feature=np.eye(5, dtype=np.float32)[4], feature_convention=FEATURE_CONVENTION)
+    with pytest.raises(LedgerIntegrityError, match="category Stage A"):
+        executor.seal_category("synthetic")
+    ledger.close()
+
+
+@pytest.mark.parametrize("label,theta,expected", [(0, .6, "TN"), (0, .4, "FP"), (1, .6, "FN"), (1, .4, "TP")])
+def test_native_c1_outcome_uses_frozen_writer_reference(label, theta, expected):
+    from test_fs4_threshold import native_bank_and_writer, issue_for_runtime
+    from experiments.calibration.fs4_threshold_integration import NativeRuntime
+    from experiments.calibration.native import _fixed_bank_digest
+    native, bank, writer = native_bank_and_writer(64)
+    reference = {"fixed_support_sha256": _fixed_bank_digest(bank), "writer_reference": {"theta": theta, "sigma": .02}}
+    cfg = SimpleNamespace(topk_patches=32, image_aggregation="max", image_topk=64, image_quantile=.95)
+    runtime = NativeRuntime(impl=native, bank=bank, cfg=cfg, writer=writer, correction_cfg=bank.corr_cfg,
+                            correction_cb=bank.corr_cb["p0"]["id"][0], reference=reference)
+    policy = StochasticBEAGroupSlot(); evidence, receipt = issue_for_runtime(policy, 0, runtime, label)
+    features = torch.zeros((32, 64)); features[:, 1] = 1
+    scored = {"G": .5, "GC": .5, "states": runtime.states(), "features": [features], "top_ids": np.arange(32)}
+    result = runtime.feedback(receipt=receipt, evidence=evidence, policy=policy, scored=scored)
+    assert result["outcome"] == expected and result["learning_reference_threshold"] == theta
+
+
+def test_durable_executor_journals_complete_transitions(tmp_path):
+    from experiments.calibration.fs4_durable_runtime import DurableExecutor
+    m = manifest({"synthetic": [(hid("executor-group"), hid(f"executor-{i}")) for i in range(5)]})
+    ledger = DurableLedger(tmp_path / "run", m, create=True); ledger.select_category("synthetic")
     loop = SharedTrajectory(runtime=_SyntheticRuntime(.5), coverage=CoverageMemory(np.eye(5, dtype=np.float32)[:4]),
         theta0=.5, policy=StochasticBEAGroupSlot(), seal_prediction=prediction_digest,
         seal_query=receipt_digest, label_provider=lambda *_: 0)
@@ -200,7 +250,8 @@ def test_durable_executor_journals_complete_transitions(tmp_path):
 
 def test_distinct_categories_use_fresh_policies_and_global_seal(tmp_path):
     from experiments.calibration.fs4_durable_runtime import DurableExecutor
-    m = dict(manifest(), expected_events_by_category={"one": 5, "two": 5})
+    m = manifest({cat: [(hid(f"{cat}-group"), hid(f"{cat}-{pos}")) for pos in range(5 * i, 5 * i + 5)]
+                  for i, cat in enumerate(("one", "two"))})
     ledger = DurableLedger(tmp_path / "run", m, create=True)
     features = torch.zeros((784, 4096)); image = SimpleNamespace(height=28, width=28)
     for index, category in enumerate(("one", "two")):

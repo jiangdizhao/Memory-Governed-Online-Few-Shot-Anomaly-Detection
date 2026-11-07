@@ -20,6 +20,7 @@ DOCS = tuple("docs/calibration/fs4_threshold/HARDENING_R1_" + name + ".md" for n
 ALLOWLIST = frozenset((*SOURCES, *DOCS, "AGENTS.md",
     "docs/calibration/fs4_threshold/HARDENING_R1_GPU_PARITY_MANIFEST.json",
     "docs/calibration/fs4_threshold/HARDENING_R1_GPU_PARITY_MANIFEST_V2.json",
+    "docs/calibration/fs4_threshold/HARDENING_R1_GPU_PARITY_MANIFEST_V3.json",
     "docs/calibration/fs4_threshold/HARDENING_R1_QUERY_STRESS.json",
     "docs/calibration/fs4_threshold/FS4_HARDENING_R1_AUTHORIZATION.md",
     "tests/calibration/test_fs4_hardening_r1.py", "tests/calibration/test_fs4_hardening_cuda.py"))

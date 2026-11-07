@@ -19,6 +19,12 @@ import numpy as np
 from .fs4_stochastic_bea import (QueryReceipt, action_uniform, bea_components, candidate_ordinal,
                                  receipt_digest, TARGET_RATE)
 from .fs4_threshold_integration import prediction_digest
+from .fs4_hardening_audit import SOURCES, PROTECTED_SOURCES
+
+REQUIRED_SOURCE_PATHS = frozenset((*SOURCES, *PROTECTED_SOURCES,
+    "experiments/calibration/fs4_threshold_core.py",
+    "experiments/calibration/fs4_threshold_audit.py",
+    "docs/calibration/fs4_threshold/SCIENTIFIC_CONTRACT.md"))
 
 
 class LedgerIntegrityError(RuntimeError):
@@ -41,11 +47,27 @@ class DurableLedger:
         self.path = self.root / "events.jsonl"
         self.manifest_path = self.root / "manifest.json"
         self.manifest = dict(manifest)
-        required = ("run_id", "source_commit", "source_fingerprints", "expected_events_by_category", "profile")
+        required = ("run_id", "source_commit", "source_fingerprints", "expected_events_by_category", "profile",
+                    "stream_sha256_by_category", "scientific_contract_sha256", "dataset_identity_sha256",
+                    "model_state_sha256", "support_groups_by_category", "fixed_support_sha256_by_category")
         if any(not self.manifest.get(k) for k in required):
             raise LedgerIntegrityError("incomplete run manifest")
         if not isinstance(self.manifest.get("query_seed"), int) or isinstance(self.manifest["query_seed"], bool):
             raise LedgerIntegrityError("query seed must be registered in the run manifest")
+        if not REQUIRED_SOURCE_PATHS.issubset(self.manifest["source_fingerprints"]):
+            raise LedgerIntegrityError("source fingerprint set omits required native or FS4 dependencies")
+        if self.manifest["scientific_contract_sha256"] != self.manifest["source_fingerprints"]["docs/calibration/fs4_threshold/SCIENTIFIC_CONTRACT.md"]:
+            raise LedgerIntegrityError("scientific contract fingerprint mismatch")
+        import re
+        is_sha = lambda s: isinstance(s, str) and re.fullmatch(r"[0-9a-f]{64}", s) is not None
+        cats = set(self.manifest["expected_events_by_category"])
+        if (not all(is_sha(self.manifest[k]) for k in ("scientific_contract_sha256", "dataset_identity_sha256", "model_state_sha256")) or
+                any(set(self.manifest[k]) != cats for k in ("stream_sha256_by_category", "support_groups_by_category", "fixed_support_sha256_by_category")) or
+                any(not is_sha(x) for x in self.manifest["stream_sha256_by_category"].values()) or
+                any(not is_sha(x) for x in self.manifest["fixed_support_sha256_by_category"].values()) or
+                any(len(groups) != 4 or len(set(groups)) != 4 or not all(is_sha(x) for x in groups)
+                    for groups in self.manifest["support_groups_by_category"].values())):
+            raise LedgerIntegrityError("incomplete registered stream, Support, dataset or model identity")
         source_root = Path(__file__).resolve().parents[2]
         source_commit = str(self.manifest["source_commit"])
         if subprocess.run(["git", "merge-base", "--is-ancestor", source_commit, "HEAD"],
@@ -97,6 +119,7 @@ class DurableLedger:
         self.event_ids: set[str] = set()
         self.group_counts: dict[tuple[str, str], int] = {}
         self.category_counts = {c: 0 for c in self.manifest["expected_events_by_category"]}
+        self.category_streams: dict[str, list[dict[str, str]]] = {c: [] for c in self.category_counts}
         self.category_seals: dict[str, str] = {}
         self.current_category: str | None = None
         self.query_price = .8
@@ -134,6 +157,7 @@ class DurableLedger:
         probe.query_history = list(self.query_history)
         probe.query_flags = list(self.query_flags)
         probe.category_counts = dict(self.category_counts)
+        probe.category_streams = {key: list(value) for key, value in self.category_streams.items()}
         probe.category_seals = dict(self.category_seals)
         probe._apply(kind, payload)
         body = {"index": len(self.records), "previous": self.last_hash, "kind": kind, "payload": payload}
@@ -166,6 +190,7 @@ class DurableLedger:
                     self.category_counts[self.current_category] >= self.manifest["expected_events_by_category"][self.current_category]):
                 raise LedgerIntegrityError("invalid or duplicate prediction")
             self.prediction = x; self.event_ids.add(x["event"]); self.phase = "PREDICTION"
+            self.category_streams[self.current_category].append({"group": x["group"], "event": x["event"]})
         elif kind == "QUERY":
             q = p["receipt"]
             pred = q["prediction"]
@@ -228,7 +253,7 @@ class DurableLedger:
             self.position += 1; self.phase = "READY"; self.prediction = None; self.query = None
         elif kind == "CATEGORY_SEAL":
             c = p["category"]
-            if self.phase != "READY" or c != self.current_category or c in self.category_seals or self.category_counts[c] != self.manifest["expected_events_by_category"][c] or any(n != 5 for (category, _), n in self.group_counts.items() if category == c) or p["stream_sha256"] != self.last_hash:
+            if self.phase != "READY" or c != self.current_category or c in self.category_seals or self.category_counts[c] != self.manifest["expected_events_by_category"][c] or any(n != 5 for (category, _), n in self.group_counts.items() if category == c) or digest(self.category_streams[c]) != self.manifest["stream_sha256_by_category"][c] or p["stream_sha256"] != self.last_hash:
                 raise LedgerIntegrityError("invalid category Stage A seal")
             self.category_seals[c] = p["stream_sha256"]; self.current_category = None
         elif kind == "GLOBAL_A":
