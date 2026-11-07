@@ -149,16 +149,121 @@ def _controller_audit(row: Mapping[str, Any], controller: str) -> Mapping[str, A
     audit = row.get("transition", {}).get("audit")
     controllers = audit.get("controllers") if isinstance(audit, Mapping) else None
     if controller == "FrozenTheta" and isinstance(controllers, Mapping) and "L" in controllers:
-        frozen = dict(controllers["L"])
-        frozen.update({"revision": 0, "suppression": {}, "cache_bytes": 0,
-            "cache_groups": 0, "rescore_invocations": 0, "rescore_seconds_total": 0.0,
+        frozen = {"revision": 0, "suppression": {}, "threshold_tokens": {"G": None, "GC": None},
+            "status": {"G": "FROZEN", "GC": "FROZEN"}, "effective_sample_size": 0.0,
+            "normal_evidence_groups": 0, "cache_bytes": 0, "cache_groups": 0,
+            "rescore_invocations": 0, "rescore_seconds_total": 0.0,
             "thresholds": {"G": row.get("thresholds", {}).get("FrozenTheta_G"),
-                           "GC": row.get("thresholds", {}).get("FrozenTheta_GC")}})
+                           "GC": row.get("thresholds", {}).get("FrozenTheta_GC")}}
         return frozen
     state = controllers.get(controller) if isinstance(controllers, Mapping) else None
     if not isinstance(state, Mapping):
         raise ValueError("Stage A transition lacks a controller audit snapshot")
     return state
+
+
+def _prediction_threshold(row: Mapping[str, Any], controller: str, scorer: str) -> float:
+    thresholds = row.get("thresholds", {})
+    value = thresholds.get(f"{controller}_{scorer}") if isinstance(thresholds, Mapping) else None
+    if value is None and isinstance(thresholds, Mapping):
+        nested = thresholds.get(controller)
+        value = nested.get(scorer) if isinstance(nested, Mapping) else None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        raise ValueError("pre-event threshold is missing or non-finite")
+    return float(value)
+
+
+def _controller_update_summary(rows: Sequence[Mapping[str, Any]], controller: str,
+                               prior_state: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Count accepted estimator tokens, independently of evidence revisions."""
+    if not rows:
+        return {"evidence_revision_start": 0, "evidence_revision": 0,
+            "accepted_update_count_G": 0, "accepted_update_count_GC": 0,
+            "earliest_accepted_update_position_G": None,
+            "earliest_accepted_update_position_GC": None,
+            "events_with_any_accepted_update": 0, "threshold_holds_by_reason": {},
+            "total_threshold_movement_G": 0.0, "total_threshold_movement_GC": 0.0}
+    if prior_state is None:
+        first_state = _controller_audit(rows[0], controller)
+        prior: dict[str, Any] = {
+            "revision": 0,
+            "threshold_tokens": {"G": None, "GC": None},
+            "thresholds": {scorer: _prediction_threshold(rows[0], controller, scorer)
+                           for scorer in ("G", "GC")},
+            # The first sealed snapshot has no predecessor in this output slice;
+            # use its hold counters as the baseline, as the prior evaluator did.
+            "suppression": dict(first_state.get("suppression", {})),
+        }
+    else:
+        prior = dict(prior_state)
+    if set(prior.get("thresholds", {})) != {"G", "GC"}:
+        raise ValueError("prior controller audit lacks both scorer thresholds")
+    tokens = prior.get("threshold_tokens", {"G": None, "GC": None})
+    if not isinstance(tokens, Mapping) or set(tokens) != {"G", "GC"}:
+        raise ValueError("prior controller audit lacks successful threshold tokens")
+    prior["threshold_tokens"] = dict(tokens)
+    prior["suppression"] = dict(prior.get("suppression", {}))
+    prior["revision"] = int(prior.get("revision", 0))
+
+    counts = {"G": 0, "GC": 0}
+    earliest: dict[str, int | None] = {"G": None, "GC": None}
+    movements = {"G": 0.0, "GC": 0.0}
+    hold_counts: dict[str, int] = {}
+    event_positions: set[int] = set()
+    seen_positions: set[int] = set()
+    revision_start = prior["revision"]
+    revision = revision_start
+    for row in rows:
+        position = row.get("position")
+        if type(position) is not int or position in seen_positions:
+            raise ValueError("controller audit event position is invalid or duplicated")
+        seen_positions.add(position)
+        state = _controller_audit(row, controller)
+        current_revision = state.get("revision")
+        if type(current_revision) is not int or current_revision < revision:
+            raise ValueError("controller evidence revision regressed")
+        revision = current_revision
+        current_tokens = state.get("threshold_tokens")
+        if not isinstance(current_tokens, Mapping) or set(current_tokens) != {"G", "GC"}:
+            raise ValueError("controller audit lacks successful threshold tokens")
+        thresholds = state.get("thresholds")
+        suppression = state.get("suppression", {})
+        if not isinstance(thresholds, Mapping) or set(thresholds) != {"G", "GC"} or not isinstance(suppression, Mapping):
+            raise ValueError("controller audit thresholds or hold counters are malformed")
+        accepted_here = False
+        for scorer in ("G", "GC"):
+            old_token, new_token = prior["threshold_tokens"][scorer], current_tokens[scorer]
+            if old_token is not None and new_token is None:
+                raise ValueError("successful threshold token was cleared")
+            if new_token is not None and new_token != old_token:
+                counts[scorer] += 1
+                earliest[scorer] = position if earliest[scorer] is None else earliest[scorer]
+                accepted_here = True
+            old_theta = prior["thresholds"][scorer]
+            new_theta = thresholds[scorer]
+            if (isinstance(new_theta, bool) or not isinstance(new_theta, (int, float)) or
+                    not math.isfinite(float(new_theta))):
+                raise ValueError("controller audit threshold is non-finite")
+            movements[scorer] += abs(float(new_theta) - float(old_theta))
+        if accepted_here:
+            event_positions.add(position)
+        for reason in set(prior["suppression"]) | set(suppression):
+            previous_count = prior["suppression"].get(reason, 0)
+            current_count = suppression.get(reason, 0)
+            if (type(previous_count) is not int or type(current_count) is not int or
+                    current_count < previous_count):
+                raise ValueError("threshold hold counter regressed or is malformed")
+            hold_counts[reason] = hold_counts.get(reason, 0) + current_count - previous_count
+        prior = {"revision": current_revision, "threshold_tokens": dict(current_tokens),
+                 "thresholds": dict(thresholds), "suppression": dict(suppression)}
+    return {"evidence_revision_start": revision_start, "evidence_revision": revision,
+        "accepted_update_count_G": counts["G"], "accepted_update_count_GC": counts["GC"],
+        "earliest_accepted_update_position_G": earliest["G"],
+        "earliest_accepted_update_position_GC": earliest["GC"],
+        "events_with_any_accepted_update": len(event_positions),
+        "threshold_holds_by_reason": {key: value for key, value in sorted(hold_counts.items()) if value},
+        "total_threshold_movement_G": movements["G"],
+        "total_threshold_movement_GC": movements["GC"]}
 
 
 def _query_summary(rows: Sequence[Mapping[str, Any]], labels: Mapping[str, int]) -> dict[str, Any]:
@@ -211,9 +316,12 @@ def _readout_temporal(rows: Sequence[Mapping[str, Any]], readout: str,
                          [row["decisions"][prediction_key] for row in window_rows])
         query_stats = _query_summary(window_rows, labels)
         last_audit = _controller_audit(window_rows[-1], _controller_name(readout))
-        first_audit = (_controller_audit(rows[0], _controller_name(readout)) if start == 0 else
-                       _controller_audit(max((row for row in rows if group_indices[row["group"]] < start),
-                                             key=lambda row: row["position"]), _controller_name(readout)))
+        prior_rows = [row for row in rows if group_indices[row["group"]] < start]
+        prior_row = max(prior_rows, key=lambda row: row["position"]) if prior_rows else None
+        first_audit = (_controller_audit(prior_row, _controller_name(readout)) if prior_row is not None else
+                       {"rescore_invocations": 0, "rescore_seconds_total": 0.0})
+        update_summary = _controller_update_summary(window_rows, _controller_name(readout),
+            _controller_audit(prior_row, _controller_name(readout)) if prior_row is not None else None)
         first_rescore = int(first_audit.get("rescore_invocations", 0))
         last_rescore = int(last_audit.get("rescore_invocations", 0))
         first_seconds = float(first_audit.get("rescore_seconds_total", 0.0))
@@ -230,7 +338,8 @@ def _readout_temporal(rows: Sequence[Mapping[str, Any]], readout: str,
             "e_rescore_invocations": max(0, last_rescore - first_rescore),
             "e_rescore_seconds": max(0.0, last_seconds - first_seconds),
             "e_cache_bytes_at_window_end": last_audit.get("cache_bytes", 0),
-            "longest_query_free_event_interval": query_stats["longest_query_free_event_interval"]})
+            "longest_query_free_event_interval": query_stats["longest_query_free_event_interval"],
+            "threshold_update_diagnostics": update_summary})
     valid = [row for row in windows if row["ber"] is not None]
     valid_fpr = [row["fpr"] for row in windows if row["fpr"] is not None]
     valid_fnr = [row["fnr"] for row in windows if row["fnr"] is not None]
@@ -307,9 +416,11 @@ def evaluate_campaign(stage_a_by_arm: Mapping[str, Mapping[str, Any]], labels: M
                         [row["scores"][scorer] for row in segment],
                         [row["decisions"][readout] for row in segment]) if segment else None
                     state = _controller_audit(segment[-1], _controller_name(readout)) if segment else None
-                    before = (_controller_audit(rows[0], _controller_name(readout)) if low == 0 else
-                              _controller_audit(max((row for row in rows if group_indices[row["group"]] < low),
-                                                    key=lambda row: row["position"]), _controller_name(readout)))
+                    before_rows = [row for row in rows if group_indices[row["group"]] < low]
+                    before_row = max(before_rows, key=lambda row: row["position"]) if before_rows else None
+                    before = (_controller_audit(before_row, _controller_name(readout))
+                              if before_row is not None else None)
+                    update_summary = _controller_update_summary(segment, _controller_name(readout), before)
                     segments[segment_name] = {"group_index_bounds": [low, high], "groups": high - low,
                         "events": len(segment), "query_rate": query_summary["image_query_rate"],
                         "group_query_fraction": query_summary["group_query_fraction"],
@@ -322,12 +433,9 @@ def evaluate_campaign(stage_a_by_arm: Mapping[str, Mapping[str, Any]], labels: M
                                                  if segment_metric else "empty Source Group segment"),
                         "effective_sample_size": state.get("effective_sample_size") if state else None,
                         "distinct_verified_normal_groups": state.get("normal_evidence_groups") if state else 0,
-                        "active_threshold_update_count": (state.get("revision", 0) - before.get("revision", 0)
-                                                           if state else 0),
-                        "threshold_holds_by_reason": ({reason: int(state.get("suppression", {}).get(reason, 0) -
-                            before.get("suppression", {}).get(reason, 0))
-                            for reason in set(state.get("suppression", {})) | set(before.get("suppression", {}))}
-                            if state else {})}
+                        "active_threshold_update_count": update_summary[
+                            f"accepted_update_count_{_score_name(readout)}"],
+                        **update_summary}
                 temporal[category][readout] = {"segments": segments,
                     "sliding_windows": _readout_temporal(rows, readout, labels)}
             diagnostics[category]["threshold_trajectories"] = {
@@ -342,31 +450,19 @@ def evaluate_campaign(stage_a_by_arm: Mapping[str, Mapping[str, Any]], labels: M
             controller_diagnostics = {}
             for controller in sorted({_controller_name(name) for name in readouts}):
                 states = [_controller_audit(row, controller) for row in rows]
-                updates = []
-                movements = {"G": 0.0, "GC": 0.0}
-                for index, row in enumerate(rows):
-                    state = states[index]
-                    prior = states[index - 1] if index else None
-                    for scorer in ("G", "GC"):
-                        old = (prior["thresholds"][scorer] if prior else row["thresholds"].get(controller, {}).get(scorer,
-                              row["thresholds"].get(f"{controller}_{scorer}")))
-                        new = state["thresholds"][scorer]
-                        if old is not None:
-                            movements[scorer] += abs(float(new) - float(old))
-                    if prior is None or state["revision"] > prior["revision"]:
-                        if state["revision"] > (prior["revision"] if prior else 0):
-                            updates.append(row["position"])
-                first_suppression = states[0].get("suppression", {})
-                last_suppression = states[-1].get("suppression", {})
-                holds = {reason: int(last_suppression.get(reason, 0) - first_suppression.get(reason, 0))
-                         for reason in set(first_suppression) | set(last_suppression)}
+                update_summary = _controller_update_summary(rows, controller)
                 controller_diagnostics[controller] = {
                     "distinct_verified_normal_groups": states[-1].get("normal_evidence_groups", 0),
                     "effective_sample_size": states[-1].get("effective_sample_size", 0.0),
-                    "earliest_accepted_threshold_update_position": updates[0] if updates else None,
-                    "accepted_threshold_updates_after_first_event": max(0, states[-1]["revision"] - states[0]["revision"]),
-                    "threshold_holds_by_reason_after_first_event": holds,
-                    "total_threshold_movement": movements,
+                    **update_summary,
+                    "accepted_threshold_updates_after_first_event": (update_summary["accepted_update_count_G"] +
+                        update_summary["accepted_update_count_GC"]),
+                    "earliest_accepted_threshold_update_position": min(
+                        (value for value in (update_summary["earliest_accepted_update_position_G"],
+                                             update_summary["earliest_accepted_update_position_GC"])
+                         if value is not None), default=None),
+                    "total_threshold_movement": {"G": update_summary["total_threshold_movement_G"],
+                                                  "GC": update_summary["total_threshold_movement_GC"]},
                     "e_cache_peak_bytes": max((state.get("cache_bytes", 0) for state in states), default=0),
                     "e_cache_peak_groups": max((state.get("cache_groups", 0) for state in states), default=0),
                     "e_rescore_invocations": states[-1].get("rescore_invocations", 0) - states[0].get("rescore_invocations", 0),

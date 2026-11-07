@@ -67,7 +67,7 @@ def verify_stage_a(root: Path) -> dict:
                     "dataset_identity_sha256": manifest["dataset_identity_sha256"],
                     "fixed_support_sha256_by_category": manifest["fixed_support_sha256_by_category"],
                     "stream_sha256_by_category": manifest["stream_sha256_by_category"],
-                    "stage_a_sha256": ledger.last_hash, "events": events,
+                    "stage_a_sha256": ledger.last_hash, "category_seals": dict(ledger.category_seals), "events": events,
                     "queried_feedback": queried_feedback}
         events = []
         queried_feedback = {}
@@ -234,7 +234,8 @@ def verify_stage_a(root: Path) -> dict:
                 "dataset_identity_sha256": manifest["dataset_identity_sha256"],
                 "fixed_support_sha256_by_category": manifest["fixed_support_sha256_by_category"],
                 "stream_sha256_by_category": manifest["stream_sha256_by_category"],
-                "stage_a_sha256": ledger.last_hash, "events": events, "queried_feedback": queried_feedback}
+                "stage_a_sha256": ledger.last_hash, "category_seals": dict(ledger.category_seals),
+                "events": events, "queried_feedback": queried_feedback}
     finally:
         ledger.close()
 

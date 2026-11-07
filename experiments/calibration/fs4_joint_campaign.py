@@ -27,6 +27,461 @@ ROOT = Path(__file__).resolve().parents[2]
 AUTH_SCHEMA = "FS4_JOINT_CAMPAIGN_AUTHORIZATION_V1"
 CAMPAIGN_SCHEMA = "FS4_JOINT_CAMPAIGN_REGISTRATION_V1"
 SCOPES = {"STAGING", "SUPPORT_PREFLIGHT", "RESOURCE_PREFLIGHT", "STAGE_A", "STAGE_B"}
+TRAJECTORY_WALL_LIMIT_SECONDS = 604800
+CAMPAIGN_WALL_LIMIT_SECONDS = 1814400
+
+
+class CampaignDeadlineExceeded(CampaignContractError):
+    def __init__(self, status: str) -> None:
+        self.status = status
+        super().__init__(status)
+
+
+class RecoverableExecutionInterruption(RuntimeError):
+    """Explicit test/infrastructure interruption at a recoverable event boundary."""
+
+
+class CampaignTimingLedger:
+    """Append-only campaign wall clock; restart gaps are charged conservatively."""
+
+    SCHEMA = "FS4_CAMPAIGN_TIMING_LEDGER_V1"
+
+    def __init__(self, path: Path, *, campaign_id: str, source_commit: str,
+                 spec_sha256: str | None = None, clock: Any = time) -> None:
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock_stream = self.path.with_suffix(self.path.suffix + ".lock").open("a+b")
+        if self._lock_stream.seek(0, os.SEEK_END) == 0:
+            self._lock_stream.write(b"\0")
+            self._lock_stream.flush()
+        self._lock_stream.seek(0)
+        try:
+            import msvcrt
+            msvcrt.locking(self._lock_stream.fileno(), msvcrt.LK_NBLCK, 1)
+            self._unlock = lambda: msvcrt.locking(self._lock_stream.fileno(), msvcrt.LK_UNLCK, 1)
+        except ImportError:
+            import fcntl
+            fcntl.flock(self._lock_stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self._unlock = lambda: fcntl.flock(self._lock_stream.fileno(), fcntl.LOCK_UN)
+        except OSError as exc:
+            self._lock_stream.close()
+            raise CampaignContractError("another Stage A process owns the timing ledger") from exc
+        self._closed = False
+        self.campaign_id = campaign_id
+        self.source_commit = source_commit
+        self.spec_sha256 = spec_sha256 or spec_identity()
+        self.clock = clock
+        self.pid = os.getpid()
+        frozen_spec = load_spec()
+        if (_spec_value(frozen_spec, "trajectory_wall_limit_seconds") != TRAJECTORY_WALL_LIMIT_SECONDS or
+                _spec_value(frozen_spec, "campaign_wall_limit_seconds") != CAMPAIGN_WALL_LIMIT_SECONDS):
+            raise CampaignContractError("frozen wall-time limits differ from the executor constants")
+        self._mono = int(clock.monotonic_ns())
+        self._wall = int(clock.time_ns())
+        self.records = self._read_records()
+        self.completed_trajectories = {row.get("payload", {}).get("trajectory_id") for row in self.records
+            if row.get("kind") == "TRAJECTORY_COMPLETE"}
+        self.deadline_status = next((row.get("deadline_status") or
+            (row.get("payload", {}).get("status") if row.get("kind") == "DEADLINE_EXCEEDED" else None)
+            for row in reversed(self.records) if row.get("deadline_status") or row.get("kind") == "DEADLINE_EXCEEDED"), None)
+        self.unclean_previous_process = bool(self.records and self.records[-1].get("process_open"))
+        if self.records:
+            last = self.records[-1]
+            if (last.get("campaign_id") != campaign_id or last.get("source_commit") != source_commit or
+                    last.get("spec_sha256") != self.spec_sha256):
+                raise CampaignContractError("timing ledger belongs to a different campaign/source/spec")
+            gap = self._wall - last["unix_ns"]
+            if gap < 0:
+                raise CampaignContractError("timing ledger wall clock moved backwards")
+            campaign_elapsed = last["campaign_elapsed_ns"] + gap
+            trajectory_elapsed = dict(last["trajectory_elapsed_ns"])
+            active = last.get("active_trajectory")
+            if active is not None:
+                trajectory_elapsed[active] = trajectory_elapsed.get(active, 0) + gap
+            if self.deadline_status:
+                raise CampaignDeadlineExceeded(self.deadline_status)
+            self.active_trajectory = active
+            self.campaign_elapsed_ns = campaign_elapsed
+            self.trajectory_elapsed_ns = trajectory_elapsed
+            self._append("PROCESS_RESUME", {"previous_process_id": last.get("process_id"),
+                "interrupted_gap_ns": gap, "interrupted_period_charged_to": active})
+        else:
+            self.active_trajectory = None
+            self.campaign_elapsed_ns = 0
+            self.trajectory_elapsed_ns = {name: 0 for name in ARM_IDS}
+            self._append("CAMPAIGN_ORIGIN", {"origin_unix_ns": self._wall,
+                "origin_process_monotonic_ns": self._mono})
+            self._append("PROCESS_START", {"process_start_unix_ns": self._wall})
+
+    def _read_records(self) -> list[dict[str, Any]]:
+        if not self.path.exists():
+            return []
+        previous = "0" * 64
+        records = []
+        for index, line in enumerate(self.path.read_bytes().splitlines()):
+            try:
+                row = json.loads(line)
+                body = {key: value for key, value in row.items() if key != "record_sha256"}
+                expected = _sha(canonical(body))
+                if (row.get("schema") != self.SCHEMA or row.get("sequence") != index or
+                        row.get("previous_sha256") != previous or row.get("record_sha256") != expected or
+                        type(row.get("campaign_elapsed_ns")) is not int or row["campaign_elapsed_ns"] < 0 or
+                        not isinstance(row.get("trajectory_elapsed_ns"), dict) or
+                        type(row.get("unix_ns")) is not int):
+                    raise ValueError
+                records.append(row)
+                previous = expected
+            except Exception as exc:
+                raise CampaignContractError("timing ledger is malformed, truncated or tampered") from exc
+        if not records:
+            raise CampaignContractError("timing ledger exists without a complete origin record")
+        if records[0].get("kind") != "CAMPAIGN_ORIGIN":
+            raise CampaignContractError("timing ledger origin record is missing")
+        prior_campaign, prior_trajectory, prior_wall, process_mono = -1, {}, -1, {}
+        exceeded_without_record = False
+        recorded_deadline_status = None
+        valid_statuses = {"TRAJECTORY_WALL_LIMIT_EXCEEDED", "CAMPAIGN_WALL_LIMIT_EXCEEDED"}
+        valid_kinds = {"CAMPAIGN_ORIGIN", "PROCESS_START", "PROCESS_RESUME", "PROCESS_STOP",
+            "TRAJECTORY_ORIGIN", "TRAJECTORY_START", "TRAJECTORY_COMPLETE", "TRAJECTORY_STOP",
+            "DEADLINE_EXCEEDED", "CHECKPOINT", "RECOVERY_CHECKPOINT_SELECTED",
+            "RECOVERY_REPLAY_COMPLETED", "RECOVERY_LEDGER_VERIFIED", "CAMPAIGN_COMPLETE", "CAMPAIGN_FAILURE"}
+        for row in records:
+            campaign_elapsed = row["campaign_elapsed_ns"]
+            by_trajectory = row["trajectory_elapsed_ns"]
+            if (campaign_elapsed < prior_campaign or row["unix_ns"] < prior_wall or
+                    set(by_trajectory) != set(ARM_IDS) or
+                    any(type(value) is not int or value < prior_trajectory.get(arm, 0)
+                        for arm, value in by_trajectory.items()) or
+                    sum(by_trajectory.values()) > campaign_elapsed or
+                    row.get("active_trajectory") not in (None, *ARM_IDS) or
+                    type(row.get("process_open")) is not bool or
+                    row["process_open"] != (row.get("kind") != "PROCESS_STOP") or
+                    row.get("kind") not in valid_kinds or
+                    not isinstance(row.get("payload"), dict)):
+                raise CampaignContractError("timing ledger totals or process state are inconsistent")
+            pid = row.get("process_id")
+            monotonic_value = row.get("process_monotonic_ns")
+            if type(pid) is not int or type(monotonic_value) is not int or monotonic_value < process_mono.get(pid, -1):
+                raise CampaignContractError("timing ledger process clock is inconsistent")
+            process_mono[pid] = monotonic_value
+            status = row.get("deadline_status")
+            if status is not None and status not in valid_statuses:
+                raise CampaignContractError("timing ledger contains an unknown deadline status")
+            if row.get("kind") == "DEADLINE_EXCEEDED":
+                declared = row.get("payload", {}).get("status")
+                if declared not in valid_statuses or status != declared or recorded_deadline_status not in (None, declared):
+                    raise CampaignContractError("timing ledger deadline status is inconsistent")
+                recorded_deadline_status = declared
+            elif recorded_deadline_status is not None and status != recorded_deadline_status:
+                raise CampaignContractError("timing ledger dropped a prior deadline failure")
+            elif recorded_deadline_status is None and status is not None:
+                raise CampaignContractError("timing ledger has an unrecorded deadline status")
+            if (campaign_elapsed >= CAMPAIGN_WALL_LIMIT_SECONDS * 1_000_000_000 or
+                    any(value >= TRAJECTORY_WALL_LIMIT_SECONDS * 1_000_000_000
+                        for value in by_trajectory.values())) and status is None and row.get("kind") != "DEADLINE_EXCEEDED":
+                exceeded_without_record = True
+            prior_campaign, prior_trajectory, prior_wall = campaign_elapsed, by_trajectory, row["unix_ns"]
+        if exceeded_without_record and not any(row.get("kind") == "DEADLINE_EXCEEDED" for row in records):
+            raise CampaignContractError("timing ledger passed a frozen deadline without recording failure")
+        return records
+
+    def _current_elapsed(self) -> tuple[int, dict[str, int]]:
+        delta = int(self.clock.monotonic_ns()) - self._mono
+        if delta < 0:
+            raise CampaignContractError("process monotonic clock moved backwards")
+        trajectory = dict(self.trajectory_elapsed_ns)
+        if self.active_trajectory is not None:
+            trajectory[self.active_trajectory] = trajectory.get(self.active_trajectory, 0) + delta
+        return self.campaign_elapsed_ns + delta, trajectory
+
+    @property
+    def prefix_sha256(self) -> str:
+        return self.records[-1]["record_sha256"] if self.records else "0" * 64
+
+    def _append(self, kind: str, payload: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        now_mono, now_wall = int(self.clock.monotonic_ns()), int(self.clock.time_ns())
+        delta = now_mono - self._mono
+        if delta < 0 or now_wall < self._wall:
+            raise CampaignContractError("process clock moved backwards")
+        self.campaign_elapsed_ns += delta
+        if self.active_trajectory is not None:
+            self.trajectory_elapsed_ns[self.active_trajectory] = (
+                self.trajectory_elapsed_ns.get(self.active_trajectory, 0) + delta)
+        self._mono, self._wall = now_mono, now_wall
+        body = {"schema": self.SCHEMA, "sequence": len(self.records),
+            "previous_sha256": self.prefix_sha256, "kind": kind, "payload": dict(payload or {}),
+            "campaign_id": self.campaign_id, "spec_sha256": self.spec_sha256,
+            "source_commit": self.source_commit, "process_id": self.pid, "process_open": kind != "PROCESS_STOP",
+            "unix_ns": now_wall, "process_monotonic_ns": now_mono,
+            "campaign_elapsed_ns": self.campaign_elapsed_ns,
+            "trajectory_elapsed_ns": dict(self.trajectory_elapsed_ns),
+            "active_trajectory": self.active_trajectory,
+            "deadline_status": self.deadline_status}
+        if self.records and self.records[-1].get("deadline_status"):
+            body["deadline_status"] = self.records[-1]["deadline_status"]
+        row = {**body, "record_sha256": _sha(canonical(body))}
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        data = canonical(row) + b"\n"
+        if not self.path.exists():
+            _write_new(self.path, data)
+        else:
+            with self.path.open("ab", buffering=0) as stream:
+                if stream.write(data) != len(data):
+                    raise OSError("short campaign timing-ledger append")
+                os.fsync(stream.fileno())
+        self.records.append(row)
+        return row
+
+    def record(self, kind: str, payload: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        return self._append(kind, payload)
+
+    def start_trajectory(self, trajectory: str) -> None:
+        if trajectory not in ARM_IDS:
+            raise CampaignContractError("unknown timed trajectory")
+        if trajectory in self.completed_trajectories:
+            self.check(trajectory)
+            return
+        if self.active_trajectory not in (None, trajectory):
+            raise CampaignContractError("timing ledger has a different active trajectory")
+        if self.active_trajectory is None:
+            self._append("TRAJECTORY_ORIGIN", {"trajectory_id": trajectory,
+                "origin_unix_ns": int(self.clock.time_ns()),
+                "origin_process_monotonic_ns": int(self.clock.monotonic_ns())})
+            self.active_trajectory = trajectory
+            self._append("TRAJECTORY_START", {"trajectory_id": trajectory})
+
+    def finish_trajectory(self, trajectory: str) -> None:
+        if trajectory in self.completed_trajectories and self.active_trajectory != trajectory:
+            self.check(trajectory)
+            return
+        if self.active_trajectory != trajectory:
+            raise CampaignContractError("timing ledger trajectory completion is out of order")
+        self.check(trajectory)
+        self._append("TRAJECTORY_COMPLETE", {"trajectory_id": trajectory,
+            "elapsed_ns": self.trajectory_elapsed_ns.get(trajectory, 0)})
+        self.completed_trajectories.add(trajectory)
+        self.active_trajectory = None
+        self._append("TRAJECTORY_STOP", {"trajectory_id": trajectory})
+
+    def check(self, trajectory: str | None = None) -> dict[str, Any]:
+        campaign, by_trajectory = self._current_elapsed()
+        if campaign >= CAMPAIGN_WALL_LIMIT_SECONDS * 1_000_000_000:
+            self.deadline_status = "CAMPAIGN_WALL_LIMIT_EXCEEDED"
+            self._append("DEADLINE_EXCEEDED", {"status": "CAMPAIGN_WALL_LIMIT_EXCEEDED"})
+            raise CampaignDeadlineExceeded("CAMPAIGN_WALL_LIMIT_EXCEEDED")
+        if trajectory is not None and by_trajectory.get(trajectory, 0) >= TRAJECTORY_WALL_LIMIT_SECONDS * 1_000_000_000:
+            self.deadline_status = "TRAJECTORY_WALL_LIMIT_EXCEEDED"
+            self._append("DEADLINE_EXCEEDED", {"status": "TRAJECTORY_WALL_LIMIT_EXCEEDED"})
+            raise CampaignDeadlineExceeded("TRAJECTORY_WALL_LIMIT_EXCEEDED")
+        return {"campaign_elapsed_ns": campaign, "trajectory_elapsed_ns": by_trajectory,
+            "campaign_remaining_ns": CAMPAIGN_WALL_LIMIT_SECONDS * 1_000_000_000 - campaign,
+            "trajectory_remaining_ns": (TRAJECTORY_WALL_LIMIT_SECONDS * 1_000_000_000 -
+                by_trajectory.get(trajectory, 0)) if trajectory else None}
+
+    def timeout_seconds(self, trajectory: str | None = None) -> float:
+        budget = self.check(trajectory)
+        remaining = [budget["campaign_remaining_ns"]]
+        if trajectory is not None:
+            remaining.append(budget["trajectory_remaining_ns"])
+        return max(0.001, min(remaining) / 1_000_000_000)
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._append("PROCESS_STOP", {"process_stop_unix_ns": int(self.clock.time_ns())})
+        self._unlock()
+        self._lock_stream.close()
+        self._closed = True
+
+    def __del__(self) -> None:
+        if getattr(self, "_closed", True):
+            return
+        try:
+            self._unlock()
+            self._lock_stream.close()
+            self._closed = True
+        except Exception:
+            pass
+
+
+def _spec_value(value: Any, key: str) -> Any:
+    if isinstance(value, Mapping):
+        if key in value:
+            return value[key]
+        for child in value.values():
+            found = _spec_value(child, key)
+            if found is not None:
+                return found
+    elif isinstance(value, list):
+        for child in value:
+            found = _spec_value(child, key)
+            if found is not None:
+                return found
+    return None
+
+
+def _append_failure_history(execution_root: Path, record: Mapping[str, Any]) -> None:
+    path = execution_root / "INCOMPLETE_FAILURE_HISTORY.jsonl"
+    previous = "0" * 64
+    sequence = 0
+    if path.exists():
+        for line in path.read_bytes().splitlines():
+            row = json.loads(line)
+            body = {key: value for key, value in row.items() if key != "record_sha256"}
+            if (row.get("sequence") != sequence or row.get("previous_sha256") != previous or
+                    row.get("record_sha256") != _sha(canonical(body))):
+                raise CampaignContractError("incomplete failure history is tampered")
+            previous = row["record_sha256"]
+            sequence += 1
+    body = {"schema": "FS4_JOINT_CAMPAIGN_FAILURE_HISTORY_V1", "sequence": sequence,
+        "previous_sha256": previous, **dict(record)}
+    row = {**body, "record_sha256": _sha(canonical(body))}
+    _append_telemetry(path, row)
+
+
+def _record_incomplete(path: Path, reason_code: str, *, campaign_id: str, source_commit: str,
+                       classification: str) -> dict[str, Any]:
+    execution_root = Path(path)
+    marker = execution_root / "INCOMPLETE.json"
+    if not marker.exists():
+        _write_json_new(marker, {"schema": "FS4_JOINT_CAMPAIGN_INCOMPLETE_V2",
+            "status": "INCOMPLETE", "campaign_id": campaign_id, "spec_sha256": spec_identity(),
+            "source_freeze_commit": source_commit, "reason_code": reason_code,
+            "classification": classification, "recorded_unix_ns": time.time_ns()})
+    marker_digest = _sha(marker.read_bytes())
+    _append_failure_history(execution_root, {"campaign_id": campaign_id,
+        "spec_sha256": spec_identity(), "source_freeze_commit": source_commit,
+        "previous_incomplete_record_sha256": marker_digest,
+        "reason_code": reason_code, "classification": classification,
+        "recorded_unix_ns": time.time_ns()})
+    return _read_json(marker)
+
+
+def _read_failure_history(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    previous, records = "0" * 64, []
+    for sequence, line in enumerate(path.read_bytes().splitlines()):
+        try:
+            row = json.loads(line)
+            body = {key: value for key, value in row.items() if key != "record_sha256"}
+            if (row.get("schema") != "FS4_JOINT_CAMPAIGN_FAILURE_HISTORY_V1" or
+                    row.get("sequence") != sequence or row.get("previous_sha256") != previous or
+                    row.get("record_sha256") != _sha(canonical(body))):
+                raise ValueError
+            previous = row["record_sha256"]
+            records.append(row)
+        except Exception as exc:
+            raise CampaignContractError("incomplete failure history is malformed or tampered") from exc
+    return records
+
+
+def _verified_timing_records(execution_root: Path, binding: Mapping[str, Any]) -> list[dict[str, Any]]:
+    path = execution_root / "TIMING_LEDGER.jsonl"
+    parser = object.__new__(CampaignTimingLedger)
+    parser.path = path
+    records = parser._read_records()
+    if any(row.get("campaign_id") != binding["campaign_id"] or
+           row.get("spec_sha256") != spec_identity() or
+           row.get("source_commit") != binding["source_freeze_commit"] for row in records):
+        raise CampaignContractError("timing ledger campaign/source/spec binding differs")
+    if records[-1].get("process_open"):
+        raise CampaignContractError("timing ledger has an unclosed orchestration process")
+    if any(row.get("kind") == "DEADLINE_EXCEEDED" for row in records):
+        raise CampaignContractError("deadline-exhausted campaign cannot be verified or recovered")
+    return records
+
+
+def _validate_terminal_state(campaign_root: Path, binding: Mapping[str, Any],
+                             projections: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+    execution_root = Path(campaign_root) / "execution"
+    seal_path = execution_root / "STAGE_A_CAMPAIGN_SEAL.json"
+    if not seal_path.is_file():
+        raise CampaignContractError("Stage A completion seal is missing")
+    seal = _read_json(seal_path)
+    expected_trajectory_seals = {key: {"run_id": projections[key]["run_id"],
+        "manifest_sha256": projections[key]["manifest_sha256"],
+        "stage_a_sha256": projections[key]["stage_a_sha256"]} for key in ARM_IDS}
+    if (seal.get("schema") != "FS4_FINAL_JOINT_STAGE_A_CAMPAIGN_SEAL_V1" or
+            seal.get("status") != "STAGE_A_COMPLETE" or
+            seal.get("campaign_id") != binding["campaign_id"] or
+            seal.get("scientific_spec_sha256") != spec_identity() or
+            seal.get("campaign_registration_sha256") != binding["campaign_registration_sha256"] or
+            seal.get("trajectory_seals") != expected_trajectory_seals):
+        raise CampaignContractError("Stage A completion seal differs from the verified trajectories")
+    marker_path = execution_root / "INCOMPLETE.json"
+    receipt_path = execution_root / "RECOVERY_COMPLETION.json"
+    history = _read_failure_history(execution_root / "INCOMPLETE_FAILURE_HISTORY.jsonl")
+    timing_records = _verified_timing_records(execution_root, binding)
+    if not marker_path.exists():
+        if history or receipt_path.exists():
+            raise CampaignContractError("failure evidence or recovery receipt exists without its incomplete marker")
+        completion = next((row for row in timing_records if row.get("kind") == "CAMPAIGN_COMPLETE"), None)
+        if (completion is None or seal.get("timing_completion_record_sha256") != completion.get("record_sha256") or
+                seal.get("execution_time_totals_ns") != completion.get("payload", {}).get("elapsed_totals_ns")):
+            raise CampaignContractError("timing ledger lacks a successful campaign completion record")
+        return {"terminal_state": "UNINTERRUPTED_COMPLETE", "seal": seal}
+    marker_bytes = marker_path.read_bytes()
+    marker_digest = _sha(marker_bytes)
+    marker = _read_json(marker_path)
+    if (marker.get("schema") != "FS4_JOINT_CAMPAIGN_INCOMPLETE_V2" or
+            marker.get("status") != "INCOMPLETE" or marker.get("campaign_id") != binding["campaign_id"] or
+            marker.get("spec_sha256") != spec_identity() or
+            marker.get("source_freeze_commit") != binding["source_freeze_commit"] or not history):
+        raise CampaignContractError("incomplete marker identity or failure history is invalid")
+    if marker.get("classification") != "RECOVERABLE_EXECUTION_INTERRUPTION" or any(
+            row.get("classification") != "RECOVERABLE_EXECUTION_INTERRUPTION" or
+            row.get("previous_incomplete_record_sha256") != marker_digest or
+            row.get("campaign_id") != binding["campaign_id"] or
+            row.get("spec_sha256") != spec_identity() or
+            row.get("source_freeze_commit") != binding["source_freeze_commit"] for row in history):
+        raise CampaignContractError("fatal, ambiguous or deadline failure is not eligible for recovery")
+    if not receipt_path.is_file():
+        raise CampaignContractError("recovered Stage A has no recovery-completion receipt")
+    receipt = _read_json(receipt_path)
+    ledger_identities = {key: {"run_id": projections[key]["run_id"],
+        "manifest_sha256": projections[key]["manifest_sha256"],
+        "stage_a_sha256": projections[key]["stage_a_sha256"],
+        "category_seals": projections[key]["category_seals"]} for key in ARM_IDS}
+    receipt_body = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+    expected_receipt_sha = _sha(canonical(receipt_body) + b"\n")
+    required_kinds = {"RECOVERY_CHECKPOINT_SELECTED", "RECOVERY_REPLAY_COMPLETED",
+                      "RECOVERY_LEDGER_VERIFIED", "CAMPAIGN_COMPLETE"}
+    if (receipt.get("schema") != "FS4_JOINT_CAMPAIGN_RECOVERY_COMPLETION_V1" or
+            receipt.get("status") != "VERIFIED_RECOVERY_COMPLETION" or
+            receipt.get("campaign_id") != binding["campaign_id"] or
+            receipt.get("spec_sha256") != spec_identity() or
+            receipt.get("source_freeze_commit") != binding["source_freeze_commit"] or
+            receipt.get("previous_incomplete_record_sha256") != marker_digest or
+            receipt.get("verified_complete_stage_a_ledger_identities") != ledger_identities or
+            receipt.get("final_trajectory_stage_a_seals") != seal["trajectory_seals"] or
+            receipt.get("recovery_classification") != "VERIFIED_RECOVERY_COMPLETION" or
+            not isinstance(receipt.get("recovery_checkpoint_identities"), list) or
+            not receipt["recovery_checkpoint_identities"] or
+            not isinstance(receipt.get("replayed_ledger_prefix_identities"), list) or
+            not receipt["replayed_ledger_prefix_identities"] or
+            receipt.get("receipt_sha256") != expected_receipt_sha):
+        raise CampaignContractError("recovery-completion receipt is forged, incomplete or bound to different evidence")
+    timing_kinds = {row.get("kind") for row in timing_records}
+    logged_checkpoints = [row.get("payload") for row in timing_records
+        if row.get("kind") == "RECOVERY_CHECKPOINT_SELECTED"]
+    logged_prefixes = [row.get("payload") for row in timing_records
+        if row.get("kind") == "RECOVERY_REPLAY_COMPLETED"]
+    verified_record = next((row for row in timing_records
+        if row.get("kind") == "RECOVERY_LEDGER_VERIFIED"), None)
+    completion_record = next((row for row in timing_records
+        if row.get("kind") == "CAMPAIGN_COMPLETE"), None)
+    if (completion_record is None or seal.get("timing_completion_record_sha256") != completion_record.get("record_sha256") or
+            seal.get("execution_time_totals_ns") != completion_record.get("payload", {}).get("elapsed_totals_ns")):
+        raise CampaignContractError("recovery seal does not bind the final timing totals")
+    if (not required_kinds <= timing_kinds or completion_record is None or
+            receipt.get("timing_ledger_prefix_sha256") != completion_record.get("record_sha256") or
+            receipt.get("recovery_checkpoint_identities") != logged_checkpoints or
+            receipt.get("replayed_ledger_prefix_identities") != logged_prefixes or
+            verified_record is None or verified_record.get("payload", {}).get(
+                "verified_complete_stage_a_ledger_identities") != ledger_identities):
+        raise CampaignContractError("recovery timing audit is incomplete or not bound to the timing ledger")
+    return {"terminal_state": "VERIFIED_RECOVERY_COMPLETION", "seal": seal, "receipt": receipt}
 
 
 def _sha(data: bytes) -> str:
@@ -53,13 +508,6 @@ def _read_json(path: Path) -> Any:
         return json.loads(Path(path).read_bytes())
     except Exception as exc:
         raise ValueError(f"required campaign JSON is unreadable: {Path(path).name}") from exc
-
-
-def _record_incomplete(path: Path, reason_code: str) -> None:
-    marker = Path(path) / "INCOMPLETE.json"
-    if marker.parent.exists() and not marker.exists():
-        _write_json_new(marker, {"schema": "FS4_JOINT_CAMPAIGN_INCOMPLETE_V1",
-            "status": "INCOMPLETE", "reason_code": reason_code, "spec_sha256": spec_identity()})
 
 
 def _validate_authorization(path: Path, *, scope: str, campaign_id: str,
@@ -316,8 +764,11 @@ def _inspect_ledger(run_root: Path, manifest: Mapping[str, Any]) -> dict[str, An
     from .fs4_research_ledger import ResearchLedger
     ledger = ResearchLedger(run_root, manifest, create=False)
     try:
+        prefix = {"run_id": manifest.get("run_id"), "manifest_sha256": digest(manifest),
+            "position": ledger.position, "phase": ledger.phase, "last_hash": ledger.last_hash}
         return {"position": ledger.position, "phase": ledger.phase, "current_category": ledger.current_category,
-                "category_seals": dict(ledger.category_seals)}
+                "category_seals": dict(ledger.category_seals), "last_hash": ledger.last_hash,
+                "prefix_identity": prefix}
     finally:
         ledger.close()
 
@@ -366,14 +817,14 @@ def _append_telemetry(path: Path, row: Mapping[str, Any]) -> None:
 
 def _start_worker(*, campaign_root: Path, metadata: Mapping[str, Any], trajectory: str,
                   manifest_path: Path, manifest: Mapping[str, Any], category: str,
-                  checkpoint: str | None, create: bool):
+                  checkpoint: str | None, create: bool, timeout_seconds: float | None = None):
     from .fs4_r4_worker import BrokerProcess, BlindedResearchWorker
     run_root = campaign_root / "execution" / "runs" / trajectory
     disclosure_root = campaign_root / "execution" / "disclosures" / trajectory
     run_root.parent.mkdir(parents=True, exist_ok=True)
     disclosure_root.parent.mkdir(parents=True, exist_ok=True)
     broker = BrokerProcess(private_root=Path(metadata["private_root"]), run_root=run_root,
-        disclosures_root=disclosure_root, manifest_path=manifest_path)
+        disclosures_root=disclosure_root, manifest_path=manifest_path, timeout_seconds=timeout_seconds)
     config = {"manifest_path": str(manifest_path.absolute()), "run_root": str(run_root.absolute()),
         "category": category, "create": create, "checkpoint": checkpoint}
     config_dir = campaign_root / "execution" / "runtime-config"
@@ -381,7 +832,7 @@ def _start_worker(*, campaign_root: Path, metadata: Mapping[str, Any], trajector
     config_path = config_dir / f"{trajectory}-{category}-{uuid.uuid4().hex}.json"
     _write_json_new(config_path, config)
     try:
-        worker = BlindedResearchWorker(config_path, broker)
+        worker = BlindedResearchWorker(config_path, broker, timeout_seconds=timeout_seconds)
     except Exception:
         try:
             config_path.unlink()
@@ -389,6 +840,65 @@ def _start_worker(*, campaign_root: Path, metadata: Mapping[str, Any], trajector
             pass
         raise
     return worker, config_path, run_root, disclosure_root
+
+
+def _checkpoint_identity(run_root: Path, trajectory: str, category: str, name: str) -> dict[str, Any]:
+    path = Path(run_root) / "checkpoints" / name
+    try:
+        committed = (path / "COMMITTED.json").read_bytes()
+        state = (path / "state.json").read_bytes()
+        tensors = (path / "tensors.npz").read_bytes()
+        marker = json.loads(committed)
+        if marker != {"state_sha256": _sha(state), "tensor_sha256": _sha(tensors)}:
+            raise ValueError
+    except Exception as exc:
+        raise CampaignContractError("recovery checkpoint identity is missing or corrupt") from exc
+    return {"trajectory_id": trajectory, "category": category, "checkpoint_name": name,
+        "committed_sha256": _sha(committed), "state_sha256": _sha(state),
+        "tensor_sha256": _sha(tensors)}
+
+
+def _recovery_eligibility(execution_root: Path, binding: Mapping[str, Any], *,
+                          unclean_previous_process: bool) -> bool:
+    marker_path = execution_root / "INCOMPLETE.json"
+    if marker_path.exists():
+        marker_digest = _sha(marker_path.read_bytes())
+        marker = _read_json(marker_path)
+        history = _read_failure_history(execution_root / "INCOMPLETE_FAILURE_HISTORY.jsonl")
+        if (marker.get("schema") != "FS4_JOINT_CAMPAIGN_INCOMPLETE_V2" or
+                marker.get("campaign_id") != binding["campaign_id"] or
+                marker.get("spec_sha256") != spec_identity() or
+                marker.get("source_freeze_commit") != binding["source_freeze_commit"] or
+                marker.get("classification") != "RECOVERABLE_EXECUTION_INTERRUPTION" or not history or
+                any(row.get("classification") != "RECOVERABLE_EXECUTION_INTERRUPTION" or
+                    row.get("previous_incomplete_record_sha256") != marker_digest or
+                    row.get("campaign_id") != binding["campaign_id"] or
+                    row.get("spec_sha256") != spec_identity() or
+                    row.get("source_freeze_commit") != binding["source_freeze_commit"] for row in history)):
+            raise CampaignContractError("existing incomplete campaign is fatal, ambiguous or deadline-exhausted")
+    elif not unclean_previous_process:
+        raise CampaignContractError("resume has no recoverable incomplete marker or unclean prior process")
+
+    ambiguous = False
+    for trajectory in ARM_IDS:
+        manifest_path = Path(execution_root).parent / "manifests" / f"{trajectory}.json"
+        if not manifest_path.is_file():
+            continue
+        manifest = _read_json(manifest_path)
+        ledger_state = _inspect_ledger(execution_root / "runs" / trajectory, manifest)
+        if ledger_state and ledger_state.get("phase") == "LABEL_INTENT":
+            ambiguous = True
+    if ambiguous:
+        _record_incomplete(execution_root, "LABEL_DISCLOSURE_INTENT_UNRESOLVED",
+            campaign_id=binding["campaign_id"], source_commit=binding["source_freeze_commit"],
+            classification="AMBIGUOUS_LABEL_DISCLOSURE")
+        raise CampaignContractError("ambiguous label intent makes this campaign permanently ineligible for resume")
+    if marker_path.exists():
+        return True
+    _record_incomplete(execution_root, "UNCLEAN_ORCHESTRATION_PROCESS_INTERRUPTION",
+        campaign_id=binding["campaign_id"], source_commit=binding["source_freeze_commit"],
+        classification="RECOVERABLE_EXECUTION_INTERRUPTION")
+    return True
 
 
 def run_stage_a(*, campaign_root: Path, authorization_path: Path, resume: bool = False) -> dict[str, Any]:
@@ -412,8 +922,31 @@ def run_stage_a(*, campaign_root: Path, authorization_path: Path, resume: bool =
         execution_root.mkdir(parents=False, exist_ok=False)
     elif not resume:
         raise FileExistsError("execution namespace exists; pass explicit resume authorization to continue")
+    timing: CampaignTimingLedger | None = None
+    recovery = False
+    recovery_checkpoints: list[dict[str, Any]] = []
+    recovery_prefixes: list[dict[str, Any]] = []
+    worker = None
+    config_path: Path | None = None
     try:
+        existing_seal = execution_root / "STAGE_A_CAMPAIGN_SEAL.json"
+        if existing_seal.exists():
+            marker = execution_root / "INCOMPLETE.json"
+            receipt = execution_root / "RECOVERY_COMPLETION.json"
+            if not marker.exists() or receipt.exists():
+                return verify_stage_a(campaign_root=campaign_root)
+            if not resume:
+                raise FileExistsError("incomplete recovery seal requires explicit resume authorization")
+        timing = CampaignTimingLedger(execution_root / "TIMING_LEDGER.jsonl",
+            campaign_id=binding["campaign_id"], source_commit=binding["source_freeze_commit"])
+        if resume:
+            recovery = _recovery_eligibility(execution_root, binding,
+                unclean_previous_process=timing.unclean_previous_process)
+        elif timing.records and len(timing.records) > 2:
+            raise CampaignContractError("existing timing history requires explicit resume")
         for trajectory in ARM_IDS:
+            timing.start_trajectory(trajectory)
+            timing.check(trajectory)
             manifest_path = campaign_root / "manifests" / f"{trajectory}.json"
             manifest = _load_trajectory_manifest(campaign_root, trajectory)
             if manifest["source_commit"] != binding["source_freeze_commit"]:
@@ -421,94 +954,242 @@ def run_stage_a(*, campaign_root: Path, authorization_path: Path, resume: bool =
             run_root = execution_root / "runs" / trajectory
             existing = _inspect_ledger(run_root, manifest)
             if existing and existing["phase"] == "GLOBAL_A":
+                if recovery:
+                    for category in EXPECTED_CATEGORIES:
+                        events = registration["categories"][category]["events"]
+                        candidates = _checkpoint_candidates(run_root, category, manifest,
+                            events[0]["position"], events[-1]["position"] + 1)
+                        if not candidates:
+                            raise CampaignContractError("sealed trajectory has no verified recovery checkpoint")
+                        checkpoint_name = candidates[-1][1]
+                        identity = _checkpoint_identity(run_root, trajectory, category, checkpoint_name)
+                        recovery_checkpoints.append(identity)
+                        timing.record("RECOVERY_CHECKPOINT_SELECTED", identity)
+                    prefix = {"trajectory_id": trajectory, "category": "GLOBAL_A",
+                        "pre": existing.get("prefix_identity"), "post": existing.get("prefix_identity")}
+                    recovery_prefixes.append(prefix)
+                    timing.record("RECOVERY_REPLAY_COMPLETED", prefix)
+                timing.finish_trajectory(trajectory)
                 continue
             parent_ledger = existing
             for category in EXPECTED_CATEGORIES:
                 if parent_ledger and category in parent_ledger["category_seals"]:
+                    if recovery:
+                        events = registration["categories"][category]["events"]
+                        candidates = _checkpoint_candidates(run_root, category, manifest,
+                            events[0]["position"], events[-1]["position"] + 1)
+                        if not candidates:
+                            raise CampaignContractError("sealed category has no verified recovery checkpoint")
+                        name = candidates[-1][1]
+                        identity = _checkpoint_identity(run_root, trajectory, category, name)
+                        recovery_checkpoints.append(identity)
+                        timing.record("RECOVERY_CHECKPOINT_SELECTED", identity)
+                        prefix = {"trajectory_id": trajectory, "category": category,
+                            "pre": parent_ledger.get("prefix_identity"), "post": parent_ledger.get("prefix_identity")}
+                        recovery_prefixes.append(prefix)
+                        timing.record("RECOVERY_REPLAY_COMPLETED", prefix)
                     continue
+                timing.check(trajectory)
                 events = registration["categories"][category]["events"]
                 category_start, category_end = events[0]["position"], events[-1]["position"] + 1
                 current = _inspect_ledger(run_root, manifest)
                 if current and current["current_category"] not in (None, category):
                     raise CampaignContractError("ledger is active in a different category; refusing to switch trajectories")
-                if current and current["phase"] not in ("READY",):
-                    # An unfinished query intent is handled only by checkpoint replay.
-                    pass
                 candidates = _checkpoint_candidates(run_root, category, manifest, category_start, category_end)
                 checkpoint = candidates[-1][1] if candidates else None
                 if checkpoint and current and current["position"] < candidates[-1][0]:
                     raise CampaignContractError("checkpoint is ahead of its durable ledger")
                 if current and current["position"] > category_start and not checkpoint:
                     raise CampaignContractError("advanced ledger has no committed category checkpoint")
+                pre_prefix = current.get("prefix_identity") if current else None
                 create = current is None
                 worker, config_path, run_root, disclosure_root = _start_worker(
                     campaign_root=campaign_root, metadata=binding, trajectory=trajectory,
                     manifest_path=manifest_path, manifest=manifest, category=category,
-                    checkpoint=checkpoint, create=create)
+                    checkpoint=checkpoint, create=create,
+                    timeout_seconds=timing.timeout_seconds(trajectory))
                 telemetry_path = execution_root / "telemetry" / f"{trajectory}.jsonl"
                 try:
                     if checkpoint is None:
-                        worker.checkpoint(f"{category}-start")
+                        timing.check(trajectory)
+                        worker.checkpoint(f"{category}-start", timeout_seconds=timing.timeout_seconds(trajectory))
+                        checkpoint_name = f"{category}-start"
+                    else:
+                        checkpoint_name = checkpoint
+                    if recovery:
+                        identity = _checkpoint_identity(run_root, trajectory, category, checkpoint_name)
+                        recovery_checkpoints.append(identity)
+                        timing.record("RECOVERY_CHECKPOINT_SELECTED", identity)
                     if checkpoint is None:
                         position = category_start
                     else:
                         checkpoint_state = _read_json(run_root / "checkpoints" / checkpoint / "state.json")
                         position = checkpoint_state["ledger_offset"]["next_position"]
                     for event_position in range(position, category_end):
-                        result = worker.step(event_position)
+                        timing.check(trajectory)
+                        result = worker.step(event_position, timeout_seconds=timing.timeout_seconds(trajectory))
                         expected = events[event_position - category_start]
                         prediction = result.get("prediction", {})
                         if (prediction.get("position") != event_position or prediction.get("event") != expected["event"] or
                                 prediction.get("group") != expected["group"]):
                             raise CampaignContractError("worker returned a different registered event identity")
+                        timing.check(trajectory)
                         completed = event_position + 1
                         if completed % 1000 == 0:
                             name = f"{category}-event-{completed:05d}"
+                            timing.check(trajectory)
                             if name not in {item[1] for item in _checkpoint_candidates(
                                     run_root, category, manifest, category_start, category_end)}:
-                                worker.checkpoint(name)
+                                worker.checkpoint(name, timeout_seconds=timing.timeout_seconds(trajectory))
+                            timing.record("CHECKPOINT", {"trajectory_id": trajectory, "category": category,
+                                "checkpoint_name": name, "completed_events": completed})
+                            timing.check(trajectory)
                             _append_telemetry(telemetry_path, {"schema": "FS4_CAMPAIGN_RUNTIME_TELEMETRY_V1",
                                 "trajectory_id": trajectory, "category": category, "completed_global_events": completed,
-                                "captured_unix_time": time.time(), **worker.stats()})
-                        # The event result is intentionally discarded after identity checks.
+                                "captured_unix_time": time.time(), **worker.stats(
+                                    timeout_seconds=timing.timeout_seconds(trajectory))})
                         del result
                     end_name = f"{category}-end"
+                    timing.check(trajectory)
                     if end_name not in {item[1] for item in _checkpoint_candidates(
                             run_root, category, manifest, category_start, category_end)}:
-                        worker.checkpoint(end_name)
-                    worker.seal_category()
+                        worker.checkpoint(end_name, timeout_seconds=timing.timeout_seconds(trajectory))
+                    timing.record("CHECKPOINT", {"trajectory_id": trajectory, "category": category,
+                        "checkpoint_name": end_name, "completed_events": category_end})
+                    timing.check(trajectory)
+                    worker.seal_category(timeout_seconds=timing.timeout_seconds(trajectory))
                     if category == EXPECTED_CATEGORIES[-1]:
-                        worker.seal_global_a()
+                        timing.check(trajectory)
+                        worker.seal_global_a(timeout_seconds=timing.timeout_seconds(trajectory))
                     _append_telemetry(telemetry_path, {"schema": "FS4_CAMPAIGN_RUNTIME_TELEMETRY_V1",
                         "trajectory_id": trajectory, "category": category, "completed_global_events": category_end,
-                        "captured_unix_time": time.time(), **worker.stats()})
+                        "captured_unix_time": time.time(), **worker.stats(
+                            timeout_seconds=timing.timeout_seconds(trajectory))})
                 finally:
                     worker.close()
+                    worker = None
                     try:
                         config_path.unlink()
                     except OSError:
                         pass
+                    config_path = None
                 parent_ledger = _inspect_ledger(run_root, manifest)
-        projections = {trajectory: _verify_trajectory_stage_a(campaign_root, trajectory, write_projection=True)
-                       for trajectory in ARM_IDS}
-        _validate_complete_stage_a(campaign_root, binding, registration, projections)
+                if recovery:
+                    identity = _checkpoint_identity(run_root, trajectory, category, end_name)
+                    if identity not in recovery_checkpoints:
+                        recovery_checkpoints.append(identity)
+                        timing.record("RECOVERY_CHECKPOINT_SELECTED", identity)
+                    prefix = {"trajectory_id": trajectory, "category": category,
+                        "pre": pre_prefix, "post": parent_ledger.get("prefix_identity")}
+                    recovery_prefixes.append(prefix)
+                    timing.record("RECOVERY_REPLAY_COMPLETED", prefix)
+            timing.finish_trajectory(trajectory)
+        projections = {}
+        for trajectory in ARM_IDS:
+            timing.check()
+            projections[trajectory] = _verify_trajectory_stage_a(campaign_root, trajectory,
+                write_projection=True, timeout_seconds=timing.timeout_seconds())
+        _validate_complete_stage_a(campaign_root, binding, registration, projections, require_terminal=False)
+        if recovery:
+            timing.record("RECOVERY_LEDGER_VERIFIED", {"verified_complete_stage_a_ledger_identities": {
+                key: {"run_id": projections[key]["run_id"], "manifest_sha256": projections[key]["manifest_sha256"],
+                    "stage_a_sha256": projections[key]["stage_a_sha256"],
+                    "category_seals": projections[key]["category_seals"]} for key in ARM_IDS}})
+        timing.check()
+        elapsed_totals = timing._current_elapsed()
+        completion_record = timing.record("CAMPAIGN_COMPLETE", {"status": "STAGE_A_COMPLETE",
+            "elapsed_totals_ns": {"campaign": elapsed_totals[0],
+                "trajectories": elapsed_totals[1]}})
         seal = {"schema": "FS4_FINAL_JOINT_STAGE_A_CAMPAIGN_SEAL_V1", "status": "STAGE_A_COMPLETE",
             "campaign_id": binding["campaign_id"], "scientific_spec_sha256": spec_identity(),
             "campaign_registration_sha256": binding["campaign_registration_sha256"],
+            "timing_completion_record_sha256": completion_record["record_sha256"],
+            "execution_time_totals_ns": completion_record["payload"]["elapsed_totals_ns"],
             "trajectory_seals": {key: {"run_id": projections[key]["run_id"],
                 "manifest_sha256": projections[key]["manifest_sha256"], "stage_a_sha256": projections[key]["stage_a_sha256"]}
                 for key in ARM_IDS}}
-        _write_json_new(execution_root / "STAGE_A_CAMPAIGN_SEAL.json", seal)
+        seal_path = execution_root / "STAGE_A_CAMPAIGN_SEAL.json"
+        if seal_path.exists():
+            if _read_json(seal_path) != seal:
+                raise CampaignContractError("existing Stage A seal differs; refusing overwrite")
+        else:
+            _write_json_new(seal_path, seal)
+        if recovery:
+            marker_digest = _sha((execution_root / "INCOMPLETE.json").read_bytes())
+            ledger_identities = {key: {"run_id": projections[key]["run_id"],
+                "manifest_sha256": projections[key]["manifest_sha256"],
+                "stage_a_sha256": projections[key]["stage_a_sha256"],
+                "category_seals": projections[key]["category_seals"]} for key in ARM_IDS}
+            receipt = {"schema": "FS4_JOINT_CAMPAIGN_RECOVERY_COMPLETION_V1",
+                "status": "VERIFIED_RECOVERY_COMPLETION", "campaign_id": binding["campaign_id"],
+                "spec_sha256": spec_identity(), "source_freeze_commit": binding["source_freeze_commit"],
+                "previous_incomplete_record_sha256": marker_digest,
+                "recovery_checkpoint_identities": recovery_checkpoints,
+                "replayed_ledger_prefix_identities": recovery_prefixes,
+                "verified_complete_stage_a_ledger_identities": ledger_identities,
+                "final_trajectory_stage_a_seals": seal["trajectory_seals"],
+                "recovery_classification": "VERIFIED_RECOVERY_COMPLETION",
+                "timing_ledger_prefix_sha256": completion_record["record_sha256"]}
+            receipt["receipt_sha256"] = _sha(canonical(receipt) + b"\n")
+            receipt_path = execution_root / "RECOVERY_COMPLETION.json"
+            if receipt_path.exists():
+                if _read_json(receipt_path) != receipt:
+                    raise CampaignContractError("existing recovery completion receipt differs; refusing overwrite")
+            else:
+                _write_json_new(receipt_path, receipt)
+        if timing:
+            timing.close()
+            timing = None
+        _validate_terminal_state(campaign_root, binding, projections)
         return seal
-    except Exception:
-        _record_incomplete(execution_root, "STAGE_A_INTEGRITY_OR_EXECUTION_FAILURE")
+    except Exception as exc:
+        if worker is not None:
+            try: worker.close()
+            except Exception: pass
+        try:
+            from .fs4_r4_worker import ResearchWorkerTimeout
+            worker_timeout = isinstance(exc, ResearchWorkerTimeout)
+        except ImportError:
+            worker_timeout = False
+        if isinstance(exc, CampaignDeadlineExceeded):
+            classification = "DEADLINE_EXHAUSTION"
+            reason = exc.status
+        elif worker_timeout:
+            ambiguous = False
+            for trajectory in ARM_IDS:
+                try:
+                    manifest = _load_trajectory_manifest(campaign_root, trajectory)
+                    state = _inspect_ledger(execution_root / "runs" / trajectory, manifest)
+                    ambiguous = ambiguous or bool(state and state.get("phase") == "LABEL_INTENT")
+                except Exception:
+                    ambiguous = True
+            classification = "AMBIGUOUS_LABEL_DISCLOSURE" if ambiguous else "RECOVERABLE_EXECUTION_INTERRUPTION"
+            reason = "WORKER_TIMEOUT_WITH_LABEL_INTENT" if ambiguous else "SUPERVISED_WORKER_TIMEOUT_AT_SAFE_BOUNDARY"
+        elif isinstance(exc, RecoverableExecutionInterruption):
+            classification, reason = "RECOVERABLE_EXECUTION_INTERRUPTION", "INJECTED_RECOVERABLE_EVENT_BOUNDARY_INTERRUPTION"
+        else:
+            classification, reason = "UNRECOVERABLE_INTEGRITY_FAILURE", "STAGE_A_INTEGRITY_OR_EXECUTION_FAILURE"
+        _record_incomplete(execution_root, reason, campaign_id=binding["campaign_id"],
+            source_commit=binding["source_freeze_commit"], classification=classification)
+        if timing is not None:
+            try:
+                timing.record("CAMPAIGN_FAILURE", {"classification": classification, "reason_code": reason})
+                timing.close()
+            except Exception:
+                pass
         raise
+    finally:
+        if worker is not None:
+            try: worker.close()
+            except Exception: pass
 
 
-def _verify_trajectory_stage_a(campaign_root: Path, trajectory: str, *, write_projection: bool) -> dict[str, Any]:
+def _verify_trajectory_stage_a(campaign_root: Path, trajectory: str, *, write_projection: bool,
+                               timeout_seconds: float | None = None) -> dict[str, Any]:
     run_root = Path(campaign_root) / "execution" / "runs" / trajectory
     command = [sys.executable, "-m", "experiments.calibration.fs4_research_stage_a_verify", str(run_root)]
-    completed = subprocess.run(command, cwd=ROOT, capture_output=True, check=True)
+    completed = subprocess.run(command, cwd=ROOT, capture_output=True, check=True,
+        timeout=timeout_seconds)
     projection = json.loads(completed.stdout)
     if projection.get("trajectory_id") != trajectory:
         raise CampaignContractError("Stage A verifier returned another trajectory")
@@ -522,7 +1203,7 @@ def _verify_trajectory_stage_a(campaign_root: Path, trajectory: str, *, write_pr
 
 
 def _validate_complete_stage_a(campaign_root: Path, binding: Mapping[str, Any], registration: Mapping[str, Any],
-                               projections: Mapping[str, Mapping[str, Any]]) -> None:
+                               projections: Mapping[str, Mapping[str, Any]], *, require_terminal: bool = True) -> None:
     if set(projections) != set(ARM_IDS):
         raise CampaignContractError("all three Stage A trajectories are mandatory")
     reference = None
@@ -547,6 +1228,10 @@ def _validate_complete_stage_a(campaign_root: Path, binding: Mapping[str, Any], 
                 category: load_spec()["source_model_support"]["support_records_by_category"][category]["fixed_bank_sha256"]
                 for category in EXPECTED_CATEGORIES}:
             raise CampaignContractError(f"{trajectory}: four-Support fixed bank identity differs")
+        category_seals = item.get("category_seals")
+        if (not isinstance(category_seals, Mapping) or set(category_seals) != set(EXPECTED_CATEGORIES) or
+                any(not isinstance(value, str) or len(value) != 64 for value in category_seals.values())):
+            raise CampaignContractError(f"{trajectory}: all four verified category seals are mandatory")
         if item.get("stream_sha256_by_category") != {
                 category: digest([{"group": row["group"], "event": row["event"]}
                                  for row in registration["categories"][category]["events"]])
@@ -559,6 +1244,8 @@ def _validate_complete_stage_a(campaign_root: Path, binding: Mapping[str, Any], 
             raise CampaignContractError("Stage A trajectories do not share the same opaque event sequence")
         if len(item["events"]) != sum(EXPECTED_EVENTS.values()):
             raise CampaignContractError(f"{trajectory}: Stage A event count is incomplete")
+    if require_terminal:
+        _validate_terminal_state(campaign_root, binding, projections)
 
 
 def verify_stage_a(*, campaign_root: Path) -> dict[str, Any]:
@@ -566,7 +1253,9 @@ def verify_stage_a(*, campaign_root: Path) -> dict[str, Any]:
     projections = {trajectory: _verify_trajectory_stage_a(campaign_root, trajectory, write_projection=True)
                    for trajectory in ARM_IDS}
     _validate_complete_stage_a(campaign_root, binding, registration, projections)
+    terminal = _validate_terminal_state(campaign_root, binding, projections)
     return {"status": "PASS", "campaign_id": binding["campaign_id"],
+        "terminal_state": terminal["terminal_state"],
         "trajectory_seals": {key: {"stage_a_sha256": projections[key]["stage_a_sha256"],
             "manifest_sha256": projections[key]["manifest_sha256"]} for key in ARM_IDS}}
 

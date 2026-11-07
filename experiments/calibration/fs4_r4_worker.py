@@ -36,6 +36,10 @@ class BlindedResearchContext(ResearchContext):
         if ledger.execution_manifest.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1":
             self._trajectory.audit_snapshot = lambda: _campaign_audit_snapshot(self._trajectory)
 
+
+class ResearchWorkerTimeout(ResearchWorkerError):
+    """A supervised worker or broker exceeded the caller's remaining wall budget."""
+
     def _encode_event(self, position: int) -> dict[str, Any]:
         from .fs4_r4_blinded import read_blinded_image
         if digest(self._manifest) != self._manifest_digest or digest(self._ledger._execution_manifest) != self._manifest_digest:
@@ -224,7 +228,8 @@ def _worker_main(connection: Any, broker: Any, config_path: str, broker_manifest
 
 class BrokerProcess:
     """Owner-side launcher; private mapping paths are never sent to the worker."""
-    def __init__(self, *, private_root: Path, run_root: Path, disclosures_root: Path, manifest_path: Path) -> None:
+    def __init__(self, *, private_root: Path, run_root: Path, disclosures_root: Path,
+                 manifest_path: Path, timeout_seconds: float | None = None) -> None:
         from .fs4_r4_broker import broker_main
         context = multiprocessing.get_context("spawn")
         parent, child = context.Pipe(duplex=True)
@@ -233,14 +238,30 @@ class BrokerProcess:
             "run_root": str(Path(run_root).absolute()), "disclosures_root": str(Path(disclosures_root).absolute()),
             "manifest_path": str(Path(manifest_path).absolute())})
         self.process.start(); child.close()
-        reply = json.loads(self.endpoint.recv_bytes(4096))
+        if not self.endpoint.poll(timeout_seconds):
+            self._terminate()
+            raise ResearchWorkerTimeout("feedback broker startup exceeded the wall budget")
+        try:
+            reply = json.loads(self.endpoint.recv_bytes(4096))
+        except (EOFError, OSError) as exc:
+            self._terminate()
+            raise ResearchWorkerError("feedback broker exited during startup") from exc
         if set(reply) != {"status", "manifest_sha256"} or reply["status"] != "READY":
-            self.process.join(); self.endpoint.close(); raise ResearchWorkerError("feedback broker did not start")
+            self._terminate(); raise ResearchWorkerError("feedback broker did not start")
         self.manifest_sha256 = reply["manifest_sha256"]
+
+    def _terminate(self) -> None:
+        if self.process.is_alive():
+            self.process.terminate(); self.process.join(timeout=1.0)
+            if self.process.is_alive() and hasattr(self.process, "kill"):
+                self.process.kill(); self.process.join(timeout=1.0)
+        try: self.endpoint.close()
+        except OSError: pass
 
 
 class BlindedResearchWorker:
-    def __init__(self, config_path: Path, broker: BrokerProcess) -> None:
+    def __init__(self, config_path: Path, broker: BrokerProcess,
+                 timeout_seconds: float | None = None) -> None:
         if type(broker) is not BrokerProcess or not Path(config_path).is_absolute():
             raise ValueError("registered configuration and separate broker required")
         context = multiprocessing.get_context("spawn")
@@ -248,31 +269,63 @@ class BlindedResearchWorker:
         self._connection = parent; self._broker = broker
         self._process = context.Process(target=_worker_main, args=(child, broker.endpoint, str(config_path), broker.manifest_sha256))
         self._process.start(); child.close(); broker.endpoint.close()
-        try: self._receive("READY")
+        try: self._receive("READY", timeout_seconds=timeout_seconds)
         except Exception:
-            self._process.join(); broker.process.join(); self._connection.close(); raise
+            self._terminate(); raise
 
-    def _receive(self, expected: str) -> dict[str, Any]:
+    def _terminate(self) -> None:
+        for process in (self._process, self._broker.process):
+            if process.is_alive():
+                process.terminate(); process.join(timeout=1.0)
+                if process.is_alive() and hasattr(process, "kill"):
+                    process.kill(); process.join(timeout=1.0)
+        try: self._connection.close()
+        except OSError: pass
+        try: self._broker.endpoint.close()
+        except OSError: pass
+
+    def _receive(self, expected: str, *, timeout_seconds: float | None = None) -> dict[str, Any]:
+        if not self._connection.poll(timeout_seconds):
+            self._terminate()
+            raise ResearchWorkerTimeout("blinded worker operation exceeded the remaining wall budget")
         try: reply = json.loads(self._connection.recv_bytes(4 * 1024 * 1024))
         except (EOFError, OSError) as exc: raise ResearchWorkerError("blinded worker exited") from exc
         if reply.get("status") != expected: raise ResearchWorkerError(reply.get("message", "blinded worker rejected request"))
         return reply
 
-    def _command(self, action: str, argument: Any) -> Any:
+    def _command(self, action: str, argument: Any, *, timeout_seconds: float | None = None) -> Any:
         self._connection.send_bytes(canonical({"command": action, "argument": argument}))
-        return self._receive("OK")["result"]
+        return self._receive("OK", timeout_seconds=timeout_seconds)["result"]
 
-    def step(self, position: int) -> Any:
+    def step(self, position: int, *, timeout_seconds: float | None = None) -> Any:
         if type(position) is not int: raise TypeError("step accepts only an event position")
-        return self._command("step", position)
+        return self._command("step", position, timeout_seconds=timeout_seconds)
 
-    def checkpoint(self, name: str) -> Any: return self._command("checkpoint", name)
-    def seal_category(self) -> str: return self._command("seal_category", None)
-    def seal_global_a(self) -> str: return self._command("seal_global_a", None)
-    def stats(self) -> dict[str, Any]: return self._command("stats", None)
+    def checkpoint(self, name: str, *, timeout_seconds: float | None = None) -> Any:
+        return self._command("checkpoint", name, timeout_seconds=timeout_seconds)
+    def seal_category(self, *, timeout_seconds: float | None = None) -> str:
+        return self._command("seal_category", None, timeout_seconds=timeout_seconds)
+    def seal_global_a(self, *, timeout_seconds: float | None = None) -> str:
+        return self._command("seal_global_a", None, timeout_seconds=timeout_seconds)
+    def stats(self, *, timeout_seconds: float | None = None) -> dict[str, Any]:
+        return self._command("stats", None, timeout_seconds=timeout_seconds)
 
-    def close(self) -> None:
+    def close(self, *, timeout_seconds: float = 5.0) -> None:
+        close_error: Exception | None = None
         if self._process.is_alive():
-            try: self._connection.send_bytes(canonical({"command": "close", "argument": None})); self._receive("CLOSED")
-            except (OSError, EOFError, ResearchWorkerError): pass
-        self._process.join(); self._broker.process.join(); self._connection.close()
+            try:
+                self._connection.send_bytes(canonical({"command": "close", "argument": None}))
+                self._receive("CLOSED", timeout_seconds=timeout_seconds)
+            except (OSError, EOFError, ResearchWorkerError) as exc:
+                close_error = exc
+        self._process.join(timeout=timeout_seconds); self._broker.process.join(timeout=timeout_seconds)
+        if self._process.is_alive() or self._broker.process.is_alive():
+            if close_error is None:
+                close_error = ResearchWorkerTimeout("worker process did not stop within bounded shutdown")
+            self._terminate()
+        try: self._connection.close()
+        except OSError: pass
+        if isinstance(close_error, ResearchWorkerTimeout):
+            raise ResearchWorkerTimeout("blinded worker did not complete bounded shutdown") from close_error
+        if close_error is not None and not isinstance(close_error, (OSError, EOFError)):
+            raise ResearchWorkerError("blinded worker failed during shutdown") from close_error
