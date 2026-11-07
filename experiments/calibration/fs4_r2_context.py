@@ -38,6 +38,11 @@ class FS4BoundaryError(RuntimeError):
     pass
 
 
+def require_isolated_worker() -> None:
+    """Fail closed until an independently controlled encoder worker exists."""
+    raise FS4BoundaryError("FS4_R2_BLOCKED: trusted encoder is not isolated from caller-controlled Python code")
+
+
 def _sha_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -176,6 +181,7 @@ class ProductionContext:
     """Owns its actual native model, registered dataset and four-Support runtime."""
 
     def __init__(self, *, ledger: DurableLedger, category: str, controller: str | None = None) -> None:
+        require_isolated_worker()
         from experiments import p0_protocol_audit as p0
         from experiments.calibration import profiles, r1_matched_correction_pilot as r1, r3_fullstream_2x2 as r3
         if type(ledger) is not DurableLedger or category != ledger.current_category:
@@ -303,6 +309,9 @@ class ProductionContext:
         return self._events[position]
 
     def _verify_runtime(self) -> None:
+        from .fs4_source_excluded_scorer import NativeSourceExcludedScorer, VerifiedNormalFeatureCache
+        from .fs4_threshold_controllers import SelectionAwareSourceExcludedThreshold
+        from .fs4_threshold_core import WeightedThresholds
         verify_native_runtime(self._trajectory.runtime, self._runtime,
                               self._ledger.manifest["fixed_support_sha256_by_category"][self._category])
         runtime = self._runtime
@@ -324,12 +333,49 @@ class ProductionContext:
         from experiments.calibration.profiles import NativeScorerConfig
         from experiments.calibration import r3_fullstream_2x2 as r3
         from experiments.risk_safe.native_bridge import dynamic_codebooks
+        scorer = runtime.rescorer
+        if (type(scorer) is not NativeSourceExcludedScorer or scorer.bank is not runtime.bank or
+                scorer.impl is not self._impl or scorer.cfg is not self._cfg or
+                scorer.correction_cfg is not runtime.correction_cfg or scorer.correction_cb is not runtime.correction_cb or
+                scorer.correction_sources is not runtime.sources or scorer.provenance is not runtime.provenance or
+                scorer.normalization != FEATURE_CONVENTION):
+            raise FS4BoundaryError("source-excluded native scorer binding changed")
+        for controller in self._controllers:
+            engine = controller.engine
+            if (type(engine) is not WeightedThresholds or engine.minimum_groups != 12 or
+                    engine.minimum_ess != 12 or engine.w_max != 50):
+                raise FS4BoundaryError("frozen weighted estimator configuration changed")
+            if isinstance(controller, SelectionAwareSourceExcludedThreshold) and (
+                    controller.scorer is not scorer or type(controller.cache) is not VerifiedNormalFeatureCache):
+                raise FS4BoundaryError("E controller scorer or cache binding changed")
         if any(int(book.K) != 1024 for book in dynamic_codebooks(runtime.bank)):
             raise FS4BoundaryError("native Greedy capacity changed")
         checked_correction = copy.deepcopy(runtime.correction_cfg)
         checked_correction.K_correction = 256
         r3._validate_correction_config(type("FrozenConfig", (), {"corr_cfg": checked_correction})())
         validate_p0_config(self._cfg, NativeScorerConfig())
+
+    def _verify_cached_evidence(self) -> None:
+        from .fs4_threshold_controllers import SelectionAwareSourceExcludedThreshold
+        predictions = {row["payload"]["event"]["position"]: row["payload"]["event"]
+                       for row in self._ledger.records if row["kind"] == "PREDICTION"}
+        for controller in self._controllers:
+            for evidence in controller.evidence:
+                try:
+                    evidence.validate()
+                except (ValueError, TypeError, AttributeError) as exc:
+                    raise FS4BoundaryError("verified normal evidence was corrupted") from exc
+                if isinstance(controller, SelectionAwareSourceExcludedThreshold):
+                    record = controller.cache.records.get(evidence.group)
+                    prediction = predictions.get(evidence.position)
+                    provenance = prediction.get("trusted_event_provenance") if prediction else None
+                    if (record is None or record.evidence != evidence or
+                            not isinstance(provenance, dict) or prediction["event"] != evidence.event or
+                            prediction["group"] != evidence.group or prediction["feature_sha256"] != record.feature_sha256 or
+                            provenance.get("geometry") != [record.width, record.height] or
+                            record.normalization != FEATURE_CONVENTION or record.dtype != str(record.features.dtype) or
+                            record.features.dtype != torch.float32 or _feature_digest(record.features) != record.feature_sha256):
+                        raise FS4BoundaryError("verified normal feature cache was corrupted")
 
     def _encode_event(self, position: int) -> dict[str, Any]:
         if digest(self._manifest) != self._manifest_digest or digest(self._ledger._execution_manifest) != self._manifest_digest:

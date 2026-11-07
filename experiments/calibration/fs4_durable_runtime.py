@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from .fs4_checkpoint import RecoveryLedger
 from .fs4_durable_ledger import DurableLedger, digest
+from .fs4_stochastic_bea import receipt_digest
 
 
 def _array_digest(value: Any) -> str:
@@ -25,7 +26,9 @@ def post_state_digest(trajectory: Any) -> str:
         items[name] = {"theta": c.engine.theta, "tokens": c.engine.tokens, "revision": c.revision,
             "status": c.engine.status, "evidence": [{"position": e.position, "group": e.group,
                 "event": e.event, "normal_version": e.normal_version, "correction_version": e.correction_version,
-                "query_seal": e.receipt.query_seal} for e in c.evidence]}
+                "query_seal": e.receipt.query_seal, "receipt_sha256": receipt_digest(e.receipt),
+                "pre_scores": dict(e.pre_scores), "scorer_states": dict(e.scorer_states),
+                "feature_handle": e.feature_handle} for e in c.evidence]}
         if hasattr(c, "cache"):
             items[name]["cache"] = {group: record.feature_sha256 for group, record in c.cache.records.items()}
             items[name]["successful_tokens"] = c.successful_tokens

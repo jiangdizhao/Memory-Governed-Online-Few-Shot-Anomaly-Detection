@@ -516,11 +516,17 @@ class DurableLedger(SyntheticTestLedger):
             self.verify_live_sources()
             self._trusted_context._verify_model()
             self._trusted_context._verify_runtime()
+            self._trusted_context._verify_cached_evidence()
+            from .fs4_durable_runtime import post_state_digest
+            before = post_state_digest(self._trusted_context._trajectory)
         value = super().disclose(event, position, reader)
         if not self._reading_existing:
             self.verify_live_sources()
             self._trusted_context._verify_model()
             self._trusted_context._verify_runtime()
+            self._trusted_context._verify_cached_evidence()
+            if post_state_digest(self._trusted_context._trajectory) != before:
+                raise LedgerIntegrityError("queried feedback reader mutated trusted trajectory state")
         return value
 
     def _validate_result(self, receipt: Mapping[str, Any]) -> None:

@@ -255,6 +255,12 @@ def test_production_stage_b_methods_never_accept_callback():
     with pytest.raises(TypeError): DurableLedger.authorize_stage_b(object(), {}, verifier=lambda _: True)
 
 
+def test_unisolated_production_worker_is_locked():
+    from experiments.calibration.fs4_r2_context import require_isolated_worker
+    with pytest.raises(FS4BoundaryError, match="FS4_R2_BLOCKED"):
+        require_isolated_worker()
+
+
 def production_manifest(ledger, execution, keys):
     data = json.loads(json.dumps(ledger))
     data.update({"execution_scope": "PRODUCTION", "protocol": execution["protocol"],
@@ -341,6 +347,9 @@ def synthetic_production(tmp_path, monkeypatch, authorities):
     from experiments.calibration.native import _fixed_bank_digest
     from test_fs4_threshold import native_bank_and_writer
     keys, _ = authorities
+    # Explicitly synthetic test-only override; the production API exposes no
+    # argument that disables the unresolved isolation lock.
+    monkeypatch.setattr(context_module, "require_isolated_worker", lambda: None)
     dataset_root = tmp_path / "dataset"
     ledger_manifest, execution = synthetic_registration(dataset_root)
     native, template_bank, _ = native_bank_and_writer(4096)
@@ -482,20 +491,63 @@ def test_production_context_rejects_wrong_constructed_support_bank(synthetic_pro
     assert synthetic_production.journal.position == 0
 
 
-def test_queried_feedback_cannot_mutate_bound_model(synthetic_production):
+@pytest.mark.parametrize("mutation", ["model", "scorer", "threshold"])
+def test_queried_feedback_cannot_mutate_bound_runtime(synthetic_production, mutation):
     journal = synthetic_production.journal
     context = ProductionContext(ledger=journal, category="audiojack")
     def malicious_reader(*_args):
-        with torch.no_grad(): context._backbone.model.weight[0, 0] += 1
+        if mutation == "model":
+            with torch.no_grad(): context._backbone.model.weight[0, 0] += 1
+        elif mutation == "scorer":
+            context._trajectory.E.scorer = object()
+        else:
+            context._trajectory.L.engine.theta["G"] += .5
         return 0
     executor = DurableExecutor(context=context, ledger=journal, label_reader=malicious_reader)
     for position in range(5):
         try:
             executor.step(position)
-        except FS4BoundaryError as exc:
-            assert "model state" in str(exc)
+        except (FS4BoundaryError, LedgerIntegrityError) as exc:
+            assert any(term in str(exc) for term in ("model state", "scorer", "mutated trusted trajectory"))
             assert journal.phase == "FEEDBACK"
             assert not any(row["kind"] == "EVENT_COMPLETE" and row["payload"]["position"] == position for row in journal.records)
             break
     else:
         pytest.fail("the registered synthetic fixture did not exercise a legal query")
+
+
+def test_trusted_cache_content_corruption_is_fatal(synthetic_production):
+    journal = synthetic_production.journal
+    context = ProductionContext(ledger=journal, category="audiojack")
+    executor = DurableExecutor(context=context, ledger=journal, label_reader=lambda *_: 0)
+    for position in range(5):
+        row = executor.step(position)
+        if row["query"].executed:
+            break
+    assert len(context._trajectory.E.evidence) == 1
+    evidence = context._trajectory.E.evidence[0]
+    record = context._trajectory.E.cache.records[evidence.group]
+    context._verify_cached_evidence()
+    record.features[0, 0] += 1
+    with pytest.raises(FS4BoundaryError, match="feature cache was corrupted"):
+        context._verify_cached_evidence()
+
+
+def test_production_rejects_preconstruction_encoder_substitution(synthetic_production, monkeypatch):
+    """Mandatory negative gate: same-process caller cannot replace the producer."""
+    from experiments import p0_protocol_audit as p0
+    native = p0.require_sources()
+    original_encode = native.encode_pil
+    def substituted(backbone, image, mode):
+        features, cls = original_encode(backbone, image, mode)
+        # Synthetic event images have this red value; the four registered
+        # Support encodings remain untouched by the attempted substitution.
+        if image.getpixel((0, 0))[0] == 115:
+            features[0] = torch.zeros_like(features[0]); features[0][:, 123] = 1
+        return features, cls
+    monkeypatch.setattr(native, "encode_pil", substituted)
+    with pytest.raises(FS4BoundaryError):
+        context = ProductionContext(ledger=synthetic_production.journal, category="audiojack")
+        executor = DurableExecutor(context=context, ledger=synthetic_production.journal, label_reader=lambda *_: 0)
+        executor.step(0)
+    assert synthetic_production.journal.position == 0
