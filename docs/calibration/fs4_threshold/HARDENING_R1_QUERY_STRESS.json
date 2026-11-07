@@ -1,0 +1,1183 @@
+{
+  "groups_per_scenario": 400,
+  "scenarios": [
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 320,
+        "0.2": 80
+      },
+      "events": 2000,
+      "exploration_fraction": 0.2079207920792079,
+      "exploration_queries": 21,
+      "group_query_fraction": 0.2525,
+      "groups": 400,
+      "image_query_rate": 0.0505,
+      "longest_query_free_interval": 265,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 1.121729424698717
+        },
+        {
+          "event": 200,
+          "price": 1.4462009411444674
+        },
+        {
+          "event": 300,
+          "price": 1.759468582485914
+        },
+        {
+          "event": 400,
+          "price": 1.9622654574859122
+        },
+        {
+          "event": 500,
+          "price": 2.020765457485915
+        },
+        {
+          "event": 600,
+          "price": 1.975437332485922
+        },
+        {
+          "event": 700,
+          "price": 1.9168279574859173
+        },
+        {
+          "event": 800,
+          "price": 1.8710310824859175
+        },
+        {
+          "event": 900,
+          "price": 1.8247654574859182
+        },
+        {
+          "event": 1000,
+          "price": 1.771156082485917
+        },
+        {
+          "event": 1100,
+          "price": 1.7205154574859214
+        },
+        {
+          "event": 1200,
+          "price": 1.679796707485917
+        },
+        {
+          "event": 1300,
+          "price": 1.640406082485918
+        },
+        {
+          "event": 1400,
+          "price": 1.6874217074859164
+        },
+        {
+          "event": 1500,
+          "price": 1.7306092074859245
+        },
+        {
+          "event": 1600,
+          "price": 1.7171560824859256
+        },
+        {
+          "event": 1700,
+          "price": 1.6557342074859187
+        },
+        {
+          "event": 1800,
+          "price": 1.665093582485919
+        },
+        {
+          "event": 1900,
+          "price": 1.7164060824859197
+        },
+        {
+          "event": 1999,
+          "price": 1.7626773324859228
+        }
+      ],
+      "queries": 101,
+      "scenario": "high",
+      "score_regions": {
+        "near": {
+          "events": 2000,
+          "queries": 101
+        }
+      },
+      "target_deviation": 0.013500000000000005,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [
+        "below",
+        "above"
+      ],
+      "verified_synthetic_normals": 101
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 400
+      },
+      "events": 2000,
+      "exploration_fraction": 1.0,
+      "exploration_queries": 25,
+      "group_query_fraction": 0.0625,
+      "groups": 400,
+      "image_query_rate": 0.0125,
+      "longest_query_free_interval": 272,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.7275541580978058
+        },
+        {
+          "event": 200,
+          "price": 0.67194360634422
+        },
+        {
+          "event": 300,
+          "price": 0.6192665745369081
+        },
+        {
+          "event": 400,
+          "price": 0.5844071995369109
+        },
+        {
+          "event": 500,
+          "price": 0.5503290745369128
+        },
+        {
+          "event": 600,
+          "price": 0.5035946995369119
+        },
+        {
+          "event": 700,
+          "price": 0.44498532453691275
+        },
+        {
+          "event": 800,
+          "price": 0.39918844953691085
+        },
+        {
+          "event": 900,
+          "price": 0.35292282453690904
+        },
+        {
+          "event": 1000,
+          "price": 0.2993134495369087
+        },
+        {
+          "event": 1100,
+          "price": 0.24867282453690776
+        },
+        {
+          "event": 1200,
+          "price": 0.2079540745369073
+        },
+        {
+          "event": 1300,
+          "price": 0.15489157453690716
+        },
+        {
+          "event": 1400,
+          "price": 0.09901657453690713
+        },
+        {
+          "event": 1500,
+          "price": 0.05
+        },
+        {
+          "event": 1600,
+          "price": 0.05
+        },
+        {
+          "event": 1700,
+          "price": 0.05
+        },
+        {
+          "event": 1800,
+          "price": 0.05
+        },
+        {
+          "event": 1900,
+          "price": 0.05
+        },
+        {
+          "event": 1999,
+          "price": 0.05
+        }
+      ],
+      "queries": 25,
+      "scenario": "low",
+      "score_regions": {
+        "below": {
+          "events": 2000,
+          "queries": 25
+        }
+      },
+      "target_deviation": -0.024499999999999997,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [
+        "near",
+        "above"
+      ],
+      "verified_synthetic_normals": 25
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 325,
+        "0.2": 75
+      },
+      "events": 2000,
+      "exploration_fraction": 0.24242424242424243,
+      "exploration_queries": 24,
+      "group_query_fraction": 0.2475,
+      "groups": 400,
+      "image_query_rate": 0.0495,
+      "longest_query_free_interval": 74,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.8710284937986397
+        },
+        {
+          "event": 200,
+          "price": 1.0042289863035598
+        },
+        {
+          "event": 300,
+          "price": 1.1437941622827064
+        },
+        {
+          "event": 400,
+          "price": 1.2776847872827055
+        },
+        {
+          "event": 500,
+          "price": 1.3571222872827087
+        },
+        {
+          "event": 600,
+          "price": 1.3942160372827102
+        },
+        {
+          "event": 700,
+          "price": 1.4192785372827084
+        },
+        {
+          "event": 800,
+          "price": 1.4627785372827113
+        },
+        {
+          "event": 900,
+          "price": 1.4928410372827121
+        },
+        {
+          "event": 1000,
+          "price": 1.495481662282713
+        },
+        {
+          "event": 1100,
+          "price": 1.4860129122827084
+        },
+        {
+          "event": 1200,
+          "price": 1.474981662282705
+        },
+        {
+          "event": 1300,
+          "price": 1.4577785372827023
+        },
+        {
+          "event": 1400,
+          "price": 1.4435441622826994
+        },
+        {
+          "event": 1500,
+          "price": 1.4197785372827019
+        },
+        {
+          "event": 1600,
+          "price": 1.3987472872827018
+        },
+        {
+          "event": 1700,
+          "price": 1.3920129122827014
+        },
+        {
+          "event": 1800,
+          "price": 1.3908254122827055
+        },
+        {
+          "event": 1900,
+          "price": 1.3789347872827034
+        },
+        {
+          "event": 1999,
+          "price": 1.3744247872827022
+        }
+      ],
+      "queries": 99,
+      "scenario": "stable",
+      "score_regions": {
+        "above": {
+          "events": 545,
+          "queries": 6
+        },
+        "below": {
+          "events": 533,
+          "queries": 18
+        },
+        "near": {
+          "events": 922,
+          "queries": 75
+        }
+      },
+      "target_deviation": 0.012500000000000004,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [],
+      "verified_synthetic_normals": 99
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 346,
+        "0.2": 54
+      },
+      "events": 2000,
+      "exploration_fraction": 0.3076923076923077,
+      "exploration_queries": 24,
+      "group_query_fraction": 0.195,
+      "groups": 400,
+      "image_query_rate": 0.039,
+      "longest_query_free_interval": 272,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.8710284937986397
+        },
+        {
+          "event": 200,
+          "price": 1.0042289863035598
+        },
+        {
+          "event": 300,
+          "price": 1.1437941622827064
+        },
+        {
+          "event": 400,
+          "price": 1.2776847872827055
+        },
+        {
+          "event": 500,
+          "price": 1.3571222872827087
+        },
+        {
+          "event": 600,
+          "price": 1.3942160372827102
+        },
+        {
+          "event": 700,
+          "price": 1.4192785372827084
+        },
+        {
+          "event": 800,
+          "price": 1.4627785372827113
+        },
+        {
+          "event": 900,
+          "price": 1.4928410372827121
+        },
+        {
+          "event": 1000,
+          "price": 1.495481662282713
+        },
+        {
+          "event": 1100,
+          "price": 1.4828879122827112
+        },
+        {
+          "event": 1200,
+          "price": 1.4595129122827128
+        },
+        {
+          "event": 1300,
+          "price": 1.4102004122827068
+        },
+        {
+          "event": 1400,
+          "price": 1.3543254122827035
+        },
+        {
+          "event": 1500,
+          "price": 1.2881379122827001
+        },
+        {
+          "event": 1600,
+          "price": 1.220622287282698
+        },
+        {
+          "event": 1700,
+          "price": 1.159200412282691
+        },
+        {
+          "event": 1800,
+          "price": 1.1086379122826957
+        },
+        {
+          "event": 1900,
+          "price": 1.0583879122826998
+        },
+        {
+          "event": 1999,
+          "price": 1.0132529122826937
+        }
+      ],
+      "queries": 78,
+      "scenario": "shift_up",
+      "score_regions": {
+        "above": {
+          "events": 1273,
+          "queries": 16
+        },
+        "below": {
+          "events": 263,
+          "queries": 17
+        },
+        "near": {
+          "events": 464,
+          "queries": 45
+        }
+      },
+      "target_deviation": 0.0020000000000000018,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [],
+      "verified_synthetic_normals": 78
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 346,
+        "0.2": 54
+      },
+      "events": 2000,
+      "exploration_fraction": 0.3076923076923077,
+      "exploration_queries": 24,
+      "group_query_fraction": 0.195,
+      "groups": 400,
+      "image_query_rate": 0.039,
+      "longest_query_free_interval": 272,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.8710284937986397
+        },
+        {
+          "event": 200,
+          "price": 1.0042289863035598
+        },
+        {
+          "event": 300,
+          "price": 1.1437941622827064
+        },
+        {
+          "event": 400,
+          "price": 1.2776847872827055
+        },
+        {
+          "event": 500,
+          "price": 1.3571222872827087
+        },
+        {
+          "event": 600,
+          "price": 1.3942160372827102
+        },
+        {
+          "event": 700,
+          "price": 1.4192785372827084
+        },
+        {
+          "event": 800,
+          "price": 1.4627785372827113
+        },
+        {
+          "event": 900,
+          "price": 1.4928410372827121
+        },
+        {
+          "event": 1000,
+          "price": 1.495481662282713
+        },
+        {
+          "event": 1100,
+          "price": 1.4828879122827112
+        },
+        {
+          "event": 1200,
+          "price": 1.4595129122827128
+        },
+        {
+          "event": 1300,
+          "price": 1.4102004122827068
+        },
+        {
+          "event": 1400,
+          "price": 1.3543254122827035
+        },
+        {
+          "event": 1500,
+          "price": 1.2881379122827001
+        },
+        {
+          "event": 1600,
+          "price": 1.220622287282698
+        },
+        {
+          "event": 1700,
+          "price": 1.159200412282691
+        },
+        {
+          "event": 1800,
+          "price": 1.1086379122826957
+        },
+        {
+          "event": 1900,
+          "price": 1.0583879122826998
+        },
+        {
+          "event": 1999,
+          "price": 1.0132529122826937
+        }
+      ],
+      "queries": 78,
+      "scenario": "shift_down",
+      "score_regions": {
+        "above": {
+          "events": 273,
+          "queries": 4
+        },
+        "below": {
+          "events": 1263,
+          "queries": 29
+        },
+        "near": {
+          "events": 464,
+          "queries": 45
+        }
+      },
+      "target_deviation": 0.0020000000000000018,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [],
+      "verified_synthetic_normals": 78
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 386,
+        "0.2": 14
+      },
+      "events": 2000,
+      "exploration_fraction": 0.631578947368421,
+      "exploration_queries": 24,
+      "group_query_fraction": 0.095,
+      "groups": 400,
+      "image_query_rate": 0.019,
+      "longest_query_free_interval": 272,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.8405501133286073
+        },
+        {
+          "event": 200,
+          "price": 0.9241369572218151
+        },
+        {
+          "event": 300,
+          "price": 0.9767861618971108
+        },
+        {
+          "event": 400,
+          "price": 0.9868486618971108
+        },
+        {
+          "event": 500,
+          "price": 0.9583174118971118
+        },
+        {
+          "event": 600,
+          "price": 0.911583036897111
+        },
+        {
+          "event": 700,
+          "price": 0.8529736618971114
+        },
+        {
+          "event": 800,
+          "price": 0.8071767868971117
+        },
+        {
+          "event": 900,
+          "price": 0.7609111618971124
+        },
+        {
+          "event": 1000,
+          "price": 0.7073017868971154
+        },
+        {
+          "event": 1100,
+          "price": 0.65666116189712
+        },
+        {
+          "event": 1200,
+          "price": 0.6159424118971197
+        },
+        {
+          "event": 1300,
+          "price": 0.5628799118971218
+        },
+        {
+          "event": 1400,
+          "price": 0.5070049118971237
+        },
+        {
+          "event": 1500,
+          "price": 0.4408174118971253
+        },
+        {
+          "event": 1600,
+          "price": 0.3733017868971268
+        },
+        {
+          "event": 1700,
+          "price": 0.311879911897128
+        },
+        {
+          "event": 1800,
+          "price": 0.26131741189712704
+        },
+        {
+          "event": 1900,
+          "price": 0.21106741189712616
+        },
+        {
+          "event": 1999,
+          "price": 0.16593241189712596
+        }
+      ],
+      "queries": 38,
+      "scenario": "drift",
+      "score_regions": {
+        "above": {
+          "events": 1856,
+          "queries": 23
+        },
+        "below": {
+          "events": 9,
+          "queries": 1
+        },
+        "near": {
+          "events": 135,
+          "queries": 14
+        }
+      },
+      "target_deviation": -0.018,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [],
+      "verified_synthetic_normals": 38
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 400
+      },
+      "events": 2000,
+      "exploration_fraction": 1.0,
+      "exploration_queries": 25,
+      "group_query_fraction": 0.0625,
+      "groups": 400,
+      "image_query_rate": 0.0125,
+      "longest_query_free_interval": 272,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.7275541580978058
+        },
+        {
+          "event": 200,
+          "price": 0.67194360634422
+        },
+        {
+          "event": 300,
+          "price": 0.6192665745369081
+        },
+        {
+          "event": 400,
+          "price": 0.5844071995369109
+        },
+        {
+          "event": 500,
+          "price": 0.5503290745369128
+        },
+        {
+          "event": 600,
+          "price": 0.5035946995369119
+        },
+        {
+          "event": 700,
+          "price": 0.44498532453691275
+        },
+        {
+          "event": 800,
+          "price": 0.39918844953691085
+        },
+        {
+          "event": 900,
+          "price": 0.35292282453690904
+        },
+        {
+          "event": 1000,
+          "price": 0.2993134495369087
+        },
+        {
+          "event": 1100,
+          "price": 0.24867282453690776
+        },
+        {
+          "event": 1200,
+          "price": 0.2079540745369073
+        },
+        {
+          "event": 1300,
+          "price": 0.15489157453690716
+        },
+        {
+          "event": 1400,
+          "price": 0.09901657453690713
+        },
+        {
+          "event": 1500,
+          "price": 0.05
+        },
+        {
+          "event": 1600,
+          "price": 0.05
+        },
+        {
+          "event": 1700,
+          "price": 0.05
+        },
+        {
+          "event": 1800,
+          "price": 0.05
+        },
+        {
+          "event": 1900,
+          "price": 0.05
+        },
+        {
+          "event": 1999,
+          "price": 0.05
+        }
+      ],
+      "queries": 25,
+      "scenario": "no_exploitation",
+      "score_regions": {
+        "below": {
+          "events": 2000,
+          "queries": 25
+        }
+      },
+      "target_deviation": -0.024499999999999997,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [
+        "near",
+        "above"
+      ],
+      "verified_synthetic_normals": 0
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 320,
+        "0.2": 80
+      },
+      "events": 2000,
+      "exploration_fraction": 0.2,
+      "exploration_queries": 20,
+      "group_query_fraction": 0.25,
+      "groups": 400,
+      "image_query_rate": 0.05,
+      "longest_query_free_interval": 90,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.869363101110015
+        },
+        {
+          "event": 200,
+          "price": 0.9948786880930905
+        },
+        {
+          "event": 300,
+          "price": 1.1094329836084897
+        },
+        {
+          "event": 400,
+          "price": 1.1952767336084928
+        },
+        {
+          "event": 500,
+          "price": 1.253542358608494
+        },
+        {
+          "event": 600,
+          "price": 1.2948548586084943
+        },
+        {
+          "event": 700,
+          "price": 1.347339233608494
+        },
+        {
+          "event": 800,
+          "price": 1.3886517336084965
+        },
+        {
+          "event": 900,
+          "price": 1.4043392336084937
+        },
+        {
+          "event": 1000,
+          "price": 1.4126829836084924
+        },
+        {
+          "event": 1100,
+          "price": 1.4210267336084905
+        },
+        {
+          "event": 1200,
+          "price": 1.428042358608492
+        },
+        {
+          "event": 1300,
+          "price": 1.441932983608493
+        },
+        {
+          "event": 1400,
+          "price": 1.462073608608495
+        },
+        {
+          "event": 1500,
+          "price": 1.4627611086084917
+        },
+        {
+          "event": 1600,
+          "price": 1.4632142336084903
+        },
+        {
+          "event": 1700,
+          "price": 1.4467142336084888
+        },
+        {
+          "event": 1800,
+          "price": 1.443495483608491
+        },
+        {
+          "event": 1900,
+          "price": 1.4316829836084848
+        },
+        {
+          "event": 1999,
+          "price": 1.4249073586084835
+        }
+      ],
+      "queries": 100,
+      "scenario": "interleaved",
+      "score_regions": {
+        "above": {
+          "events": 545,
+          "queries": 4
+        },
+        "below": {
+          "events": 533,
+          "queries": 21
+        },
+        "near": {
+          "events": 922,
+          "queries": 75
+        }
+      },
+      "target_deviation": 0.013000000000000005,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [],
+      "verified_synthetic_normals": 100
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 348,
+        "0.2": 52
+      },
+      "events": 2000,
+      "exploration_fraction": 0.2972972972972973,
+      "exploration_queries": 22,
+      "group_query_fraction": 0.185,
+      "groups": 400,
+      "image_query_rate": 0.037,
+      "longest_query_free_interval": 272,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 1.121729424698717
+        },
+        {
+          "event": 200,
+          "price": 1.4462009411444674
+        },
+        {
+          "event": 300,
+          "price": 1.759468582485914
+        },
+        {
+          "event": 400,
+          "price": 1.9622654574859122
+        },
+        {
+          "event": 500,
+          "price": 2.020765457485915
+        },
+        {
+          "event": 600,
+          "price": 1.975437332485922
+        },
+        {
+          "event": 700,
+          "price": 1.9168279574859173
+        },
+        {
+          "event": 800,
+          "price": 1.8710310824859175
+        },
+        {
+          "event": 900,
+          "price": 1.8247654574859182
+        },
+        {
+          "event": 1000,
+          "price": 1.771156082485917
+        },
+        {
+          "event": 1100,
+          "price": 1.7205154574859214
+        },
+        {
+          "event": 1200,
+          "price": 1.679796707485917
+        },
+        {
+          "event": 1300,
+          "price": 1.6267342074859144
+        },
+        {
+          "event": 1400,
+          "price": 1.5708592074859111
+        },
+        {
+          "event": 1500,
+          "price": 1.5046717074859077
+        },
+        {
+          "event": 1600,
+          "price": 1.4371560824859055
+        },
+        {
+          "event": 1700,
+          "price": 1.3757342074858987
+        },
+        {
+          "event": 1800,
+          "price": 1.3251717074859033
+        },
+        {
+          "event": 1900,
+          "price": 1.2749217074859074
+        },
+        {
+          "event": 1999,
+          "price": 1.2297867074859012
+        }
+      ],
+      "queries": 74,
+      "scenario": "imbalance",
+      "score_regions": {
+        "below": {
+          "events": 1600,
+          "queries": 18
+        },
+        "near": {
+          "events": 400,
+          "queries": 56
+        }
+      },
+      "target_deviation": 0.0,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [
+        "above"
+      ],
+      "verified_synthetic_normals": 74
+    },
+    {
+      "candidate_slots": 400,
+      "eligible_design_probabilities": {
+        "0.010000000000000002": 347,
+        "0.2": 53
+      },
+      "events": 2000,
+      "exploration_fraction": 0.28378378378378377,
+      "exploration_queries": 21,
+      "group_query_fraction": 0.185,
+      "groups": 400,
+      "image_query_rate": 0.037,
+      "longest_query_free_interval": 272,
+      "price_trajectory_every_100_events": [
+        {
+          "event": 0,
+          "price": 0.7992600000000001
+        },
+        {
+          "event": 100,
+          "price": 0.9839948592719053
+        },
+        {
+          "event": 200,
+          "price": 1.01067161528963
+        },
+        {
+          "event": 300,
+          "price": 0.9936740003204436
+        },
+        {
+          "event": 400,
+          "price": 0.9588146253204464
+        },
+        {
+          "event": 500,
+          "price": 0.9247365003204483
+        },
+        {
+          "event": 600,
+          "price": 0.8788615003204474
+        },
+        {
+          "event": 700,
+          "price": 0.8990021253204478
+        },
+        {
+          "event": 800,
+          "price": 0.9703927503204481
+        },
+        {
+          "event": 900,
+          "price": 1.0206115003204497
+        },
+        {
+          "event": 1000,
+          "price": 0.9737208753204497
+        },
+        {
+          "event": 1100,
+          "price": 0.9230802503204543
+        },
+        {
+          "event": 1200,
+          "price": 0.882361500320454
+        },
+        {
+          "event": 1300,
+          "price": 0.8971115003204563
+        },
+        {
+          "event": 1400,
+          "price": 0.9349865003204569
+        },
+        {
+          "event": 1500,
+          "price": 0.945595875320457
+        },
+        {
+          "event": 1600,
+          "price": 0.8797990003204555
+        },
+        {
+          "event": 1700,
+          "price": 0.892674000320456
+        },
+        {
+          "event": 1800,
+          "price": 0.9671115003204579
+        },
+        {
+          "event": 1900,
+          "price": 1.0256896253204588
+        },
+        {
+          "event": 1999,
+          "price": 0.9923515003204562
+        }
+      ],
+      "queries": 74,
+      "scenario": "ties",
+      "score_regions": {
+        "near": {
+          "events": 2000,
+          "queries": 74
+        }
+      },
+      "target_deviation": 0.0,
+      "uncovered_observed_regions": [],
+      "unobserved_regions": [
+        "below",
+        "above"
+      ],
+      "verified_synthetic_normals": 74
+    }
+  ],
+  "schema": "FS4_QUERY_STRESS_R1",
+  "seed": 37
+}

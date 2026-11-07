@@ -1,0 +1,9 @@
+# FS4 hardening R1 changelog
+
+The hardening adds explicit fatal and retryable error classes, transactional E threshold publication, a failed-condition latch, recorded frozen Writer/C1 decisions, a query-only coupled profile, a ten-scenario query stress suite, a hash-chained fsynced event ledger, explicit checkpoint state and replay, resource accounting, and synthetic CPU/CUDA validation. It also adds a separately authorized four-Support TRAIN-only constructor preflight. The original native v22, Greedy, C1, E6/D2 and A1–A4 sources were not edited.
+
+The accepted four-Support builder, weighted q90, weights capped at 50, 12-group and ESS-12 gates, +/-0.01 update, one-of-five hash slot, 1/0.05 query gate and 0.037 price target remain unchanged. An optional global event-position offset permits a fresh category-local policy in a multi-category ledger; it does not change the candidate or action lottery. Shared mode remains threshold-only. Coupled mode is explicitly named `COUPLED_QUERY_ONLY_FROZEN_WRITER` and changes the query reference only.
+
+The first engineering source freeze was `b8dc79f5f34b484cf73b777a7b6d74ec618d6717`. After additional receipt-input and category-isolation changes, `a49fe2e686d29a436e27d6639796e75fc5da9485` was separately frozen and rechecked. The final source revision `348c077` adds complete source-fingerprint requirements and a registered-stream digest gate; its commit was labeled WIP because the source-identity tests had to run after committing the exact source they verify. The initial and revised TRAIN-only parity receipts are retained separately; no receipt is reused for another source revision.
+
+The remaining operational limitations and review blockers are in `HARDENING_R1_INDEPENDENT_REVIEW_HANDOFF.md` and the accompanying ledger and test reports. No scientific experiment was launched and no branch was pushed.

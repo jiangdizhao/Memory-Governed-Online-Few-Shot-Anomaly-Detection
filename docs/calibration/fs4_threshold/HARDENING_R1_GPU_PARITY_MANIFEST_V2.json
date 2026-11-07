@@ -1,0 +1,255 @@
+{
+  "additional_normal_images_read": 0,
+  "categories": {
+    "audiojack": {
+      "cold_start": "four native self-scores; G=GC and C1 empty",
+      "fixed_dtype": "torch.float16",
+      "fixed_evidence": {
+        "actual_raw_prototype_algorithm": "experiments.p0_protocol_audit.fixed_bank_profile.v1:raw-prototype-bytes",
+        "actual_raw_prototype_sha256": "30b5dc834009aae8c552f35e6971f9bded50d4fe3361a39dc42200802d2c030e",
+        "actual_structured_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "actual_structured_sha256": "837fa5153e852b617e1d0ecf563509bca037f5c0cab29c48b06befd21ce02673",
+        "expected_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "expected_sha256": "837fa5153e852b617e1d0ecf563509bca037f5c0cab29c48b06befd21ce02673",
+        "layer_profile": [
+          {
+            "bytes": 67108864,
+            "capacity": 25000,
+            "dtype": "float16",
+            "feature_dim": 4096,
+            "layer": 0,
+            "n_prototypes": 8192,
+            "shape": [
+              8192,
+              4096
+            ]
+          }
+        ],
+        "matches_expected_structured_digest": true
+      },
+      "fixed_shape": [
+        8192,
+        4096
+      ],
+      "status": "PASS",
+      "support_groups_sha256": "596aace2f6446db821f5456f4ca06161d9eae5d8d0b93c810fd8b03fc7bcac5a",
+      "support_image_content_sha256": [
+        "70eee61de2f47a840625908d3a045a718915a141ab01b3dfbc5371349ab1ea0d",
+        "14d605e4d72565a2f94c6e0d96d56ea6104e1ead995b12543ec68866568d583c",
+        "76895d8c240af80e00fa33dd36c434422aec668473e734ececba9767b662b22e",
+        "da39a76e6cd2d072fa2162a75dae6fc5e9180602267ed49cfd2c01de9d344027"
+      ],
+      "support_images_sha256": "0f5de47d2465fac92317207399e607bbb08990615407198d76814a8a98b24f11",
+      "support_role_receipt_sha256": "127c3eba97b9011545e8f53c74e4248410fa5c8f29773b0f8b6d15de239dd1ad"
+    },
+    "regulator": {
+      "cold_start": "four native self-scores; G=GC and C1 empty",
+      "fixed_dtype": "torch.float16",
+      "fixed_evidence": {
+        "actual_raw_prototype_algorithm": "experiments.p0_protocol_audit.fixed_bank_profile.v1:raw-prototype-bytes",
+        "actual_raw_prototype_sha256": "c7fd60e643a50fa3bba14b4214a723aa4db6679a67c7b64bb03f541c068cf2f7",
+        "actual_structured_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "actual_structured_sha256": "b162fe852cdc4c7dd5c5a25e3560263427cde588d42f12364bac0d3c79df48bb",
+        "expected_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "expected_sha256": "b162fe852cdc4c7dd5c5a25e3560263427cde588d42f12364bac0d3c79df48bb",
+        "layer_profile": [
+          {
+            "bytes": 67108864,
+            "capacity": 25000,
+            "dtype": "float16",
+            "feature_dim": 4096,
+            "layer": 0,
+            "n_prototypes": 8192,
+            "shape": [
+              8192,
+              4096
+            ]
+          }
+        ],
+        "matches_expected_structured_digest": true
+      },
+      "fixed_shape": [
+        8192,
+        4096
+      ],
+      "status": "PASS",
+      "support_groups_sha256": "cf4ee46d1afa826d30ef85e9d14b21e850a2875dd37aa3a83473284c6aa42a5a",
+      "support_image_content_sha256": [
+        "da9105e7f80526fdf58c201e6349e2a301f92f842878967f95e3a688322244aa",
+        "b894d3b80f7e557b1961143d88648fc24af607a9f0254232ec07bab3aa5c0bf4",
+        "613273b1b0bc775671ecbe08d73fc2796ea066f7bb2875b26c48e9e97af0fbe8",
+        "d279f33cd61238b8058527479a2a8c9c56de3c1b4d1dd00debc802ec5d63c38d"
+      ],
+      "support_images_sha256": "4a3a651ce886b217bb64e40b74719a156775a239eeb950c33dbc2dae0e3c1f55",
+      "support_role_receipt_sha256": "58ecf6ca0f158ceb98be5ca804b311ab6cfda8b0c867d27cbc6309477c70bd6f"
+    },
+    "rolled_strip_base": {
+      "cold_start": "four native self-scores; G=GC and C1 empty",
+      "fixed_dtype": "torch.float16",
+      "fixed_evidence": {
+        "actual_raw_prototype_algorithm": "experiments.p0_protocol_audit.fixed_bank_profile.v1:raw-prototype-bytes",
+        "actual_raw_prototype_sha256": "9316a771a88e8b3d204da854dcf5a0d6cbeafece447dfe01c604359a533a5822",
+        "actual_structured_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "actual_structured_sha256": "12c1dcacba90b1f0c576480b0afddaabf2d80466845ac61f4346aebfd968d4f3",
+        "expected_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "expected_sha256": "12c1dcacba90b1f0c576480b0afddaabf2d80466845ac61f4346aebfd968d4f3",
+        "layer_profile": [
+          {
+            "bytes": 67108864,
+            "capacity": 25000,
+            "dtype": "float16",
+            "feature_dim": 4096,
+            "layer": 0,
+            "n_prototypes": 8192,
+            "shape": [
+              8192,
+              4096
+            ]
+          }
+        ],
+        "matches_expected_structured_digest": true
+      },
+      "fixed_shape": [
+        8192,
+        4096
+      ],
+      "status": "PASS",
+      "support_groups_sha256": "4f065c5059e7ab3acb66601d3556dae3ac7e20d2f5e78d36fb833ee58576f8ac",
+      "support_image_content_sha256": [
+        "80ff212059e11baa8c7eefa37a6cd51ac3a742968916a3b2060809d71c1c3210",
+        "2fc832ed3900aba4396387eaeb4c87c13d84dd7b2b0100e2e5226f0241531be5",
+        "b303dfeddd967b1322b28a37b247feb4c8c6012f5d84c7f4157abd7cbb4a09ba",
+        "52592f4715face0c86c611235e7652b7dffd98c8b12193f501bf04efda7504b6"
+      ],
+      "support_images_sha256": "c9b3e99d9c31a7d335a6497c1a5a79c2b4310a5b235c66ae2da05d55d6267bc5",
+      "support_role_receipt_sha256": "b03ff3cc0726955ef76fa69abf0063f0b43627a9ebbc9e44fc93ef6303fbd2d8"
+    },
+    "switch": {
+      "cold_start": "four native self-scores; G=GC and C1 empty",
+      "fixed_dtype": "torch.float16",
+      "fixed_evidence": {
+        "actual_raw_prototype_algorithm": "experiments.p0_protocol_audit.fixed_bank_profile.v1:raw-prototype-bytes",
+        "actual_raw_prototype_sha256": "087feded0d780bbc3a56d45404b4126991b1aeb54f1ae3724bce025caf0d380e",
+        "actual_structured_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "actual_structured_sha256": "8a710d028509350568e976bc3ede66aa59603499cbea525bdd8579322b1a1558",
+        "expected_algorithm": "experiments.calibration.native._fixed_bank_digest.v1:path-shape-dtype-bytes",
+        "expected_sha256": "8a710d028509350568e976bc3ede66aa59603499cbea525bdd8579322b1a1558",
+        "layer_profile": [
+          {
+            "bytes": 67108864,
+            "capacity": 25000,
+            "dtype": "float16",
+            "feature_dim": 4096,
+            "layer": 0,
+            "n_prototypes": 8192,
+            "shape": [
+              8192,
+              4096
+            ]
+          }
+        ],
+        "matches_expected_structured_digest": true
+      },
+      "fixed_shape": [
+        8192,
+        4096
+      ],
+      "status": "PASS",
+      "support_groups_sha256": "ed48457bddd13cc15dd9199e08653f8a94d2fc1f652b14c078c92f82bdc5a83f",
+      "support_image_content_sha256": [
+        "c2cab19829dffc345dd021a831eaf7a212e9f0f6f4f7f9c9840df786edf70ff4",
+        "72d107ada010760618f8b47f51c0652478f3330830ac744a56eb8fd47dd836ca",
+        "21db8c0b072a6dea0ac629731d11125d6994616abcccb91a8c4ae051c8915b54",
+        "1f62841748ffb0e2065326b250c0cfa95b50779a69a980b18ff96ba6278c5a00"
+      ],
+      "support_images_sha256": "6f831e8245fa4d78569c53b4c95624c420aa50dc5511c061eefdf3643409127e",
+      "support_role_receipt_sha256": "5525c97822cbda1bf4bb094b1720180a514f655688ed145646015e08de7a76ac"
+    }
+  },
+  "cuda_peak_allocated_bytes": 1705055744,
+  "fixed_receipt_manifest_sha256": "c884694c7f63adb0984d1f96e386ab8ec1dd4a85d5bac4b62bb9b4509fb34e39",
+  "frozen_input_receipt_sha256": "48b80202e4b5e02a85b8a950431b386199ee59046d220956062eef25804d0166",
+  "loaded_model_state_sha256": "1f26464ba4055403e550f1d5c1333fb012631d98661df6993cabea730d17e3f9",
+  "masks_read": 0,
+  "model": {
+    "checkpoint_name": "dinov2_vitl14_reg4_pretrain.pth",
+    "checkpoint_sha256": "36e4deffbaef061a2576705b0c36f93621e2ae20bf6274694821b0b492551b51",
+    "expected_model_state_sha256": "1f26464ba4055403e550f1d5c1333fb012631d98661df6993cabea730d17e3f9",
+    "hub_source_name": "facebookresearch_dinov2_main",
+    "hub_source_tree_sha256": "b7c0037f90671c4932393bd56de8c8a205b29a6eb22dea563b6c8a88c471da15",
+    "runtime_profile": {
+      "cublas_workspace_config": ":4096:8",
+      "cuda_device_index": 0,
+      "cuda_device_name": "NVIDIA GeForce RTX 3090 Ti",
+      "cuda_matmul_allow_tf32": false,
+      "cuda_runtime_version": "11.7",
+      "cudnn_allow_tf32": false,
+      "cudnn_benchmark": false,
+      "cudnn_deterministic": true,
+      "deterministic_algorithms": true,
+      "profile_id": "stage05_set_seed_0_math_sdp_v1",
+      "python_version": "3.11.14",
+      "sdp": {
+        "flash_enabled": false,
+        "math_enabled": true,
+        "memory_efficient_enabled": false
+      },
+      "seed": 0,
+      "torch_version": "2.0.1+cu117"
+    }
+  },
+  "schema": "FS4_SUPPORT_PREFLIGHT_V1",
+  "scientific_metrics_computed": 0,
+  "source_commit": "a49fe2e686d29a436e27d6639796e75fc5da9485",
+  "source_sha256": {
+    "experiments/a0_a1_memory_methods.py": "64bcf052a17335c82f2723ea4dc1e565e16e76f2fccec51c1934775bbdec8c15",
+    "experiments/a0_a1_strict4_matched.py": "e916659681607bf75e097dd62379dcc363ccc3adf6f991d4108592997e1b53bf",
+    "experiments/calibration/a_calibration_continuation.py": "ed1c5908ea9e380dfbca6c4cb52ffe74de7901a883806fa5c020e96bd5e1b111",
+    "experiments/calibration/a_calibration_scale.py": "aa355dface0d1468cae9c23ed822841d63d657b0b2c9b2e9da8155e02e1a435e",
+    "experiments/calibration/controllers.py": "25fbdfc9a92e8bfb6fe983185dca3cdd5ed24d804c28838b4797e0ae8670cf7d",
+    "experiments/calibration/e6_bea_closed_loop.py": "b0300ff80cf6d5020b1464ab84cc356c461842ad124a76342c46dba66ad99dbe",
+    "experiments/calibration/e6_bea_d2.py": "4321d4fce090d447962c11c74be6bb170a6a6c43e8bdf82922a7b228ae6e8b25",
+    "experiments/calibration/e6_bea_d2_runner.py": "6ed6359cb77cac45b4eafcec1f8cc9cc0fd0d808191bb37549cf22a9ffb40a25",
+    "experiments/calibration/e6_bea_policy.py": "1f3688eed7878adb04e835f5870d700cc8ee73a272672bacb7fe21ce3d2599c3",
+    "experiments/calibration/fs4_checkpoint.py": "136d9c8c91433c400c2c9819969c1c7254482a1b4a9e1292d7bc5aeb78ee6e2d",
+    "experiments/calibration/fs4_durable_ledger.py": "d28104579c5163e5587bc2f1f3e1230c03c1f6ae51247b85bf672dfe057abad3",
+    "experiments/calibration/fs4_durable_runtime.py": "0257282e700c8920fac25817f6ee5cfdfb8b318843697e7de7f26715157d2d11",
+    "experiments/calibration/fs4_errors.py": "781a4c4782b287075450785fd39dc95f8ceafe500b1f3d45cf077cc68c3ff0fc",
+    "experiments/calibration/fs4_greedy_provenance.py": "a2ce800cf7abcd245a4b69687e7cc53d6faf6682bcf4679b4b0210435f4469f4",
+    "experiments/calibration/fs4_hardening_audit.py": "ebc88141b23865bdc02c33c70f4d4fd25b42aa168e1a872c0da15a87ed7afe4d",
+    "experiments/calibration/fs4_query_stress.py": "766303ab4f197a4c7bbc07dd0bb7eba3a2a82831161428da1b9b0d289e65c36f",
+    "experiments/calibration/fs4_resources.py": "74be2c51aba394140d9b267fed5851c7b20c84b7365d48a14f985c79f288c075",
+    "experiments/calibration/fs4_source_excluded_scorer.py": "7252f2990a01164e8f7cb1ca1384dac62bb54caf0ff48ba6ba03aa82ec84e740",
+    "experiments/calibration/fs4_stochastic_bea.py": "636b5f3b227a961857834ff1ddc3389a2dc55eae793d88b87f35f0d14ef76f5d",
+    "experiments/calibration/fs4_support_preflight.py": "2c32d56df52417f55794f26e070aa0cac9bdc3ba6f5f5bba965d0b014b8f3b51",
+    "experiments/calibration/fs4_threshold_audit.py": "2c51580f951fa20bc50575e5f79fa927bf4440fe5f5f9512c0b9a3cd691e9c05",
+    "experiments/calibration/fs4_threshold_controllers.py": "c0f972703a7b14a6af35c34655eda97d370f94ced30e23276ff159cde83adbfa",
+    "experiments/calibration/fs4_threshold_core.py": "659706d59dbfc016debacac58f23839e8c13806ae5141f1902560d4d1502b29a",
+    "experiments/calibration/fs4_threshold_integration.py": "1135eb54c23941cb7156e4b0101735b0bead274258efd3298354b391f2cbf0e6",
+    "experiments/calibration/fs4_threshold_synthetic_smoke.py": "b07f4da8da06c482ee75954d2bab74a5bb0700296388c1bed0a5dd562f480a02",
+    "experiments/calibration/memory_state.py": "785708d21dac5e4e11a22238943aab122c054cd6b32f09c5ba0b970d044dc1c0",
+    "experiments/calibration/native.py": "3a347d65aaf4bfd6b41eff2ea7339d878065bb2e08ed64795f57b0458135dd45",
+    "experiments/calibration/profiles.py": "7ff59b6a3783bf4061ab75c6b0782b23a0f6e456b40457a022e5d0de13d6f7a5",
+    "experiments/calibration/protocol.py": "16b39ead3975bf442047737bc5746814ef9697cd0a9962464ee388bbfc52da60",
+    "experiments/calibration/query_tape.py": "ed6f77c2a4de1bd05969ae3c09f2c98c13a744481ca436f80e4633bd6c412c6d",
+    "experiments/calibration/r1_matched_correction_pilot.py": "3208e2c52277ad76351eb86968e362aa315effe9e3c734bfe2b6ff7bab0db448",
+    "experiments/calibration/r2_exp2a_c1_strength.py": "4b798dcb1472e6dd630f58b3e62f3782dfb302f7579e942fcdb399885a5f33d3",
+    "experiments/calibration/r3_fullstream_2x2.py": "0a67d893df6fe73399726f4cc60caa5967a6e3c2eb93535f23f7089350986741",
+    "experiments/calibration/r7_shuffled_correction_4class.py": "0e2b0bc468cdcc1a8d72082487b1618817a45342fe93b99a00052ecb50f85b3a",
+    "experiments/calibration/r9_correction_mechanism_falsification.py": "60d07172ebac238f41f8cf487ce3935750f600771710d299ab541d538d19fd74",
+    "experiments/p0_protocol_audit.py": "b83918ec5aceb3ef63cca942fc9fb0e241559d9672d20bed422b15fcd48135e7",
+    "experiments/risk_safe/native_bridge.py": "9575214ea8d14ebe32a537fa15afa332446b41d66c1c8c85f890d2251eaef8f7",
+    "experiments/risk_safe/shadow_memory.py": "70c2ba3d29b225f241d9ad147f5be168ee2e0613f452e1428cc585bbce3339b5",
+    "experiments/tmra_compact_memory.py": "2a76351e68aacf443e29e428255eba2e46eec3547351bcb721725662d0469644",
+    "experiments/tmra_recurrence_core.py": "3c61029cad93d24c4dcf470d26bb90fe1e1f174beb5ea25ad4fe42a9db370be2",
+    "experiments/v02_memory.py": "3c4e247e3a41dc9acc8147a35aa892cf3f3571aca85beb4169809bd70ad48ae0",
+    "test_phase3_AIF_simplified_v22.py": "bfc871d5a9a32b2f5bdb9d7aab5177e702dec2e1110a6632f20bd13c20fcba30",
+    "tests/calibration/test_fs4_hardening_cuda.py": "f9e1da2ec8380cc14312c02754562525c66cab0a6e7b357be1c9a8bacd7bff80",
+    "tests/calibration/test_fs4_hardening_r1.py": "25b3c75204535c08246d6a2b52c8ecae4630e3bc933e42568fac51334324465c",
+    "tests/calibration/test_fs4_threshold.py": "74526aebf290210acd0a1ac26a6dbc0121d6f4ba854b6e7b5822c0884d4c29a8",
+    "vmb_visionad_new.py": "bd6545bf5ff63acce01792e5d42aa964c88e73fb59670febeb55f2d1139a409a"
+  },
+  "status": "PASS",
+  "test_images_read": 0,
+  "test_outcomes_read": 0
+}
