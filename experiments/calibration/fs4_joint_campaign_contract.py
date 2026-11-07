@@ -448,7 +448,8 @@ def build_trajectory_manifests(*, registration: Mapping[str, Any], campaign_id: 
         })
         manifest = {
             "run_id": run_id, "campaign_id": campaign_id, "trajectory_id": trajectory,
-            "source_commit": source_commit, "source_fingerprints": source,
+            "source_commit": source_commit, "model_state_sha256": registration["model_state_sha256"],
+            "source_fingerprints": source,
             "expected_events_by_category": dict(EXPECTED_EVENTS), "profile": arm["profile"],
             "stream_sha256_by_category": streams,
             "scientific_contract_sha256": source["docs/calibration/fs4_threshold/SCIENTIFIC_CONTRACT.md"],
