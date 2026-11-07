@@ -190,10 +190,7 @@ def test_staging_private_labels_are_bound_to_registered_official_json(tmp_path, 
     category = "audiojack"
     source_root = tmp_path / "registered-source"
     ledger, original = synthetic_registration(source_root / "images")
-    original["dataset_root"] = str(source_root.resolve())
-    for row in [*original["categories"][category]["supports"],
-                *original["categories"][category]["events"]]:
-        row["relative_path"] = "images/" + row["relative_path"]
+    original["dataset_root"] = str((source_root / "images").resolve())
     original["dataset_identity_sha256"] = digest({
         "dataset_root": original["dataset_root"],
         "category_order": original["category_order"],
@@ -205,7 +202,7 @@ def test_staging_private_labels_are_bound_to_registered_official_json(tmp_path, 
     official_rows = []
     frozen_stream = []
     for local_position, event in enumerate(original["categories"][category]["events"]):
-        source_path = source_root / Path(event["relative_path"])
+        source_path = Path(original["dataset_root"]) / Path(event["relative_path"])
         parsed = parse_image_name(source_path, expected_class=category)
         official_rows.append({"category": category, "image_path": parsed.rel_path,
                               "anomaly_class": "OK"})

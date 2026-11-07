@@ -684,7 +684,7 @@ def _validate_staging_labels_from_official_json(original: Mapping[str, Any],
         raise CampaignContractError("private labels do not cover the exact registered positions")
 
     dataset_root = Path(original["dataset_root"]).resolve(strict=True)
-    json_root = dataset_root / "jsons" / "realiad_jsons"
+    json_root = dataset_root.parent / "jsons" / "realiad_jsons"
     verified_json_hashes: dict[str, str] = {}
     global_position = 0
     verified_count = 0
@@ -721,7 +721,7 @@ def _validate_staging_labels_from_official_json(original: Mapping[str, Any],
                     not isinstance(record.get("image_path"), str) or
                     ("category" in record and record["category"] != category)):
                 raise CampaignContractError(f"{category}: official annotation or source position is invalid")
-            relative = PurePosixPath("images") / PurePosixPath(metadata["prefix"]) / PurePosixPath(record["image_path"].replace("\\", "/"))
+            relative = PurePosixPath(metadata["prefix"]) / PurePosixPath(record["image_path"].replace("\\", "/"))
             if relative.is_absolute() or ".." in relative.parts or str(relative) != event.get("relative_path", "").replace("\\", "/"):
                 raise CampaignContractError(f"{category}: registered path differs from the official JSON order")
             image_path = (dataset_root.joinpath(*relative.parts)).resolve(strict=True)
