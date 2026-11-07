@@ -45,3 +45,7 @@ The separate `docs/calibration/EXPERIMENT_A4_EB68_AUTHORIZATION.md` authorizes o
 ## FS4 hardening R1 scoped engineering authorization
 
 `docs/calibration/fs4_threshold/FS4_HARDENING_R1_AUTHORIZATION.md` authorizes `FS4_THRESHOLD_HARDENING_R1`: FS4-only repairs and production infrastructure, synthetic CPU/CUDA verification, and the narrowly defined verified four-Support TRAIN-only engineering parity preflight. No scientific experiment, TEST labels or masks, other categories, historical-source edits, or additional normal-reference inputs are authorized. All other scientific and repository invariants remain in force.
+
+## FS4 hardening R2 scoped engineering authorization
+
+`docs/calibration/fs4_threshold/FS4_HARDENING_R2_AUTHORIZATION.md` authorizes only the R2 trusted execution boundary, Stage B integrity and private-storage engineering repair, plus bounded synthetic CPU/CUDA verification. It does not authorize scientific execution, Real-IAD TEST data or outcomes, masks, additional reference images, historical-source modifications, or a future campaign. The earlier R1 preflight receipts remain immutable historical evidence. All other scientific and repository invariants remain in force.

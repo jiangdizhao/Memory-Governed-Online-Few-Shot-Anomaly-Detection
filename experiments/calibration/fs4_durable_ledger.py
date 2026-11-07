@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import asdict
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -24,6 +25,11 @@ from .fs4_hardening_audit import SOURCES, PROTECTED_SOURCES
 REQUIRED_SOURCE_PATHS = frozenset((*SOURCES, *PROTECTED_SOURCES,
     "experiments/calibration/fs4_threshold_core.py",
     "experiments/calibration/fs4_threshold_audit.py",
+    "experiments/calibration/fs4_r2_security.py",
+    "experiments/calibration/fs4_r2_trust.py",
+    "experiments/calibration/fs4_r2_context.py",
+    "experiments/calibration/fs4_r2_stage_b.py",
+    "experiments/calibration/fs4_r2_audit.py",
     "docs/calibration/fs4_threshold/SCIENTIFIC_CONTRACT.md"))
 
 
@@ -39,14 +45,16 @@ def digest(value: Any) -> str:
     return hashlib.sha256(canonical(value)).hexdigest()
 
 
-class DurableLedger:
-    """One exclusive run namespace with explicitly registered category counts."""
+class SyntheticTestLedger:
+    """Synthetic-only ledger; caller-controlled verifiers have no production authority."""
 
     def __init__(self, root: Path, manifest: Mapping[str, Any], *, create: bool) -> None:
         self.root = Path(root)
         self.path = self.root / "events.jsonl"
         self.manifest_path = self.root / "manifest.json"
         self.manifest = dict(manifest)
+        if type(self) is SyntheticTestLedger and self.manifest.get("execution_scope") != "SYNTHETIC_ONLY":
+            raise LedgerIntegrityError("synthetic ledger requires an explicit SYNTHETIC_ONLY manifest")
         required = ("run_id", "source_commit", "source_fingerprints", "expected_events_by_category", "profile",
                     "stream_sha256_by_category", "scientific_contract_sha256", "dataset_identity_sha256",
                     "model_state_sha256", "support_groups_by_category", "fixed_support_sha256_by_category")
@@ -267,8 +275,16 @@ class DurableLedger:
                     p.get("stage_a_sha256") != self.last_hash or p.get("scope") != "FS4_STAGE_B"):
                 raise LedgerIntegrityError("Stage B requires a separate explicit authorization")
             self.phase = "STAGE_B_AUTH"
+        elif kind == "STAGE_B_RESULT":
+            if self.phase != "STAGE_B_AUTH" or not p.get("result_sha256") or not p.get("result_size"):
+                raise LedgerIntegrityError("Stage B needs validated result evidence")
+            self.phase = "STAGE_B_RESULT"
+        elif kind == "STAGE_B_SEAL":
+            if self.phase != "STAGE_B_RESULT" or p.get("result_record_sha256") != self.last_hash:
+                raise LedgerIntegrityError("Stage B completion seal requires a result record")
+            self.phase = "STAGE_B_SEALED"
         elif kind == "COMPLETE":
-            if self.phase != "STAGE_B_AUTH" or p["stream_sha256"] != self.last_hash:
+            if self.phase != "STAGE_B_SEALED" or p["stream_sha256"] != self.last_hash:
                 raise LedgerIntegrityError("invalid complete seal")
             self.phase = "COMPLETE"
         else:
@@ -310,6 +326,13 @@ class DurableLedger:
             raise LedgerIntegrityError("Stage B authorization was not independently verified")
         return self._append("STAGE_B_AUTH", dict(authorization))
 
+    def synthetic_stage_b_result(self, result: bytes) -> str:
+        if not isinstance(result, bytes) or not result:
+            raise LedgerIntegrityError("synthetic result bytes are required")
+        value = self._append("STAGE_B_RESULT", {"result_sha256": hashlib.sha256(result).hexdigest(), "result_size": len(result)})
+        self._append("STAGE_B_SEAL", {"result_record_sha256": value})
+        return value
+
     def seal_complete(self) -> str:
         return self._append("COMPLETE", {"stream_sha256": self.last_hash})
 
@@ -321,8 +344,223 @@ class DurableLedger:
         if not self._lock.closed:
             self._lock.close()
 
-    def __enter__(self) -> "DurableLedger":
+    def __enter__(self) -> "SyntheticTestLedger":
         return self
 
     def __exit__(self, *_args: Any) -> None:
         self.close()
+
+
+class DurableLedger(SyntheticTestLedger):
+    """Production ledger: signed manifest, private ACLs and signed Stage B proofs."""
+
+    def __init__(self, root: Path, manifest: Mapping[str, Any], *, create: bool) -> None:
+        from .fs4_r2_security import WindowsPrivateStore
+        from .fs4_r2_trust import verify_production_signed
+        supplied = dict(manifest)
+        if supplied.get("execution_scope") != "PRODUCTION":
+            raise LedgerIntegrityError("production ledger requires a production-scoped manifest")
+        required_keys = {"run_id", "source_commit", "source_fingerprints", "expected_events_by_category", "profile",
+            "stream_sha256_by_category", "scientific_contract_sha256", "dataset_identity_sha256", "model_state_sha256",
+            "support_groups_by_category", "fixed_support_sha256_by_category", "query_seed", "execution_scope",
+            "protocol", "stage_b_scope", "stage_a_principal_sid", "r2_execution_manifest", "r2_stage_a_authorization"}
+        optional_keys = {"controller"} if supplied.get("profile") == "COUPLED_QUERY_ONLY_FROZEN_WRITER" else set()
+        if set(supplied) != required_keys | optional_keys:
+            raise LedgerIntegrityError("production manifest contains missing or unregistered fields")
+        import re
+        if (not isinstance(supplied["protocol"], str) or not supplied["protocol"] or
+                not isinstance(supplied["stage_b_scope"], str) or
+                not re.fullmatch(r"[A-Z0-9_]{1,128}", supplied["stage_b_scope"])):
+            raise LedgerIntegrityError("production protocol or Stage B scope is invalid")
+        from .fs4_r2_security import current_user_sid, _sid_string
+        if supplied.get("stage_a_principal_sid") != _sid_string(current_user_sid()):
+            raise LedgerIntegrityError("production Stage A principal differs from signed manifest")
+        document = supplied.get("r2_stage_a_authorization")
+        if not isinstance(document, dict):
+            raise LedgerIntegrityError("production run requires a signed Stage A authorization")
+        grant = verify_production_signed(document, role="experiment_manifest")
+        core = {key: value for key, value in supplied.items() if key != "r2_stage_a_authorization"}
+        expected = {"run_id": core.get("run_id"), "protocol": core.get("protocol"),
+                    "source_commit": core.get("source_commit"), "ledger_manifest_sha256": digest(core),
+                    "dataset_identity_sha256": core.get("dataset_identity_sha256"),
+                    "stream_sha256_by_category": core.get("stream_sha256_by_category"), "scope": "FS4_STAGE_A"}
+        if any(value is None for value in expected.values()) or any(grant.get(k) != v for k, v in expected.items()):
+            raise LedgerIntegrityError("signed Stage A authorization does not bind the run manifest")
+        from .fs4_r2_context import validate_execution_manifest
+        execution_document = supplied.get("r2_execution_manifest")
+        if not isinstance(execution_document, dict):
+            raise LedgerIntegrityError("signed execution manifest is required")
+        execution = verify_production_signed(execution_document, role="experiment_manifest")
+        self._execution_manifest = validate_execution_manifest(execution, supplied)
+        self._initial_manifest_digest = digest(supplied)
+        self._trusted_context = None
+        self._active_provenance = None
+        self._reading_existing = True
+        self._private = WindowsPrivateStore(Path(root), create=create)
+        if create:
+            self._private.write("manifest.json", canonical(supplied) + b"\n")
+            self._private.write("events.jsonl", b"")
+        else:
+            self._private.read("manifest.json"); self._private.read("events.jsonl")
+        super().__init__(root, supplied, create=False)
+        self._reading_existing = False
+
+    def _append(self, kind: str, payload: dict[str, Any]) -> str:
+        from .fs4_r2_security import validate_private_acl
+        try:
+            validate_private_acl(self.root, directory=True)
+            validate_private_acl(self.path, directory=False)
+            if digest(self.manifest) != self._initial_manifest_digest or self._private.read("manifest.json") != canonical(self.manifest) + b"\n":
+                raise LedgerIntegrityError("production manifest changed after authorization")
+        except Exception:
+            self.poisoned = True
+            raise
+        value = super()._append(kind, payload)
+        try:
+            validate_private_acl(self.path, directory=False)
+        except Exception:
+            self.poisoned = True
+            raise
+        return value
+
+    def _apply(self, kind: str, p: dict[str, Any]) -> None:
+        from .fs4_r2_trust import verify_production_signed
+        if kind == "PREDICTION":
+            x = p["event"]
+            provenance = x.get("trusted_event_provenance")
+            category = self.current_category
+            info = self._execution_manifest["categories"].get(category, {})
+            matches = [row for row in info.get("events", ()) if row["position"] == x.get("position")]
+            if len(matches) != 1 or not isinstance(provenance, dict):
+                raise LedgerIntegrityError("production prediction lacks registered trusted provenance")
+            record = matches[0]
+            expected = {"schema": "FS4_TRUSTED_EVENT_V1", "dataset_identity_sha256": self.manifest["dataset_identity_sha256"],
+                "manifest_sha256": digest(self._execution_manifest), "category": category,
+                "image_content_sha256": record["content_sha256"], "geometry": [record["width"], record["height"]],
+                "model_state_sha256": self.manifest["model_state_sha256"], "feature_sha256": x.get("feature_sha256")}
+            if (x.get("event") != record["event"] or x.get("group") != record["group"] or
+                    any(provenance.get(key) != value for key, value in expected.items()) or
+                    not isinstance(provenance.get("cls_sha256"), str) or len(provenance["cls_sha256"]) != 64 or
+                    (not self._reading_existing and (self._trusted_context is None or provenance != self._active_provenance))):
+                raise LedgerIntegrityError("prediction does not match the trusted encoder and registered event")
+        if kind == "STAGE_B_AUTH":
+            if self.phase != "GLOBAL_A":
+                raise LedgerIntegrityError("Stage B authorization requires the global Stage A seal")
+            grant = verify_production_signed(p["grant"], role="stage_b_grant")
+            expected = {"run_id": self.manifest["run_id"], "protocol": self.manifest["protocol"],
+                "source_commit": self.manifest["source_commit"], "manifest_sha256": digest(self.manifest),
+                "dataset_identity_sha256": self.manifest["dataset_identity_sha256"],
+                "stream_sha256_by_category": self.manifest["stream_sha256_by_category"],
+                "stage_a_sha256": self.last_hash, "scope": self.manifest["stage_b_scope"]}
+            if not grant.get("authorization_id") or any(grant.get(k) != v for k, v in expected.items()):
+                raise LedgerIntegrityError("signed Stage B grant does not bind this run and global seal")
+            if (grant.get("stage_a_principal_sid") != self.manifest["stage_a_principal_sid"] or
+                    not isinstance(grant.get("stage_b_principal_sid"), str) or
+                    grant["stage_b_principal_sid"] == grant["stage_a_principal_sid"]):
+                raise LedgerIntegrityError("Stage B must use a distinct registered Windows principal")
+            from .fs4_r2_security import _windows
+            try:
+                _windows()[2].ConvertStringSidToSid(grant["stage_b_principal_sid"])
+                projection_root = Path(grant["projection_root"])
+                if not projection_root.is_absolute() or projection_root.absolute().is_relative_to(self.root.absolute()):
+                    raise ValueError("projection store must be outside the Stage A run directory")
+            except (KeyError, ValueError, TypeError) as exc:
+                raise LedgerIntegrityError("Stage B principal or projection-store identity is invalid") from exc
+            self.stage_b_grant_sha256 = digest(p["grant"])
+            self.stage_b_global_a = self.last_hash
+            self.stage_b_principal_sid = grant["stage_b_principal_sid"]
+            self.phase = "STAGE_B_AUTH"
+            return
+        if kind == "STAGE_B_RESULT":
+            if self.phase != "STAGE_B_AUTH":
+                raise LedgerIntegrityError("Stage B result requires a verified grant")
+            receipt = verify_production_signed(p["receipt"], role="stage_b_result")
+            expected = {"run_id": self.manifest["run_id"], "protocol": self.manifest["protocol"],
+                "source_commit": self.manifest["source_commit"], "manifest_sha256": digest(self.manifest),
+                "stage_a_sha256": self.stage_b_global_a, "grant_sha256": self.stage_b_grant_sha256,
+                "scope": self.manifest["stage_b_scope"], "status": "EVALUATION_COMPLETE",
+                "stage_b_principal_sid": self.stage_b_principal_sid, "artifact_type": "AGGREGATE_METRICS_ONLY"}
+            if any(receipt.get(k) != v for k, v in expected.items()):
+                raise LedgerIntegrityError("signed Stage B result does not bind this run and grant")
+            self._validate_result(receipt)
+            self.stage_b_result_receipt = dict(receipt)
+            self.phase = "STAGE_B_RESULT"
+            return
+        if kind == "STAGE_B_SEAL":
+            if self.phase != "STAGE_B_RESULT" or p.get("result_record_sha256") != self.last_hash:
+                raise LedgerIntegrityError("Stage B completion seal requires its verified result")
+            self._validate_result(self.stage_b_result_receipt)
+            self.phase = "STAGE_B_SEALED"
+            return
+        if kind == "COMPLETE" and self.phase == "STAGE_B_SEALED":
+            self._validate_result(self.stage_b_result_receipt)
+        super()._apply(kind, p)
+
+    def _bind_context(self, context: Any) -> None:
+        from .fs4_r2_context import ProductionContext
+        if type(context) is not ProductionContext or context._ledger is not self or context._category != self.current_category:
+            raise LedgerIntegrityError("unrelated production context")
+        self._trusted_context = context
+
+    def verify_live_sources(self) -> None:
+        source_root = Path(__file__).resolve().parents[2]
+        for name, expected in self.manifest["source_fingerprints"].items():
+            path = (source_root / name).resolve()
+            if not path.is_relative_to(source_root) or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                raise LedgerIntegrityError("production source changed after manifest verification")
+
+    def disclose(self, event: str, position: int, reader: Callable[[str, int], int]) -> int:
+        if not self._reading_existing:
+            if self._trusted_context is None or self._active_provenance is None:
+                raise LedgerIntegrityError("production feedback requires the active trusted event")
+            self.verify_live_sources()
+            self._trusted_context._verify_model()
+            self._trusted_context._verify_runtime()
+        value = super().disclose(event, position, reader)
+        if not self._reading_existing:
+            self.verify_live_sources()
+            self._trusted_context._verify_model()
+            self._trusted_context._verify_runtime()
+        return value
+
+    def _validate_result(self, receipt: Mapping[str, Any]) -> None:
+        from .fs4_r2_security import WindowsPrivateStore
+        filename = receipt.get("result_file")
+        if not isinstance(filename, str) or Path(filename).name != filename or filename in ("", ".", ".."):
+            raise LedgerIntegrityError("invalid Stage B result filename")
+        store = WindowsPrivateStore(self.root / "stage_b_results", create=False)
+        data = store.read(filename)
+        if (not data or len(data) != receipt.get("result_size") or
+                hashlib.sha256(data).hexdigest() != receipt.get("result_sha256")):
+            raise LedgerIntegrityError("Stage B result checksum or size mismatch")
+        try:
+            result = json.loads(data)
+            if (set(result) != {"schema", "run_id", "stage_a_sha256", "scope", "metrics"} or
+                    result["schema"] != "FS4_STAGE_B_AGGREGATE_V1" or result["run_id"] != self.manifest["run_id"] or
+                    result["stage_a_sha256"] != self.stage_b_global_a or result["scope"] != self.manifest["stage_b_scope"] or
+                    not isinstance(result["metrics"], dict) or not result["metrics"] or
+                    any(not isinstance(k, str) or not k or isinstance(v, bool) or
+                        (v is not None and (not isinstance(v, (int, float)) or not math.isfinite(v)))
+                        for k, v in result["metrics"].items())):
+                raise ValueError("invalid aggregate schema")
+        except (ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+            raise LedgerIntegrityError("Stage B result is not a valid aggregate artifact") from exc
+
+    def stage_b_result_store(self) -> Any:
+        from .fs4_r2_security import WindowsPrivateStore
+        if self.phase != "STAGE_B_AUTH":
+            raise LedgerIntegrityError("Stage B result storage is unavailable before authorization")
+        root = self.root / "stage_b_results"
+        return WindowsPrivateStore(root, create=not root.exists())
+
+    def authorize_stage_b(self, signed_grant: Mapping[str, Any]) -> str:
+        return self._append("STAGE_B_AUTH", {"grant": dict(signed_grant)})
+
+    def record_stage_b_result(self, signed_receipt: Mapping[str, Any]) -> str:
+        return self._append("STAGE_B_RESULT", {"receipt": dict(signed_receipt)})
+
+    def seal_stage_b(self) -> str:
+        return self._append("STAGE_B_SEAL", {"result_record_sha256": self.last_hash})
+
+    def synthetic_stage_b_result(self, result: bytes) -> str:
+        raise LedgerIntegrityError("synthetic result is forbidden in a production ledger")

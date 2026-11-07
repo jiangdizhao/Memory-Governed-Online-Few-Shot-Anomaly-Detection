@@ -55,9 +55,15 @@ def _validate_c1(runtime: Any, next_position: int) -> None:
         raise CheckpointError("invalid C1 provenance at checkpoint boundary") from exc
 
 
-def save_checkpoint(path: Path, *, trajectory: Any, ledger: Any) -> dict[str, Any]:
+def save_checkpoint(path: Path, *, trajectory: Any, ledger: Any, private_store: Any = None) -> dict[str, Any]:
     """Save a completely applied event, bound to the exact durable ledger offset."""
     path = Path(path)
+    from .fs4_durable_ledger import DurableLedger
+    if type(ledger) is DurableLedger:
+        from .fs4_r2_security import WindowsPrivateStore
+        if (type(private_store) is not WindowsPrivateStore or ledger._trusted_context is None or
+                trajectory is not ledger._trusted_context._trajectory):
+            raise CheckpointError("production checkpoint requires its trusted context and private store")
     offset = ledger.offset()
     if offset["phase"] != "READY" or offset["next_position"] != trajectory.policy.last_position + 1 or getattr(trajectory, "failed", False):
         raise CheckpointError("checkpoint requires a complete ledger/trajectory event boundary")
@@ -121,16 +127,25 @@ def save_checkpoint(path: Path, *, trajectory: Any, ledger: Any) -> dict[str, An
                    "receipts": [asdict(policy.receipts[p]) for p in sorted(policy.receipts)],
                    "events": sorted(policy.events), "last_position": policy.last_position},
         "controllers": cdata}
+    if private_store is not None:
+        if path.parent.absolute() != private_store.root or path.name in ("", ".", ".."):
+            raise CheckpointError("private checkpoint must be a direct child of its protected store")
     path.mkdir(parents=False, exist_ok=False)
+    if private_store is not None:
+        from .fs4_r2_security import set_private_acl
+        set_private_acl(path, directory=True)
     tensor_path = path / "tensors.npz"
     with tensor_path.open("xb") as stream:
+        if private_store is not None: set_private_acl(tensor_path, directory=False)
         np.savez(stream, **arrays); stream.flush(); os.fsync(stream.fileno())
     state["tensor_sha256"] = _sha(tensor_path)
     state_path = path / "state.json"
     with state_path.open("xb") as stream:
+        if private_store is not None: set_private_acl(state_path, directory=False)
         stream.write(canonical(state) + b"\n"); stream.flush(); os.fsync(stream.fileno())
     marker = {"state_sha256": _sha(state_path), "tensor_sha256": state["tensor_sha256"]}
     with (path / "COMMITTED.json").open("xb") as stream:
+        if private_store is not None: set_private_acl(path / "COMMITTED.json", directory=False)
         stream.write(canonical(marker) + b"\n"); stream.flush(); os.fsync(stream.fileno())
     return {**marker, "persistent_bytes": sum(x.stat().st_size for x in (tensor_path, state_path, path / "COMMITTED.json")),
             "ledger_offset": offset}
@@ -180,10 +195,21 @@ def _validate_saved_policy(saved: dict[str, Any], ledger: Any, record_count: int
         raise CheckpointError("checkpoint adaptive query history differs from ledger")
 
 
-def restore_checkpoint(path: Path, *, trajectory: Any, ledger: Any, allow_advanced: bool = False) -> dict[str, Any]:
+def restore_checkpoint(path: Path, *, trajectory: Any, ledger: Any, allow_advanced: bool = False,
+                       trusted_context: Any = None) -> dict[str, Any]:
     """Restore into a fresh native trajectory at an identical durable boundary."""
     path = Path(path)
     try:
+        from .fs4_durable_ledger import DurableLedger
+        if type(ledger) is DurableLedger:
+            from .fs4_r2_context import ProductionContext
+            from .fs4_r2_security import validate_private_acl
+            if (type(trusted_context) is not ProductionContext or trusted_context is not ledger._trusted_context or
+                    trusted_context._trajectory is not trajectory or path.parent.absolute() != (ledger.root / "checkpoints").absolute()):
+                raise CheckpointError("production restore requires its trusted context and private checkpoint")
+            validate_private_acl(path.parent, directory=True); validate_private_acl(path, directory=True)
+            for name in ("state.json", "tensors.npz", "COMMITTED.json"):
+                validate_private_acl(path / name, directory=False)
         marker = json.loads((path / "COMMITTED.json").read_text(encoding="utf-8"))
         state_path, tensor_path = path / "state.json", path / "tensors.npz"
         if _sha(state_path) != marker["state_sha256"] or _sha(tensor_path) != marker["tensor_sha256"]:
@@ -343,8 +369,10 @@ class RecoveryLedger:
             raise CheckpointError("durable tail has not been fully replayed")
 
 
-def begin_recovery(path: Path, *, trajectory: Any, ledger: Any, label_reader: Any) -> RecoveryLedger:
-    offset = restore_checkpoint(path, trajectory=trajectory, ledger=ledger, allow_advanced=True)
+def begin_recovery(path: Path, *, trajectory: Any, ledger: Any, label_reader: Any,
+                   trusted_context: Any = None) -> RecoveryLedger:
+    offset = restore_checkpoint(path, trajectory=trajectory, ledger=ledger, allow_advanced=True,
+                                trusted_context=trusted_context)
     recovery = RecoveryLedger(ledger, offset, label_reader)
     trajectory.seal_prediction = recovery.seal_prediction
     trajectory.seal_query = recovery.seal_query

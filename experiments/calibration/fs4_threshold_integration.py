@@ -41,6 +41,18 @@ def prediction_digest(payload: dict[str, Any]) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _validate_bound_inputs(provenance: Mapping[str, Any] | None, image: Any,
+                           features: torch.Tensor, cls_feature: Any) -> None:
+    if provenance is None:
+        return
+    cls = np.asarray(cls_feature, dtype=np.float32).reshape(-1)
+    cls_sha = hashlib.sha256(cls.tobytes()).hexdigest()
+    if (provenance.get("feature_sha256") != _feature_digest(features) or
+            provenance.get("cls_sha256") != cls_sha or
+            provenance.get("geometry") != [int(image.width), int(image.height)]):
+        raise FS4FatalIntegrityError("trusted feature, CLS or geometry identity changed")
+
+
 @dataclass(frozen=True)
 class FrozenWriterReference:
     theta: float
@@ -261,10 +273,12 @@ class SharedTrajectory:
 
     @_condition_guard
     def step(self, *, position: int, group: str, event: str, image: Any,
-             features: torch.Tensor, cls_feature: Any, feature_convention: str) -> dict[str, Any]:
+             features: torch.Tensor, cls_feature: Any, feature_convention: str,
+             event_provenance: Mapping[str, Any] | None = None) -> dict[str, Any]:
         if (feature_convention != FEATURE_CONVENTION or not isinstance(features, torch.Tensor) or
                 tuple(features.shape) != (784, 4096) or features.dtype != torch.float32 or not torch.isfinite(features).all()):
             raise ValueError("current event must supply the complete registered fused feature tensor")
+        _validate_bound_inputs(event_provenance, image, features, cls_feature)
         if float(getattr(self.runtime, "theta_ref", self._learning_reference)) != self._learning_reference:
             raise FS4FatalIntegrityError("frozen writer/C1 learning reference changed")
         scale = self.policy.prior_scale()  # obtained before the current score
@@ -295,6 +309,8 @@ class SharedTrajectory:
                    "learning_prediction": learning_prediction,
                    "decision_learning_disagreement": {name: {j: decisions[name][j] != learning_prediction for j in ("G", "GC")} for name in decisions},
                    "feature_sha256": feature_sha, "top32_ids": top_ids}
+        if event_provenance is not None:
+            payload["trusted_event_provenance"] = dict(event_provenance)
         expected_seal = prediction_digest(payload)
         seal = self.seal_prediction(payload)
         if seal != expected_seal or prediction_digest(payload) != expected_seal or _feature_digest(features) != feature_sha:
@@ -305,7 +321,13 @@ class SharedTrajectory:
         receipt = self.policy.seal_query(receipt, self.seal_query(receipt))
         update = None
         if receipt.executed:
+            _validate_bound_inputs(event_provenance, image, features, cls_feature)
+            if _feature_digest(scored["features"][0]) != feature_sha:
+                raise FS4FatalIntegrityError("sealed native scoring features changed before disclosure")
             receipt = self.policy.disclose(receipt, self.label_provider(event, position))
+            _validate_bound_inputs(event_provenance, image, features, cls_feature)
+            if _feature_digest(scored["features"][0]) != feature_sha:
+                raise FS4FatalIntegrityError("sealed native scoring features changed after disclosure")
             if _feature_digest(features) != feature_sha or np.asarray(scored["top_ids"], dtype=np.int64).tolist() != top_ids:
                 raise ValueError("sealed feature or Top-32 identity changed before feedback")
             evidence = (NormalEvidence.from_disclosure(self.policy, receipt,
@@ -348,10 +370,12 @@ class CoupledTrajectory:
 
     @_condition_guard
     def step(self, *, position: int, group: str, event: str, image: Any,
-             features: torch.Tensor, cls_feature: Any, feature_convention: str) -> dict[str, Any]:
+             features: torch.Tensor, cls_feature: Any, feature_convention: str,
+             event_provenance: Mapping[str, Any] | None = None) -> dict[str, Any]:
         if (feature_convention != FEATURE_CONVENTION or not isinstance(features, torch.Tensor) or
                 tuple(features.shape) != (784, 4096) or features.dtype != torch.float32 or not torch.isfinite(features).all()):
             raise ValueError("current event must supply the complete registered fused feature tensor")
+        _validate_bound_inputs(event_provenance, image, features, cls_feature)
         if float(getattr(self.runtime, "theta_ref", self._learning_reference)) != self._learning_reference:
             raise FS4FatalIntegrityError("frozen writer/C1 learning reference changed")
         scale = self.policy.prior_scale()
@@ -380,6 +404,8 @@ class CoupledTrajectory:
                    "learning_prediction": learning_prediction,
                    "decision_learning_disagreement": {j: decisions[j] != learning_prediction for j in ("G", "GC")},
                    "feature_sha256": feature_sha, "top32_ids": top_ids}
+        if event_provenance is not None:
+            payload["trusted_event_provenance"] = dict(event_provenance)
         expected_seal = prediction_digest(payload)
         seal = self.seal_prediction(payload)
         if seal != expected_seal or prediction_digest(payload) != expected_seal or _feature_digest(features) != feature_sha:
@@ -390,7 +416,13 @@ class CoupledTrajectory:
         receipt = self.policy.seal_query(receipt, self.seal_query(receipt))
         update = None
         if receipt.executed:
+            _validate_bound_inputs(event_provenance, image, features, cls_feature)
+            if _feature_digest(scored["features"][0]) != feature_sha:
+                raise FS4FatalIntegrityError("sealed native scoring features changed before disclosure")
             receipt = self.policy.disclose(receipt, self.label_provider(event, position))
+            _validate_bound_inputs(event_provenance, image, features, cls_feature)
+            if _feature_digest(scored["features"][0]) != feature_sha:
+                raise FS4FatalIntegrityError("sealed native scoring features changed after disclosure")
             if _feature_digest(features) != feature_sha or np.asarray(scored["top_ids"], dtype=np.int64).tolist() != top_ids:
                 raise ValueError("sealed feature or Top-32 identity changed before feedback")
             evidence = (NormalEvidence.from_disclosure(self.policy, receipt,

@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 import torch
 
-from experiments.calibration.fs4_durable_ledger import DurableLedger, LedgerIntegrityError
+from experiments.calibration.fs4_durable_ledger import SyntheticTestLedger as DurableLedger, LedgerIntegrityError
 from experiments.calibration.fs4_errors import (FS4FatalIntegrityError, FS4NativeScoringIntegrityError,
     FS4ProvenanceIntegrityError, FS4RecoverableAvailabilityError, FS4StateMutationError)
 from experiments.calibration.fs4_query_stress import SCENARIOS, run_scenario
@@ -149,7 +149,7 @@ def manifest(streams=None):
             "fixed_support_sha256_by_category": {cat: hid(f"{cat}-fixed") for cat in streams},
             "stream_sha256_by_category": {cat: digest([{"group": g, "event": e} for g, e in pairs]) for cat, pairs in streams.items()},
             "expected_events_by_category": {cat: len(pairs) for cat, pairs in streams.items()},
-            "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY", "query_seed": 37}
+            "profile": "SHARED_TRAJECTORY_THRESHOLD_ONLY", "query_seed": 37, "execution_scope": "SYNTHETIC_ONLY"}
 
 
 def test_durable_order_reopen_and_stage_a_seals(tmp_path):
@@ -175,7 +175,11 @@ def test_durable_order_reopen_and_stage_a_seals(tmp_path):
                      "stage_a_sha256": reopened.last_hash, "scope": "FS4_STAGE_B"}
     with pytest.raises(LedgerIntegrityError):
         reopened.authorize_stage_b(authorization, verifier=lambda _: False)
-    reopened.authorize_stage_b(authorization, verifier=lambda _: True); reopened.seal_complete(); reopened.close()
+    reopened.authorize_stage_b(authorization, verifier=lambda _: True)
+    with pytest.raises(LedgerIntegrityError, match="complete seal"):
+        reopened.seal_complete()
+    reopened.synthetic_stage_b_result(b"synthetic result")
+    reopened.seal_complete(); reopened.close()
 
 
 def test_corrupt_ledger_and_manifest_rejected(tmp_path):
@@ -196,7 +200,7 @@ def test_manifest_rejects_missing_source_fingerprints(tmp_path):
 
 
 def test_stage_a_rejects_mismatched_registered_stream(tmp_path):
-    from experiments.calibration.fs4_durable_runtime import DurableExecutor
+    from experiments.calibration.fs4_durable_runtime import SyntheticTestExecutor as DurableExecutor
     m = manifest(); ledger = DurableLedger(tmp_path / "run", m, create=True); ledger.select_category("synthetic")
     loop = SharedTrajectory(runtime=_SyntheticRuntime(.5), coverage=CoverageMemory(np.eye(5, dtype=np.float32)[:4]),
         theta0=.5, policy=StochasticBEAGroupSlot(), seal_prediction=prediction_digest,
@@ -230,7 +234,7 @@ def test_native_c1_outcome_uses_frozen_writer_reference(label, theta, expected):
 
 
 def test_durable_executor_journals_complete_transitions(tmp_path):
-    from experiments.calibration.fs4_durable_runtime import DurableExecutor
+    from experiments.calibration.fs4_durable_runtime import SyntheticTestExecutor as DurableExecutor
     m = manifest({"synthetic": [(hid("executor-group"), hid(f"executor-{i}")) for i in range(5)]})
     ledger = DurableLedger(tmp_path / "run", m, create=True); ledger.select_category("synthetic")
     loop = SharedTrajectory(runtime=_SyntheticRuntime(.5), coverage=CoverageMemory(np.eye(5, dtype=np.float32)[:4]),
@@ -249,7 +253,7 @@ def test_durable_executor_journals_complete_transitions(tmp_path):
 
 
 def test_distinct_categories_use_fresh_policies_and_global_seal(tmp_path):
-    from experiments.calibration.fs4_durable_runtime import DurableExecutor
+    from experiments.calibration.fs4_durable_runtime import SyntheticTestExecutor as DurableExecutor
     m = manifest({cat: [(hid(f"{cat}-group"), hid(f"{cat}-{pos}")) for pos in range(5 * i, 5 * i + 5)]
                   for i, cat in enumerate(("one", "two"))})
     ledger = DurableLedger(tmp_path / "run", m, create=True)
@@ -454,7 +458,7 @@ def test_native_crash_during_real_e_rescoring_replays_checkpoint(tmp_path):
     import shutil
     from test_fs4_threshold import native_bank_and_writer
     from experiments.calibration.fs4_checkpoint import save_checkpoint, restore_checkpoint, begin_recovery
-    from experiments.calibration.fs4_durable_runtime import DurableExecutor, post_state_digest
+    from experiments.calibration.fs4_durable_runtime import SyntheticTestExecutor as DurableExecutor, post_state_digest
     from experiments.calibration.fs4_stochastic_bea import action_uniform, candidate_ordinal
     from experiments.calibration.fs4_threshold_integration import NativeRuntime
     from experiments.calibration.native import _fixed_bank_digest
