@@ -49,7 +49,8 @@ def verified_mapping(private_root: Path, execution: Mapping[str, Any]) -> dict[s
             if (original_path in original_paths or row["original_group"] != original_group or
                     not isinstance(row["original_event"], str) or re.fullmatch(r"[0-9a-f]{64}", row["original_event"]) is None or
                     row["original_event"] in original_events or
-                    parsed.camera_id != row["view"] or int(parsed.capture_session != "OK") != row["label"] or
+                    parsed.camera_id != row["view"] or
+                    (parsed.capture_session == "OK" and row["label"] != 0) or
                     support_digest in support_groups or group_map.setdefault(original_group, row["group"]) != row["group"] or
                     reverse_groups.setdefault(row["group"], original_group) != original_group):
                 raise ValueError("inconsistent private original identity")

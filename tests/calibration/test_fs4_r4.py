@@ -140,6 +140,67 @@ def test_preparation_blinds_paths_preserves_views_and_pixels(prepared):
         WindowsPrivateStore(prepared.root / "blinded", create=False).read("mapping.json")
 
 
+def test_ng_capture_group_preserves_mixed_official_image_labels_through_broker(tmp_path):
+    from experiments.calibration.fs4_r4_broker import verified_mapping
+    from experiments.calibration.fs4_r4_preparation import prepare_blinded_registration
+    from experiments.risk_safe.preflight import parse_image_name
+
+    source_root = tmp_path / "mixed-ng-source"
+    old_ledger, original = synthetic_registration(source_root)
+    events = original["categories"]["audiojack"]["events"]
+    expected_labels = {0: 0, 1: 1, 2: 0, 3: 1, 4: 0}
+    sample_key = "audiojack__0005_NG_BX"
+    group_sha = hashlib.sha256(f"official-sample-group\0{sample_key}".encode()).hexdigest()
+    for event in events:
+        old_path = source_root / Path(event["relative_path"])
+        parsed_old = parse_image_name(old_path, expected_class="audiojack")
+        new_relative = (Path("audiojack") / "NG" / "BX" / "S0005" /
+            f"audiojack__0005_NG_BX_C{parsed_old.camera_id}_20231021131324.jpg")
+        new_path = source_root / new_relative
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.rename(new_path)
+        event["relative_path"] = new_relative.as_posix()
+        event["group"] = group_sha
+        parsed_new = parse_image_name(new_path, expected_class="audiojack")
+        assert parsed_new.official_sample_key == sample_key
+        assert parsed_new.capture_session.startswith("NG_")
+
+    original["dataset_identity_sha256"] = digest({
+        "dataset_root": original["dataset_root"],
+        "category_order": original["category_order"],
+        "categories": original["categories"],
+    })
+    old_ledger["dataset_identity_sha256"] = original["dataset_identity_sha256"]
+    old_ledger["stream_sha256_by_category"]["audiojack"] = digest([
+        {"group": row["group"], "event": row["event"]} for row in events
+    ])
+
+    execution, _receipt = prepare_blinded_registration(
+        original=original,
+        original_ledger=old_ledger,
+        labels_by_position=expected_labels,
+        private_root=tmp_path / "mixed-ng-private",
+        image_root=tmp_path / "mixed-ng-blinded",
+    )
+    mapping = verified_mapping(tmp_path / "mixed-ng-private", execution)
+    assert len(mapping) == 5
+    mapping_by_position = {row["position"]: row for row in mapping.values()}
+    assert {position: row["label"] for position, row in mapping_by_position.items()} == expected_labels
+    assert {row["label"] for row in mapping_by_position.values()} == {0, 1}
+    assert [mapping_by_position[position]["view"] for position in range(5)] == [1, 2, 3, 4, 5]
+    assert [mapping_by_position[position]["original_event"] for position in range(5)] == [row["event"] for row in events]
+
+    ok_ledger, ok_original = synthetic_registration(tmp_path / "ok-source")
+    with pytest.raises(ValueError, match="INCOMPLETE"):
+        prepare_blinded_registration(
+            original=ok_original,
+            original_ledger=ok_ledger,
+            labels_by_position={0: 1, 1: 0, 2: 0, 3: 0, 4: 0},
+            private_root=tmp_path / "ok-private",
+            image_root=tmp_path / "ok-blinded",
+        )
+
+
 def test_blinded_resource_and_identity_tampering_fails(prepared):
     rows = prepared.execution["categories"]["audiojack"]["events"]
     first, second = rows[0], rows[1]

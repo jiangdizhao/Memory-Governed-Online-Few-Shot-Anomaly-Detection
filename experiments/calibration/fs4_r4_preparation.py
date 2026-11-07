@@ -67,7 +67,11 @@ def prepare_blinded_registration(*, original: Mapping[str, Any], original_ledger
             path, image = _read_registered_image(Path(original["dataset_root"]), row, category=category)
             parsed = parse_image_name(path, expected_class=category)
             label = labels_by_position[row["position"]]
-            if label != int(parsed.capture_session != "OK"):
+            # A capture session may be NG while this individual camera view is
+            # normal. The trusted campaign staging gate verifies labels against
+            # the registered official JSON; retain only the supported OK=>normal
+            # consistency condition here.
+            if parsed.capture_session == "OK" and label != 0:
                 raise ValueError("original registration label is inconsistent")
             key = (category, parsed.official_sample_key)
             view_set = views.setdefault(key, set())

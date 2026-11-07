@@ -24,6 +24,7 @@ from .fs4_joint_campaign_contract import (ARM_IDS, EXPECTED_CATEGORIES, EXPECTED
     validate_registration, validate_spec, validate_support_preflight)
 
 ROOT = Path(__file__).resolve().parents[2]
+STAGE05_FROZEN_INPUTS = ROOT / "outputs/calibration/stage05_exploratory_20261029/frozen_inputs.json"
 AUTH_SCHEMA = "FS4_JOINT_CAMPAIGN_AUTHORIZATION_V1"
 CAMPAIGN_SCHEMA = "FS4_JOINT_CAMPAIGN_REGISTRATION_V1"
 SCOPES = {"STAGING", "SUPPORT_PREFLIGHT", "RESOURCE_PREFLIGHT", "STAGE_A", "STAGE_B"}
@@ -642,6 +643,127 @@ def _r7_reordered_registration(original: Mapping[str, Any], original_ledger: Map
     return reordered, ledger, labels_by_new_position, digest(order_receipt), digest({"registration": original, "ledger": original_ledger})
 
 
+def _validate_staging_labels_from_official_json(original: Mapping[str, Any],
+                                                original_ledger: Mapping[str, Any],
+                                                labels_by_position: Mapping[int, int]) -> dict[str, Any]:
+    """Bind private staging labels to the registered image-level JSON labels.
+
+    Capture-session tokens identify a source acquisition. They are not an
+    image-level label: a normal camera view can occur in an NG sample. The
+    frozen Stage 05 registration and each registered JSON hash anchor the
+    authoritative ``anomaly_class == meta.normal_class`` labels.
+    """
+    from pathlib import PurePosixPath
+    from experiments.risk_safe.preflight import parse_image_name
+
+    identity = original_ledger.get("frozen_source_identity")
+    if not isinstance(identity, Mapping):
+        raise CampaignContractError("registered Stage 05 JSON source identity is missing")
+    try:
+        frozen_bytes = STAGE05_FROZEN_INPUTS.read_bytes()
+        frozen = json.loads(frozen_bytes)
+    except Exception as exc:
+        raise CampaignContractError("registered Stage 05 source input is unavailable") from exc
+    frozen_sha = _sha(frozen_bytes)
+    if (frozen.get("schema") != "stage05.frozen_inputs.v1" or
+            frozen.get("freeze_verification_status") != "PASS" or
+            frozen.get("stage1_or_stage2_run") is not False or
+            identity.get("stage05_frozen_inputs_sha256") != frozen_sha):
+        raise CampaignContractError("Stage 05 frozen source identity differs")
+
+    categories = original.get("category_order")
+    if categories != list(EXPECTED_CATEGORIES) or set(frozen.get("classes", {})) != set(EXPECTED_CATEGORIES):
+        raise CampaignContractError("registered source category set differs from the frozen population")
+    json_hashes = identity.get("real_iad_json_sha256_by_category")
+    if not isinstance(json_hashes, Mapping) or set(json_hashes) != set(EXPECTED_CATEGORIES):
+        raise CampaignContractError("registered official JSON hashes are incomplete")
+    positions = [row.get("position") for category in categories
+                 for row in original["categories"][category]["events"]]
+    if (set(labels_by_position) != set(positions) or
+            any(type(value) is not int or value not in (0, 1) for value in labels_by_position.values())):
+        raise CampaignContractError("private labels do not cover the exact registered positions")
+
+    dataset_root = Path(original["dataset_root"]).resolve(strict=True)
+    json_root = dataset_root / "jsons" / "realiad_jsons"
+    verified_json_hashes: dict[str, str] = {}
+    global_position = 0
+    verified_count = 0
+    for category in categories:
+        source_path = json_root / f"{category}.json"
+        try:
+            source_bytes = source_path.read_bytes()
+            source = json.loads(source_bytes)
+        except Exception as exc:
+            raise CampaignContractError(f"{category}: registered official JSON is unavailable") from exc
+        source_sha = _sha(source_bytes)
+        frozen_class = frozen["classes"][category]
+        if (source_sha != json_hashes.get(category) or
+                source_sha != frozen_class.get("class_json_sha256")):
+            raise CampaignContractError(f"{category}: official JSON hash differs from its frozen registration")
+        metadata = source.get("meta")
+        if (not isinstance(metadata, Mapping) or not isinstance(metadata.get("normal_class"), str) or
+                not isinstance(metadata.get("prefix"), str) or
+                metadata["prefix"].replace("\\", "/") != f"{category}/"):
+            raise CampaignContractError(f"{category}: official JSON label metadata or prefix is invalid")
+        rows = source.get("test")
+        events = original["categories"][category]["events"]
+        stream = frozen_class.get("stream")
+        if (not isinstance(rows, list) or not isinstance(stream, list) or
+                len(rows) != EXPECTED_EVENTS[category] or len(events) != len(rows) or len(stream) != len(rows)):
+            raise CampaignContractError(f"{category}: official JSON, frozen stream and registration counts differ")
+
+        group_views: dict[str, list[int]] = {}
+        seen_paths: set[str] = set()
+        for local_position, (record, event, frozen_row) in enumerate(zip(rows, events, stream, strict=True)):
+            position = global_position + local_position
+            if (event.get("position") != position or frozen_row.get("position") != local_position or
+                    "anomaly_class" not in record or not isinstance(record["anomaly_class"], str) or
+                    not isinstance(record.get("image_path"), str) or
+                    ("category" in record and record["category"] != category)):
+                raise CampaignContractError(f"{category}: official annotation or source position is invalid")
+            relative = PurePosixPath("images") / PurePosixPath(metadata["prefix"]) / PurePosixPath(record["image_path"].replace("\\", "/"))
+            if relative.is_absolute() or ".." in relative.parts or str(relative) != event.get("relative_path", "").replace("\\", "/"):
+                raise CampaignContractError(f"{category}: registered path differs from the official JSON order")
+            image_path = (dataset_root.joinpath(*relative.parts)).resolve(strict=True)
+            if dataset_root not in image_path.parents:
+                raise CampaignContractError(f"{category}: official JSON image path escaped the dataset root")
+            parsed = parse_image_name(image_path, expected_class=category)
+            group_sha = hashlib.sha256(
+                f"official-sample-group\0{parsed.official_sample_key}".encode("utf-8")).hexdigest()
+            if (event.get("group") != group_sha or
+                    frozen_row.get("sample_key") != parsed.official_sample_key or
+                    frozen_row.get("opaque_group") != group_sha or
+                    int(frozen_row.get("camera_id", -1)) != parsed.camera_id or
+                    str(frozen_row.get("timestamp")) != parsed.timestamp or
+                    str(frozen_row.get("relative_id", "")).replace("\\", "/") != parsed.rel_path or
+                    Path(str(frozen_row.get("image_path", ""))).resolve() != image_path):
+                raise CampaignContractError(f"{category}: frozen source image/group/view identity differs")
+            if str(image_path) in seen_paths:
+                raise CampaignContractError(f"{category}: duplicate official JSON image path")
+            seen_paths.add(str(image_path))
+            group_views.setdefault(parsed.official_sample_key, []).append(parsed.camera_id)
+
+            official_label = int(record["anomaly_class"] != metadata["normal_class"])
+            if parsed.capture_session == "OK" and official_label != 0:
+                raise CampaignContractError(f"{category}: official JSON labels an OK-session image as defective")
+            if labels_by_position[position] != official_label:
+                raise CampaignContractError(f"{category}: private input label differs from official JSON at position {position}")
+            verified_count += 1
+
+        if any(views != [1, 2, 3, 4, 5] for views in group_views.values()):
+            raise CampaignContractError(f"{category}: official Source Groups are not ordered complete five-view groups")
+        if len(group_views) != EXPECTED_EVENTS[category] // 5:
+            raise CampaignContractError(f"{category}: official Source Group count differs")
+        global_position += len(rows)
+        verified_json_hashes[category] = source_sha
+
+    return {"schema": "FS4_OFFICIAL_JSON_LABEL_VERIFICATION_V1",
+            "stage05_frozen_inputs_sha256": frozen_sha,
+            "official_json_sha256_by_category": verified_json_hashes,
+            "verified_private_label_count": verified_count,
+            "label_semantics": "anomaly_class equals meta.normal_class per image"}
+
+
 def prepare_real_data(*, campaign_id: str, campaign_root: Path, private_root: Path, image_root: Path,
                       original_registration_path: Path, original_ledger_path: Path,
                       labels_path: Path, authorization_path: Path) -> dict[str, Any]:
@@ -656,10 +778,21 @@ def prepare_real_data(*, campaign_id: str, campaign_root: Path, private_root: Pa
         raise FileExistsError("real-data campaign and blinded stores must use fresh non-overwriting roots")
     original = _read_json(original_registration_path)
     original_ledger = _read_json(original_ledger_path)
+    current_source_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+        check=True, capture_output=True, text=True).stdout.strip()
+    if (original.get("source_commit") != current_source_commit or
+            original_ledger.get("source_commit") != current_source_commit):
+        raise CampaignContractError("original registration and ledger must use the corrected source commit")
     labels_document = _read_json(labels_path)
     if set(labels_document) != {"schema", "labels_by_position"} or labels_document["schema"] != "FS4_CAMPAIGN_PRIVATE_LABEL_INPUT_V1":
         raise CampaignContractError("staging labels input has an invalid explicit schema")
-    labels_by_original = {int(key): value for key, value in labels_document["labels_by_position"].items()}
+    raw_labels = labels_document["labels_by_position"]
+    if (not isinstance(raw_labels, dict) or
+            any(not isinstance(key, str) or not key.isdecimal() or str(int(key)) != key for key in raw_labels)):
+        raise CampaignContractError("staging label positions are malformed")
+    labels_by_original = {int(key): value for key, value in raw_labels.items()}
+    label_source_verification = _validate_staging_labels_from_official_json(
+        original, original_ledger, labels_by_original)
     reordered, reordered_ledger, labels_by_new, order_sha, source_identity = _r7_reordered_registration(
         original, original_ledger, labels_by_original)
     from .fs4_r4_preparation import prepare_blinded_registration
@@ -676,6 +809,7 @@ def prepare_real_data(*, campaign_id: str, campaign_root: Path, private_root: Pa
         "private_root": str(private_root), "dataset_root": blinded["dataset_root"],
         "r7_seed0_order_sha256": order_sha, "source_manifest_identity_sha256": source_identity,
         "preparation_receipt": preparation_receipt, "trajectory_manifests": {},
+        "private_label_source_verification": label_source_verification,
         "status": "STAGING_COMPLETE_SUPPORT_PREFLIGHT_REQUIRED"}
     _write_json_new(campaign_root / "registration.json", blinded)
     _write_json_new(campaign_root / "campaign.json", campaign_meta)

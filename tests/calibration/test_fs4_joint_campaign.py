@@ -181,6 +181,66 @@ def test_r7_seed_zero_reconstruction_is_a_bijection_and_preserves_view_order():
         assert reordered_ledger["expected_events_by_category"][category] == EXPECTED_EVENTS[category]
 
 
+def test_staging_private_labels_are_bound_to_registered_official_json(tmp_path, monkeypatch):
+    from experiments.calibration import fs4_joint_campaign as campaign
+    from experiments.calibration.fs4_durable_ledger import canonical
+    from experiments.risk_safe.preflight import parse_image_name
+    from test_fs4_hardening_r2 import synthetic_registration
+
+    category = "audiojack"
+    source_root = tmp_path / "registered-source"
+    ledger, original = synthetic_registration(source_root / "images")
+    original["dataset_root"] = str(source_root.resolve())
+    for row in [*original["categories"][category]["supports"],
+                *original["categories"][category]["events"]]:
+        row["relative_path"] = "images/" + row["relative_path"]
+    original["dataset_identity_sha256"] = digest({
+        "dataset_root": original["dataset_root"],
+        "category_order": original["category_order"],
+        "categories": original["categories"],
+    })
+    ledger["dataset_identity_sha256"] = original["dataset_identity_sha256"]
+    json_root = source_root / "jsons" / "realiad_jsons"
+    json_root.mkdir(parents=True)
+    official_rows = []
+    frozen_stream = []
+    for local_position, event in enumerate(original["categories"][category]["events"]):
+        source_path = source_root / Path(event["relative_path"])
+        parsed = parse_image_name(source_path, expected_class=category)
+        official_rows.append({"category": category, "image_path": parsed.rel_path,
+                              "anomaly_class": "OK"})
+        frozen_stream.append({"position": local_position, "sample_key": parsed.official_sample_key,
+            "opaque_group": event["group"], "camera_id": parsed.camera_id,
+            "timestamp": parsed.timestamp, "image_path": str(source_path.resolve()),
+            "relative_id": parsed.rel_path})
+    json_data = {"meta": {"prefix": "audiojack/", "normal_class": "OK"}, "test": official_rows}
+    json_path = json_root / "audiojack.json"
+    json_bytes = canonical(json_data)
+    json_path.write_bytes(json_bytes)
+    json_sha = hashlib.sha256(json_bytes).hexdigest()
+    frozen = {"schema": "stage05.frozen_inputs.v1", "freeze_verification_status": "PASS",
+        "stage1_or_stage2_run": False, "classes": {category: {
+            "class_json_sha256": json_sha, "stream": frozen_stream}}}
+    frozen_path = tmp_path / "frozen_inputs.json"
+    frozen_bytes = canonical(frozen)
+    frozen_path.write_bytes(frozen_bytes)
+    ledger["frozen_source_identity"] = {
+        "stage05_frozen_inputs_sha256": hashlib.sha256(frozen_bytes).hexdigest(),
+        "real_iad_json_sha256_by_category": {category: json_sha},
+    }
+    monkeypatch.setattr(campaign, "STAGE05_FROZEN_INPUTS", frozen_path)
+    monkeypatch.setattr(campaign, "EXPECTED_CATEGORIES", (category,))
+    monkeypatch.setattr(campaign, "EXPECTED_EVENTS", {category: 5})
+
+    verified = campaign._validate_staging_labels_from_official_json(
+        original, ledger, {position: 0 for position in range(5)})
+    assert verified["verified_private_label_count"] == 5
+    assert verified["official_json_sha256_by_category"] == {category: json_sha}
+    with pytest.raises(CampaignContractError, match="differs from official JSON"):
+        campaign._validate_staging_labels_from_official_json(
+            original, ledger, {0: 1, 1: 0, 2: 0, 3: 0, 4: 0})
+
+
 def test_metric_formulas_ties_and_undefined_one_class_inputs():
     result = metrics([0, 0, 1, 1], [0.1, 0.4, 0.35, 0.8], [0, 1, 0, 1])
     assert result["confusion"] == {"tp": 1, "tn": 1, "fp": 1, "fn": 1}
