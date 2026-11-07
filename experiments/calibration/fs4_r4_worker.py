@@ -37,9 +37,6 @@ class BlindedResearchContext(ResearchContext):
             self._trajectory.audit_snapshot = lambda: _campaign_audit_snapshot(self._trajectory)
 
 
-class ResearchWorkerTimeout(ResearchWorkerError):
-    """A supervised worker or broker exceeded the caller's remaining wall budget."""
-
     def _encode_event(self, position: int) -> dict[str, Any]:
         from .fs4_r4_blinded import read_blinded_image
         if digest(self._manifest) != self._manifest_digest or digest(self._ledger._execution_manifest) != self._manifest_digest:
@@ -80,6 +77,10 @@ class ResearchWorkerTimeout(ResearchWorkerError):
         return {"position": position, "group": row["group"], "event": row["event"], "image": image,
                 "features": features[0], "cls_feature": cls_array, "feature_convention": FEATURE_CONVENTION,
                 "event_provenance": provenance}
+
+
+class ResearchWorkerTimeout(ResearchWorkerError):
+    """A supervised worker or broker exceeded the caller's remaining wall budget."""
 
 
 def _campaign_audit_snapshot(trajectory: Any) -> dict[str, Any]:
