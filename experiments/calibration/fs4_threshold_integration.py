@@ -256,8 +256,10 @@ class SharedTrajectory:
     """Threshold-only comparison: one scorer, query reference, writer and feedback."""
     def __init__(self, *, runtime: Any, coverage: CoverageMemory, theta0: float,
                  policy: StochasticBEAGroupSlot, seal_prediction: Callable[[dict[str, Any]], str],
-                 seal_query: Callable[[Any], str], label_provider: Callable[[str, int], int]) -> None:
+                 seal_query: Callable[[Any], str], label_provider: Callable[[str, int], int],
+                 frozen_theta_readout: bool = False) -> None:
         self.runtime, self.coverage, self.policy = runtime, coverage, policy
+        self.frozen_theta_readout = frozen_theta_readout is True
         self.L = SelectionAwareHistoricalThreshold(theta0)
         self.E = SelectionAwareSourceExcludedThreshold(theta0, runtime.rescorer)
         self._query_reference = float(theta0)
@@ -289,7 +291,8 @@ class SharedTrajectory:
             raise ValueError("scorer state changed before event seal")
         decisions = {name: {j: int(scored[j] >= controller.engine.theta[j]) for j in ("G", "GC")}
                      for name, controller in (("L", self.L), ("E", self.E))}
-        decisions["FrozenTheta"] = {j: int(scored[j] >= self._learning_reference) for j in ("G", "GC")}
+        if self.frozen_theta_readout:
+            decisions["FrozenTheta"] = {j: int(scored[j] >= self._learning_reference) for j in ("G", "GC")}
         novelty, _distance = self.coverage.novelty(cls_feature)
         query_inputs = {"novelty_percentile": novelty,
             "correction_top32": np.asarray(scored["correction_top32"], dtype=np.float64).tolist(),
@@ -297,15 +300,16 @@ class SharedTrajectory:
             "topk_dN_mean": float(scored["dmean"]), "pre_score_scale": scale}
         feature_sha = _feature_digest(features)
         top_ids = np.asarray(scored["top_ids"], dtype=np.int64).tolist()
-        threshold_state = hashlib.sha256(json.dumps({"L": self.L.engine.theta, "E": self.E.engine.theta,
-            "FrozenTheta": {j: self._learning_reference for j in ("G", "GC")},
-            "query_reference": self.query_reference}, sort_keys=True).encode()).hexdigest()
+        threshold_snapshot = {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta)}
+        if self.frozen_theta_readout:
+            threshold_snapshot["FrozenTheta"] = {j: self._learning_reference for j in ("G", "GC")}
+        threshold_state_payload = {**threshold_snapshot, "query_reference": self.query_reference}
+        threshold_state = hashlib.sha256(json.dumps(threshold_state_payload, sort_keys=True).encode()).hexdigest()
         learning_prediction = int(scored["G"] >= self._learning_reference)
         payload = {"position": position, "group": group, "event": event, "profile": self.mode,
                    "scores": {j: scored[j] for j in ("G", "GC")}, "decisions": decisions,
                    "states": states, "threshold_state": threshold_state,
-                   "thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta),
-                                  "FrozenTheta": {j: self._learning_reference for j in ("G", "GC")}},
+                   "thresholds": threshold_snapshot,
                    "query_reference_threshold": self.query_reference,
                    "query_inputs": query_inputs,
                    "learning_reference_threshold": self._learning_reference,
@@ -349,10 +353,11 @@ class SharedTrajectory:
                 self.coverage.observe_normal(cls_feature)
             current = self.runtime.states()
             self.E.refresh(state_g=current["G"], state_gc=current["GC"], event_position=position + 1)
+        next_thresholds = {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta)}
+        if self.frozen_theta_readout:
+            next_thresholds["FrozenTheta"] = {j: self._learning_reference for j in ("G", "GC")}
         return {"sealed_prediction": payload, "query": receipt, "feedback_update": update,
-                "next_thresholds": {"L": dict(self.L.engine.theta), "E": dict(self.E.engine.theta),
-                                    "FrozenTheta": {j: self._learning_reference for j in ("G", "GC")}},
-                "mode": self.mode}
+                "next_thresholds": next_thresholds, "mode": self.mode}
 
 
 class CoupledTrajectory:

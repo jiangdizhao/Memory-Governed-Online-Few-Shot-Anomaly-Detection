@@ -59,10 +59,10 @@ class BlindedResearchContext(ResearchContext):
             "source_commit": self._ledger.manifest["source_commit"],
             "fixed_support_sha256": self._ledger.manifest["fixed_support_sha256_by_category"][self._category],
             "resource_sha256": row["resource_sha256"], "pixel_sha256": row["pixel_sha256"], "view": row["view"]}
-        if position == self._manifest["categories"][self._category]["events"][0]["position"]:
+        if (position == self._manifest["categories"][self._category]["events"][0]["position"] and
+                self._ledger.execution_manifest.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1"):
             supports = self._manifest["categories"][self._category]["supports"]
             reference = self._support_reference
-            joint = self._ledger.execution_manifest.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1"
             provenance["support_bootstrap"] = {
                 "support_groups": [item["group"] for item in supports],
                 "support_content_sha256": [item["content_sha256"] for item in supports],
@@ -70,8 +70,7 @@ class BlindedResearchContext(ResearchContext):
                 "mean": reference["mean"], "sample_std_ddof1": reference["sample_std_ddof1"],
                 "theta0": reference["theta"], "writer_sigma": reference["writer_reference"]["sigma"],
                 "fixed_support_sha256": reference["fixed_support_sha256"],
-                "preflight_receipt_sha256": (self._ledger.execution_manifest["support_preflight_receipt_sha256"]
-                    if joint else self._ledger.execution_manifest["preflight_receipt_sha256"]),
+                "preflight_receipt_sha256": self._ledger.execution_manifest["support_preflight_receipt_sha256"],
                 "additional_normal_images": 0,
             }
         return {"position": position, "group": row["group"], "event": row["event"], "image": image,

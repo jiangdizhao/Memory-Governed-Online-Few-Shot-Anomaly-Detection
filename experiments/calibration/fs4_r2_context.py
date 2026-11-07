@@ -306,7 +306,8 @@ class ProductionContext:
         blocked = lambda *_args, **_kwargs: (_ for _ in ()).throw(FS4BoundaryError("durable callback is not bound"))
         if ledger.manifest["profile"] == "SHARED_TRAJECTORY_THRESHOLD_ONLY":
             self._trajectory = SharedTrajectory(runtime=runtime, coverage=coverage, theta0=float(reference["theta"]),
-                policy=policy, seal_prediction=blocked, seal_query=blocked, label_provider=blocked)
+                policy=policy, seal_prediction=blocked, seal_query=blocked, label_provider=blocked,
+                frozen_theta_readout=(signed.get("schema") == "FS4_JOINT_CAMPAIGN_EXECUTION_V1"))
         else:
             self._trajectory = CoupledTrajectory(controller=controller, runtime=runtime, coverage=coverage,
                 theta0=float(reference["theta"]), policy=policy, seal_prediction=blocked, seal_query=blocked, label_provider=blocked)
