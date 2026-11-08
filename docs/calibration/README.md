@@ -111,3 +111,11 @@ confirmation outcomes, or masks were accessed.
 ## D3-P0 external dataset feasibility audit (2026-11-05; metadata only)
 
 The [VisA / MVTec AD 2 D3-P0 audit summary](audit/d3_p0_local_dataset_feasibility_20261105/REPORT.md) records local split and mask counts, strict-4 versus 4+C64 *count-only* feasibility, short official TEST streams, the 256-event query-history limit, partial cross-partition duplicate checking, and unresolved confirmation eligibility. This is a **documentation-only follow-up** to the [2026-11-01 MVTec AD 2 P0 decision](audit/p0_benchmark_integrity_and_exposure_20261101/P0_AUDIT_DECISION.md); it does not authorize D3 or any new feedback access. The full Codex audit remains local under `outputs/calibration/d3_dataset_audit_20261105_6c1d3aa4/`. The supervisor's Recovery E1/E2/E3 completion takes priority.
+
+## FS4 joint calibration live campaign and B/C reprioritization (2026-11-08)
+
+**Current operations snapshot, distinct from historical Stage 0 acceptance and from independent confirmation:** The [FS4 execution status and no-pause decision](fs4_joint_campaign/EXECUTION_STATUS_20261108.md) records the pushed source revision `c184e7130c943746a9911e92e987c4749b67318f`, completed Real-IAD staging and four-Support parity, resource preflight, the last reported S progress of **5,818/15,295** completed image events, unstarted CL/CE, and unstarted Stage B. No H1/H2 final experimental outcome exists yet.
+
+The researcher evaluated prioritizing integrated **B (Signed Correction)** and **C (BEA)** ahead of finishing the expensive FS4 trajectory. The live A pause was **not performed**, because the current executor provides no guaranteed controlled pause and counts inactive wall-clock gaps against its 7-day/21-day limits. **A remains running** while existing R9/R10 and D2 development artifacts are used to prepare B/C. Historical completed B/C-related development conditions are not new blinded confirmation and should not be rerun without a distinct scientific purpose.
+
+This section records only status and prioritization. It does not change frozen experiment designs, overwrite older Stage 0 decisions, authorize additional GPU experiments, or put private campaign artifacts in Git.
