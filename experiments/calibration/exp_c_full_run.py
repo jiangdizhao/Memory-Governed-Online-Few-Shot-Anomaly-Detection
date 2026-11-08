@@ -42,6 +42,7 @@ from experiments.calibration.e6_bea_d2 import (
     D2PolicyController,
     d2_stage_b_evaluate,
 )
+from experiments.calibration import r1_runtime_supervisor as supervisor
 from experiments.calibration.exp_c_memory_evidence import (
     ARM_IDS,
     C_MANIFEST_SCHEMA,
@@ -55,6 +56,7 @@ from experiments.calibration.exp_c_memory_evidence import (
     CStageAClosedLoop,
     CONTRASTS,
     ExperimentCError,
+    UNCHANGED_D2_ARMS,
     build_stage_b_metrics,
 )
 from experiments.calibration.exp_c_historical_parity import (
@@ -72,8 +74,8 @@ PROTOCOL_PATH = ROOT / "docs" / "calibration" / "EXP_C_MEMORY_CONDITIONED_EVIDEN
 D2_RUN_ID = "20261104_b1"
 D2_STAGE_B_DIR = OUTPUT_BASE / f"e6_bea_d2_stage_b_{D2_RUN_ID}"
 CATEGORIES_ORDERED = ("audiojack", "regulator", "switch", "rolled_strip_base")
-CATEGORY_DEADLINE_SECONDS = 7 * 24 * 3600
-STAGE_B_DEADLINE_SECONDS = 24 * 3600
+CATEGORY_DEADLINE_SECONDS = supervisor.MAX_RUNTIME_SECONDS
+STAGE_B_DEADLINE_SECONDS = supervisor.MAX_RUNTIME_SECONDS
 SOURCE_FILES = (
     "experiments/calibration/exp_c_memory_evidence.py",
     "experiments/calibration/exp_c_historical_parity.py",
@@ -258,6 +260,7 @@ def _resource_snapshot() -> dict[str, Any]:
 
 
 def _stage_a_child(run_id: str, category: str, authorization_file: Path) -> int:
+    _require_job_object_child("STAGE_A")
     root = _run_root(run_id)
     run_dir = root / "stage_a" / category
     failure_path = run_dir / "startup_failure.json"
@@ -623,6 +626,7 @@ def _render_report(evaluation: Mapping[str, Any]) -> str:
 
 
 def _stage_b_child(run_id: str, authorization_file: Path) -> int:
+    _require_job_object_child("STAGE_B")
     root = _run_root(run_id)
     stage_b_dir = root / "stage_b"
     try:
@@ -747,6 +751,14 @@ def main(argv: list[str] | None = None) -> int:
                           "message": str(exc), "automatic_retry": False}, sort_keys=True))
         return 1
     return 0
+
+
+def _require_job_object_child(stage: str) -> None:
+    if stage not in {"STAGE_A", "STAGE_B"}:
+        raise ExperimentCError("C Job Object guard received an unregistered child stage")
+    if not supervisor.current_process_is_in_job():
+        raise ExperimentCError(
+            f"Experiment C {stage} child must be contained in the authorized Windows Job Object")
 
 
 if __name__ == "__main__":

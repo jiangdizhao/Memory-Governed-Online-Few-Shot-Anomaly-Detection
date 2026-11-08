@@ -117,7 +117,8 @@ four validated C seals and D2 public parity first.
 
 Resource contract: at least 20 GiB free disk at launch; at most 2 GiB across
 score and private-feedback streams per category (8 GiB total upper bound); a
-seven-day per-category child deadline and 24-hour CPU Stage B child deadline.
+120-minute per-category child deadline and 120-minute CPU Stage B child
+deadline, each bound to the existing supervisor's 7,200-second maximum.
 Host RSS and CUDA allocator high-water marks are recorded when available.
 The existing Windows Job Object helper enforces process-tree lifetime, but it
 does not set a hard RAM or GPU memory cap; the runner records start/end free
