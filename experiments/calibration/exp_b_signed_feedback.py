@@ -660,7 +660,8 @@ def _stage_a_category(category: str, category_output: Path, *, run_id: str,
                     group_sha, position, base_map, top_ids)
             selected_np = selected.detach().float().cpu().numpy()
             scores["SignedKNN"], _knn_delta, diagnostics["SignedKNN"] = r10._corrected_c2_score(
-                base_map, top_ids, selected_np, knn, position=position, group_sha=group_sha)
+                base_map, top_ids, selected_np, knn,
+                position=position, group_sha256=group_sha)
             patch_features = features[0]
             ext_results: dict[str, Any] = {}
             for arm, memory in (("HITL_FP", ext1), ("HITL_FP_FN", ext2)):

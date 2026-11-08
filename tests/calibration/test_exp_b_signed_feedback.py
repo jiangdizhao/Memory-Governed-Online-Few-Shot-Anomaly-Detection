@@ -101,6 +101,25 @@ def test_stage_a_score_validation_rejects_labels_and_query_drift():
                                  expected_queries=())
 
 
+def test_real_r10_corrected_c2_score_accepts_group_identity_and_returns_finite_score():
+    import numpy as np
+    from experiments.calibration import r10_signed_knn_baseline as r10
+
+    memory = r10.SignedKNNFIFO(capacity=1024)
+    base_map = np.linspace(0.1, 0.9, 784, dtype=np.float32)
+    top_ids = np.arange(32, dtype=np.int64)
+    selected = np.eye(32, 4096, dtype=np.float32)
+
+    score, delta, diagnostics = r10._corrected_c2_score(
+        base_map, top_ids, selected, memory,
+        position=7, group_sha256="a" * 64)
+
+    assert np.isfinite(score)
+    assert score == pytest.approx(float(np.max(base_map)))
+    assert delta.shape == (32,)
+    assert diagnostics["eligible_anchor_count"] == 0
+
+
 def test_state_change_threshold_refresh_updates_real_b3_threshold_and_version():
     from experiments.calibration import r7_shuffled_correction_4class as r7
     from experiments.calibration.controllers import StateConsistentQuantile
