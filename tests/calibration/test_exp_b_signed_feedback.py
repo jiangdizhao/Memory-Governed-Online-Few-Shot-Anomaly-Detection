@@ -100,6 +100,29 @@ def test_stage_a_score_validation_rejects_labels_and_query_drift():
                                  expected_queries=())
 
 
+def test_state_change_threshold_refresh_updates_real_b3_threshold_and_version():
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+    from experiments.calibration.controllers import StateConsistentQuantile
+
+    initial_scores = [float(value) for value in range(64)]
+    updated_scores = [value + 0.005 for value in initial_scores]
+    old_digest, new_digest = "a" * 64, "b" * 64
+    group_digest = "c" * 64
+    controller = StateConsistentQuantile(57.0, delta=0.01, min_normals=16, name="test-B3")
+    r7._initialize_b3(controller, initial_scores, group_digest, old_digest, 57.0)
+
+    transition = expb._refresh_threshold(
+        controller, updated_scores, group_digest, old_digest, new_digest, old_version=0)
+
+    assert transition is not None
+    assert transition["version_before"] == 0
+    assert transition["version_after"] == 1
+    assert transition["new_theta"] == pytest.approx(57.005)
+    assert controller.theta == pytest.approx(57.005)
+    assert controller.evidence_version == 1
+    assert controller._r7_state_digest == new_digest
+
+
 def test_stage_b_gate_requires_all_category_seals_before_any_label_projection(tmp_path):
     with pytest.raises(expb.ExperimentBError, match="refuses labels"):
         expb._stage_b_global(tmp_path, {"status": "SEALED_COMPLETE", "categories": {}}, {})

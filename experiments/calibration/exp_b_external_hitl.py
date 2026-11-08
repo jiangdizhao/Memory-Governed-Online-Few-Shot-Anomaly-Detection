@@ -339,6 +339,12 @@ class ExternalNormalMemory:
         patches = torch.as_tensor(patch_features, dtype=torch.float32, device=self.device)
         if patches.shape != (self.patch_count, self.feature_dim) or not 0 <= int(anomaly_patch) < self.patch_count:
             raise ExternalMemoryError("FN surgery requires this arm's valid anomaly patch")
+        if not bool(torch.isfinite(patches).all().item()):
+            raise ExternalMemoryError("FN surgery received non-finite DINO descriptors")
+        patch_norms = torch.linalg.vector_norm(patches, dim=1)
+        if bool(torch.any(patch_norms < 1e-12).item()):
+            raise ExternalMemoryError("FN surgery received a zero DINO descriptor")
+        patches = torch.nn.functional.normalize(patches, p=2, dim=1)
         group = _check_group(source_group_sha256)
         eligible = self.eligible_indices(source_group_sha256=group, event_position=event_position)
         if not eligible:

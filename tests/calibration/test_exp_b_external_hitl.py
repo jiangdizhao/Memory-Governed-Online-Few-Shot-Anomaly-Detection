@@ -96,6 +96,33 @@ def test_fn_surgery_only_removes_nearest_five_and_never_changes_e1():
     assert len(e2.ids) == len(set(e2.ids))
 
 
+def test_fn_surgery_normalizes_nonunit_query_before_prototype_ranking():
+    _e1, memory = _memory_pair()
+    cosine_x = torch.tensor([0.1, 0.2, -0.2, -0.5, 0.6, 0.9, 0.95,
+                             0.8, 0.7, 0.4, 0.3, 0.0, -0.7, -0.9])
+    prototypes = torch.zeros((14, 16), dtype=torch.float32)
+    prototypes[:, 0] = cosine_x
+    prototypes[:, 1] = torch.sqrt(1.0 - cosine_x.square())
+    memory.features = prototypes
+
+    patches = torch.zeros((8, 16), dtype=torch.float32)
+    patches[:, 0] = 10.0
+    normalized_query = torch.nn.functional.normalize(patches[0], p=2, dim=0)
+    eligible = memory.eligible_indices(source_group_sha256="d" * 64, event_position=30)
+    distances = torch.linalg.vector_norm(
+        memory.features[eligible] - normalized_query.unsqueeze(0), dim=1)
+    expected_order = torch.argsort(distances, stable=True)[:5].tolist()
+    expected_ids = {memory.ids[eligible[index]] for index in expected_order}
+    assert expected_ids != set(memory.ids[:5])  # Non-unit scoring would clamp many similarities into ties.
+
+    result = memory.false_negative_surgery(
+        patches, anomaly_patch=0, source_group_sha256="d" * 64,
+        event_position=30, queried=True, label=1, arm_prediction=0)
+
+    assert result["changed"]
+    assert set(result["removed_ids"]) == expected_ids
+
+
 def test_noop_version_and_unqueried_label_guard():
     e1, _ = _memory_pair()
     before = e1.state_sha256

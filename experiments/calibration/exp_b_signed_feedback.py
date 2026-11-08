@@ -402,9 +402,10 @@ def _score_c1(impl: Any, bank: Any, r9: Any, r1: Any, exp2a: Any,
 
 def _refresh_threshold(controller: Any, scores: Sequence[float], group_sha: str,
                        old_digest: str, new_digest: str, old_version: int) -> dict[str, Any] | None:
-
     if old_digest == new_digest:
         return None
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+
     transition = r7._refresh_b3(controller, scores, group_sha, old_digest,
                                 new_digest, old_version)
     if transition is None:
@@ -1304,9 +1305,14 @@ def _stage_b_category(category: str, category_dir: Path,
     # Descriptive before/after first-defect-query summaries do not change the fixed-score ranking estimand.
     first = out["first_legal_defect_query_position"]
     out["before_after_first_defect_query"] = {}
+    if first is None:
+        spans = {"before": (0, None), "after": (None, len(labels))}
+    else:
+        first_feedback_effective = int(first) + 1
+        spans = {"before": (0, first_feedback_effective),
+                 "after": (first_feedback_effective, len(labels))}
     for arm in MAIN_ARMS:
         out["before_after_first_defect_query"][arm] = {}
-        spans = {"before": (0, first), "after": (first, len(labels))}
         for name, (lo, hi) in spans.items():
             if lo is None or hi is None or hi <= lo:
                 out["before_after_first_defect_query"][arm][name] = None
