@@ -1,15 +1,35 @@
-# FS4 joint calibration campaign — live execution status and B/C prioritization (2026-11-08)
+# FS4 joint calibration campaign — execution history, controlled stop, and B/C prioritization (2026-11-08)
 
-> **Point-in-time research operations record, not a final experiment report.** The figures below come from the latest researcher-supplied Codex status. The FS4 worker continues independently, so counts may have advanced. This document does not authorize any source, specification, or experiment change.
+> **Research-operations history, not a final scientific experiment report.** The latest researcher-supplied Codex report confirms that FS4 A was intentionally stopped at a completed-event boundary on 2026-11-08. Earlier progress and no-pause assessments below are retained as historical snapshots, not the current state. No scientific protocol or source modification is authorized by this record.
+
+
+## Latest reported status — A intentionally stopped; artifacts preserved
+
+**Codex final operational status:** `FS4_A_STOPPED_ARTIFACTS_PRESERVED`. The researcher instructed Codex to stop A in order to prioritize GPU execution of B and C. This **supersedes the earlier decision to leave A running**. It is not a protocol-supported suspension, a completed Stage A result, or a guarantee of future recovery.
+
+- The experiment-bound source revision remained `c184e7130c943746a9911e92e987c4749b67318f`; frozen scientific parameters and historical evidence were not changed.
+- **Completed event counts on stop:** **S 5,909/15,295 (38.6%)**, **CL 0/15,295**, **CE 0/15,295**; combined Stage A **5,909/45,885 (12.9%)** by completed-image-event count. The remaining Stage A and all of Stage B are **unfinished**; no valid final H1/H2 result exists.
+- The orchestrator was suspended while an already-dispatched event completed in the worker/broker. The durable journal reached `EVENT_COMPLETE` for position **5908** (zero-based), i.e. **5,909** S completions. The completed-event boundary remained stable under dispatcher suspension, with **no further event dispatched**.
+- Then Codex terminated the identified worker **PID 18980**, broker **PID 20540**, and suspended orchestrator **PID 49300** using `psutil`. All three and the launcher were absent at final verification. These are **historical stop-time PIDs**, not instructions to target current unrelated processes.
+- **Final verified checkpoint:** `regulator-event-05000`; `state.json` and `tensors.npz` SHA-256 values matched `COMMITTED.json`. Last completed-category checkpoint: `audiojack-end`, likewise hash-matched. **No 6,000-event checkpoint** was reached.
+- **GPU released:** NVIDIA GPU memory usage fell from **15,297 MiB** to **1,362 MiB** out of 24,564 MiB; the residual use belonged to other applications. No inference should be made that the entire GPU was empty.
+- **First post-stop process-exit verification timestamp:** `2026-11-08T01:10:24.0199126Z`. The exact individual termination syscall times were **not captured**.
+- The local operational evidence is `FS4_Joint_Experiment/fs4joint_20261107_s0q37/operations/FS4_A_CONTROLLED_STOP_20261108.md`; it stays **excluded from Git** alongside private mapping, image resources, ledgers, checkpoint tensors and outcome data. This Git summary references the researcher's reported evidence; it is **not** a new independent verification of those private files.
+- **Recovery remains uncertain**, despite intact checkpoint evidence. The stop was intentional rather than an executor-supported pause; the existing 7-day trajectory and 21-day campaign wall-time accounting continues to charge stopped gaps. Do not describe `--resume` as a guaranteed delayed-restart solution.
+- **No Stage B, cleanup, data deletion, source modification or checkpoint rewrite** occurred. Preserve every A artifact until a separate explicit decision on eventual recovery, archival or post-verified cleanup.
+
+### Historical snapshots below
+
+The former live snapshot (S 5,818) and the earlier `A_PAUSE_NOT_SAFE_UNDER_CURRENT_PROTOCOL` decision are retained solely to explain the sequence of decisions. **The authoritative latest status is STOPPED at S 5,909, CL 0, CE 0.**
 
 ## Identity and scope
 
 - Repository branch: `calibration-stage0-contract-20261029`.
-- **Pushed and active FS4 source revision:** `c184e7130c943746a9911e92e987c4749b67318f`.
+- **Experiment-bound FS4 source revision:** `c184e7130c943746a9911e92e987c4749b67318f`.
 - Frozen scientific specification SHA-256: `1c96077bfdaa58f9ff93a67a9349a4cc6bc8b63578ae8915ff23762b50aee896`.
 - Campaign ID: `fs4joint_20261107_s0q37`.
 - Windows experiment base (not for Git tracking): `E:\Memory-Governed-Online-Few-Shot-Anomaly-Detection\FS4_Joint_Experiment\fs4joint_20261107_s0q37`.
-- Current active scientific campaign root: `FS4_Joint_Experiment/fs4joint_20261107_s0q37/campaign/attempt_02`.
+- Scientific campaign root (execution stopped): `FS4_Joint_Experiment/fs4joint_20261107_s0q37/campaign/attempt_02`.
 - Population: 15,295 Real-IAD TEST camera views in 3,059 five-view Source Groups across audiojack (3,815), regulator (3,855), switch (3,820), and rolled_strip_base (3,805); all are **previously exposed development categories**, not untouched confirmation data.
 - FS4 scientific scope: shared trajectory S comparing historical L and current-state source-excluded E thresholds, plus independent L-coupled CL and E-coupled CE trajectories. The S/CL/CE trajectory names are **not** shorthand for research-program Experiments A/B/C.
 
@@ -22,7 +42,7 @@
 5. Earlier staging/worker attempts and their failure evidence remain preserved under separate non-overwriting attempt paths. An early worker/ledger model-identity binding error required the narrowly scoped source fix committed as `c184e713`. The current staging and scientific campaign use that revision.
 6. During Stage A, multiple worker shutdown exceptions required verified checkpoint/ledger recovery. The recovered event boundaries were checked to avoid duplicate label disclosure; previous failure records were retained. These interruptions increased wall-clock cost. Their presence does **not** mean Stage A is complete.
 
-## Last reported live progress (not final results)
+## Earlier live progress snapshot (superseded by controlled stop)
 
 | Gate or trajectory | Last researcher-supplied status |
 | --- | --- |
@@ -41,11 +61,11 @@
 
 **Progress counting:** count `EVENT_COMPLETE` markers, not raw `events.jsonl` lines, because the append-only journal contains multiple record kinds per image. No Stage A/Stage B performance claim may be inferred from partial progress.
 
-## Pause feasibility and explicit operational decision
+## Earlier pause-feasibility assessment (superseded by controlled stop)
 
 **Codex assessment:** `A_PAUSE_NOT_SAFE_UNDER_CURRENT_PROTOCOL`.
 
-**Decision:** **DO NOT PAUSE A. KEEP A RUNNING.** No pause, suspension, termination, or discretionary restart was performed in the reported pause-feasibility check. The experiment remains in progress.
+**Decision at the time of this assessment (later superseded):** **DO NOT PAUSE A. KEEP A RUNNING.** No pause, suspension, termination, or discretionary restart was performed in that earlier feasibility check. A subsequently stopped at a stable completed-event boundary; see the latest stop record at the top.
 
 Reasons established from the active executor:
 
@@ -64,10 +84,10 @@ The **research program's** key upcoming integrated experiments are:
 - **Experiment B — Signed Correction mechanism attribution:** existing R9 and R10 development runs already provide sealed full-stream, retrospective evidence, including Full C1, beta-only and Signed Exemplar/knn comparisons. See [R9](../audit/r9_correction_mechanism/REPORT.md) and [R10](../audit/r10_signed_knn_baseline/REPORT.md). Repeating these identical development conditions is **not** a substitute for the still-needed integrated scientific contrast or independent confirmation.
 - **Experiment C — BEA policy attribution:** historical E6/D2 B1 closed-loop artifacts exist for the same four development categories, including reported Stage A seals and Stage B files. This inventory was reported by Codex; this record does **not** newly validate or re-run private feedback, metrics or seals. Any genuinely new C conditions need a distinct registered identity and a frozen protocol, not a silent replay under the old D2 run identity.
 
-**Priority decision:** use existing R9/R10/D2 evidence to prepare B and C without rerunning known historical experiments; retain the currently running A, and do not enlarge A into a new calibration-scale sweep. B/C preparation can proceed without GPU contention, but new GPU execution requires an explicitly agreed, scientific-condition-specific protocol. A and its Stage B cannot be called complete until all S/CL/CE trajectories and the final verification finish.
+**Current priority decision:** A has been intentionally stopped with its incomplete research artifacts preserved; GPU capacity is released for B/C. Use existing R9/R10/D2 evidence to prepare B and C without rerunning identical historical experiments, and do not enlarge A into a new calibration-scale sweep. New B/C GPU conditions need distinct scientific registration/authorization. A and its Stage B cannot be called complete until all S/CL/CE trajectories and the final verification finish.
 
 ## Next status update requirements
 
 When new durable evidence is available, update only the corresponding **observed** counts, category/global seals, execution failures/recoveries, resource consumption, and final verified outcomes. Keep timestamps with snapshots. Do not invent BER/AUROC/AP, query counts, Stage B outcomes, or GPU-time estimates. Store large outputs, feedback, dataset data and checkpoints **outside Git tracking**, under the existing experiment base.
 
-This record documents a **rejected pause proposal and continued execution**, not a paused experiment or an independently confirmed research result.
+This record documents the earlier **rejected pause proposal**, its subsequent **controlled stop**, and the fact that neither the unfinished A trajectory nor historical B/C development data constitute an independently confirmed result.
