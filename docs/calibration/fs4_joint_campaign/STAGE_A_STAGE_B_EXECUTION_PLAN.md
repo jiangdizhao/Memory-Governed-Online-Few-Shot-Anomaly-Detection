@@ -1,5 +1,7 @@
 # Stage A and Stage B execution plan
 
+> **Live execution status (2026-11-08):** The preregistration and original inert-gate wording below describe the historical freeze, not the current campaign authorization. The researcher-authorized FS4 campaign is **running** at source revision `c184e7130c943746a9911e92e987c4749b67318f`. Latest supplied Stage A image-event snapshot: **S 5,818/15,295**, **CL 0**, **CE 0**; Stage B has not started. A planned pause was **rejected as unsafe** under the existing wall-clock/recovery contract; A has **not** been paused. See [the dated execution status and B/C prioritization record](EXECUTION_STATUS_20261108.md). This notice changes no executable protocol.
+
 ## Inert interface and staged gates
 
 `python -m experiments.calibration.fs4_joint_campaign` defaults to `freeze-only`; it reads only the frozen text specification and performs no data access. `validate-contract` checks machine/human arm identities. `prepare-real-data` requires a `STAGING` authorization, original registered metadata and a private outcome input; it reconstructs R7 seed-0 group order, verifies identities, then calls the reviewed R4 lossless pixel-preserving preparation once. The private original-to-opaque mapping is written once and shared by all arms.
