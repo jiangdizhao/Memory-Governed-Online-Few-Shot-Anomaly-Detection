@@ -17,7 +17,12 @@ import re
 import subprocess
 import sys
 import time
+import traceback
 from typing import Any, Mapping, Sequence
+
+# Keep the launcher's authorized device selection before any imported research
+# helper can hide CUDA as part of a CPU-only utility.
+AUTHORIZED_CUDA_VISIBILITY = os.environ.get("CUDA_VISIBLE_DEVICES")
 
 import numpy as np
 
@@ -429,8 +434,10 @@ def _jsonl_rows(path: Path) -> list[dict[str, Any]]:
 
 def _stage_a_category(category: str, category_output: Path, *, run_id: str,
                       source_commit: str, identity_sha256: str,
+                      authorized_cuda_visibility: str | None,
                       experiment_seed: int = 0) -> dict[str, Any]:
     """Run one frozen category through one encoder and all seven main arms."""
+    inherited_visibility = authorized_cuda_visibility
     import torch
     import psutil
     from types import SimpleNamespace
@@ -453,7 +460,9 @@ def _stage_a_category(category: str, category_output: Path, *, run_id: str,
     if category not in CATEGORIES or category_output.exists():
         raise ExperimentBError("Category output must be a fresh leaf for a registered category")
     category_output.mkdir(parents=True, exist_ok=False)
-    inherited_visibility = os.environ.get("CUDA_VISIBLE_DEVICES")
+    # Historical CPU-only helpers may hide CUDA at import time. Restore the
+    # child environment captured before these imports, as R3/R9/R10 do.
+    r3._restore_cuda_visibility(inherited_visibility)
     if not torch.cuda.is_available() or torch.cuda.device_count() != 1:
         raise ExperimentBError("Full Stage A requires exactly one authorized CUDA device")
     torch.set_num_threads(1)
@@ -1019,7 +1028,7 @@ def _stage_a_category(category: str, category_output: Path, *, run_id: str,
         if torch.cuda.is_available():
             torch.cuda.synchronize()
             torch.cuda.empty_cache()
-        os.environ["CUDA_VISIBLE_DEVICES"] = inherited_visibility or ""
+        r3._restore_cuda_visibility(inherited_visibility)
 
 
 def _verify_historical_parity(category: str, rows: Sequence[Mapping[str, Any]],
@@ -1445,7 +1454,7 @@ def _run_supervised_stage_a(category: str, run_root: Path, *, run_id: str,
     from experiments.calibration import r1_runtime_supervisor as supervisor
     from experiments.calibration import r3_fullstream_2x2 as r3
 
-    env = r3._child_environment(os.environ, "STAGE_A", os.environ.get("CUDA_VISIBLE_DEVICES"))
+    env = r3._child_environment(os.environ, "STAGE_A", AUTHORIZED_CUDA_VISIBILITY)
     command = [sys.executable, "-m", "experiments.calibration.exp_b_signed_feedback",
                "--stage-a-child", "--run-id", run_id,
                "--authorization-file", str(authorization_file.resolve()),
@@ -1461,7 +1470,20 @@ def _run_supervised_stage_a(category: str, run_root: Path, *, run_id: str,
     category_output = run_root / "stage_a" / category
     if (result.status != "COMPLETED" or result.child_exit_code != 0 or
             not result.termination_confirmed or result.active_job_processes != 0):
-        raise ExperimentBError(f"{category}: supervised Stage A child did not complete cleanly: {receipt}")
+        failure_candidates = (category_output / "startup_failure.json",
+                              category_output / "failure.json",
+                              category_output.parent / f"{category}.startup_failure.json")
+        child_failure = None
+        for failure_path in failure_candidates:
+            if failure_path.is_file():
+                failure_row = json.loads(failure_path.read_text(encoding="utf-8"))
+                child_failure = {"receipt": str(failure_path.relative_to(run_root)),
+                    "exception_type": failure_row.get("exception_type"),
+                    "message": failure_row.get("message")}
+                break
+        raise ExperimentBError(
+            f"{category}: supervised Stage A child did not complete cleanly: "
+            f"supervisor={receipt}; child_failure={child_failure}")
     seal_path = category_output / "stage_a_seal.json"
     if not seal_path.is_file():
         raise ExperimentBError(f"{category}: supervised Stage A child exited without a category seal")
@@ -1484,6 +1506,68 @@ def _run_supervised_stage_b(run_id: str, authorization_file: Path) -> None:
     if (result.status != "COMPLETED" or result.child_exit_code != 0 or
             not result.termination_confirmed or result.active_job_processes != 0):
         raise ExperimentBError(f"CPU Stage B child did not complete cleanly: {asdict(result)}")
+
+
+def _record_stage_a_child_failure(run_id: str, category: str,
+                                  exc: BaseException) -> Path | None:
+    """Persist a child startup traceback without replacing any prior receipt."""
+    if (not re.fullmatch(r"expb_[a-z0-9][a-z0-9_-]{5,63}", str(run_id)) or
+            category not in CATEGORIES):
+        return None
+    stage_root = RUN_ROOT / run_id / "stage_a"
+    if not stage_root.is_dir():
+        return None
+    category_root = stage_root / category
+    failure_path = (category_root / "startup_failure.json" if category_root.is_dir() else
+                    stage_root / f"{category}.startup_failure.json")
+    failure = {
+        "schema": "exp-b.stage-a.failure.v1", "status": "INCOMPLETE",
+        "phase": "stage_a_child_startup", "run_id": run_id, "category": category,
+        "exception_type": type(exc).__name__, "message": str(exc),
+        "traceback": "".join(traceback.format_exception(
+            type(exc), exc, exc.__traceback__)),
+        "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    try:
+        write_json_exclusive(failure_path, failure)
+    except FileExistsError:
+        # Failure records are immutable. Keep the first receipt intact.
+        pass
+    return failure_path
+
+
+def _run_stage_a_child(args: Any, authorized_cuda_visibility: str | None) -> None:
+    """Validate and run a category while preserving every startup traceback."""
+    try:
+        from experiments.calibration import r1_runtime_supervisor as supervisor
+        if not supervisor.current_process_is_in_job():
+            raise ExperimentBError(
+                "Stage A category child must be contained in the authorized Windows Job Object")
+        if args.category not in CATEGORIES:
+            raise ExperimentBError("Stage A category child requires a registered category")
+        auth = _check_run_authorization(args.authorization_file, run_id=args.run_id)
+        run_root = (RUN_ROOT / args.run_id).resolve(strict=True)
+        manifest = json.loads((run_root / "run_manifest.json").read_text(encoding="utf-8"))
+        payload = {key: value for key, value in manifest.items() if key != "identity_sha256"}
+        if (manifest.get("authorization", {}).get("authorization_file_sha256") != auth["authorization_file_sha256"] or
+                manifest.get("source_commit_sha") != _git(["rev-parse", "HEAD"]) or
+                sha256_bytes(canonical_json(payload)) != manifest.get("identity_sha256") or
+                manifest.get("run_id") != args.run_id or args.category not in manifest.get("categories", ())):
+            raise ExperimentBError(
+                "Stage A child authorization, source revision or run identity differs from manifest")
+        _verify_source_fingerprints(manifest["source_fingerprints"])
+        category_output = run_root / "stage_a" / args.category
+        if category_output.exists():
+            raise ExperimentBError("Stage A child requires a fresh registered category output leaf")
+        _stage_a_category(
+            args.category, category_output, run_id=args.run_id,
+            source_commit=manifest["source_commit_sha"],
+            identity_sha256=manifest["identity_sha256"],
+            authorized_cuda_visibility=authorized_cuda_visibility,
+            experiment_seed=args.experiment_seed)
+    except BaseException as exc:
+        _record_stage_a_child_failure(args.run_id, str(args.category or ""), exc)
+        raise
 
 
 def run_full(*, run_id: str, authorization_file: Path, experiment_seed: int = 0) -> Path:
@@ -1593,6 +1677,7 @@ def run_full(*, run_id: str, authorization_file: Path, experiment_seed: int = 0)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    stage_a_authorized_cuda_visibility = AUTHORIZED_CUDA_VISIBILITY
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--full-run", action="store_true",
                         help="execute registered full Stage A and Stage B; requires researcher authorization")
@@ -1610,28 +1695,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.run_id or not args.authorization_file or sum(bool(mode) for mode in modes) != 1:
         parser.error("select exactly one authorized full-run or supervised child mode with run ID and authorization")
     if args.stage_a_child:
-        from experiments.calibration import r1_runtime_supervisor as supervisor
-        if not supervisor.current_process_is_in_job():
-            parser.error("Stage A category child must be contained in the authorized Windows Job Object")
-        if args.category not in CATEGORIES:
-            parser.error("Stage A category child requires a registered category")
-        auth = _check_run_authorization(args.authorization_file, run_id=args.run_id)
-        run_root = (RUN_ROOT / args.run_id).resolve(strict=True)
-        manifest = json.loads((run_root / "run_manifest.json").read_text(encoding="utf-8"))
-        payload = {key: value for key, value in manifest.items() if key != "identity_sha256"}
-        if (manifest.get("authorization", {}).get("authorization_file_sha256") != auth["authorization_file_sha256"] or
-                manifest.get("source_commit_sha") != _git(["rev-parse", "HEAD"]) or
-                sha256_bytes(canonical_json(payload)) != manifest.get("identity_sha256") or
-                manifest.get("run_id") != args.run_id or args.category not in manifest.get("categories", ())):
-            parser.error("Stage A child authorization, source revision or run identity differs from manifest")
-        _verify_source_fingerprints(manifest["source_fingerprints"])
-        category_output = run_root / "stage_a" / args.category
-        if category_output.exists():
-            parser.error("Stage A child requires a fresh registered category output leaf")
-        _stage_a_category(args.category, category_output, run_id=args.run_id,
-                          source_commit=manifest["source_commit_sha"],
-                          identity_sha256=manifest["identity_sha256"],
-                          experiment_seed=args.experiment_seed)
+        _run_stage_a_child(args, stage_a_authorized_cuda_visibility)
         return 0
     if args.stage_b_only or args.stage_b_child:
         if args.stage_b_only:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 import pytest
 import torch
@@ -121,6 +122,37 @@ def test_state_change_threshold_refresh_updates_real_b3_threshold_and_version():
     assert controller.theta == pytest.approx(57.005)
     assert controller.evidence_version == 1
     assert controller._r7_state_digest == new_digest
+
+
+def test_stage_a_startup_failure_receipt_has_traceback_and_is_non_overwriting(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from experiments.calibration import r1_runtime_supervisor as supervisor
+
+    monkeypatch.setattr(expb, "RUN_ROOT", tmp_path)
+    stage_root = tmp_path / "expb_test_0001" / "stage_a"
+    stage_root.mkdir(parents=True)
+    monkeypatch.setattr(supervisor, "current_process_is_in_job", lambda: True)
+
+    def fail_authorization(*_args, **_kwargs):
+        raise RuntimeError("synthetic pre-category startup failure")
+
+    monkeypatch.setattr(expb, "_check_run_authorization", fail_authorization)
+    args = SimpleNamespace(category="audiojack", run_id="expb_test_0001",
+                           authorization_file=tmp_path / "auth.json", experiment_seed=0)
+    with pytest.raises(RuntimeError, match="synthetic pre-category startup failure"):
+        expb._run_stage_a_child(args, authorized_cuda_visibility=None)
+
+    path = stage_root / "audiojack.startup_failure.json"
+    assert path.is_file()
+    first = path.read_text(encoding="utf-8")
+    receipt = json.loads(first)
+    assert receipt["exception_type"] == "RuntimeError"
+    assert receipt["message"] == "synthetic pre-category startup failure"
+    assert "RuntimeError: synthetic pre-category startup failure" in receipt["traceback"]
+
+    expb._record_stage_a_child_failure(
+        "expb_test_0001", "audiojack", ValueError("later error must not replace first"))
+    assert path.read_text(encoding="utf-8") == first
 
 
 def test_stage_b_gate_requires_all_category_seals_before_any_label_projection(tmp_path):
