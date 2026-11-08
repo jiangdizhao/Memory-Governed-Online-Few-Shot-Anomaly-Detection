@@ -618,7 +618,8 @@ def analyze_metrics(per_category: Mapping[str, Mapping[str, Mapping[str, Any]]])
     macro: dict[str, dict[str, float]] = {}
     for arm in ARM_IDS:
         macro[arm] = {metric: float(np.mean([per_category[cat][arm][metric] for cat in CATEGORIES]))
-                      for metric in ("ber", "ba", "fpr", "fnr", "auroc", "ap", "query_rate")}
+                      for metric in ("ber", "ba", "fpr", "fnr", "auroc", "ap",
+                                     "worst_256_window_ber", "query_rate")}
         macro[arm]["query_count_sum"] = int(sum(per_category[cat][arm]["query_count"] for cat in CATEGORIES))
     contrasts: dict[str, Any] = {}
     for scope in (*CATEGORIES, "CATEGORY_EQUAL_MACRO"):

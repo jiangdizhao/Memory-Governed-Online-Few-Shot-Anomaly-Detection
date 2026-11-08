@@ -27,6 +27,7 @@ from experiments.calibration.exp_c_memory_evidence import (
     build_stage_b_metrics,
     gate_decomposition,
 )
+from experiments.calibration.exp_c_historical_parity import verify_d2_metric_reproduction
 
 
 def _sha(text: str) -> str:
@@ -238,7 +239,8 @@ def test_contrast_sign_budget_classification_and_rate_tolerance():
             rate = 0.03 if arm in {"B", "BD", "BN_BAND", "BN_AVG_GATE", "BND"} else 0.037
             metrics[category][arm] = {"ber": ber, "query_rate": rate, "ba": 1 - ber,
                                       "fpr": ber, "fnr": ber, "auroc": 0.7,
-                                      "ap": 0.5, "query_count": 10}
+                                      "ap": 0.5, "worst_256_window_ber": 0.25,
+                                      "query_count": 10}
     result = analyze_metrics(metrics)
     contrast = result["contrasts"]["CATEGORY_EQUAL_MACRO"]["BN_AVG_GATE_minus_BND"]
     assert np.isclose(contrast["ber_difference_left_minus_right"], 0.01)
@@ -247,16 +249,17 @@ def test_contrast_sign_budget_classification_and_rate_tolerance():
                            ber_left=0.14, ber_right=0.15) == "LEFT_DOMINATES_QUALITY_AND_EXPENDITURE"
 
 
-def test_synthetic_stage_b_metrics_and_paired_source_group_bootstrap():
+def test_synthetic_stage_b_metrics_and_paired_source_group_bootstrap(tmp_path):
     labels, rows_by_category, query_counts = {}, {}, {}
     for category in ("audiojack", "regulator", "switch", "rolled_strip_base"):
-        y = np.asarray([0, 1] * 4, dtype=np.int8)
+        y = np.asarray([0, 1] * 128, dtype=np.int8)
         rows = []
-        query_counts[category] = {arm: 4 for arm in ARM_IDS}
+        query_counts[category] = {arm: 128 for arm in ARM_IDS}
         for position, label in enumerate(y):
             arm_rows = {}
             for arm in ARM_IDS:
-                pred = int(label if arm != "B" else 1 - label)
+                invert_b = arm == "B" and category in {"audiojack", "switch"}
+                pred = int(1 - label if invert_b else label)
                 score = 1.0 if pred else -1.0
                 arm_rows[arm] = {
                     "gc_score": score, "b3_threshold": 0.0, "prediction": pred,
@@ -281,7 +284,35 @@ def test_synthetic_stage_b_metrics_and_paired_source_group_bootstrap():
         rows_by_category[category] = rows
     result = build_stage_b_metrics(labels, rows_by_category, query_counts, bootstrap_draws=100)
     assert result["per_category"]["audiojack"]["B"]["ber"] == 1.0
-    assert result["per_category"]["audiojack"]["BND"]["queried_normal_count"] == 4
+    assert result["per_category"]["audiojack"]["BND"]["queried_normal_count"] == 128
+    for arm in ARM_IDS:
+        category_values = [result["per_category"][category][arm]["worst_256_window_ber"]
+                           for category in ("audiojack", "regulator", "switch", "rolled_strip_base")]
+        assert all(value is not None for value in category_values)
+        assert np.isclose(result["category_equal_macro"][arm]["worst_256_window_ber"],
+                          np.mean(category_values))
+    assert result["category_equal_macro"]["B"]["worst_256_window_ber"] == 0.5
+
+    # Synthetic saved D2 aggregates exercise the real verifier without opening
+    # historical labels or artifacts.
+    stage_b = tmp_path / "synthetic_d2_stage_b"
+    stage_b.mkdir()
+    d2_evaluation = {
+        "category_metrics": result["per_category"],
+        "category_equal_macro": result["category_equal_macro"],
+    }
+    evaluation_path = stage_b / "D2_evaluation.json"
+    evaluation_path.write_text(json.dumps(d2_evaluation, sort_keys=True), encoding="utf-8")
+    evaluation_sha256 = hashlib.sha256(evaluation_path.read_bytes()).hexdigest()
+    (stage_b / "D2_provenance.json").write_text(json.dumps({
+        "status": "COMPLETE", "run_id": "synthetic-d2-metrics",
+        "stage_b_evaluation_sha256": evaluation_sha256,
+    }, sort_keys=True), encoding="utf-8")
+    parity = verify_d2_metric_reproduction(
+        d2_run_id="synthetic-d2-metrics", c_evaluation=result,
+        d2_evaluation=d2_evaluation, d2_stage_b_dir=stage_b)
+    assert parity["status"] == "PASS"
+    assert parity["historical_label_files_opened"] is False
     assert result["mechanism_diagnostics"]["counterfactual_queries_executed"] is False
     interval = result["paired_source_group_bootstrap"][
         "category_equal_macro_contrasts"]["BN_AVG_GATE_minus_BND"]
