@@ -1,6 +1,6 @@
 # Stage A and Stage B execution plan
 
-> **Live execution status (2026-11-08):** The preregistration and original inert-gate wording below describe the historical freeze, not the current campaign authorization. The researcher-authorized FS4 campaign is **running** at source revision `c184e7130c943746a9911e92e987c4749b67318f`. Latest supplied Stage A image-event snapshot: **S 5,818/15,295**, **CL 0**, **CE 0**; Stage B has not started. A planned pause was **rejected as unsafe** under the existing wall-clock/recovery contract; A has **not** been paused. See [the dated execution status and B/C prioritization record](EXECUTION_STATUS_20261108.md). This notice changes no executable protocol.
+> **Latest FS4 operations status (2026-11-08): A STOPPED, artifacts preserved.** After an earlier no-pause assessment, the researcher directed a controlled stop of the active FS4 campaign at source revision `c184e7130c943746a9911e92e987c4749b67318f`. Codex observed a stable completed-event boundary at zero-based position 5908 and subsequently terminated the identified process tree. **S 5,909/15,295**, **CL 0**, **CE 0**; Stage B **not started**; GPU context released. Latest verified checkpoint: `regulator-event-05000`. Recovery is **uncertain**, not a supported planned pause; stopped wall time counts against frozen limits. See the [dated chronological execution and B/C reprioritization record](EXECUTION_STATUS_20261108.md). This notice makes no change to scientific source, specification, or executable protocol.
 
 ## Inert interface and staged gates
 
