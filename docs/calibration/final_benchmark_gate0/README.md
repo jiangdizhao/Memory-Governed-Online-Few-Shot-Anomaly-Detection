@@ -1,10 +1,12 @@
 # Final Benchmark Gate 0 — Executive Summary
 
-**Status:** `GATE0_DOCUMENT_AUDIT_COMPLETE_RESEARCHER_REVIEW_PENDING`
-**Planning date:** 2026-11-10
-**Reviewed checkout:** `calibration-stage0-contract-20261029` at `26fc4e585e9c6e678aaa06f8825d24a22bdf048c`
+**Status:** `GATE0_R1_DOCUMENT_REVISION_COMPLETE_RESEARCHER_REVIEW_PENDING`
+**Revision date:** 2026-11-11
+**Checkout:** `calibration-stage0-contract-20261029`, HEAD `4b836e1ad41b9d12dfd2f87f75a1da3bceb21053`
 
-This is a documentation-only, read-only protocol audit. It does not freeze the protocol, authorize implementation, authorize data access, or authorize Gate 1. Six new drafts are in this directory:
+This R1 revision incorporates targeted scientific review. It is still a protocol candidate: none of its recommendations is final researcher approval, and it does not freeze Gate 0 or authorize Gate 1.
+
+The six revised documents are:
 
 1. `GATE0_SCIENTIFIC_CONTRACT_DRAFT.md`
 2. `GATE0_DATA_AND_INFORMATION_ACCESS.md`
@@ -13,18 +15,16 @@ This is a documentation-only, read-only protocol audit. It does not freeze the p
 5. `GATE0_DECISIONS_AND_BLOCKERS.md`
 6. `README.md` (this summary)
 
-**Unresolved P0 scientific/protocol decisions: 6.** They concern the hard query caps and new Margin rule; feedback timing across Real-IAD views in one Source Group; verifiable identities and the P0/P1/P2 construction; the matched-feedback N-shadow; exposure/independence claims; and inference/practical-significance rules. The decision register states the evidence, recommendation, alternative, consequence, status, and exact researcher approval required.
+**Pending Gate 0 decisions:** query cap and `Margin_rho` details; Real-IAD Group-atomic feedback; selection/group-key policy, especially VisA's group identity exception; exposure terminology; the primary statistical/practical decision rule; and whether to require a credible source-faithful external online comparison or limit complete-system competitive claims. N-shadow's scientific definition is simplified here; implementation fidelity remains a Gate 1 source-review requirement. Exact identity manifests are deferred to a separately authorized Gate 1 metadata operation and do not prevent Gate 0 design review.
 
-## Required before Gate 1
+## Current recommendation
 
-- Researcher and ChatGPT review the six drafts and resolve every P0 item in `GATE0_DECISIONS_AND_BLOCKERS.md`.
-- Freeze category-wise, role-separated Support/C64/TEST and event-order manifests, the three paired conditions, source-group rules, and dataset-specific VisA grouping/provenance. No identities were opened or inferred here.
-- Specify and review the N-shadow data flow and the exact BEA/Margin/cap interaction before implementation.
-- Decide whether the campaign is a development/benchmark reassessment or supports any independently held-out claim. The local evidence does not support calling Real-IAD wholly unseen; VisA exposure and identity overlap remain unverified.
-- Only after Gate 0 review, issue separate explicit authorization for source implementation, dataset roles/label access, and any execution. Gate 2 must measure actual runtime, GPU/RAM, cache, output, and disk costs before ceilings are frozen.
+- Real-IAD: **full-category benchmark reassessment on a historically exposed dataset**.
+- VisA: **cross-dataset external validation**, with independent-confirmation status conditional on exposure and identity/provenance certification.
+- Support/C64 construction: freeze the deterministic metadata-only role-selection rule in the Gate 0 decision, then generate actual image/group identity hashes only after separate Gate 1 authorization.
+- Feedback: recommend Group-atomic feedback for five-view Real-IAD Source Groups; this changes historical R7/D2/B/C event timing and must not be described as historical parity.
+- N-shadow: passive, non-querying matched-feedback mechanism control that reads F-B's Greedy state and adds only negative C1 anchors after verified-normal feedback.
 
-The existing implementation is not the proposed 42-category campaign: the inspected E6/C runner is a four-category, Support-Seed-0/Shuffle-Seed-0 development implementation. Static-36+32 and K-NG/FOADS are supplementary and remain fidelity/identity pending. Strict-four-shot-total remains on HOLD: existing evidence uses four deployed Supports plus additional C64, while the tracked decision register says strict-four and independent confirmation require a separate data-access comparison, model freeze, and authorization.
+The strict-four-total study remains separate and on HOLD: existing evidence is four deployed Supports plus 64 additional C64 normals, while the tracked C0 decision requires its own data-access comparison, model freeze and authorization. No identity manifests were generated. No data, labels, masks, protected outcomes, GPU or experiments were accessed. No historical source, test, result, checkpoint or artifact was modified; no commit or push was made.
 
-No historical source, test, protocol, output, checkpoint, or ignored file was modified. Existing untracked research artifacts were preserved. No dataset, image, label, mask, private feedback, model, GPU, or experiment was accessed or run. The tracked working tree was clean before these six new documents; no Git add, commit, or push was performed.
-
-**Gate 0 documentation complete. Awaiting researcher and ChatGPT scientific review.**
+Gate 1 remains unauthorized. The independent metadata operation must be separately approved after Gate 0 freezes dataset releases, role algorithms, group/timing rules, seeds, order construction and manifest schema. Gate 2 resource ceilings remain measurement-dependent.

@@ -1,6 +1,6 @@
 # Gate 0 — Data and Information-Access Contract
 
-**State:** `DRAFT_NOT_AUTHORIZED`. This document records permitted roles needed by a future separately authorized campaign; it does not authorize opening any data now.
+**State:** `DRAFT_NOT_AUTHORIZED`. R1 freezes the proposed metadata-only role-selection rule, while actual identity generation remains a separately authorized Gate 1 operation. Nothing here authorizes opening data now.
 
 ## 1. Dataset scope and role table
 
@@ -24,15 +24,37 @@
 
 All four principal arms receive the same Support/C64 identities inside a paired condition, but retain arm-specific mutable state. Each arm has its own one-query-per-Source-Group set and private disclosure record. The N-shadow's query ledger is an explicit read-only view of F-B's executed opportunities; it has no query decision or feedback influence on F-B.
 
-## 3. Group rules and event timing
+## 3. Gate 0 role selection; Gate 1 identity records
 
-Real-IAD's existing E6 contract assumes five camera views per official Source Group, checks camera 1 through 5, checks Support/C64/TEST group disjointness, and suppresses a second query by an arm from a group already queried. No one query reveals the other four labels. Source Group identities are opaque in public event records.
+The Gate 0 candidate selection algorithm uses metadata only. After separate Gate 1 authorization, enumerate official TRAIN-normal image metadata and authoritative group keys. Do not read candidate pixels, compute features, or rank by anomaly scores to choose roles.
 
-The current event loop seals each event before a query, then reads and applies a queried label before the next event. It does not defer updates to a five-view group boundary. Thus an earlier queried view's verified feedback can alter the scorer/threshold state used on a later view from that same group. This is existing behavior, not a new rule endorsed here. Researcher decision is required whether to retain it or define a group barrier. The independent evaluation/bootstrap unit should not be the image view when multiple views share a Source Group.
+For each dataset release, category and Support Seed `s`, rank eligible official physical groups by ascending SHA-256 of UTF-8:
 
-Do not transplant Real-IAD's five-camera grouping rule to VisA. The tracked D3-P0 summary says no official five-view Source Group structure was established for VisA; physical groups, exact duplicates, and support/C64/TEST group disjointness must be defined from a permitted official identity source before any future access. The local D3 summary reports no cross-partition exact duplicates among hashed VisA candidates but explicitly says hashing was partial and does not establish full-dataset absence. It also states exact identical-file hashing alone would not prove physical independence.
+```text
+Gate0-role-v1\0<dataset_release_sha256>\0<category>\0<s_decimal>\0<official_group_key>
+```
 
-## 4. Exposure and provenance register
+Within each ranked group, select one officially normal TRAIN image by ascending SHA-256 of:
+
+```text
+Gate0-image-v1\0<dataset_release_sha256>\0<category>\0<s_decimal>\0<official_group_key>\0<official_image_key>
+```
+
+Use the canonical NFC UTF-8 official keys, lowercase release digest, unsigned decimal seed, SHA-256 digest comparison and tie rules in the Scientific Contract. The first four distinct groups/images are Supports; the next 64 are C64. Require at least 68 eligible distinct groups and verify disjointness from TEST groups; otherwise fail closed rather than silently broadening the pool. Support Seed 0 is reused by P0 and P1, so their exact Supports/C64 roles are identical. Support Seed 1 selects a separate role set for P2. Stream Seed does not change role selection. Feature extraction is allowed only after the 68 selected identities are fixed; feature inspection of a larger candidate pool is additional predeployment information and is excluded from this protocol.
+
+This is a new deterministic protocol candidate, not an assertion that historical P0 Support construction used the same ranking. No historical image IDs are guessed. Do not claim historical event/score parity unless later identity/source verification establishes exact equivalence.
+
+Actual image/group hashes, role membership, annotation checksums, and manifest digests are Gate 1 metadata artifacts. Their absence does not prevent Gate 0 design review. Gate 1 requires a separate researcher authorization for exact roots/metadata fields and review of the resulting checksummed manifests; this R1 task does not authorize that operation.
+
+## 4. Group rules and event timing
+
+Real-IAD's existing E6 contract assumes five camera views per official Source Group and checks camera 1 through 5, Support/C64/TEST group disjointness, and one query per group. R1 recommends **Group-atomic feedback** as a new protocol: use a group-major stream with all five views contiguous in camera order 1–5; score and seal all views from one pre-group state; permit at most one query per arm/group; after group sealing account for event-level actions, disclose only the purchased view's label, and update state for the next group. Missing, duplicate, incomplete, or noncontiguous membership fails closed. This is `RECOMMENDED_RESEARCHER_DECISION_REQUIRED` and is not historical R7/D2/B/C event parity.
+
+Rank eligible official TEST groups by ascending SHA-256 of UTF-8 `Gate0-stream-v1\0<dataset_release_sha256>\0<category>\0<stream_seed_decimal>\0<official_group_key>`; within each group retain registered camera order 1–5. P0 and P2 share Stream-0 order; P1 uses Stream Seed 11. The eventual event digest binds dataset release, category, stream seed, group digest, camera/image identity and within-group position. Only opaque digests appear in public score records.
+
+Do not transplant Real-IAD's five-camera grouping rule to VisA. The tracked D3-P0 summary says no official five-view Source Group structure was established; physical groups, complete duplicate relationships, and Support/C64/TEST group disjointness remain uncertified. Use an official VisA object/group key if documented. If none exists, the researcher must approve one explicit exception: a complete identity/duplicate-cluster query unit with no physical-independence claim, or no online VisA feedback. No image-as-independent-physical-group assumption is silent. The local D3 summary found no cross-partition exact duplicates only among partially hashed candidates; that does not establish full-dataset absence. Exact byte identity also does not establish physical-object identity.
+
+## 5. Exposure, terminology, and provenance register
 
 | Evidence in inspected tracked text | What is established | What remains unknown / claim limit |
 |---|---|---|
@@ -44,14 +66,16 @@ Do not transplant Real-IAD's five-camera grouping rule to VisA. The tracked D3-P
 
 No distinct external handoff/report for the proposed 11 November campaign was identified in the locally inspected tracked documents. The 0.01 Macro BER practical threshold is supplied in the current task context but its external handoff provenance and researcher/supervisor approval are not present in the inspected record.
 
-## 5. Identity manifest requirements (schema only; identities pending)
+Recommended terminology for review: **Real-IAD — full-category benchmark reassessment on a historically exposed dataset. VisA — cross-dataset external validation, with independent-confirmation status conditional on exposure and identity/provenance certification.** Do not describe VisA as completely untouched without supporting evidence. Historical absence of a recorded outcome read is not proof of independent data exposure. Protected Mint/PCB outcomes and masks remain under their existing authorization boundaries.
+
+## 6. Gate 1 identity-manifest schema (identities pending)
 
 Before any future Gate 1 data open, publish a checksummed manifest for every dataset/category/paired condition with at least:
 
 - dataset release/version and provenance receipt; category; official split/role; official JSON/annotation file SHA-256 (without placing labels in public Stage A records);
-- source image opaque identity and content SHA-256; Source Group digest; camera/view or dataset-specific physical-group relation; duplicate-candidate audit and disposition;
+- source image opaque identity and content SHA-256; Source Group/object-group digest; camera/view or dataset-specific physical-group relation; duplicate-candidate audit and disposition;
 - role=`SUPPORT`, `C64`, or `TEST`; four Support and 64 C64 identity digests; role and group disjointness evidence; Support Seed and Stream Seed; event-order/tape digest and expected image-event count;
 - frozen scorer/feature and preprocessing identities; query/cap/controller version; authorized label-reader identity and scope; which labels may be queried; Stage A seal and Stage B evaluator boundary;
 - explicit `UNKNOWN` for any provenance, group relation, or overlap not certified by a permitted source.
 
-The existing E6/C/D2 contracts are for four Real-IAD development categories and Support Seed 0 / Shuffle Seed 0. They do not supply verified 30-category Real-IAD or 12-category VisA identities, P1/P2 role assignments, or new hard-cap tapes. No actual sample IDs or hashes were created or read for this draft.
+The existing E6/C/D2 contracts are for four Real-IAD development categories and Support Seed 0 / Shuffle Seed 0. They do not supply authenticated 30-category Real-IAD or 12-category VisA identities, P1/P2 final manifests, or hard-cap trajectories. Gate 0 freezes the selection, grouping, order, and checksum schema only. No actual sample IDs or hashes were created or read for this draft; Gate 1 remains separately unauthorized.
