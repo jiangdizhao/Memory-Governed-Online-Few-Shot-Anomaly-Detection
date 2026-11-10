@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from .query import PRINCIPAL_ARMS
+
 
 class SinkProtocolError(RuntimeError):
     pass
@@ -32,6 +34,7 @@ class FsyncGroupSink:
         self.group_count = 0
         self.event_count = 0
         self.closed = False
+        self._sealed_queries: dict[tuple[str, int], Mapping[str, Any]] = {}
 
     @staticmethod
     def _reject_outcomes(value: Any) -> None:
@@ -69,12 +72,53 @@ class FsyncGroupSink:
                 cameras != [1, 2, 3, 4, 5] or
                 group_seal.get("status") != "SEALED_BEFORE_LABEL_DISCLOSURE"):
             raise SinkProtocolError("group journal rejected an invalid or unsealed five-view group")
+        queries: dict[tuple[str, int], Mapping[str, Any]] = {}
+        queried_arms: set[str] = set()
+        for row in score_rows:
+            for arm, action in row.get("query_actions", {}).items():
+                if (arm not in PRINCIPAL_ARMS or not isinstance(action, Mapping) or
+                        not isinstance(action.get("executed"), bool)):
+                    raise SinkProtocolError("group query action is malformed")
+                receipt_sha = action.get("query_receipt_sha256")
+                if action["executed"]:
+                    if arm in queried_arms:
+                        raise SinkProtocolError("a Source Group cannot purchase two labels for one arm")
+                    queried_arms.add(arm)
+                    if (not isinstance(receipt_sha, str) or len(receipt_sha) != 64 or
+                            any(char not in "0123456789abcdef" for char in receipt_sha)):
+                        raise SinkProtocolError("executed query lacks its receipt digest")
+                    key = (str(arm), int(row["position"]))
+                    if key in self._sealed_queries or key in queries:
+                        raise SinkProtocolError("duplicate sealed query identity")
+                    queries[key] = {"event_id_sha256": row["event_id_sha256"],
+                                    "image_identity_sha256": row["image_identity_sha256"],
+                                    "source_group_sha256": row["source_group_sha256"],
+                                    "query_receipt_sha256": receipt_sha}
+                elif receipt_sha is not None:
+                    raise SinkProtocolError("unexecuted query carries a receipt digest")
         envelope = {"schema": "final-benchmark.stage-a-group.v1",
                     "group_seal": dict(group_seal), "score_rows": list(score_rows)}
         digest = self._write_payload(envelope)
+        self._sealed_queries.update(queries)
         self.group_count += 1
         self.event_count += 5
         return digest
+
+    def query_is_sealed(self, *, arm_id: str, event: Any,
+                        query_receipt: Mapping[str, Any]) -> bool:
+        """Match an executed action to the already-fsynced group envelope."""
+        saved = self._sealed_queries.get((str(arm_id), int(event.position)))
+        return bool(saved and saved["event_id_sha256"] == event.event_id_sha256 and
+                    saved["image_identity_sha256"] == event.image_identity_sha256 and
+                    saved["source_group_sha256"] == event.group_sha256 and
+                    saved["query_receipt_sha256"] == hashlib.sha256(_canonical(query_receipt)).hexdigest())
+
+    def consume_sealed_query(self, *, arm_id: str, event: Any,
+                             query_receipt: Mapping[str, Any]) -> bool:
+        if not self.query_is_sealed(arm_id=arm_id, event=event, query_receipt=query_receipt):
+            return False
+        self._sealed_queries.pop((str(arm_id), int(event.position)))
+        return True
 
     def seal_category(self, seal: Mapping[str, Any]) -> str:
         if self.closed or int(seal.get("completed_event_count", -1)) != self.event_count or int(

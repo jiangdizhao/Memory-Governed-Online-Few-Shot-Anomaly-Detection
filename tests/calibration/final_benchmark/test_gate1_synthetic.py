@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from experiments.calibration.final_benchmark import identity
 from experiments.calibration.final_benchmark.evaluation import (
@@ -24,6 +25,7 @@ from experiments.calibration.final_benchmark.static_baselines import (
     FIXED_BYTES, static36_threshold_c32,
 )
 from experiments.calibration.final_benchmark.sink import FsyncGroupSink, SinkProtocolError
+from experiments.calibration.final_benchmark.label_broker import LabelBrokerError, RealIADQueryLabelBroker
 from experiments.calibration import r10_signed_knn_baseline as r10
 
 
@@ -38,6 +40,7 @@ class _SyntheticBackend:
         self.static = {arm: 0 for arm in ("STATIC-4+64", "STATIC-36+32")}
         self.scores_seen: list[tuple[str, int, int]] = []
         self.shadow_feedback: list[int] = []
+        self.shadow_fb_state_on_feedback: list[int] = []
 
     def state_digest(self, arm_id):
         return sha(f"arm:{arm_id}:{self.arms[arm_id]}")
@@ -69,6 +72,7 @@ class _SyntheticBackend:
 
     def commit_shadow_feedback(self, event, packet, label, receipt):
         self.shadow_feedback.append(label)
+        self.shadow_fb_state_on_feedback.append(self.arms["F-B"])
         if label == 0:
             self.shadow += 1
         return {"negative_only_count": self.shadow}
@@ -122,6 +126,50 @@ def event_group(start: int, group_index: int) -> list[TestEvent]:
 
 
 class IdentityTests(unittest.TestCase):
+    def test_private_locator_resolves_only_registered_identity_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            train = "OK/S0001/widget_0001_OK_C1_20260101000000.png"
+            test = "NG/AB/S0002/widget__0002_NG_AB_C1_20260101000000.png"
+            for key in (train, test):
+                path = root / "images" / "widget" / key
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b"synthetic")
+            annotation = root / "annotation.json"
+            annotation.write_text(json.dumps({"meta": {"normal_class": "OK", "prefix": "widget"},
+                "train": [{"image_path": train, "anomaly_class": "OK"}],
+                "test": [{"image_path": test, "anomaly_class": "SYNTHETIC_PRIVATE_OUTCOME",
+                          "mask_path": "SYNTHETIC_PRIVATE_MASK"}]}), encoding="utf-8")
+            digest = hashlib.sha256(annotation.read_bytes()).hexdigest()
+            image_id = identity._image_identity_digest(test)
+            locators = identity.resolve_realiad_private_locators(
+                dataset_root=root, annotation_path=annotation, annotation_sha256=digest,
+                category="widget", split="test", selected_image_ids=[image_id])
+            self.assertEqual(locators[image_id]["official_image_key"], test)
+            self.assertEqual(locators[image_id]["relative_id"], test)
+            self.assertNotIn("anomaly_class", locators[image_id])
+            with self.assertRaises(identity.IdentityAuditError):
+                identity.resolve_realiad_private_locators(
+                    dataset_root=root, annotation_path=annotation, annotation_sha256=sha("wrong"),
+                    category="widget", split="test", selected_image_ids=[image_id])
+
+    def test_visa_exception_candidate_stays_disabled_and_checks_units(self):
+        rows = [{"image_identity_sha256": sha(f"visa-image-{i}"),
+                 "image_content_sha256": sha(f"visa-content-{i if i != 69 else 68}"),
+                 "role": "SUPPORT" if i < 4 else "C64" if i < 68 else "TEST"}
+                for i in range(70)]
+        units = {row["image_identity_sha256"]: sha(f"unit-{i if i != 69 else 68}")
+                 for i, row in enumerate(rows)}
+        result = identity.prepare_visa_exception_candidate(identity_rows=rows,
+                                                           proposed_unit_by_image=units)
+        self.assertEqual(result["status"], "RESEARCHER_DECISION_REQUIRED_NOT_EXECUTABLE")
+        self.assertEqual(result["query_rate_target"], .10)
+        self.assertEqual(result["test_unit_count"], 1)
+        bad = dict(units)
+        bad[rows[69]["image_identity_sha256"]] = sha("different-unit")
+        with self.assertRaises(identity.IdentityAuditError):
+            identity.prepare_visa_exception_candidate(identity_rows=rows, proposed_unit_by_image=bad)
+
     def test_role_seed_replay_and_static36_partition(self):
         release = sha("official-release")
         role_payload = "\0".join(("Gate0-role-v1", release, "widget", "0", "widget_group_000"))
@@ -176,28 +224,49 @@ class IdentityTests(unittest.TestCase):
                 key = f"widget_group{group_index}_C{camera}_20260101000000.png"
                 rows.append({"_official_group_key": f"widget_group{group_index}",
                              "_official_image_key": key, "camera_id": camera,
+                             "original_position": len(rows),
                              "image_identity_sha256": identity._image_identity_digest(key),
                              "image_content_sha256": sha(key)})
         stream = identity._stream_order(category="widget", stream_seed=0,
                                         dataset_release_sha256=release, test_rows=rows)
         self.assertEqual([row["camera_id"] for row in stream[:5]], [1, 2, 3, 4, 5])
+        self.assertEqual(sorted(row["original_position"] for row in stream), list(range(10)))
         with self.assertRaises(identity.IdentityAuditError):
             identity._stream_order(category="widget", stream_seed=0,
                                     dataset_release_sha256=release, test_rows=rows[:-1])
 
     def test_json_projection_drops_test_labels_and_masks(self):
+        from experiments.calibration import r7_shuffled_correction_4class as r7
+        decoded = []
+        decoded_keys = []
+        original_decode = r7._decode_field
+        original_string = r7._string
+        def capture(data, bounds):
+            decoded.append(data[bounds[0]:bounds[1]])
+            return original_decode(data, bounds)
+        def capture_key(data, offset):
+            result = original_string(data, offset)
+            decoded_keys.append(result[0])
+            return result
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "category.json"
             path.write_text(json.dumps({
                 "meta": {"normal_class": "OK", "prefix": "images"},
                 "train": [{"image_path": "normal.png", "anomaly_class": "OK"}],
-                "test": [{"image_path": "test.png", "anomaly_class": "NG", "mask_path": "private.png"}],
+                "test": [{"image_path": "test.png", "anomaly_class": "SYNTHETIC_OUTCOME",
+                          "mask_path": "SYNTHETIC_MASK",
+                          "mask": {"SYNTHETIC_SECRET_KEY": ['} ] " \\', {"inner": "MASK"}]}}],
             }), encoding="utf-8")
-            meta, train, test = identity._identity_only_realiad_sections(path)
+            with patch.object(r7, "_decode_field", side_effect=capture), \
+                    patch.object(r7, "_string", side_effect=capture_key):
+                meta, train, test = identity._identity_only_realiad_sections(path)
         self.assertEqual(train[0]["anomaly_class"], "OK")
         self.assertEqual(test, [{"image_path": "test.png"}])
         self.assertNotIn("anomaly_class", test[0])
         self.assertNotIn("mask_path", test[0])
+        self.assertNotIn(b'"SYNTHETIC_OUTCOME"', decoded)
+        self.assertNotIn(b'"SYNTHETIC_MASK"', decoded)
+        self.assertNotIn("SYNTHETIC_SECRET_KEY", decoded_keys)
 
     def test_visa_test_projection_skips_label_and_mask_cells(self):
         row = identity._parse_csv_projected_line(
@@ -205,6 +274,10 @@ class IdentityTests(unittest.TestCase):
             ["object", "split", "label", "image", "mask"],
             train_label_allowed=True)
         self.assertEqual(row, {"object": "widget", "split": "test", "image": "images/widget/test.png"})
+        undecodable_outcomes = identity._parse_csv_projected_line(
+            b"widget,test,\xff,images/widget/test.png,\xfe",
+            ["object", "split", "label", "image", "mask"], train_label_allowed=True)
+        self.assertEqual(undecodable_outcomes, row)
 
     def test_manifest_rejects_restricted_fields_at_any_depth(self):
         manifest = {"schema": "final-benchmark.identity-manifest.v1", "dataset_id": "realiad",
@@ -283,6 +356,7 @@ class QueryAndRunnerTests(unittest.TestCase):
             self.assertEqual(accounting[arm]["first_cap_exhaustion_position"], 10)
             self.assertEqual(accounting[arm]["max_no_query_gap_events"], 89)
         self.assertEqual(backend.shadow_feedback, [0, 1, 0])
+        self.assertEqual(backend.shadow_fb_state_on_feedback, [0, 1, 1])
         self.assertEqual(backend.arms["F-B"], 2)
         self.assertEqual(backend.arms["K-B"], 2)
         self.assertEqual(backend.shadow, 2)
@@ -319,6 +393,161 @@ class QueryAndRunnerTests(unittest.TestCase):
 
 
 class EvaluationAndSourceTests(unittest.TestCase):
+    def test_real_query_broker_requires_fsynced_action_and_reads_only_queried_views(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            root = Path(directory)
+            release = sha("release")
+            annotation = root / "synthetic.json"
+            source_rows, identity_rows, locators = [], [], {}
+            for camera in range(1, 6):
+                image_key = f"NG/AB/S0001/widget__0001_NG_AB_C{camera}_20260101000000.png"
+                group, _ = identity._realiad_identity_key("widget", image_key)
+                image_id = identity._image_identity_digest(image_key)
+                source_rows.append({"image_path": image_key,
+                                    "anomaly_class": "OK" if camera == 1 else f"synthetic-defect-{camera}",
+                                    "mask": {"SYNTHETIC_SECRET_KEY": "synthetic-unused-mask"}})
+                identity_rows.append({"_official_group_key": group, "_official_image_key": image_key,
+                    "camera_id": camera, "original_position": camera - 1,
+                    "image_identity_sha256": image_id, "image_content_sha256": sha(image_key)})
+                locators[image_id] = {"official_image_key": image_key, "official_group_key": group,
+                                      "image_path": str(root / image_key)}
+            annotation.write_text(json.dumps({"meta": {"normal_class": "OK"}, "test": source_rows}),
+                                  encoding="utf-8")
+            records = identity._stream_order(category="widget", stream_seed=0,
+                                             dataset_release_sha256=release, test_rows=identity_rows)
+            events = [TestEvent(row["position"], row["event_id_sha256"], row["image_identity_sha256"],
+                                row["source_group_sha256"], row["camera_id"]) for row in records]
+            sink = FsyncGroupSink(root / "scores.jsonl", identity={"run_id": "synthetic"})
+            broker = RealIADQueryLabelBroker(
+                category="widget", condition_id="P0", stream_seed=0, dataset_release_sha256=release,
+                annotation_path=annotation, annotation_sha256=hashlib.sha256(annotation.read_bytes()).hexdigest(),
+                stream_records=records, private_locators=locators, sink=sink,
+                private_feedback_path=root / "private.jsonl")
+            try:
+                receipts = {}
+                for arm, index in (("F-B", 0), ("K-B", 1)):
+                    event = events[index]
+                    receipts[arm] = {"schema": "final-benchmark.query-receipt.v1", "arm_id": arm,
+                        "category": "widget", "condition_id": "P0", "event_id_sha256": event.event_id_sha256,
+                        "source_group_sha256": event.group_sha256, "position": event.position}
+                with self.assertRaises(LabelBrokerError):
+                    broker.disclose(arm_id="F-B", event=events[0], query_receipt=receipts["F-B"])
+                self.assertEqual(broker.decoded_queries, [])
+                rows = []
+                for index, event in enumerate(events):
+                    actions = {}
+                    for arm in ("F-B", "K-B"):
+                        executed = (arm == "F-B" and index == 0) or (arm == "K-B" and index == 1)
+                        digest = hashlib.sha256(json.dumps(receipts[arm], sort_keys=True, separators=(",", ":"),
+                            ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest() if executed else None
+                        actions[arm] = {"executed": executed, "query_receipt_sha256": digest}
+                    rows.append({"position": index, "event_id_sha256": event.event_id_sha256,
+                        "image_identity_sha256": event.image_identity_sha256,
+                        "source_group_sha256": event.group_sha256, "camera_id": event.camera_id,
+                        "query_actions": actions})
+                rows_sha = hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":"),
+                    ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+                invalid_rows = json.loads(json.dumps(rows))
+                invalid_rows[1]["query_actions"]["F-B"] = {
+                    "executed": True, "query_receipt_sha256": sha("extra-query")}
+                invalid_sha = hashlib.sha256(json.dumps(invalid_rows, sort_keys=True, separators=(",", ":"),
+                    ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+                with self.assertRaises(SinkProtocolError):
+                    sink.append_group(group_seal={"start_position": 0, "end_position_exclusive": 5,
+                        "source_group_sha256": events[0].group_sha256, "score_rows_sha256": invalid_sha,
+                        "status": "SEALED_BEFORE_LABEL_DISCLOSURE"}, score_rows=invalid_rows)
+                sink.append_group(group_seal={"start_position": 0, "end_position_exclusive": 5,
+                    "source_group_sha256": events[0].group_sha256, "score_rows_sha256": rows_sha,
+                    "status": "SEALED_BEFORE_LABEL_DISCLOSURE"}, score_rows=rows)
+                bad_rows = json.loads(json.dumps(source_rows))
+                bad_rows[0]["image_path"] = "different-prefix/" + bad_rows[0]["image_path"]
+                bad_annotation = root / "synthetic-mismatched.json"
+                bad_annotation.write_text(json.dumps({"meta": {"normal_class": "OK"}, "test": bad_rows}),
+                                          encoding="utf-8")
+                bad_broker = RealIADQueryLabelBroker(
+                    category="widget", condition_id="P0", stream_seed=0, dataset_release_sha256=release,
+                    annotation_path=bad_annotation, annotation_sha256=hashlib.sha256(bad_annotation.read_bytes()).hexdigest(),
+                    stream_records=records, private_locators=locators, sink=sink,
+                    private_feedback_path=root / "private-mismatched.jsonl")
+                try:
+                    with self.assertRaisesRegex(LabelBrokerError, "annotation image identity"):
+                        bad_broker.disclose(arm_id="F-B", event=events[0], query_receipt=receipts["F-B"])
+                    self.assertEqual(bad_broker.decoded_queries, [])
+                finally:
+                    bad_broker.close()
+                from experiments.calibration import r7_shuffled_correction_4class as r7
+                decoded_values, decoded_keys = [], []
+                original_decode, original_string = r7._decode_field, r7._string
+                def capture_value(data, bounds):
+                    decoded_values.append(bytes(data[bounds[0]:bounds[1]]))
+                    return original_decode(data, bounds)
+                def capture_key(data, offset):
+                    result = original_string(data, offset)
+                    decoded_keys.append(result[0])
+                    return result
+                with patch.object(r7, "_decode_field", side_effect=capture_value), \
+                        patch.object(r7, "_string", side_effect=capture_key):
+                    self.assertEqual(broker.disclose(arm_id="F-B", event=events[0], query_receipt=receipts["F-B"])[0], 0)
+                    self.assertEqual(broker.disclose(arm_id="K-B", event=events[1], query_receipt=receipts["K-B"])[0], 1)
+                self.assertIn(b'"synthetic-defect-2"', decoded_values)
+                self.assertNotIn(b'"synthetic-defect-3"', decoded_values)
+                self.assertNotIn(b'"synthetic-unused-mask"', decoded_values)
+                self.assertNotIn("SYNTHETIC_SECRET_KEY", decoded_keys)
+                self.assertEqual(broker.decoded_queries, [("F-B", 0), ("K-B", 1)])
+                with self.assertRaises(LabelBrokerError):
+                    broker.disclose(arm_id="F-B", event=events[0], query_receipt=receipts["F-B"])
+                self.assertEqual(len((root / "private.jsonl").read_text(encoding="utf-8").splitlines()), 2)
+            finally:
+                broker.close()
+                sink.close()
+
+    def test_static_metrics_use_own_threshold_and_static36_is_p0_only(self):
+        class StaticThresholdBackend(_SyntheticBackend):
+            def __init__(self):
+                super().__init__()
+                self.static_seen = []
+
+            def static_score(self, baseline_id, event):
+                self.static_seen.append(baseline_id)
+                threshold = {"STATIC-4+64": 0.015, "STATIC-36+32": 0.025}[baseline_id]
+                score = event.position / 100.0
+                return ScorePacket(score, int(score >= threshold), 0.5, 0.0, 0,
+                                   self.static_state_digest(baseline_id), threshold=threshold)
+
+        for condition, support_seed, stream_seed in (("P0", 0, 0), ("P1", 0, 11), ("P2", 1, 0)):
+            backend = StaticThresholdBackend()
+            runner = GroupAtomicCategoryRunner(
+                dataset_id="realiad", category="widget", condition_id=condition,
+                support_seed=support_seed, stream_seed=stream_seed, expected_event_count=5,
+                expected_group_order=[sha("group-0")], rho=0.03, backend=backend,
+                broker=_SyntheticBroker(), sink=_SyntheticSink())
+            runner.process_group(event_group(0, 0))
+            seal = runner.seal()
+            projection = LabelProjectionAuthorization(
+                "AUTHORIZED_POST_STAGE_A_LABEL_PROJECTION", "stage_b_category_evaluation",
+                sha("synthetic"), "realiad", "widget", seal.durable_seal_sha256)
+            result = evaluate_sealed_category(
+                dataset_id="realiad", category="widget", rows=runner.rows, seal=seal,
+                group_seals=runner.group_seals,
+                labels_by_event_id={row["event_id_sha256"]: i % 2 for i, row in enumerate(runner.rows)},
+                label_projection=projection)
+            static4 = result["arm_metrics"]["STATIC-4+64"]
+            self.assertAlmostEqual(static4["fpr"], 2 / 3)
+            self.assertAlmostEqual(static4["fnr"], 1 / 2)
+            self.assertAlmostEqual(static4["ber"], 7 / 12)
+            self.assertAlmostEqual(static4["balanced_accuracy"], 5 / 12)
+            self.assertIn("auroc", static4)
+            self.assertIn("ap", static4)
+            self.assertNotIn("ber", result["arm_metrics"]["N-shadow"])
+            if condition == "P0":
+                static36 = result["arm_metrics"]["STATIC-36+32"]
+                self.assertAlmostEqual(static36["fpr"], 1 / 3)
+                self.assertAlmostEqual(static36["fnr"], 1 / 2)
+                self.assertAlmostEqual(static36["ber"], 5 / 12)
+            else:
+                self.assertNotIn("STATIC-36+32", result["arm_metrics"])
+                self.assertNotIn("STATIC-36+32", backend.static_seen)
+
     def test_real_r10_corrected_c2_score_cpu_synthetic_interface(self):
         import numpy as np
         memory = r10.SignedKNNFIFO(capacity=1024)

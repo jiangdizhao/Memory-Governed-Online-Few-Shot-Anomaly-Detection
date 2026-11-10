@@ -28,6 +28,14 @@ STATIC_ARMS = ("STATIC-4+64", "STATIC-36+32")
 _FORBIDDEN = frozenset({"label", "anomaly_class", "mask", "mask_path", "ground_truth", "gt"})
 
 
+def static_arms_for_condition(condition_id: str) -> tuple[str, ...]:
+    if condition_id == "P0":
+        return STATIC_ARMS
+    if condition_id in ("P1", "P2"):
+        return ("STATIC-4+64",)
+    raise CampaignProtocolError("unregistered paired condition")
+
+
 def _canonical(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"),
                       ensure_ascii=False, allow_nan=False).encode("utf-8")
@@ -169,6 +177,7 @@ class GroupAtomicCategoryRunner:
             raise CampaignProtocolError("registered Source Group order is incomplete or malformed")
         self.dataset_id, self.category = dataset_id, category
         self.condition_id = condition_id
+        self.static_arms = static_arms_for_condition(condition_id)
         self.support_seed, self.stream_seed = int(support_seed), int(stream_seed)
         self.expected_event_count, self.rho = int(expected_event_count), float(rho)
         self.expected_group_order = tuple(expected_group_order)
@@ -223,7 +232,7 @@ class GroupAtomicCategoryRunner:
             raise CampaignProtocolError("Source Group order differs from the frozen stream manifest")
         before_digest = {arm: self.backend.state_digest(arm) for arm in PRINCIPAL_ARMS}
         shadow_before = self.backend.shadow_state_digest()
-        static_before = {arm: self.backend.static_state_digest(arm) for arm in STATIC_ARMS}
+        static_before = {arm: self.backend.static_state_digest(arm) for arm in self.static_arms}
         snapshots = {arm: self.backend.snapshot(arm) for arm in PRINCIPAL_ARMS}
         shadow_snapshot = self.backend.shadow_snapshot(snapshots["F-B"])
 
@@ -250,7 +259,7 @@ class GroupAtomicCategoryRunner:
             if packet.state_sha256 and packet.state_sha256 != shadow_before:
                 raise CampaignProtocolError("N-shadow score did not use its frozen pre-group state")
             packets[("N-shadow", event_index)] = packet
-            for baseline in STATIC_ARMS:
+            for baseline in self.static_arms:
                 timer = time.perf_counter()
                 static_packet = self.backend.static_score(baseline, event)
                 static_packets[(baseline, event_index)] = static_packet
@@ -262,7 +271,7 @@ class GroupAtomicCategoryRunner:
 
         if ({arm: self.backend.state_digest(arm) for arm in PRINCIPAL_ARMS} != before_digest or
                 self.backend.shadow_state_digest() != shadow_before or
-                {arm: self.backend.static_state_digest(arm) for arm in STATIC_ARMS} != static_before):
+                {arm: self.backend.static_state_digest(arm) for arm in self.static_arms} != static_before):
             raise CampaignProtocolError("a scorer mutated detector state before group sealing")
 
         # Freeze the controller state for the whole group. Every view sees the
@@ -358,7 +367,7 @@ class GroupAtomicCategoryRunner:
                     "state_version": int(packet.state_version),
                     "state_sha256": packet.state_sha256 or before_digest[arm],
                 }
-            for baseline in STATIC_ARMS:
+            for baseline in self.static_arms:
                 row["static_scores"][baseline] = float(static_packets[(baseline, event_index)].score)
                 row.setdefault("static_predictions", {})[baseline] = int(static_packets[(baseline, event_index)].prediction)
                 row.setdefault("static_thresholds", {})[baseline] = float(static_packets[(baseline, event_index)].threshold)
@@ -395,7 +404,7 @@ class GroupAtomicCategoryRunner:
             self.bea[arm].observe_final_actions(actions)
 
         # Only executed query receipts may cross the private broker boundary.
-        private_fb: tuple[TestEvent, ScorePacket, int, Mapping[str, Any]] | None = None
+        fb_disclosed = False
         arms_with_feedback: set[str] = set()
         for arm in PRINCIPAL_ARMS:
             for event_index, event in enumerate(events):
@@ -411,6 +420,22 @@ class GroupAtomicCategoryRunner:
                         int(label) not in (0, 1) or not isinstance(private_receipt, Mapping)):
                     raise CampaignProtocolError("query broker returned an invalid verified label")
                 private_digest = _sha(_canonical({"receipt": private_receipt, "label": int(label)}))
+                if arm == "F-B":
+                    # The shadow's C1 writer must consume the same pre-feedback
+                    # C0/Greedy evidence as F-B, before F-B can update Greedy.
+                    principal_before_shadow = {name: self.backend.state_digest(name) for name in PRINCIPAL_ARMS}
+                    shadow_state_before_feedback = self.backend.shadow_state_digest()
+                    timer = time.perf_counter()
+                    shadow_update = self.backend.commit_shadow_feedback(
+                        event, packets[(arm, event_index)], int(label), private_receipt)
+                    self.telemetry.record_duration("feedback_update:N-shadow", time.perf_counter() - timer)
+                    _reject_outcome_fields(shadow_update)
+                    if ({name: self.backend.state_digest(name) for name in PRINCIPAL_ARMS} != principal_before_shadow or
+                            {name: self.backend.static_state_digest(name) for name in self.static_arms} != static_before):
+                        raise CampaignProtocolError("N-shadow update changed a principal or static trajectory")
+                    if int(label) == 1 and self.backend.shadow_state_digest() != shadow_state_before_feedback:
+                        raise CampaignProtocolError("N-shadow accepted a defect label into its normal-only correction")
+                    fb_disclosed = True
                 other_digests = {other: self.backend.state_digest(other)
                                  for other in PRINCIPAL_ARMS if other != arm}
                 timer = time.perf_counter()
@@ -418,29 +443,14 @@ class GroupAtomicCategoryRunner:
                                                       int(label), private_receipt)
                 self.telemetry.record_duration(f"feedback_update:{arm}", time.perf_counter() - timer)
                 if ({other: self.backend.state_digest(other) for other in other_digests} != other_digests or
-                        {baseline: self.backend.static_state_digest(baseline) for baseline in STATIC_ARMS} != static_before):
+                        {baseline: self.backend.static_state_digest(baseline) for baseline in self.static_arms} != static_before):
                     raise CampaignProtocolError("feedback update escaped its arm or mutated a static baseline")
                 _reject_outcome_fields(update)
                 self._updates[arm].append(dict(update))
                 arms_with_feedback.add(arm)
                 self._query_receipt_hashes[arm].append(private_digest)
-                if arm == "F-B":
-                    private_fb = (event, packets[(arm, event_index)], int(label), private_receipt)
 
-        if private_fb is not None:
-            event, packet, label, receipt = private_fb
-            principal_after_feedback = {arm: self.backend.state_digest(arm) for arm in PRINCIPAL_ARMS}
-            shadow_state_before_feedback = self.backend.shadow_state_digest()
-            timer = time.perf_counter()
-            shadow_update = self.backend.commit_shadow_feedback(event, packet, label, receipt)
-            self.telemetry.record_duration("feedback_update:N-shadow", time.perf_counter() - timer)
-            _reject_outcome_fields(shadow_update)
-            if ({arm: self.backend.state_digest(arm) for arm in PRINCIPAL_ARMS} != principal_after_feedback or
-                    {baseline: self.backend.static_state_digest(baseline) for baseline in STATIC_ARMS} != static_before):
-                raise CampaignProtocolError("N-shadow update changed a principal or static trajectory")
-            if int(label) == 1 and self.backend.shadow_state_digest() != shadow_state_before_feedback:
-                raise CampaignProtocolError("N-shadow accepted a defect label into its normal-only correction")
-        elif self.backend.shadow_state_digest() != shadow_before:
+        if not fb_disclosed and self.backend.shadow_state_digest() != shadow_before:
             raise CampaignProtocolError("N-shadow changed state without inheriting F-B feedback")
 
         for arm in PRINCIPAL_ARMS:

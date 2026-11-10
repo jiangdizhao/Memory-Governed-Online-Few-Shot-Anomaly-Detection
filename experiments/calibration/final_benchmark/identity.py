@@ -105,74 +105,143 @@ def _safe_join(root: Path, *relative_parts: str, identity: str) -> Path:
     return resolved
 
 
+def _skip_json_value_opaque(data: bytes, offset: int) -> int:
+    """Find a value boundary without decoding strings or nested object keys."""
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+    offset = r7._ws(data, offset)
+    if offset >= len(data):
+        raise IdentityAuditError("truncated annotation value")
+    first = data[offset]
+    if first == ord('"'):
+        cursor, escaped = offset + 1, False
+        while cursor < len(data):
+            byte = data[cursor]
+            if byte == ord('"') and not escaped:
+                return cursor + 1
+            escaped = byte == ord("\\") and not escaped
+            cursor += 1
+        raise IdentityAuditError("unterminated annotation string")
+    if first in (ord("{"), ord("[")):
+        stack, cursor, in_string, escaped = [first], offset + 1, False, False
+        while cursor < len(data):
+            byte = data[cursor]
+            if in_string:
+                if byte == ord('"') and not escaped:
+                    in_string = False
+                escaped = byte == ord("\\") and not escaped
+            elif byte == ord('"'):
+                in_string, escaped = True, False
+            elif byte in (ord("{"), ord("[")):
+                stack.append(byte)
+            elif byte in (ord("}"), ord("]")):
+                expected = ord("}") if stack[-1] == ord("{") else ord("]")
+                if byte != expected:
+                    raise IdentityAuditError("mismatched annotation delimiters")
+                stack.pop()
+                if not stack:
+                    return cursor + 1
+            cursor += 1
+        raise IdentityAuditError("unterminated annotation container")
+    end = offset
+    while end < len(data) and data[end] not in b",]} \t\r\n":
+        end += 1
+    if end == offset:
+        raise IdentityAuditError("empty annotation scalar")
+    return end
+
+
+def _identity_object_fields(data: bytes, start: int, stop: int) -> dict[str, tuple[int, int]]:
+    from experiments.calibration import r7_shuffled_correction_4class as r7
+    cursor = r7._ws(data, start)
+    if cursor >= stop or data[cursor] != ord("{"):
+        raise IdentityAuditError("expected an annotation object")
+    cursor += 1
+    fields: dict[str, tuple[int, int]] = {}
+    while True:
+        cursor = r7._ws(data, cursor)
+        if cursor >= stop:
+            raise IdentityAuditError("truncated annotation object")
+        if data[cursor] == ord("}"):
+            return fields
+        key, cursor = r7._string(data, cursor)
+        cursor = r7._ws(data, cursor)
+        if cursor >= stop or data[cursor] != ord(":") or key in fields:
+            raise IdentityAuditError("malformed or duplicate annotation field")
+        begin = r7._ws(data, cursor + 1)
+        end = _skip_json_value_opaque(data, begin)
+        fields[key] = (begin, end)
+        cursor = r7._ws(data, end)
+        if cursor < stop and data[cursor] == ord(","):
+            cursor += 1
+            continue
+        if cursor < stop and data[cursor] == ord("}"):
+            return fields
+        raise IdentityAuditError("malformed annotation object separator")
+
+
 def _identity_only_realiad_sections(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
     """Project JSON into metadata plus TRAIN normal-eligibility and TEST IDs.
 
-    The record decoders whitelist fields before returning dictionaries. TRAIN
-    may expose its official image-level anomaly class solely to identify normal
-    TRAIN candidates. TEST anomaly classes and all mask fields are discarded.
+    The boundary scanner skips unselected values without decoding them. TRAIN
+    anomaly_class is decoded only for normal eligibility; TEST outcomes and all
+    mask values are never passed to a JSON value decoder.
     """
+    from experiments.calibration import r7_shuffled_correction_4class as r7
     try:
-        text = path.read_text(encoding="utf-8")
+        data = path.read_bytes()
     except OSError as exc:
         raise IdentityAuditError(f"category annotation unavailable ({type(exc).__name__})") from None
+    try:
+        if r7._ws(data, _skip_json_value_opaque(data, 0)) != len(data):
+            raise IdentityAuditError("Real-IAD annotation has trailing data")
+        top = _identity_object_fields(data, 0, len(data))
+        if set(top) != {"meta", "train", "test"}:
+            raise IdentityAuditError("Real-IAD annotation sections are incomplete")
+        meta_bounds = top["meta"]
+        meta_fields = _identity_object_fields(data, *meta_bounds)
+        def decode_text(bounds: tuple[int, int]) -> str:
+            if data[bounds[0]] != ord('"'):
+                raise IdentityAuditError("permitted identity field must be a JSON string")
+            value = r7._decode_field(data, bounds)
+            if not isinstance(value, str):
+                raise IdentityAuditError("permitted identity field must decode to text")
+            return value
 
-    def decoder(allowed: frozenset[str]) -> json.JSONDecoder:
-        def project(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-            keys = [key for key, _ in pairs]
-            if len(set(keys)) != len(keys):
-                raise IdentityAuditError("Real-IAD annotation contains a duplicate JSON field")
-            return {key: value for key, value in pairs if key in allowed}
-        return json.JSONDecoder(object_pairs_hook=project)
+        meta = {key: decode_text(meta_fields[key])
+                for key in ("prefix", "normal_class", "category", "dataset") if key in meta_fields}
 
-    top = json.JSONDecoder()
-    meta_decoder = decoder(frozenset({"prefix", "normal_class", "category", "dataset"}))
-    train_decoder = decoder(frozenset({"image_path", "category", "anomaly_class"}))
-    test_decoder = decoder(frozenset({"image_path", "category"}))
-    index = 0
-    while index < len(text) and text[index].isspace():
-        index += 1
-    if index >= len(text) or text[index] != "{":
-        raise IdentityAuditError("Real-IAD category annotation is not a JSON object")
-    index += 1
-    result: dict[str, Any] = {}
-    seen: set[str] = set()
-    while True:
-        while index < len(text) and text[index].isspace():
-            index += 1
-        if index < len(text) and text[index] == "}":
-            index += 1
-            break
-        key, index = top.raw_decode(text, index)
-        if key not in {"meta", "train", "test"} or key in seen:
-            raise IdentityAuditError("Real-IAD annotation has an unexpected top-level field")
-        seen.add(key)
-        while index < len(text) and text[index].isspace():
-            index += 1
-        if index >= len(text) or text[index] != ":":
-            raise IdentityAuditError("Real-IAD annotation is malformed")
-        index += 1
-        while index < len(text) and text[index].isspace():
-            index += 1
-        selected_decoder = {"meta": meta_decoder, "train": train_decoder,
-                            "test": test_decoder}[key]
-        result[key], index = selected_decoder.raw_decode(text, index)
-        while index < len(text) and text[index].isspace():
-            index += 1
-        if index < len(text) and text[index] == ",":
-            index += 1
-            continue
-        if index < len(text) and text[index] == "}":
-            index += 1
-            break
-        raise IdentityAuditError("Real-IAD annotation is malformed")
-    while index < len(text) and text[index].isspace():
-        index += 1
-    if index != len(text) or seen != {"meta", "train", "test"}:
-        raise IdentityAuditError("Real-IAD annotation sections are incomplete")
-    if not isinstance(result["meta"], dict) or not isinstance(result["train"], list) or not isinstance(result["test"], list):
-        raise IdentityAuditError("Real-IAD annotation section types are invalid")
-    return result["meta"], result["train"], result["test"]
+        def project_array(bounds: tuple[int, int], allowed: tuple[str, ...]) -> list[dict[str, Any]]:
+            start, stop = bounds
+            cursor = r7._ws(data, start)
+            if cursor >= stop or data[cursor] != ord("["):
+                raise IdentityAuditError("Real-IAD identity section is not an array")
+            cursor += 1
+            rows = []
+            while True:
+                cursor = r7._ws(data, cursor)
+                if cursor >= stop:
+                    raise IdentityAuditError("Real-IAD identity array is truncated")
+                if data[cursor] == ord("]"):
+                    if cursor + 1 != stop:
+                        raise IdentityAuditError("Real-IAD identity array has trailing data")
+                    return rows
+                end = _skip_json_value_opaque(data, cursor)
+                fields = _identity_object_fields(data, cursor, end)
+                rows.append({key: decode_text(fields[key]) for key in allowed if key in fields})
+                cursor = r7._ws(data, end)
+                if cursor < stop and data[cursor] == ord(","):
+                    cursor += 1
+                    continue
+                if cursor >= stop or data[cursor] != ord("]"):
+                    raise IdentityAuditError("Real-IAD identity array separator is malformed")
+
+        train = project_array(top["train"], ("image_path", "category", "anomaly_class"))
+        test = project_array(top["test"], ("image_path", "category"))
+        return meta, train, test
+    except IdentityAuditError:
+        raise
+    except (ValueError, TypeError, KeyError, IndexError, r7.R7Error) as exc:
+        raise IdentityAuditError(f"Real-IAD identity projection failed ({type(exc).__name__})") from None
 
 
 def _realiad_identity_key(category: str, official_image_key: str) -> tuple[str, int]:
@@ -329,6 +398,11 @@ def _select_role_groups(*, dataset_id: str, category: str, support_seed: int,
 def _stream_order(*, category: str, stream_seed: int, dataset_release_sha256: str,
                   test_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     digest = str(dataset_release_sha256).lower()
+    original_positions = [row.get("original_position") for row in test_rows]
+    if (any(isinstance(value, bool) or not isinstance(value, int) or value < 0
+            for value in original_positions) or
+            len(set(original_positions)) != len(original_positions)):
+        raise IdentityAuditError("TEST original annotation positions are missing or duplicated")
     by_group: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
     for row in test_rows:
         by_group[str(row["_official_group_key"])].append(row)
@@ -347,6 +421,7 @@ def _stream_order(*, category: str, stream_seed: int, dataset_release_sha256: st
                 str(int(row["camera_id"])), str(row["_official_image_key"]), str(ordinal))
             result.append({
                 "position": len(result),
+                "original_position": int(row["original_position"]),
                 "event_id_sha256": event_id,
                 "image_identity_sha256": row["image_identity_sha256"],
                 "image_content_sha256": row["image_content_sha256"],
@@ -354,6 +429,52 @@ def _stream_order(*, category: str, stream_seed: int, dataset_release_sha256: st
                 "camera_id": int(row["camera_id"]),
                 "within_group_ordinal": ordinal,
             })
+    return result
+
+
+def resolve_realiad_private_locators(*, dataset_root: str | Path,
+                                    annotation_path: str | Path,
+                                    annotation_sha256: str, category: str,
+                                    split: str,
+                                    selected_image_ids: Sequence[str]) -> dict[str, dict[str, str]]:
+    """Resolve only registered TRAIN-normal or TEST identity metadata to local paths.
+
+    TEST outcome and mask fields are omitted by the identity-only projection;
+    file contents are checked later immediately before the authorized encoding.
+    """
+    from experiments.risk_safe.preflight import parse_image_name
+    if split not in {"train", "test"} or not re.fullmatch(r"[0-9a-f]{64}", annotation_sha256):
+        raise IdentityAuditError("private locator requires a registered split and annotation hash")
+    requested = list(selected_image_ids)
+    if (not requested or len(set(requested)) != len(requested) or
+            any(not re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in requested)):
+        raise IdentityAuditError("private locator image identities are missing or repeated")
+    actual_hash, _size = _safe_file_hash(Path(annotation_path), identity="annotation")
+    if actual_hash != annotation_sha256:
+        raise IdentityAuditError("official annotation hash differs from its registration")
+    meta, train_rows, test_rows = _identity_only_realiad_sections(Path(annotation_path))
+    normal_class, prefix = meta.get("normal_class"), meta.get("prefix", "")
+    if not isinstance(normal_class, str) or not normal_class or not isinstance(prefix, str):
+        raise IdentityAuditError("annotation lacks its normal class or image prefix")
+    wanted, result = set(requested), {}
+    for row in train_rows if split == "train" else test_rows:
+        image_key = row.get("image_path")
+        if not isinstance(image_key, str) or not image_key:
+            raise IdentityAuditError("official image identity is missing")
+        image_id = _image_identity_digest(image_key)
+        if image_id not in wanted:
+            continue
+        if split == "train" and row.get("anomaly_class") != normal_class:
+            raise IdentityAuditError("a selected TRAIN image is not verified normal")
+        group, camera = _realiad_identity_key(category, image_key)
+        path = _safe_join(Path(dataset_root) / "images", prefix, image_key, identity=image_id)
+        parsed = parse_image_name(path, expected_class=category)
+        if parsed.official_sample_key != group or parsed.camera_id != camera or image_id in result:
+            raise IdentityAuditError("selected official image/group mapping is inconsistent")
+        result[image_id] = {"official_image_key": image_key, "official_group_key": group,
+                            "image_path": str(path), "relative_id": parsed.rel_path}
+    if set(result) != wanted:
+        raise IdentityAuditError("one or more registered image identities are absent from the official split")
     return result
 
 
@@ -599,9 +720,11 @@ def build_realiad_identity_manifest(dataset_root: str | Path,
     }
 
 
-def _parse_csv_projected_line(line: str, header: Sequence[str], *,
+def _parse_csv_projected_line(line: bytes | str, header: Sequence[str], *,
                               train_label_allowed: bool) -> dict[str, str]:
-    """CSV scanner that never materializes TEST label or mask cell contents."""
+    """Decode allowed CSV fields only; skip TEST outcome and mask bytes."""
+    if isinstance(line, str):
+        line = line.encode("utf-8")  # Synthetic callers may supply text.
     lower = [name.strip().lower() for name in header]
     required = {"object", "split", "image"}
     if not required.issubset(lower):
@@ -617,7 +740,7 @@ def _parse_csv_projected_line(line: str, header: Sequence[str], *,
     allowed |= group_indices
 
     output: dict[str, str] = {}
-    chars: list[str] = []
+    chars = bytearray()
     index = 0
     column = 0
     in_quotes = False
@@ -634,22 +757,25 @@ def _parse_csv_projected_line(line: str, header: Sequence[str], *,
         nonlocal chars, split_value
         name = lower[column] if column < len(lower) else ""
         if keep_current():
-            value = "".join(chars)
+            try:
+                value = chars.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise IdentityAuditError("VisA permitted identity field is not UTF-8") from exc
             if name == "split":
                 split_value = value.strip().lower()
             elif name == "label":
                 output[name] = value.strip().lower()
             else:
                 output[name] = value
-        chars = []
+        chars = bytearray()
 
     while index < len(line):
         char = line[index]
         if in_quotes:
-            if char == '"':
-                if index + 1 < len(line) and line[index + 1] == '"':
+            if char == ord('"'):
+                if index + 1 < len(line) and line[index + 1] == ord('"'):
                     if keep_current():
-                        chars.append('"')
+                        chars.append(ord('"'))
                     index += 2
                     continue
                 in_quotes = False
@@ -657,20 +783,20 @@ def _parse_csv_projected_line(line: str, header: Sequence[str], *,
                 chars.append(char)
             index += 1
             continue
-        if char == '"' and at_field_start:
+        if char == ord('"') and at_field_start:
             in_quotes = True
             at_field_start = False
             index += 1
             continue
-        if char == ",":
+        if char == ord(","):
             finish_field()
             column += 1
             at_field_start = True
             index += 1
             continue
-        if char in "\r\n":
+        if char in (ord("\r"), ord("\n")):
             break
-        if char == '"':
+        if char == ord('"'):
             raise IdentityAuditError("VisA split table contains malformed CSV quoting")
         if keep_current():
             chars.append(char)
@@ -699,8 +825,8 @@ def build_visa_1cls_identity_manifest(dataset_root: str | Path, *,
     try:
         csv_sha, csv_bytes = _safe_file_hash(source, identity="visa-1cls-csv")
         license_sha, license_bytes = _safe_file_hash(license_file, identity="visa-license")
-        with source.open("r", encoding="utf-8-sig", newline="") as stream:
-            header_line = stream.readline()
+        with source.open("rb") as stream:
+            header_line = stream.readline().decode("utf-8-sig")
             header = next(csv.reader([header_line]))
             lower = [name.strip().lower() for name in header]
             if any(name in {"anomaly_class", "ground_truth", "gt"} for name in lower):
@@ -937,4 +1063,44 @@ def build_static36_schedule(role_manifest: Mapping[str, Any], *,
     }
     schedule["schedule_sha256"] = _sha256_bytes(_canonical_json(schedule))
     return schedule
+
+
+def prepare_visa_exception_candidate(*, identity_rows: Sequence[Mapping[str, Any]],
+                                     proposed_unit_by_image: Mapping[str, str]) -> dict[str, Any]:
+    """Validate a supplied identity/duplicate-cluster proposal without enabling it.
+
+    Unit identities must be supplied by the future registered exception; this
+    function does not infer physical objects or authorize online VisA feedback.
+    """
+    rows = list(identity_rows)
+    allowed = {"image_identity_sha256", "image_content_sha256", "role"}
+    if not rows or any(not isinstance(row, Mapping) or set(row) != allowed for row in rows):
+        raise IdentityAuditError("VisA candidate requires outcome-free identity rows")
+    images = [str(row.get("image_identity_sha256", "")) for row in rows]
+    contents = [str(row.get("image_content_sha256", "")) for row in rows]
+    roles = [row.get("role") for row in rows]
+    if (len(set(images)) != len(images) or set(images) != set(proposed_unit_by_image) or
+            roles.count("SUPPORT") != 4 or roles.count("C64") != 64 or "TEST" not in roles or
+            any(role not in {"SUPPORT", "C64", "TEST"} for role in roles) or
+            any(not re.fullmatch(r"[0-9a-f]{64}", value) for value in images + contents)):
+        raise IdentityAuditError("VisA candidate identities or 4+64/TEST roles are incomplete")
+    units = [str(proposed_unit_by_image[image]) for image in images]
+    if any(not re.fullmatch(r"[0-9a-f]{64}", unit) for unit in units):
+        raise IdentityAuditError("VisA candidate unit identities must be opaque SHA-256 digests")
+    unit_roles: dict[str, set[str]] = defaultdict(set)
+    content_units: dict[str, set[str]] = defaultdict(set)
+    for role, content, unit in zip(roles, contents, units):
+        unit_roles[unit].add(str(role))
+        content_units[content].add(unit)
+    train_units = [unit for role, unit in zip(roles, units) if role in {"SUPPORT", "C64"}]
+    if len(set(train_units)) != 68 or any(len(value) != 1 for value in unit_roles.values()):
+        raise IdentityAuditError("VisA candidate unit crosses Support/C64/TEST roles")
+    if any(len(value) != 1 for value in content_units.values()):
+        raise IdentityAuditError("byte-identical images must share a proposed duplicate-cluster unit")
+    return {"dataset_id": "visa_1cls", "query_rate_target": 0.10,
+            "test_image_count": roles.count("TEST"),
+            "test_unit_count": len({unit for role, unit in zip(roles, units) if role == "TEST"}),
+            "image_to_unit": dict(zip(images, units)),
+            "physical_independence_claim": "NOT_ESTABLISHED",
+            "status": "RESEARCHER_DECISION_REQUIRED_NOT_EXECUTABLE"}
 

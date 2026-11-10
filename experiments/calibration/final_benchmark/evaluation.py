@@ -4,12 +4,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 import numbers
 import re
 from typing import Any, Mapping, Sequence
 
 from .metrics import binary_metrics, worst_256_window_ber
-from .runner import STATIC_ARMS, StageASeal
+from .runner import StageASeal, static_arms_for_condition, CampaignProtocolError
 
 
 class EvaluationProtocolError(RuntimeError):
@@ -88,14 +89,32 @@ def evaluate_sealed_category(*, dataset_id: str, category: str,
     scores["N-shadow"] = [float(row["n_shadow_score"]) for row in rows]
     # N-shadow reports its registered prequential AUROC/AP diagnostic only.
     predictions["N-shadow"] = [0] * len(rows)
-    for baseline in STATIC_ARMS:
-        scores[baseline] = [float(row["static_scores"][baseline]) for row in rows]
-        predictions[baseline] = [int(row["static_predictions"][baseline]) for row in rows]
+    try:
+        static_arms = static_arms_for_condition(seal.run_condition)
+    except CampaignProtocolError as exc:
+        raise EvaluationProtocolError("Stage A seal has an invalid condition") from exc
+    for row in rows:
+        for field in ("static_scores", "static_predictions", "static_thresholds"):
+            if not isinstance(row.get(field), Mapping) or set(row[field]) != set(static_arms):
+                raise EvaluationProtocolError("static baseline schema does not match the registered condition")
+    for baseline in static_arms:
+        values = [float(row["static_scores"][baseline]) for row in rows]
+        thresholds = [float(row["static_thresholds"][baseline]) for row in rows]
+        raw_predictions = [row["static_predictions"][baseline] for row in rows]
+        if (not all(math.isfinite(value) for value in values + thresholds) or
+                len(set(thresholds)) != 1 or
+                any(isinstance(value, bool) or not isinstance(value, numbers.Integral) or value not in (0, 1)
+                    for value in raw_predictions) or
+                any(int(pred) != int(score >= threshold)
+                    for pred, score, threshold in zip(raw_predictions, values, thresholds))):
+            raise EvaluationProtocolError("static predictions must use their own unchanged frozen threshold")
+        scores[baseline] = values
+        predictions[baseline] = [int(value) for value in raw_predictions]
 
     results: dict[str, Any] = {}
     for arm, values in scores.items():
         metric = binary_metrics(labels, values, predictions[arm])
-        if arm in ("N-shadow", *STATIC_ARMS):
+        if arm == "N-shadow":
             metric = {key: metric[key] for key in ("status", "n", "positive_count", "negative_count", "auroc", "ap")}
         else:
             metric["worst_256"] = worst_256_window_ber(dataset_id, labels, predictions[arm])
@@ -115,6 +134,7 @@ def evaluate_sealed_category(*, dataset_id: str, category: str,
         first_queried_defect_position[arm] = min(defect_positions) if defect_positions else None
     return {
         "dataset_id": dataset_id, "category": category,
+        "condition_id": seal.run_condition,
         "stage_a_seal_status": seal.status,
         "stage_a_score_rows_sha256": seal.score_rows_sha256,
         "label_projection_source_sha256": label_projection.source_sha256,

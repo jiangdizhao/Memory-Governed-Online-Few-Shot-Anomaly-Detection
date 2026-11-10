@@ -4,12 +4,13 @@
 
 ## Required before any Gate 2 resource preflight
 
-1. Independent review of the new Gate 1 code, tests, identity receipts and frozen Gate0 consistency.
-2. Official release provenance SHA-256 receipt for Real-IAD and resolution of every local identity/camera/group/duplicate exception.
-3. A documented official VisA physical-group key or a separate researcher decision to exclude the affected online condition; no identity-level grouping assumption is available from `1cls.csv`.
-4. A concrete source-bound native backend with separate F-B/K-B/F-M/K-M Greedy, correction, threshold and controller state; validated R7/R9/R10 score/update parity; C64 write protection; and N-shadow read-only F-B Greedy plus negative-only correction behavior.
-5. Static-36+32 candidate identity/tie construction verified against the existing A3b/A4 source contract, plus source-parity checks for its 8,192 FP16 bank and C32 threshold.
-6. Separate execution authorization naming the exact reviewed source, data manifest, categories/conditions, resource limits and label-projection scope.
+1. Researcher and independent review of the prior census access deviation: the Real-IAD JSON decoder transiently materialized TEST outcome/mask values, including protected categories, and the VisA CSV reader decoded whole rows containing TEST cells. See the corrected identity audit. The repaired projections were exercised only on synthetic data.
+2. A researcher-approved release identity convention or authenticated Real-IAD release receipt, plus resolution of the recorded cross-category duplicate's provenance. The existing local snapshot hashes identify local bytes but do not authenticate a publisher release.
+3. An explicit VisA physical-group or image/duplicate-cluster decision. The candidate-unit adapter remains non-executable; the current online runner still needs a variable-size unit path before VisA could run.
+4. Independent review of the new concrete F-B/K-B/F-M/K-M backend, N-shadow and query-only broker, followed by GPU numerical checks of independent native score/update, protected C64/B3 and shared-feature behavior. The completed CPU checks cover source primitives and synthetic integration, not the full GPU constructor.
+5. GPU verification of the source-connected A4/A3b Static-36+32 candidate construction and tie behavior, 8,192 FP16 bank, native static scorer and C32 q90 threshold. The comparison is P0 only.
+6. A separately authorized plan for incomplete category recovery: the new broker's in-memory consumed-query index is not reconstructed after a restart. Preserve incomplete journals and feedback.
+7. Separate execution authorization naming the exact reviewed source, data manifest, categories/conditions, resource limits and label-projection scope.
 
 ## Gate 2 measurements
 
@@ -29,21 +30,14 @@ Do not run a full scientific trajectory as a substitute for this representative 
 
 ## Reproducibility commands
 
-Identity-only local census (non-overwriting output):
-
-```powershell
-& 'D:\anaconda3\envs\torch\python.exe' -m experiments.calibration.final_benchmark.identity_cli `
-  --realiad-root 'G:\dataset\realiad' `
-  --realiad-json-root 'G:\dataset\realiad\jsons\realiad_jsons' `
-  --visa-root 'G:\dataset\VisA' `
-  --output-dir 'outputs\calibration\final_benchmark_gate1\attempt_02'
-```
+The local census is already recorded in `attempt_01`; do not repeat it merely for redundancy. Its prior access descriptions are corrected in the identity audit. Preserve those historical files.
 
 CPU synthetic verification:
 
 ```powershell
-& 'D:\anaconda3\envs\torch\python.exe' -m unittest tests.calibration.final_benchmark.test_gate1_synthetic -v
+$env:CUDA_VISIBLE_DEVICES=''
+& 'D:\anaconda3\envs\torch\python.exe' -m unittest discover -s tests/calibration/final_benchmark -p 'test*.py' -v
 & 'D:\anaconda3\envs\torch\python.exe' -m compileall -q experiments\calibration\final_benchmark tests\calibration\final_benchmark
 ```
 
-`attempt_01` already contains the local Gate 1 census; do not rerun into or overwrite it. A new output directory is required for a repeat.
+Do not overwrite `attempt_01`.

@@ -1,7 +1,7 @@
 # FINAL-GATE1 Dataset Identity Audit
 
 **Status:** local identity census completed; official release and role certification pending.  
-**Access:** identity/provenance metadata and opaque image-byte hashing only. No TEST labels, masks, image decoding, inference or evaluation.
+**Access correction:** The original Real-IAD census projection transiently decoded TEST annotation outcome and mask-field values before discarding them. They were not returned in the identity records or written to the checked manifests. This was unintended access and the earlier assertion that no TEST outcome field was accessed was incorrect. The original VisA scanner also decoded complete CSV lines into text buffers containing TEST cells, although it did not assemble or return those cells. Mask files were not opened; no real image decoding, inference or evaluation was performed. Neither census was repeated for this repair.
 
 ## Source inventory and private receipts
 
@@ -19,9 +19,11 @@ Files:
 
 The private manifests store opaque image/group/content/locator digests, original metadata position, role eligibility and sanitized category summaries. They do not store raw image paths, TEST labels, mask paths or pixel data. The report does not reproduce image-level identity rows.
 
+The existing census manifests and receipts are preserved as historical artifacts. Their earlier `NOT_ACCESSED` descriptions do not capture the transient parsing behavior disclosed above and are superseded by this correction.
+
 ## Real-IAD
 
-Registered source roots: `G:\dataset\realiad` and `G:\dataset\realiad\jsons\realiad_jsons`. The annotation inventory contains 30 category JSON files. The parser projects only the permitted metadata fields and official TRAIN image-level class needed for normal eligibility; TEST `anomaly_class` and all mask fields are dropped before records are returned. Official TEST image membership and camera/group metadata are derived from the official JSON identity keys; the filename/capture-session string is never used as a defect label.
+Registered source roots: `G:\dataset\realiad` and `G:\dataset\realiad\jsons\realiad_jsons`. The annotation inventory contains 30 category JSON files. The original parser discarded TEST `anomaly_class` and mask fields before returning records, but its JSON decoder had already materialized those values transiently. The corrected parser scans field boundaries and decodes only permitted identity fields and TRAIN normal-eligibility classes; a synthetic sentinel test checks that TEST outcomes and mask values are not decoded. Official TEST image membership and camera/group metadata derive from official JSON identity keys; filename/session text is never used as a defect label.
 
 | Census item | Result |
 |---|---:|
@@ -37,7 +39,7 @@ Registered source roots: `G:\dataset\realiad` and `G:\dataset\realiad\jsons\real
 
 **Certification result:** `IDENTITY_CENSUS_LOCAL_ONLY_OFFICIAL_RELEASE_PROVENANCE_PENDING`. All 30 categories have at least 167 locally identified normal TRAIN groups, complete five-camera TEST groups, no TRAIN-normal/TEST group overlap and no sanitized projection error. Local annotation/image hashes establish a reproducible local snapshot, not the identity of an official release. No externally verified release receipt or official release SHA-256 was supplied. Therefore the frozen `dataset_release_sha256` role, event and Static-36+32 hashes were deliberately not generated. Support/C64 identities and P0/P1/P2 stream manifests are not certified.
 
-**Exact duplicate review:** one pair of byte-identical TEST files occurs under different official image identities and different local locator digests in `button_battery` and `phone_battery` (camera IDs 1 and 5; distinct opaque Source Group digests). No duplicate crosses TRAIN/TEST. The images were not decoded and no TEST outcome field was accessed. The local metadata establishes distinct category/identity/group keys but does not establish whether the duplicate is a legitimate shared source, a release-copy artifact or a provenance error. This cross-category dependency remains an unresolved Gate 1 provenance item; the pair is retained in the private manifest and must not be silently deduplicated from evaluation.
+**Exact duplicate review:** one pair of byte-identical TEST files occurs under different official image identities and different local locator digests in `button_battery` and `phone_battery` (camera IDs 1 and 5; distinct opaque Source Group digests). No duplicate crosses TRAIN/TEST. The images were not decoded. The original projection's transient decoding of outcome fields is disclosed above; the duplicate audit did not use outcome values. The local metadata establishes distinct category/identity/group keys but does not establish whether the duplicate is a legitimate shared source, a release-copy artifact or a provenance error. This cross-category dependency remains an unresolved Gate 1 provenance item; the pair is retained in the private manifest and must not be silently deduplicated from evaluation.
 
 | Real-IAD category | TRAIN-normal groups | Complete TEST groups | TEST events | Invalid TEST groups | TRAIN/TEST overlap | Local status |
 |---|---:|---:|---:|---:|---:|---|
@@ -74,7 +76,7 @@ Registered source roots: `G:\dataset\realiad` and `G:\dataset\realiad\jsons\real
 
 ## VisA 1cls
 
-Registered source root: `G:\dataset\VisA`, using the official `split_csv/1cls.csv` and dataset license. The CSV identity projection retains object, split and image fields; it reads TRAIN `label` only to identify TRAIN-normal eligibility and skips the TEST `label` and `mask` cell contents. Mask files are not opened.
+Registered source root: `G:\dataset\VisA`, using the official `split_csv/1cls.csv` and dataset license. The original census read each CSV row as UTF-8 text, so TEST outcome and mask-cell characters were present in the row buffer; the scanner did not assemble or return those cells. The corrected scanner reads bytes and decodes only permitted identity fields and TRAIN labels. A synthetic invalid-UTF-8 sentinel test verifies that TEST outcome/mask bytes are skipped. Mask files were not opened; the census was not repeated.
 
 | Census item | Result |
 |---|---:|
@@ -116,12 +118,14 @@ Registered source root: `G:\dataset\VisA`, using the official `split_csv/1cls.cs
 
 The role-builder implements the Gate0 NFC/UTF-8 `Gate0-role-v1`, `Gate0-image-v1`, `Gate0-stream-v1`, `Gate0-event-v1`, and `Gate0-static36-c64-v1` digest strings. It requires a caller-supplied 64-character official release digest. It does not substitute the local snapshot digest. P0/P1 share Support Seed 0 identities; P2 uses Support Seed 1; streams use Stream Seeds 0 and 11. Real-IAD stream ordering keeps the five cameras contiguous and orders cameras 1 through 5.
 
+The annotation artifact hashes, registered paths and local snapshot digest identify this local dataset snapshot reproducibly; they do not authenticate it as a publisher release. No publisher-authenticated release checksum was present in the reviewed local records. A narrow researcher decision could approve a specifically defined, checksummed local snapshot as the value used for Gate 0's `dataset_release_sha256` domain, explicitly recording that it is a local convention rather than publisher authentication. The value, canonical construction and source scope must be approved and frozen before role/event manifests are generated; no substitution has been made here.
+
 Static-36+32 schedule construction preserves the principal four-Support-plus-64-C64 manifest and separately ranks the same P0 C64 set into 32 reference and 32 C32 identities. The schedule is metadata-only and is not emitted for the real datasets while official release identity remains unresolved.
 
 ## Access record
 
-- Real-IAD TEST outcome field: not exposed to callers or written to manifests.
-- VisA TEST label cells: skipped by the projection.
+- Real-IAD original census: TEST outcome and mask metadata values were transiently decoded by the former JSON parser, then discarded before the projected records were returned. The checked identity manifests contain neither field. No claim is made that this was compliant with the identity-only access restriction. The repair uses boundary-based selective decoding and was tested only on synthetic annotations.
+- VisA original census: TEST label and mask cells were present in decoded row buffers, but were not assembled into cell values or returned in the identity projection. The repaired byte scanner avoids decoding those cells; it was tested only with synthetic rows.
 - Masks: not opened.
 - Image bytes: opened only as opaque streams for SHA-256; no image decoder or model was called.
 - GPU/model: not accessed.
