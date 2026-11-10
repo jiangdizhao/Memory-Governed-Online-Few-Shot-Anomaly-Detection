@@ -1,12 +1,12 @@
 # Final Benchmark Gate 0 — Executive Summary
 
-**Status:** `GATE0_R2_MINIMAL_PATCH_COMPLETE_RESEARCHER_REVIEW_PENDING`
+**Status:** `GATE0_SCIENTIFIC_DESIGN_FROZEN_RESEARCHER_APPROVED`
 **Revision date:** 2026-11-11
-**Checkout:** `calibration-stage0-contract-20261029`, R2 baseline HEAD `f202d4055d0219dfa377e9612d5bb570c3afd96e`
+**Checkout:** `calibration-stage0-contract-20261029`, approved R2 base commit `2511d4f5b61efe869994b23afb398040eb49d270`
 
-This R2 revision incorporates three targeted corrections to the R1 protocol candidate. None is final researcher approval; this document does not freeze Gate 0 or authorize Gate 1.
+The researcher approved the six Gate 0 scientific decisions on 2026-11-11 following independent ChatGPT review of the R2 protocol. The scientific design is frozen at this level; this is not supervisor sign-off, data certification, implementation freeze, or Gate 1 authorization.
 
-The six-document Gate 0 set is:
+The six Gate 0 protocol documents remain:
 
 1. `GATE0_SCIENTIFIC_CONTRACT_DRAFT.md`
 2. `GATE0_DATA_AND_INFORMATION_ACCESS.md`
@@ -15,21 +15,23 @@ The six-document Gate 0 set is:
 5. `GATE0_DECISIONS_AND_BLOCKERS.md`
 6. `README.md` (this summary)
 
-**Pending Gate 0 decisions:** query cap and `Margin_rho` details, including whether the proposed 0.003 realized-rate tolerance is approved; Real-IAD Group-atomic feedback; selection/group-key policy, especially VisA's group identity exception; exposure terminology; the primary statistical/practical decision rule and a separate Signed kNN non-inferiority margin `delta_K`; Static-36+32 construction and VisA eligibility; and whether to require a credible source-faithful external online comparison or limit complete-system competitive claims. N-shadow's scientific definition is simplified here; implementation fidelity remains a Gate 1 source-review requirement. Exact identity manifests are deferred to a separately authorized Gate 1 metadata operation and do not prevent Gate 0 design review.
+The separate [researcher approval and freeze record](GATE0_RESEARCHER_APPROVAL_AND_FREEZE.md) documents the six approvals.
 
-## Current recommendation
+**Approved design:** all six P0 protocol decisions recorded in the approval document. **Deferred dependencies:** actual identity/provenance manifests and VisA group verification require separate Gate 1 authorization; source-fidelity and implementation review remain Gate 1 work; resource limits remain Gate 2 measurements. `delta_K` is not approved and is required before any formal Signed kNN non-inferiority claim. The 0.01 BER value is not an approved hard success criterion. N-shadow remains a passive non-querying, normal-only matched-feedback control; its implementation fidelity remains subject to Gate 1 review.
+
+## Researcher-approved scientific design
 
 - Real-IAD: **full-category benchmark reassessment on a historically exposed dataset**.
 - Real-IAD `H_Q`: the **primary prespecified benchmark contrast** on that historically exposed dataset, not independent confirmation.
 - VisA: **cross-dataset external validation**, with independent-confirmation status conditional on exposure and identity/provenance certification.
-- Query budgets: equal caps mean equal maximum allowances; realized query counts/rates can differ. The 0.003 candidate rate-matching rule is an additional description, not a condition for the equal-cap BER comparison.
-- Support/C64 construction: freeze the deterministic metadata-only role-selection rule in the Gate 0 decision, then generate actual image/group identity hashes only after separate Gate 1 authorization.
-- Static-36+32: required static baseline for all 30 Real-IAD categories at P0; conditionally required for all 12 VisA categories at P0 if identity/group eligibility and provenance pass. Exact identity split, reference construction, byte cap and threshold remain pending researcher review.
-- Feedback: recommend Group-atomic feedback for five-view Real-IAD Source Groups; this changes historical R7/D2/B/C event timing and must not be described as historical parity.
+- Query budgets: Real-IAD 3%, VisA 10%, category-level hard caps, approved `Margin_rho` and simplified BN+Band; equal caps mean equal maximum allowances, not equal realized spending. The approved 0.003 criterion governs only the additional approximately rate-matched description. No forced queries or top-ups.
+- Support/C64 construction: use the approved deterministic metadata-only role-selection rule; generate actual image/group identity hashes only after separate Gate 1 authorization.
+- Static-36+32: required for Real-IAD all 30 categories at P0; conditional for VisA all 12 categories at P0 if eligibility/provenance passes. Approved target: deterministic 36/32 identity allocation, single K-Center 8,192-prototype FP16 fixed bank, and C32 q90 static threshold, subject to Gate 1 source-fidelity checks.
+- Feedback: approved Group-atomic feedback for five-view Real-IAD Source Groups; all five views are scored and sealed before purchased feedback changes model state. It differs from historical R7/D2/B/C event timing and is not historical parity.
 - N-shadow: passive, non-querying matched-feedback mechanism control that reads F-B's Greedy state and adds only negative C1 anchors after verified-normal feedback.
 
-For the Full C1 versus Signed kNN contrast, a nonsignificant difference is not equivalence or non-inferiority. A formal Signed kNN non-inferiority claim requires an independently justified, approved positive `delta_K`; it is not automatically 0.01. Static-36+32 is a same-total-normal-information allocation comparator, not a mechanism ablation and not historical A4's dynamic D arm.
+The primary prespecified Real-IAD contrast is `H_Q` on a historically exposed dataset; it is not independent confirmation. VisA is cross-dataset validation, with any independent-confirmation claim conditional on provenance. A nonsignificant Full C1 versus Signed kNN difference is not equivalence or non-inferiority. A formal Signed kNN non-inferiority claim requires a separately approved positive `delta_K`; it is not automatically 0.01. Static-36+32 is a same-total-normal-information allocation comparator, not a mechanism ablation and not historical A4's dynamic D arm.
 
 The strict-four-total study remains separate and on HOLD: existing evidence is four deployed Supports plus 64 additional C64 normals, while the tracked C0 decision requires its own data-access comparison, model freeze and authorization. No identity manifests were generated. No data, labels, masks, protected outcomes, GPU or experiments were accessed. No historical source, test, result, checkpoint or artifact was modified; no commit or push was made.
 
-Gate 1 remains unauthorized. The independent metadata operation must be separately approved after Gate 0 freezes dataset releases, role algorithms, group/timing rules, seeds, order construction and manifest schema. Gate 2 resource ceilings remain measurement-dependent.
+Gate 1 remains unauthorized. Actual data identities and VisA group provenance are not certified; any metadata operation requires separate authorization. Implementation/source-fidelity review and execution authorization are also deferred. Gate 2 resource ceilings remain measurement-dependent. Supervisor sign-off is not asserted.
