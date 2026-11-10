@@ -35,6 +35,7 @@ class FsyncGroupSink:
         self.event_count = 0
         self.closed = False
         self._sealed_queries: dict[tuple[str, int], Mapping[str, Any]] = {}
+        self._visa_units: set[str] = set()
 
     @staticmethod
     def _reject_outcomes(value: Any) -> None:
@@ -102,6 +103,72 @@ class FsyncGroupSink:
         self._sealed_queries.update(queries)
         self.group_count += 1
         self.event_count += 5
+        return digest
+
+    def append_unit(self, *, group_seal: Mapping[str, Any],
+                    score_rows: Sequence[Mapping[str, Any]]) -> str:
+        """Durably seal one VisA image/duplicate-cluster unit before feedback."""
+        if self.closed or not score_rows:
+            raise SinkProtocolError("atomic-unit journal is closed or unit is empty")
+        self._reject_outcomes(group_seal)
+        self._reject_outcomes(score_rows)
+        unit_sha = group_seal.get("atomic_unit_sha256")
+        unit_kind = group_seal.get("atomic_unit_kind")
+        if (unit_kind not in {"VISA_SINGLE_IMAGE", "VISA_EXACT_DUPLICATE_CLUSTER"} or
+                not isinstance(unit_sha, str) or len(unit_sha) != 64 or
+                any(char not in "0123456789abcdef" for char in unit_sha) or
+                group_seal.get("unit_candidate_sha256") is None or
+                group_seal.get("unit_approval_sha256") is None or
+                group_seal.get("status") != "SEALED_BEFORE_LABEL_DISCLOSURE"):
+            raise SinkProtocolError("VisA unit seal lacks its candidate-bound authorization")
+        if hashlib.sha256(_canonical(list(score_rows))).hexdigest() != group_seal.get("score_rows_sha256"):
+            raise SinkProtocolError("atomic-unit score-row digest differs from its sealed rows")
+        start = int(group_seal.get("start_position", -1))
+        stop = int(group_seal.get("end_position_exclusive", -1))
+        positions = [int(row.get("position", -1)) for row in score_rows]
+        event_ids = [str(row.get("event_id_sha256", "")) for row in score_rows]
+        image_ids = [str(row.get("image_identity_sha256", "")) for row in score_rows]
+        if (positions != list(range(start, stop)) or stop - start != len(score_rows) or
+                start != self.event_count or unit_sha in self._visa_units or
+                len(set(event_ids)) != len(event_ids) or len(set(image_ids)) != len(image_ids) or
+                hashlib.sha256(_canonical(event_ids)).hexdigest() != group_seal.get("event_order_sha256") or
+                any(row.get("atomic_unit_sha256") != unit_sha or
+                    row.get("atomic_unit_kind") != unit_kind for row in score_rows) or
+                group_seal.get("source_group_sha256") != unit_sha):
+            raise SinkProtocolError("VisA rows do not match one ordered, registered atomic unit")
+        queries: dict[tuple[str, int], Mapping[str, Any]] = {}
+        queried_arms: set[str] = set()
+        for row in score_rows:
+            if not isinstance(row.get("query_actions"), Mapping):
+                raise SinkProtocolError("VisA score row has no query-action map")
+            for arm, action in row["query_actions"].items():
+                if (arm not in PRINCIPAL_ARMS or not isinstance(action, Mapping) or
+                        not isinstance(action.get("executed"), bool)):
+                    raise SinkProtocolError("atomic-unit query action is malformed")
+                receipt_sha = action.get("query_receipt_sha256")
+                if action["executed"]:
+                    if arm in queried_arms:
+                        raise SinkProtocolError("an atomic unit cannot purchase two labels for one arm")
+                    queried_arms.add(arm)
+                    if (not isinstance(receipt_sha, str) or len(receipt_sha) != 64 or
+                            any(char not in "0123456789abcdef" for char in receipt_sha)):
+                        raise SinkProtocolError("executed atomic-unit query lacks its receipt digest")
+                    key = (str(arm), int(row["position"]))
+                    if key in self._sealed_queries or key in queries:
+                        raise SinkProtocolError("duplicate sealed atomic-unit query identity")
+                    queries[key] = {"event_id_sha256": row["event_id_sha256"],
+                        "image_identity_sha256": row["image_identity_sha256"],
+                        "source_group_sha256": unit_sha,
+                        "query_receipt_sha256": receipt_sha}
+                elif receipt_sha is not None:
+                    raise SinkProtocolError("unexecuted VisA action carries a query receipt")
+        envelope = {"schema": "final-benchmark.stage-a-atomic-unit.v1",
+                    "unit_seal": dict(group_seal), "score_rows": list(score_rows)}
+        digest = self._write_payload(envelope)
+        self._sealed_queries.update(queries)
+        self._visa_units.add(unit_sha)
+        self.group_count += 1
+        self.event_count += len(score_rows)
         return digest
 
     def query_is_sealed(self, *, arm_id: str, event: Any,

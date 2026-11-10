@@ -1066,11 +1066,13 @@ def build_static36_schedule(role_manifest: Mapping[str, Any], *,
 
 
 def prepare_visa_exception_candidate(*, identity_rows: Sequence[Mapping[str, Any]],
-                                     proposed_unit_by_image: Mapping[str, str]) -> dict[str, Any]:
+                                     proposed_unit_by_image: Mapping[str, str],
+                                     proposed_test_unit_order: Sequence[str]) -> dict[str, Any]:
     """Validate a supplied identity/duplicate-cluster proposal without enabling it.
 
-    Unit identities must be supplied by the future registered exception; this
-    function does not infer physical objects or authorize online VisA feedback.
+    Unit identities and their TEST order must be supplied by the future
+    registered exception; this function does not infer physical objects or
+    authorize online VisA feedback.
     """
     rows = list(identity_rows)
     allowed = {"image_identity_sha256", "image_content_sha256", "role"}
@@ -1097,10 +1099,33 @@ def prepare_visa_exception_candidate(*, identity_rows: Sequence[Mapping[str, Any
         raise IdentityAuditError("VisA candidate unit crosses Support/C64/TEST roles")
     if any(len(value) != 1 for value in content_units.values()):
         raise IdentityAuditError("byte-identical images must share a proposed duplicate-cluster unit")
-    return {"dataset_id": "visa_1cls", "query_rate_target": 0.10,
-            "test_image_count": roles.count("TEST"),
-            "test_unit_count": len({unit for role, unit in zip(roles, units) if role == "TEST"}),
-            "image_to_unit": dict(zip(images, units)),
-            "physical_independence_claim": "NOT_ESTABLISHED",
-            "status": "RESEARCHER_DECISION_REQUIRED_NOT_EXECUTABLE"}
+    image_to_unit = dict(zip(images, units))
+    content_by_image = dict(zip(images, contents))
+    test_unit_members: dict[str, list[str]] = defaultdict(list)
+    for image, role, unit in zip(images, roles, units):
+        if role == "TEST":
+            test_unit_members[unit].append(image)
+    members = {unit: sorted(unit_images) for unit, unit_images in sorted(test_unit_members.items())}
+    unit_order = [str(unit) for unit in proposed_test_unit_order]
+    if (len(unit_order) != len(members) or len(set(unit_order)) != len(unit_order) or
+            set(unit_order) != set(members)):
+        raise IdentityAuditError("VisA candidate requires an explicit complete ordered TEST-unit registration")
+    candidate = {"schema": "final-benchmark.visa-unit-candidate.v1",
+        "dataset_id": "visa_1cls", "query_rate_target": 0.10,
+        "test_image_count": roles.count("TEST"),
+        "test_unit_count": len(members),
+        "test_unit_order": unit_order,
+        "image_to_unit": image_to_unit,
+        "test_unit_members": members,
+        "test_unit_kind": {unit: ("SINGLE_IMAGE" if len(unit_images) == 1 else "EXACT_DUPLICATE_CLUSTER")
+                           for unit, unit_images in members.items()},
+        "physical_independence_claim": "NOT_ESTABLISHED",
+        "status": "RESEARCHER_DECISION_REQUIRED_NOT_EXECUTABLE"}
+    # A cluster is acceptable only when every member is an exact byte duplicate.
+    for unit, unit_images in members.items():
+        contents_for_unit = {content_by_image[image] for image in unit_images}
+        if len(contents_for_unit) != 1:
+            raise IdentityAuditError("VisA candidate cluster contains nonidentical image content")
+    candidate["candidate_sha256"] = _sha256_bytes(_canonical_json(candidate))
+    return candidate
 

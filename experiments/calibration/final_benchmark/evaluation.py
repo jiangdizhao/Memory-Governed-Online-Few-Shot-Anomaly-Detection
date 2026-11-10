@@ -25,6 +25,8 @@ class LabelProjectionAuthorization:
     dataset_id: str
     category: str
     stage_a_seal_sha256: str
+    unit_candidate_sha256: str | None = None
+    unit_approval_sha256: str | None = None
 
 
 def _canonical(value: Any) -> bytes:
@@ -54,6 +56,15 @@ def evaluate_sealed_category(*, dataset_id: str, category: str,
             seal.expected_event_count != len(rows) or
             not re.fullmatch(r"[0-9a-f]{64}", seal.durable_seal_sha256)):
         raise EvaluationProtocolError("Stage B cannot evaluate an incomplete or mismatched Stage A seal")
+    if dataset_id == "visa_1cls":
+        if (seal.atomic_unit_kind != "VISA_CANDIDATE_ATOMIC_UNIT" or
+                not re.fullmatch(r"[0-9a-f]{64}", str(seal.unit_candidate_sha256 or "")) or
+                not re.fullmatch(r"[0-9a-f]{64}", str(seal.unit_approval_sha256 or "")) or
+                label_projection.unit_candidate_sha256 != seal.unit_candidate_sha256 or
+                label_projection.unit_approval_sha256 != seal.unit_approval_sha256):
+            raise EvaluationProtocolError("VisA Stage B requires the same separately approved unit candidate")
+    elif dataset_id != "realiad" or seal.atomic_unit_kind != "REAL_IAD_SOURCE_GROUP":
+        raise EvaluationProtocolError("dataset or atomic-unit kind is not registered for Stage B")
     if (_digest(list(rows)) != seal.score_rows_sha256 or
             _digest(list(group_seals)) != seal.group_seals_sha256 or
             len(group_seals) != seal.group_count):
@@ -61,13 +72,28 @@ def evaluate_sealed_category(*, dataset_id: str, category: str,
     cursor = 0
     for group in group_seals:
         start, stop = int(group.get("start_position", -1)), int(group.get("end_position_exclusive", -1))
-        if (start != cursor or stop - start != 5 or
+        if (start != cursor or stop <= start or stop - start != len(rows[start:stop]) or
                 group.get("status") != "SEALED_BEFORE_LABEL_DISCLOSURE"):
-            raise EvaluationProtocolError("Stage A group seal order is incomplete or noncontiguous")
+            raise EvaluationProtocolError("Stage A atomic-unit seal order is incomplete or noncontiguous")
         local = rows[start:stop]
-        if ([int(row.get("camera_id", -1)) for row in local] != [1, 2, 3, 4, 5] or
-                any(row.get("source_group_sha256") != group.get("source_group_sha256") for row in local)):
-            raise EvaluationProtocolError("Stage A event rows do not match their sealed five-view group")
+        if dataset_id == "realiad":
+            if (stop - start != 5 or
+                    [int(row.get("camera_id", -1)) for row in local] != [1, 2, 3, 4, 5] or
+                    any(row.get("source_group_sha256") != group.get("source_group_sha256") for row in local)):
+                raise EvaluationProtocolError("Stage A event rows do not match their sealed five-view group")
+        else:
+            unit_sha = group.get("atomic_unit_sha256")
+            unit_kind = group.get("atomic_unit_kind")
+            if (unit_sha != group.get("source_group_sha256") or
+                    unit_kind not in {"VISA_SINGLE_IMAGE", "VISA_EXACT_DUPLICATE_CLUSTER"} or
+                    group.get("unit_candidate_sha256") != seal.unit_candidate_sha256 or
+                    group.get("unit_approval_sha256") != seal.unit_approval_sha256 or
+                    any(row.get("atomic_unit_sha256") != unit_sha or
+                        row.get("atomic_unit_kind") != unit_kind for row in local)):
+                raise EvaluationProtocolError("VisA events do not match their approved sealed unit")
+            for arm in ("F-B", "K-B", "F-M", "K-M"):
+                if sum(bool(row["query_actions"][arm]["executed"]) for row in local) > 1:
+                    raise EvaluationProtocolError("VisA unit contains more than one executed query for an arm")
         cursor = stop
     if cursor != len(rows):
         raise EvaluationProtocolError("Stage A group seals do not cover all sealed score rows")

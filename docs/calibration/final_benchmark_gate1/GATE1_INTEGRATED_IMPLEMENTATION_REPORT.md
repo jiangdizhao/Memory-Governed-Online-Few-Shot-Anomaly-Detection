@@ -1,12 +1,12 @@
 # FINAL-GATE1 Native Backend and Scientific Validity Report
 
-**Status:** `GATE1_PARTIAL_NATIVE_BLOCKER_REMAINS`
+**Status:** `GATE1_IMPLEMENTATION_COMPLETE_GATE2_NUMERICAL_REVIEW_PENDING`
 
-**Branch / base HEAD:** `calibration-stage0-contract-20261029` / `6cdd20fcb8510792371f4719cc046d1fabbc37b0`
+**Branch / base HEAD:** `calibration-stage0-contract-20261029` / `f9b3ce3919aadd1129472967bb14cb0cabb9f50d`
 
 **Frozen Gate 0 commit:** `a34b870fd4700bfe970e459d2963a602f04b1341`
 
-**Working tree:** Gate 1 repair source, tests and documents are uncommitted. The prior `attempt_01/gate1_source_identity.json` binds the earlier implementation and is preserved as historical evidence; it does not identify these edits.
+**Working tree:** Gate 1 closeout source, tests and documents are uncommitted. Existing unrelated research artifacts remain untouched. The prior `attempt_01/gate1_source_identity.json` binds an earlier implementation and remains preserved as historical evidence; it does not identify these edits.
 
 ## Scientific access correction
 
@@ -22,6 +22,8 @@ N-shadow has an independent negative-only C1 codebook and reads F-B's Greedy sta
 
 `label_broker.py` adds a Real-IAD query-only broker and private fsynced feedback receipt. The sink records executed query identities only after the full group is fsynced, limits each arm to one query per group, and consumes a receipt once. The broker validates the annotation hash and original position, checks the selected official image identity, and decodes only that purchased image's `anomaly_class`; a synthetic NG group with normal and defect views verifies image-level semantics. The broker and sink do not yet provide restart/recovery of unconsumed receipts after a process failure; an incomplete category must remain incomplete and its journal be preserved.
 
+`entrypoint.py` now connects the certified identity/release/role bundle, `NativeInputEncoder`, four-arm native backend, query-only Real-IAD broker, dataset-aware runner, fsync journal, and Stage B evaluator. It verifies separate private locator sets for the 4+64 TRAIN roles and the registered TEST stream. It has a one-category, 5-or-10-event numerical preflight path that creates no Stage A seal and has no label access. Both entry paths require source- and manifest-bound authorizations; Stage B invokes its label projection callback only after a separate seal-bound grant passes. The entrypoint rejects the current uncertified local release identity. No entrypoint or model path was executed against real data in this task.
+
 ## Static baselines and metrics
 
 Static-4+64 uses an independently built native fixed scorer whose fixed-bank digest must equal the principal four-Support bank; its C64 q90 threshold is frozen. Static-36+32 validates the P0 36/32 schedule, calls A4's candidate construction with its A3b quotas and identity/tie conventions, calls the A3b CUDA K-Center source, checks the 8,192 x 4,096 FP16 / 64 MiB bank, and calibrates a frozen C32 higher-q90 threshold. The full CUDA constructor and numerical source parity have not been run. Static-36+32 is requested only for P0; P1/P2 require only Static-4+64.
@@ -31,13 +33,13 @@ Stage B checks each static prediction against its own constant threshold and rep
 ## Data and outstanding work
 
 - Real-IAD's local census remains 30 categories, 36,465 TRAIN-normal images in 7,293 groups and 114,585 TEST events in 22,917 complete five-view groups. One byte-identical TEST pair spans `button_battery` and `phone_battery`; it remains recorded and was not removed. The 30 annotation artifact-set hash is `8652d842d26785fff780fa3ac429592a39da72675c8dacb5fe56eabf512ce420`; the local identity snapshot hash is `d44a059bf998231fcdc2a296b97ca45544a2554075e1f92b4dfc15c89a5fe4e2`. These identify a reproducible local snapshot, not an independently authenticated publisher release.
-- No publisher-authenticated release checksum was present in the reviewed local records. A narrow researcher-approved convention could define a canonical local snapshot digest as the frozen `dataset_release_sha256` input, explicitly identified as a local convention. Its algorithm, source scope and exact digest must be approved before generating role/stream hashes; this work does not substitute a digest.
-- VisA's 1cls split has no recognized physical-group key. `prepare_visa_exception_candidate` validates caller-supplied image/duplicate-unit proposals and 4+64/TEST separation, but marks them non-executable. The current online runner and journal still require five-view Real-IAD groups; a variable-size VisA unit path remains to be implemented after the researcher decides the exception. No physical-independence claim is supported.
-- A complete four-arm initialization and P0 static construction have not been exercised end-to-end: the production path includes GPU-only K-Center and native C64 rescoring. The components and source-call boundaries have CPU coverage, but their combined GPU numerical/source fidelity and resources remain unverified. This, the VisA unit path, and review of the prior access deviation prevent a completion claim.
+- No publisher-authenticated release checksum was present in the reviewed local records. The identity audit now records a precise local-snapshot identifier and domain-separated digest proposal for researcher review. Gate 0 was not amended, no digest was substituted, and no role/event manifests were issued under the proposal.
+- VisA's 1cls split has no recognized physical-group key. The candidate adapter now binds each image to either a single-image unit or a supplied exact-duplicate cluster, rejects role-crossing or content-inconsistent clusters, and computes a candidate digest. The runner, fsync sink, and Stage B verifier support variable-size candidate units in synthetic-only mode; one query per unit is enforced after unit sealing and the category cap is `floor(0.10*T_c)` over images. Real VisA execution still requires a separate researcher approval bound to the candidate and role/release identities. No physical-independence claim is supported.
+- The Real-IAD native path is source-connected and ready for a bounded Gate 2 numerical preflight after release/role certification and authorization. The end-to-end runtime was not executed: Native DINO loading, complete four-arm commissioning, P0 GPU K-Center for Static-36+32, C64 rescoring and measured resource parity remain Gate 2 work. The earlier TEST-field access deviation also remains a researcher/independent-review dependency for claims and subsequent data execution.
 
 ## Verification and Gate 2 boundary
 
-The focused suite passes 27 CPU synthetic tests. It covers actual native CPU C0 writer/Greedy parity, signed C1 updates and source exclusion, 4,096D native F/K scoring with R10, native C1/C64/B3 refresh on a small CPU fixture, real C1/Greedy shadow noninterference, R10 and independent B3 state, arm-specific BEA inputs, group sealing/query disclosure, identity-only projections, P0-only static schema and static metrics. Some full-backend integration tests use synthetic bank or C64 stand-ins; they are not numerical GPU parity tests. Compilation passes. Reproduce with:
+The focused suite passes 34 CPU synthetic tests. It covers the existing native CPU C0 writer/Greedy parity, signed C1 updates and source exclusion, 4,096D native F/K scoring with R10, native C1/C64/B3 refresh, real C1/Greedy shadow noninterference, independent arm state, arm-specific BEA inputs, Real-IAD group sealing/query disclosure, VisA image and duplicate-cluster unit timing/caps, durable variable-unit seals, bounded entrypoint wiring, release-certification rejection, Stage B authorization gating, P0-only Static-36+32, and static metrics. Some full-backend checks use synthetic bank or C64 stand-ins; none are numerical GPU parity tests. Compilation passes. Reproduce with:
 
 ```powershell
 $env:CUDA_VISIBLE_DEVICES=''
@@ -46,18 +48,18 @@ $env:CUDA_VISIBLE_DEVICES=''
 git diff --check
 ```
 
-A separately authorized Gate 2 should verify the real DINO/preprocessing/model receipt and 4,096D features, four-bank initialization and independent score/update parity, full C64 C1/R10 rescoring and B3 transitions, N-shadow noninterference, A4 candidate identities and CUDA K-Center 8,192 FP16 bank/C32 q90, and end-to-end runtime, VRAM, RAM and disk costs. These are pending checks, not measured results or authorization to run a scientific campaign. No supervisor sign-off is asserted.
+A separately authorized Gate 2 should execute only the bounded checks enumerated in `GATE1_GATE2_HANDOFF.md`: one certified Real-IAD category/condition, 64 commissioning images, at most 10 complete TEST events, no labels, and no Stage A seal. Verify model receipt and DINO/preprocessing descriptors; independent native bank/scorer/write parity; C64/C1/R10/B3 state; N-shadow noninterference; P0 Static-36+32 candidate IDs and CUDA K-Center 8,192 FP16/64 MiB bank with C32 q90; and measured runtime/VRAM/RAM/disk costs. These remain pending, not measured results or authorization to run a scientific campaign. No supervisor sign-off is asserted.
 
-## Local source identity
+## Closeout source identity
 
-The following SHA-256 values identify the uncommitted repair at report time:
+These SHA-256 values identify the current uncommitted closeout files:
 
-- `native_backend.py`: `8b7c2ccd7db68dfc5c5dd0f6eda8ad52b7377456f0e7ea36d85f36b3fbe4f9f4`
-- `label_broker.py`: `ddcc296e15a932a38b8f67d6354b0d4c48182a2f1269f8898a5e233d02892132`
-- `identity.py`: `5611d3314351415c6c91aebe58b08bf49f1f3075e47a178c1bd3d444efb88bb9`
-- `runner.py`: `9328c95be4f68b70f03984e3ae207b3b6a838cc01ce7b5ca07cc7fd2c030bddf`
-- `sink.py`: `17f22c33c2475f7763da68d548b525e508b1628cf1a61eca11097f7883765fa8`
-- `evaluation.py`: `15ca48487b1409ccd862b0b91648aecd3dfef141c45853618562e271d5ff80fe`
-- `static_baselines.py`: `f12727c2348cbc3454af0a3afc44243fffe5123ccc00efb017ba2c008369cf73`
-- `test_gate1_synthetic.py`: `3a49e09407934168e10de677299a086f1a47411de89ffabde3ca2ad5da9e4cc1`
-- `test_native_backend_cpu.py`: `3d7cf004cdfb6a602f2f2a8e6f7c9543fb17686d71594b212fb481095cf7dd5a`
+- `entrypoint.py`: `2fe77693d4008b65e4ed4cf86cddba5c0137cf2e62c5cec6b7fdded3000236ac`
+- `identity.py`: `8c235a57386a75056ef35bc9f24464be5e7133997332a5285db1442ab5eccb59`
+- `runner.py`: `e0d56ba4541314aa75132c294852f905642dc82f0a0150bf61d718d76fe6d4a2`
+- `sink.py`: `98b5c0e1c463a79627ed259dce67a0d425988e9070e1cc1b58996d4bea08c943`
+- `evaluation.py`: `9b7b9369a83899703c095daded8e8f93a00f4002ec07fb1429655c5c89c6a112`
+- `__init__.py`: `5749b609cce57974a522207cc2142cbb2bc5329dfc4f3c1ccae81e84cac1b82c`
+- `test_gate1_synthetic.py`: `31fad4699dc4dea0e4e314d0145f15e7518d58e4ad5818508da8bbb717eb6fbb`
+
+The prior repair hashes and `attempt_01/gate1_source_identity.json` remain historical evidence and were not overwritten.

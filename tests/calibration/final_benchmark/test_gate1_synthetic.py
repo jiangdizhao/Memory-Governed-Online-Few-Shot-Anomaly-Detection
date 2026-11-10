@@ -12,6 +12,9 @@ from experiments.calibration.final_benchmark import identity
 from experiments.calibration.final_benchmark.evaluation import (
     EvaluationProtocolError, LabelProjectionAuthorization, evaluate_sealed_category,
 )
+from experiments.calibration.final_benchmark.entrypoint import (
+    EntryPointError, FinalBenchmarkEntrypoint, validate_release_identity,
+)
 from experiments.calibration.final_benchmark.metrics import (
     MetricContractError, binary_metrics, compare_query_budgets,
     paired_category_bootstrap, worst_256_window_ber,
@@ -111,6 +114,9 @@ class _SyntheticSink:
         self.event_count += len(score_rows)
         return sha(json.dumps(self.groups[-1], sort_keys=True))
 
+    def append_unit(self, *, group_seal, score_rows):
+        return self.append_group(group_seal=group_seal, score_rows=score_rows)
+
     def seal_category(self, seal):
         assert seal["group_count"] == self.group_count
         assert seal["completed_event_count"] == self.event_count
@@ -126,6 +132,126 @@ def event_group(start: int, group_index: int) -> list[TestEvent]:
 
 
 class IdentityTests(unittest.TestCase):
+    def test_real_execution_rejects_uncertified_local_release_identifier(self):
+        categories = [{"category": f"category-{index}"} for index in range(30)]
+        identity_manifest = {"schema": "final-benchmark.identity-manifest.v1",
+            "dataset_id": "realiad", "category_count": 30, "categories": categories,
+            "identity_records": [], "local_snapshot_sha256": sha("local snapshot"),
+            "official_release_sha256": None, "test_label_access": "NOT_ACCESSED",
+            "mask_access": "NOT_ACCESSED"}
+        release = sha("proposed-local-release-id")
+        role_manifest = {"dataset_id": "realiad", "dataset_release_sha256": release}
+        release_identity = {"schema": "final-benchmark.dataset-release-identity.v1",
+            "status": "RESEARCHER_REVIEW_REQUIRED", "gate0_freeze_commit": "a34b870fd4700bfe970e459d2963a602f04b1341",
+            "dataset_id": "realiad", "dataset_release_sha256": release,
+            "identity_manifest_sha256": sha("identity"), "role_manifest_sha256": sha("roles"),
+            "provenance_kind": "RESEARCHER_APPROVED_LOCAL_SNAPSHOT",
+            "local_snapshot_sha256": identity_manifest["local_snapshot_sha256"],
+            "researcher_decision_sha256": sha("decision")}
+        with self.assertRaisesRegex(EntryPointError, "Gate0-certified"):
+            validate_release_identity(identity_manifest=identity_manifest,
+                role_manifest=role_manifest, release_identity=release_identity)
+
+    def test_bounded_entrypoint_wires_synthetic_roles_stream_backend_without_labels(self):
+        class FakeRuntime:
+            def __init__(self, role_ids, test_ids):
+                self.role_ids, self.test_ids = set(role_ids), set(test_ids)
+
+            def prepare_commissioning(self, *, role_manifest, private_locators, condition_id):
+                assert set(private_locators) == self.role_ids
+                assert condition_id == "P0" and len(role_manifest["selected"]) == 68
+                return {"synthetic_only": True}
+
+            def build_backend(self, *, category, condition_id, commissioning):
+                assert category == "widget" and commissioning["synthetic_only"]
+                return _SyntheticBackend()
+
+            def encode_registered_realiad_event(self, *, record, locator, category,
+                                                dataset_release_sha256, stream_seed):
+                assert category == "widget" and stream_seed == 0
+                assert record["image_identity_sha256"] in self.test_ids
+                assert locator == {"synthetic_role": "TEST"}
+                return TestEvent(record["position"], record["event_id_sha256"],
+                    record["image_identity_sha256"], record["source_group_sha256"],
+                    record["camera_id"], feature_ref=f"bounded-feature-{record['position']}")
+
+        def object_sha(value):
+            payload = json.dumps(value, sort_keys=True, separators=(",", ":"),
+                                 ensure_ascii=False, allow_nan=False).encode("utf-8")
+            return hashlib.sha256(payload).hexdigest()
+
+        category_names = ["widget"] + [f"synthetic-category-{i}" for i in range(29)]
+        release_sha = sha("publisher-release")
+        identity_records = []
+        selected, role_locators = [], {}
+        for index in range(68):
+            image_id, content_id, group_id = (sha(f"role-image-{index}"),
+                sha(f"role-content-{index}"), sha(f"role-group-{index}"))
+            identity_records.append({"dataset_id": "realiad", "category": "widget",
+                "split": "train", "image_identity_sha256": image_id,
+                "file_locator_sha256": sha(f"role-locator-{index}"),
+                "image_content_sha256": content_id, "image_bytes": 1,
+                "source_group_sha256": group_id, "camera_id": 1,
+                "train_normal_eligible": True})
+            selected.append({"role": "SUPPORT" if index < 4 else "C64",
+                "image_identity_sha256": image_id, "image_content_sha256": content_id,
+                "source_group_sha256": group_id})
+            role_locators[image_id] = {"synthetic_role": "TRAIN"}
+        test_records = []
+        stream_records = []
+        test_locators = {}
+        test_group = sha("test-group")
+        for camera in range(1, 6):
+            image_id, content_id = sha(f"test-image-{camera}"), sha(f"test-content-{camera}")
+            identity_records.append({"dataset_id": "realiad", "category": "widget",
+                "split": "test", "image_identity_sha256": image_id,
+                "file_locator_sha256": sha(f"test-locator-{camera}"),
+                "image_content_sha256": content_id, "image_bytes": 1,
+                "source_group_sha256": test_group, "camera_id": camera,
+                "train_normal_eligible": None})
+            record = {"dataset_id": "realiad", "category": "widget", "role": "TEST",
+                "position": camera - 1, "event_id_sha256": sha(f"test-event-{camera}"),
+                "image_identity_sha256": image_id, "image_content_sha256": content_id,
+                "source_group_sha256": test_group, "camera_id": camera}
+            test_records.append(record)
+            stream_records.append(record)
+            test_locators[image_id] = {"synthetic_role": "TEST"}
+        identity_manifest = {"schema": "final-benchmark.identity-manifest.v1",
+            "dataset_id": "realiad", "category_count": 30,
+            "categories": [{"category": name} for name in category_names],
+            "identity_records": identity_records, "official_release_sha256": release_sha,
+            "local_snapshot_sha256": sha("synthetic-snapshot")}
+        role_manifest = {"dataset_id": "realiad", "category": "widget", "support_seed": 0,
+            "dataset_release_sha256": release_sha, "selected": selected}
+        release_identity = {"schema": "final-benchmark.dataset-release-identity.v1",
+            "status": "GATE0_CERTIFIED", "gate0_freeze_commit": "a34b870fd4700bfe970e459d2963a602f04b1341",
+            "dataset_id": "realiad", "dataset_release_sha256": release_sha,
+            "identity_manifest_sha256": object_sha(identity_manifest),
+            "role_manifest_sha256": object_sha(role_manifest),
+            "provenance_kind": "PUBLISHER_AUTHENTICATED",
+            "publisher_release_sha256": release_sha}
+        entrypoint = FinalBenchmarkEntrypoint(source_commit=sha("synthetic-source"),
+            identity_manifest=identity_manifest, role_manifest=role_manifest,
+            release_identity=release_identity, stream_records=stream_records,
+            test_private_locators=test_locators, role_private_locators=role_locators,
+            category="widget", condition_id="P0")
+        authorization = {"schema": "final-benchmark.execution-authorization.v1",
+            "status": "AUTHORIZED", "scope": "restricted_numerical_preflight",
+            "source_commit": entrypoint.source_commit,
+            "identity_manifest_sha256": entrypoint.identity_manifest_sha256,
+            "role_manifest_sha256": entrypoint.role_manifest_sha256,
+            "dataset_release_sha256": release_sha,
+            "dataset_id": "realiad", "category": "widget", "condition_id": "P0",
+            "max_events": 5, "label_access": "NONE", "stage_b_authorized": False}
+        result = entrypoint.run_restricted_numerical_preflight(
+            authorization=authorization, max_events=5, encoder=FakeRuntime(role_locators, test_locators))
+        self.assertEqual(result["status"], "BOUNDED_NUMERICAL_PREFLIGHT_INCOMPLETE_NOT_STAGE_A")
+        self.assertEqual(result["event_count"], 5)
+        self.assertFalse(result["labels_read"])
+        self.assertFalse(result["stage_a_seal_created"])
+        self.assertTrue(all(set(row["arm_scores"]) == {"F-B", "K-B", "F-M", "K-M"}
+                            for row in result["score_rows"]))
+
     def test_private_locator_resolves_only_registered_identity_metadata(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -160,15 +286,23 @@ class IdentityTests(unittest.TestCase):
                 for i in range(70)]
         units = {row["image_identity_sha256"]: sha(f"unit-{i if i != 69 else 68}")
                  for i, row in enumerate(rows)}
+        order = []
+        for row in rows:
+            if row["role"] == "TEST" and units[row["image_identity_sha256"]] not in order:
+                order.append(units[row["image_identity_sha256"]])
         result = identity.prepare_visa_exception_candidate(identity_rows=rows,
-                                                           proposed_unit_by_image=units)
+            proposed_unit_by_image=units, proposed_test_unit_order=order)
         self.assertEqual(result["status"], "RESEARCHER_DECISION_REQUIRED_NOT_EXECUTABLE")
         self.assertEqual(result["query_rate_target"], .10)
         self.assertEqual(result["test_unit_count"], 1)
+        self.assertEqual(result["test_unit_kind"][next(iter(result["test_unit_members"]))],
+                         "EXACT_DUPLICATE_CLUSTER")
+        self.assertEqual(len(result["candidate_sha256"]), 64)
         bad = dict(units)
         bad[rows[69]["image_identity_sha256"]] = sha("different-unit")
         with self.assertRaises(identity.IdentityAuditError):
-            identity.prepare_visa_exception_candidate(identity_rows=rows, proposed_unit_by_image=bad)
+            identity.prepare_visa_exception_candidate(identity_rows=rows,
+                proposed_unit_by_image=bad, proposed_test_unit_order=order)
 
     def test_role_seed_replay_and_static36_partition(self):
         release = sha("official-release")
@@ -387,12 +521,148 @@ class QueryAndRunnerTests(unittest.TestCase):
                 expected_group_order=[sha(f"visa-group-{i}") for i in range(20)],
                 rho=0.10, backend=_SyntheticBackend(), broker=_SyntheticBroker(), sink=_SyntheticSink())
 
+    @staticmethod
+    def _visa_candidate(test_count: int, *, duplicate_first_pair: bool = False):
+        identity_rows = []
+        units = {}
+        for index in range(68 + test_count):
+            image_id = sha(f"visa-unit-test-image-{index}")
+            content_id = sha(f"visa-unit-test-content-{index}")
+            role = "SUPPORT" if index < 4 else "C64" if index < 68 else "TEST"
+            if duplicate_first_pair and index == 69:
+                content_id = sha("visa-unit-test-content-68")
+            unit_id = sha(f"visa-unit-test-unit-{index}")
+            if duplicate_first_pair and index == 69:
+                unit_id = sha("visa-unit-test-unit-68")
+            identity_rows.append({"image_identity_sha256": image_id,
+                                  "image_content_sha256": content_id, "role": role})
+            units[image_id] = unit_id
+        order = []
+        for row in identity_rows[68:]:
+            unit = units[row["image_identity_sha256"]]
+            if unit not in order:
+                order.append(unit)
+        if duplicate_first_pair:
+            duplicate_unit = units[identity_rows[68]["image_identity_sha256"]]
+            order = [duplicate_unit, *[unit for unit in order if unit != duplicate_unit]]
+        return identity.prepare_visa_exception_candidate(
+            identity_rows=identity_rows, proposed_unit_by_image=units,
+            proposed_test_unit_order=order)
+
+    @staticmethod
+    def _visa_events(candidate):
+        events, order, sizes = [], [], []
+        members = candidate["test_unit_members"]
+        for unit in candidate["test_unit_order"]:
+            image_ids = members[unit]
+            order.append(unit)
+            sizes.append(len(image_ids))
+            kind = "VISA_SINGLE_IMAGE" if len(image_ids) == 1 else "VISA_EXACT_DUPLICATE_CLUSTER"
+            for image_id in image_ids:
+                position = len(events)
+                events.append(TestEvent(position, sha(f"visa-event-{position}"), image_id,
+                    unit, 0, feature_ref=f"visa-feature-{position}",
+                    atomic_unit_sha256=unit, atomic_unit_kind=kind))
+        return events, order, sizes
+
+    def test_visa_single_image_units_run_all_arms_with_ten_percent_image_cap(self):
+        class VisaSyntheticBackend(_SyntheticBackend):
+            def score(self, arm_id, event, snapshot):
+                packet = super().score(arm_id, event, snapshot)
+                psi = 0.2 if event.position < 20 else 1.0
+                return ScorePacket(packet.score, packet.prediction, psi,
+                    packet.bea_objective, packet.state_version, packet.state_sha256,
+                    threshold=packet.threshold)
+
+        candidate = self._visa_candidate(100)
+        events, order, sizes = self._visa_events(candidate)
+        sink, backend, broker = _SyntheticSink(), VisaSyntheticBackend(), _SyntheticBroker()
+        runner = GroupAtomicCategoryRunner(dataset_id="visa_1cls", category="widget",
+            condition_id="P0", support_seed=0, stream_seed=0, expected_event_count=100,
+            expected_group_order=order, expected_unit_sizes=sizes, rho=0.10,
+            backend=backend, broker=broker, sink=sink,
+            visa_unit_candidate=candidate, synthetic_visa_test_only=True)
+        for event in events:
+            runner.process_unit([event])
+        seal = runner.seal()
+        self.assertEqual(seal.status, "SEALED_COMPLETE")
+        self.assertEqual(seal.atomic_unit_kind, "VISA_CANDIDATE_ATOMIC_UNIT")
+        self.assertEqual(seal.group_count, 100)
+        accounting = runner.accounting()
+        for arm in ("F-B", "K-B", "F-M", "K-M"):
+            self.assertEqual(accounting[arm]["cap"], 10)
+            self.assertEqual(accounting[arm]["executed"], 10, msg=f"{arm}: {accounting[arm]}")
+            self.assertGreater(backend.arms[arm], 0)
+        self.assertEqual(sink.event_count, 100)
+        self.assertEqual(sink.group_count, 100)
+        self.assertEqual(len(broker.disclosures), 40)
+        self.assertEqual(candidate["physical_independence_claim"], "NOT_ESTABLISHED")
+        projection = LabelProjectionAuthorization(
+            "AUTHORIZED_POST_STAGE_A_LABEL_PROJECTION", "stage_b_category_evaluation",
+            sha("synthetic-visa-projection"), "visa_1cls", "widget",
+            seal.durable_seal_sha256, seal.unit_candidate_sha256, seal.unit_approval_sha256)
+        evaluated = evaluate_sealed_category(dataset_id="visa_1cls", category="widget",
+            rows=runner.rows, seal=seal, group_seals=runner.group_seals,
+            labels_by_event_id={row["event_id_sha256"]: row["position"] % 2 for row in runner.rows},
+            label_projection=projection)
+        self.assertIn("STATIC-36+32", evaluated["arm_metrics"])
+
+    def test_visa_duplicate_cluster_is_scored_sealed_then_queries_once(self):
+        candidate = self._visa_candidate(10, duplicate_first_pair=True)
+        events, order, sizes = self._visa_events(candidate)
+        self.assertIn(2, sizes)
+        sink, backend = _SyntheticSink(), _SyntheticBackend()
+        broker = _SyntheticBroker(sink)
+        runner = GroupAtomicCategoryRunner(dataset_id="visa_1cls", category="widget",
+            condition_id="P0", support_seed=0, stream_seed=0, expected_event_count=10,
+            expected_group_order=order, expected_unit_sizes=sizes, rho=0.10,
+            backend=backend, broker=broker, sink=sink,
+            visa_unit_candidate=candidate, synthetic_visa_test_only=True)
+        first_unit_size = sizes[0]
+        rows = runner.process_unit(events[:first_unit_size])
+        self.assertTrue(rows[0]["query_actions"]["F-B"]["executed"])
+        if first_unit_size == 2:
+            self.assertTrue(rows[1]["query_actions"]["F-B"]["group_suppressed"])
+            self.assertEqual(len([item for item in broker.disclosures if item[0] == "F-B"]), 1)
+        for unit_index in range(1, len(order)):
+            start = sum(sizes[:unit_index])
+            runner.process_unit(events[start:start + sizes[unit_index]])
+        self.assertEqual(runner.caps["F-B"].limit, 1)
+        self.assertEqual(runner.caps["F-B"].executed, 1)
+        seal = runner.seal()
+        self.assertEqual(seal.completed_event_count, 10)
+
+    def test_unapproved_real_visa_unit_path_remains_disabled(self):
+        candidate = self._visa_candidate(10)
+        events, order, sizes = self._visa_events(candidate)
+        with self.assertRaisesRegex(CampaignProtocolError, "explicit candidate-bound researcher approval"):
+            GroupAtomicCategoryRunner(dataset_id="visa_1cls", category="widget",
+                condition_id="P0", support_seed=0, stream_seed=0, expected_event_count=10,
+                expected_group_order=order, expected_unit_sizes=sizes, rho=0.10,
+                backend=_SyntheticBackend(), broker=_SyntheticBroker(), sink=_SyntheticSink(),
+                visa_unit_candidate=candidate)
+
     def test_unqueried_c64_role_cannot_enter_stream(self):
         with self.assertRaises(CampaignProtocolError):
             TestEvent(0, sha("e"), sha("i"), sha("g"), 1, role="C64")
 
 
 class EvaluationAndSourceTests(unittest.TestCase):
+    def test_entrypoint_rejects_stage_b_before_calling_label_projection(self):
+        class Seal:
+            status = "SEALED_COMPLETE"
+            durable_seal_sha256 = sha("sealed-category")
+
+        called = []
+        authorization = LabelProjectionAuthorization(
+            "AUTHORIZED_POST_STAGE_A_LABEL_PROJECTION", "stage_b_category_evaluation",
+            "uncertified", "realiad", "widget", Seal.durable_seal_sha256)
+        with self.assertRaises(EntryPointError):
+            FinalBenchmarkEntrypoint.evaluate_stage_b(dataset_id="realiad", category="widget",
+                rows=[], seal=Seal(), unit_seals=[], authorization=authorization,
+                projection_loader=lambda: called.append("read labels"))
+        self.assertEqual(called, [])
+
     def test_real_query_broker_requires_fsynced_action_and_reads_only_queried_views(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
             root = Path(directory)
@@ -640,6 +910,61 @@ class EvaluationAndSourceTests(unittest.TestCase):
             self.assertTrue((root / "stage_a_category_seal.json").is_file())
             with self.assertRaises(SinkProtocolError):
                 FsyncGroupSink(root / "group_journal.jsonl", identity={"run_id": "overwrite"})
+
+    def test_fsync_sink_persists_variable_visa_unit_before_one_query_disclosure(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            root = Path(directory)
+            sink = FsyncGroupSink(root / "visa_journal.jsonl", identity={"run_id": "synthetic-visa"})
+            unit_sha = sha("duplicate-unit")
+            candidate_sha = sha("unit-candidate")
+            approval_sha = sha("synthetic-approval")
+            events = [TestEvent(index, sha(f"visa-sink-event-{index}"),
+                sha(f"visa-sink-image-{index}"), unit_sha, 0,
+                atomic_unit_sha256=unit_sha, atomic_unit_kind="VISA_EXACT_DUPLICATE_CLUSTER")
+                for index in range(2)]
+            receipt = {"schema": "final-benchmark.query-receipt.atomic-unit.v1",
+                "arm_id": "F-B", "category": "widget", "condition_id": "P0",
+                "event_id_sha256": events[0].event_id_sha256,
+                "atomic_unit_sha256": unit_sha,
+                "atomic_unit_kind": "VISA_EXACT_DUPLICATE_CLUSTER", "position": 0}
+            receipt_sha = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":"),
+                ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+            rows = []
+            for index, event in enumerate(events):
+                actions = {arm: {"executed": arm == "F-B" and index == 0,
+                    "query_receipt_sha256": receipt_sha if arm == "F-B" and index == 0 else None}
+                    for arm in ("F-B", "K-B", "F-M", "K-M")}
+                rows.append({"position": index, "event_id_sha256": event.event_id_sha256,
+                    "image_identity_sha256": event.image_identity_sha256,
+                    "source_group_sha256": unit_sha, "atomic_unit_sha256": unit_sha,
+                    "atomic_unit_kind": "VISA_EXACT_DUPLICATE_CLUSTER", "camera_id": 0,
+                    "query_actions": actions})
+            unit_seal = {"group_index": 0, "source_group_sha256": unit_sha,
+                "atomic_unit_sha256": unit_sha, "atomic_unit_kind": "VISA_EXACT_DUPLICATE_CLUSTER",
+                "unit_candidate_sha256": candidate_sha, "unit_approval_sha256": approval_sha,
+                "start_position": 0, "end_position_exclusive": 2,
+                "event_order_sha256": hashlib.sha256(json.dumps(
+                    [event.event_id_sha256 for event in events], separators=(",", ":"),
+                    ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest(),
+                "score_rows_sha256": hashlib.sha256(json.dumps(rows, sort_keys=True,
+                    separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest(),
+                "status": "SEALED_BEFORE_LABEL_DISCLOSURE"}
+            sink.append_unit(group_seal=unit_seal, score_rows=rows)
+            self.assertTrue(sink.query_is_sealed(arm_id="F-B", event=events[0],
+                                                  query_receipt=receipt))
+            self.assertFalse(sink.query_is_sealed(arm_id="F-B", event=events[1],
+                                                   query_receipt=receipt))
+            self.assertTrue(sink.consume_sealed_query(arm_id="F-B", event=events[0],
+                                                       query_receipt=receipt))
+            self.assertFalse(sink.consume_sealed_query(arm_id="F-B", event=events[0],
+                                                        query_receipt=receipt))
+            sink.seal_category({"status": "SEALED_COMPLETE", "completed_event_count": 2,
+                "group_count": 1, "score_rows_sha256": sha("rows"),
+                "group_seals_sha256": sha("units")})
+            sink.close()
+            envelopes = (root / "visa_journal.jsonl").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(envelopes), 2)
+            self.assertIn("stage-a-atomic-unit.v1", envelopes[1])
 
     def test_bootstrap_is_reproducible_and_historical_interfaces_exist(self):
         conditions = {}

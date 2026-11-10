@@ -66,11 +66,19 @@ class TestEvent:
     feature_ref: Any = None
     role: str = "TEST"
     encoding_seconds: float | None = None
+    atomic_unit_sha256: str | None = None
+    atomic_unit_kind: str | None = None
 
     def __post_init__(self) -> None:
         for name in ("event_id_sha256", "image_identity_sha256", "group_sha256"):
             if not re.fullmatch(r"[0-9a-f]{64}", str(getattr(self, name))):
                 raise CampaignProtocolError(f"{name} must be a lowercase SHA-256 digest")
+        if self.atomic_unit_sha256 is not None and not re.fullmatch(
+                r"[0-9a-f]{64}", str(self.atomic_unit_sha256)):
+            raise CampaignProtocolError("atomic unit identity must be a lowercase SHA-256 digest")
+        if self.atomic_unit_kind not in (None, "REAL_IAD_SOURCE_GROUP", "VISA_SINGLE_IMAGE",
+                                         "VISA_EXACT_DUPLICATE_CLUSTER"):
+            raise CampaignProtocolError("atomic unit kind is not registered")
         if self.role != "TEST":
             raise CampaignProtocolError("only registered TEST observations may enter a stream")
         if (isinstance(self.position, bool) or not isinstance(self.position, numbers.Integral) or
@@ -146,23 +154,28 @@ class StageASeal:
     group_seals_sha256: str
     durable_seal_sha256: str
     status: str
+    atomic_unit_kind: str = "REAL_IAD_SOURCE_GROUP"
+    unit_candidate_sha256: str | None = None
+    unit_approval_sha256: str | None = None
 
 
 class GroupAtomicCategoryRunner:
-    """One category/condition trajectory with a mandatory five-view barrier."""
+    """One category/condition trajectory with a dataset-specific atomic barrier."""
 
     def __init__(self, *, dataset_id: str, category: str, condition_id: str,
                  support_seed: int, stream_seed: int, expected_event_count: int,
                  expected_group_order: Sequence[str], rho: float,
-                 backend: ArmBackend, broker: LabelBroker, sink: Any):
+                 backend: ArmBackend, broker: LabelBroker, sink: Any,
+                 expected_unit_sizes: Sequence[int] | None = None,
+                 visa_unit_candidate: Mapping[str, Any] | None = None,
+                 visa_execution_authorization: Mapping[str, Any] | None = None,
+                 synthetic_visa_test_only: bool = False):
         expected_rho = {"realiad": 0.03, "visa_1cls": 0.10}.get(dataset_id)
         if expected_rho is None or float(rho) != expected_rho:
             raise CampaignProtocolError("dataset-specific query target differs from Gate 0")
-        if dataset_id != "realiad":
-            raise CampaignProtocolError("VisA online execution is blocked pending certified physical-group unit")
         if (isinstance(expected_event_count, bool) or
                 not isinstance(expected_event_count, numbers.Integral) or
-                int(expected_event_count) <= 0 or int(expected_event_count) % 5):
+                int(expected_event_count) <= 0):
             raise CampaignProtocolError("category event count must be positive")
         if (condition_id not in {"P0", "P1", "P2"} or
                 isinstance(support_seed, bool) or isinstance(stream_seed, bool) or
@@ -171,18 +184,90 @@ class GroupAtomicCategoryRunner:
                 {"P0": (0, 0), "P1": (0, 11), "P2": (1, 0)}[condition_id] !=
                 (int(support_seed), int(stream_seed))):
             raise CampaignProtocolError("paired condition or Support/Stream seed differs from Gate 0")
-        if (len(expected_group_order) * 5 != int(expected_event_count) or
-                len(set(expected_group_order)) != len(expected_group_order) or
+        if (not expected_group_order or len(set(expected_group_order)) != len(expected_group_order) or
                 any(not re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in expected_group_order)):
-            raise CampaignProtocolError("registered Source Group order is incomplete or malformed")
+            raise CampaignProtocolError("registered atomic-unit order is incomplete or malformed")
+        if dataset_id == "realiad":
+            if (visa_unit_candidate is not None or visa_execution_authorization is not None or
+                    synthetic_visa_test_only or int(expected_event_count) % 5 or
+                    len(expected_group_order) * 5 != int(expected_event_count) or
+                    (expected_unit_sizes is not None and tuple(expected_unit_sizes) !=
+                     (5,) * len(expected_group_order))):
+                raise CampaignProtocolError("Real-IAD must preserve its registered five-view group path")
+            unit_sizes = (5,) * len(expected_group_order)
+            unit_kind = "REAL_IAD_SOURCE_GROUP"
+            unit_candidate_sha256 = unit_approval_sha256 = None
+        else:
+            if (not isinstance(visa_unit_candidate, Mapping) or
+                    visa_unit_candidate.get("schema") != "final-benchmark.visa-unit-candidate.v1" or
+                    visa_unit_candidate.get("dataset_id") != "visa_1cls" or
+                    visa_unit_candidate.get("status") != "RESEARCHER_DECISION_REQUIRED_NOT_EXECUTABLE" or
+                    visa_unit_candidate.get("physical_independence_claim") != "NOT_ESTABLISHED"):
+                raise CampaignProtocolError("VisA requires the reviewed identity-only unit candidate")
+            candidate_sha = str(visa_unit_candidate.get("candidate_sha256", ""))
+            candidate_payload = {key: value for key, value in visa_unit_candidate.items()
+                                 if key != "candidate_sha256"}
+            if (not re.fullmatch(r"[0-9a-f]{64}", candidate_sha) or
+                    hashlib.sha256(_canonical(candidate_payload)).hexdigest() != candidate_sha):
+                raise CampaignProtocolError("VisA unit candidate digest is invalid")
+            members = visa_unit_candidate.get("test_unit_members")
+            kinds = visa_unit_candidate.get("test_unit_kind")
+            if not isinstance(members, Mapping) or not isinstance(kinds, Mapping):
+                raise CampaignProtocolError("VisA candidate unit membership is missing")
+            if synthetic_visa_test_only:
+                if visa_execution_authorization is not None:
+                    raise CampaignProtocolError("synthetic VisA tests cannot consume real-data authorization")
+                unit_approval_sha256 = hashlib.sha256(
+                    b"final-benchmark.synthetic-visa-test-only.v1").hexdigest()
+            else:
+                approval = dict(visa_execution_authorization or {})
+                required = {
+                    "schema": "final-benchmark.visa-unit-execution-authorization.v1",
+                    "status": "RESEARCHER_APPROVED_VISA_ATOMIC_UNIT_EXECUTION",
+                    "dataset_id": "visa_1cls",
+                    "unit_candidate_sha256": candidate_sha,
+                    "physical_independence_claim": "NOT_ESTABLISHED",
+                }
+                if any(approval.get(key) != value for key, value in required.items()):
+                    raise CampaignProtocolError(
+                        "real VisA execution is disabled until an explicit candidate-bound researcher approval exists")
+                for key in ("role_manifest_sha256", "dataset_release_identity_sha256",
+                            "researcher_decision_sha256"):
+                    if not re.fullmatch(r"[0-9a-f]{64}", str(approval.get(key, ""))):
+                        raise CampaignProtocolError("VisA approval lacks its certified data-protocol binding")
+                unit_approval_sha256 = hashlib.sha256(_canonical(approval)).hexdigest()
+            if (int(visa_unit_candidate.get("test_image_count", -1)) != int(expected_event_count) or
+                    float(visa_unit_candidate.get("query_rate_target", -1)) != 0.10 or
+                    tuple(map(str, expected_group_order)) !=
+                    tuple(visa_unit_candidate.get("test_unit_order", ())) or
+                    set(str(value) for value in expected_group_order) != set(members)):
+                raise CampaignProtocolError("VisA candidate and category stream differ")
+            unit_sizes = tuple(len(members[unit]) for unit in expected_group_order)
+            if (any(size <= 0 for size in unit_sizes) or sum(unit_sizes) != int(expected_event_count) or
+                    (expected_unit_sizes is not None and tuple(map(int, expected_unit_sizes)) != unit_sizes)):
+                raise CampaignProtocolError("VisA unit sizes do not match the registered candidate")
+            for unit, size in zip(expected_group_order, unit_sizes):
+                expected_kind = "SINGLE_IMAGE" if size == 1 else "EXACT_DUPLICATE_CLUSTER"
+                if kinds.get(unit) != expected_kind:
+                    raise CampaignProtocolError("VisA unit kind differs from its registered membership")
+            unit_kind = "VISA_CANDIDATE_ATOMIC_UNIT"
+            unit_candidate_sha256 = candidate_sha
         self.dataset_id, self.category = dataset_id, category
         self.condition_id = condition_id
         self.static_arms = static_arms_for_condition(condition_id)
         self.support_seed, self.stream_seed = int(support_seed), int(stream_seed)
         self.expected_event_count, self.rho = int(expected_event_count), float(rho)
+        self.expected_unit_sizes = tuple(unit_sizes)
+        self.atomic_unit_kind = unit_kind
+        self.unit_candidate_sha256 = unit_candidate_sha256
+        self.unit_approval_sha256 = unit_approval_sha256
+        self.visa_unit_candidate = (dict(visa_unit_candidate)
+                                    if dataset_id == "visa_1cls" and visa_unit_candidate is not None else None)
         self.expected_group_order = tuple(expected_group_order)
         self.backend, self.broker = backend, broker
-        if not callable(getattr(sink, "append_group", None)) or not callable(getattr(sink, "seal_category", None)):
+        append_name = "append_group" if dataset_id == "realiad" else "append_unit"
+        if (not callable(getattr(sink, append_name, None)) or
+                not callable(getattr(sink, "seal_category", None))):
             raise CampaignProtocolError("Stage A requires a durable fsync group sink")
         self.sink = sink
         self.telemetry = TelemetryLedger()
@@ -209,27 +294,47 @@ class GroupAtomicCategoryRunner:
     def process_group(self, events: Sequence[TestEvent]) -> tuple[Mapping[str, Any], ...]:
         if self._sealed:
             raise CampaignProtocolError("category has already been sealed")
-        if len(events) != 5:
+        if self.group_count >= len(self.expected_group_order):
+            raise CampaignProtocolError("category has already consumed every registered atomic unit")
+        unit_size = len(events)
+        if unit_size != self.expected_unit_sizes[self.group_count]:
+            raise CampaignProtocolError("atomic unit event count differs from its registered identity membership")
+        if self.dataset_id == "realiad" and unit_size != 5:
             raise CampaignProtocolError("Real-IAD Source Group must contain exactly five views")
-        expected_positions = list(range(self.event_count, self.event_count + 5))
+        expected_positions = list(range(self.event_count, self.event_count + unit_size))
         if [event.position for event in events] != expected_positions:
-            raise CampaignProtocolError("group event positions are missing, duplicated or noncontiguous")
-        if [event.camera_id for event in events] != [1, 2, 3, 4, 5]:
+            raise CampaignProtocolError("atomic unit event positions are missing, duplicated or noncontiguous")
+        if self.dataset_id == "realiad" and [event.camera_id for event in events] != [1, 2, 3, 4, 5]:
             raise CampaignProtocolError("Real-IAD group camera order must be exactly 1 through 5")
         if any(event.feature_ref is None for event in events):
-            raise CampaignProtocolError("group lacks the one shared immutable encoded-feature reference per event")
-        group_ids = {event.group_sha256 for event in events}
+            raise CampaignProtocolError("atomic unit lacks a shared immutable encoded-feature reference per event")
+        group_ids = {event.atomic_unit_sha256 or event.group_sha256 for event in events}
         if len(group_ids) != 1 or next(iter(group_ids)) in self._seen_groups:
-            raise CampaignProtocolError("Source Group identity is inconsistent or repeated")
-        if len({event.event_id_sha256 for event in events}) != 5 or any(
+            raise CampaignProtocolError("atomic unit identity is inconsistent or repeated")
+        if any(event.group_sha256 != (event.atomic_unit_sha256 or event.group_sha256)
+               for event in events):
+            raise CampaignProtocolError("atomic unit identity differs from the event source identity")
+        expected_event_unit_kind = ("REAL_IAD_SOURCE_GROUP" if self.dataset_id == "realiad" else
+            ("VISA_SINGLE_IMAGE" if unit_size == 1 else "VISA_EXACT_DUPLICATE_CLUSTER"))
+        if any(event.atomic_unit_kind not in (None, expected_event_unit_kind) for event in events):
+            raise CampaignProtocolError("event carries an unregistered atomic-unit kind")
+        if len({event.event_id_sha256 for event in events}) != unit_size or any(
                 event.event_id_sha256 in self._seen_events for event in events):
-            raise CampaignProtocolError("group contains duplicate event identity")
-        if self.event_count + 5 > self.expected_event_count:
-            raise CampaignProtocolError("group exceeds the registered category event count")
+            raise CampaignProtocolError("atomic unit contains duplicate event identity")
+        if self.event_count + unit_size > self.expected_event_count:
+            raise CampaignProtocolError("atomic unit exceeds the registered category event count")
 
         group_sha = next(iter(group_ids))
         if group_sha != self.expected_group_order[self.group_count]:
-            raise CampaignProtocolError("Source Group order differs from the frozen stream manifest")
+            raise CampaignProtocolError("atomic unit order differs from the frozen stream manifest")
+        if self.dataset_id == "visa_1cls":
+            expected_members = set(self.visa_unit_candidate["test_unit_members"][group_sha])
+            observed_members = {event.image_identity_sha256 for event in events}
+            if observed_members != expected_members:
+                raise CampaignProtocolError("VisA event images differ from the approved atomic-unit membership")
+            if any(event.atomic_unit_sha256 != group_sha or
+                   event.atomic_unit_kind != expected_event_unit_kind for event in events):
+                raise CampaignProtocolError("VisA event lacks its registered unit identity and kind")
         before_digest = {arm: self.backend.state_digest(arm) for arm in PRINCIPAL_ARMS}
         shadow_before = self.backend.shadow_state_digest()
         static_before = {arm: self.backend.static_state_digest(arm) for arm in self.static_arms}
@@ -294,7 +399,7 @@ class GroupAtomicCategoryRunner:
         for arm in PRINCIPAL_ARMS:
             group_used = False
             cap = self.caps[arm]
-            for event_index in range(5):
+            for event_index in range(unit_size):
                 proposal = proposals[(arm, event_index)]
                 cap.proposals += int(proposal.proposed)
                 executed = group_suppressed = cap_suppressed = False
@@ -324,14 +429,25 @@ class GroupAtomicCategoryRunner:
         for arm in PRINCIPAL_ARMS:
             for event_index, event in enumerate(events):
                 if action_rows[(arm, event_index)]["executed"]:
-                    query_receipts[(arm, event_index)] = {
-                        "schema": "final-benchmark.query-receipt.v1",
-                        "arm_id": arm, "category": self.category,
-                        "condition_id": self.condition_id,
-                        "event_id_sha256": event.event_id_sha256,
-                        "source_group_sha256": event.group_sha256,
-                        "position": event.position,
-                    }
+                    if self.dataset_id == "realiad":
+                        query_receipts[(arm, event_index)] = {
+                            "schema": "final-benchmark.query-receipt.v1",
+                            "arm_id": arm, "category": self.category,
+                            "condition_id": self.condition_id,
+                            "event_id_sha256": event.event_id_sha256,
+                            "source_group_sha256": event.group_sha256,
+                            "position": event.position,
+                        }
+                    else:
+                        query_receipts[(arm, event_index)] = {
+                            "schema": "final-benchmark.query-receipt.atomic-unit.v1",
+                            "arm_id": arm, "category": self.category,
+                            "condition_id": self.condition_id,
+                            "event_id_sha256": event.event_id_sha256,
+                            "atomic_unit_sha256": group_sha,
+                            "atomic_unit_kind": expected_event_unit_kind,
+                            "position": event.position,
+                        }
 
         # Public score rows are constructed and hashed before label access.
         group_rows: list[dict[str, Any]] = []
@@ -347,6 +463,9 @@ class GroupAtomicCategoryRunner:
                 "n_shadow_state_version": int(packets[("N-shadow", event_index)].state_version),
                 "n_shadow_state_sha256": packets[("N-shadow", event_index)].state_sha256 or shadow_before,
             }
+            if self.dataset_id == "visa_1cls":
+                row["atomic_unit_sha256"] = group_sha
+                row["atomic_unit_kind"] = expected_event_unit_kind
             for arm in PRINCIPAL_ARMS:
                 packet = packets[(arm, event_index)]
                 proposal = proposals[(arm, event_index)]
@@ -384,23 +503,28 @@ class GroupAtomicCategoryRunner:
             "score_rows_sha256": group_rows_sha,
             "status": "SEALED_BEFORE_LABEL_DISCLOSURE",
         }
+        if self.dataset_id == "visa_1cls":
+            group_record.update({"atomic_unit_sha256": group_sha,
+                "atomic_unit_kind": expected_event_unit_kind,
+                "unit_candidate_sha256": self.unit_candidate_sha256,
+                "unit_approval_sha256": self.unit_approval_sha256})
         timer = time.perf_counter()
-        durable_group_receipt_sha = self.sink.append_group(
-            group_seal=group_record, score_rows=group_rows)
+        append_unit = self.sink.append_group if self.dataset_id == "realiad" else self.sink.append_unit
+        durable_group_receipt_sha = append_unit(group_seal=group_record, score_rows=group_rows)
         self.telemetry.record_duration("group_journal_fsync", time.perf_counter() - timer)
         if not re.fullmatch(r"[0-9a-f]{64}", str(durable_group_receipt_sha)):
             raise CampaignProtocolError("durable group sink returned a malformed commit receipt")
         self.group_seals.append({**group_record, "durable_group_receipt_sha256": durable_group_receipt_sha})
 
-        # Query policy state is advanced only after all five score rows are
-        # sealed; all proposals used the pre-group state captured above.
+        # Query policy state is advanced only after the whole atomic unit is
+        # sealed; all proposals used its pre-unit controller state.
         for arm in MARGIN_ARMS:
-            self.margin[arm].observe_group([packets[(arm, i)].psi for i in range(5)])
+            self.margin[arm].observe_group([packets[(arm, i)].psi for i in range(unit_size)])
         for arm in BEA_ARMS:
-            actions = [bool(action_rows[(arm, i)]["executed"]) for i in range(5)]
-            self.bea[arm].proposals += sum(int(proposals[(arm, i)].proposed) for i in range(5))
-            self.bea[arm].group_suppressed += sum(int(action_rows[(arm, i)]["group_suppressed"]) for i in range(5))
-            self.bea[arm].cap_suppressed += sum(int(action_rows[(arm, i)]["cap_suppressed"]) for i in range(5))
+            actions = [bool(action_rows[(arm, i)]["executed"]) for i in range(unit_size)]
+            self.bea[arm].proposals += sum(int(proposals[(arm, i)].proposed) for i in range(unit_size))
+            self.bea[arm].group_suppressed += sum(int(action_rows[(arm, i)]["group_suppressed"]) for i in range(unit_size))
+            self.bea[arm].cap_suppressed += sum(int(action_rows[(arm, i)]["cap_suppressed"]) for i in range(unit_size))
             self.bea[arm].observe_final_actions(actions)
 
         # Only executed query receipts may cross the private broker boundary.
@@ -457,21 +581,31 @@ class GroupAtomicCategoryRunner:
             if arm not in arms_with_feedback and self.backend.state_digest(arm) != before_digest[arm]:
                 raise CampaignProtocolError("an unqueried arm changed state at the group boundary")
 
-        # State writes are legal only after every row in this Source Group was
+        # State writes are legal only after every row in this atomic unit was
         # sealed and the query broker returned the purchased event's label.
         for event in events:
             self._seen_events.add(event.event_id_sha256)
         self._seen_groups.add(group_sha)
         self.rows.extend(group_rows)
-        self.event_count += 5
+        self.event_count += unit_size
         self.group_count += 1
         return tuple(group_rows)
+
+    def process_unit(self, events: Sequence[TestEvent]) -> tuple[Mapping[str, Any], ...]:
+        """Process one registered dataset-specific atomic unit.
+
+        The Real-IAD alias retains the original five-view path; VisA units are
+        accepted only when the constructor received an explicit candidate and
+        authorization (or the synthetic-only test switch).
+        """
+        return self.process_group(events)
 
     def seal(self) -> StageASeal:
         if self.event_count != self.expected_event_count:
             raise CampaignProtocolError("Stage A category cannot seal before every registered event is complete")
-        if self.event_count % 5 or self.group_count != len(self.expected_group_order):
-            raise CampaignProtocolError("Real-IAD category ends with an incomplete Source Group")
+        if (self.group_count != len(self.expected_group_order) or
+                (self.dataset_id == "realiad" and self.event_count % 5)):
+            raise CampaignProtocolError("category ends with an incomplete registered atomic unit")
         self._sealed = True
         digest = _sha(_canonical(self.rows))
         group_seal_digest = _sha(_canonical(self.group_seals))
@@ -485,12 +619,18 @@ class GroupAtomicCategoryRunner:
             "group_seals_sha256": group_seal_digest,
             "status": "SEALED_COMPLETE",
         }
+        if self.dataset_id == "visa_1cls":
+            seal_payload.update({"atomic_unit_kind": self.atomic_unit_kind,
+                "unit_candidate_sha256": self.unit_candidate_sha256,
+                "unit_approval_sha256": self.unit_approval_sha256})
         timer = time.perf_counter()
         durable_sha = self.sink.seal_category(seal_payload)
         self.telemetry.record_duration("category_seal_fsync", time.perf_counter() - timer)
         return StageASeal(self.dataset_id, self.category, self.condition_id,
                           self.expected_event_count, self.event_count, self.group_count,
-                          digest, group_seal_digest, durable_sha, "SEALED_COMPLETE")
+                          digest, group_seal_digest, durable_sha, "SEALED_COMPLETE",
+                          self.atomic_unit_kind, self.unit_candidate_sha256,
+                          self.unit_approval_sha256)
 
     def accounting(self) -> dict[str, Any]:
         def longest_no_query_gap(positions: Sequence[int]) -> int:
