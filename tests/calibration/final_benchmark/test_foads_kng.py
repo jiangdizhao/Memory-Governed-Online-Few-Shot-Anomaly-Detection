@@ -205,13 +205,25 @@ def _simple_features(value: float) -> np.ndarray:
     return features
 
 
-def test_raw_singleton_and_sibling_independence_with_fixed_state(source_api):
+def test_raw_singleton_and_sibling_independence_with_fixed_state(source_api, monkeypatch):
     model = _SyntheticKlinks(np.zeros(100, dtype=np.float64))
     registration = _registration()
-    maps_a = np.stack([_simple_features(value) for value in (0.1, 0.5, 1.0, 1.5, 2.0)])
+    values = (0.1, 0.5, 1.0, 1.5, 2.0)
+    maps_a = np.zeros((5, *kng.FEATURE_GRID, kng.FEATURE_DIMENSIONS), dtype=np.float32)
+    maps_a[..., 0] = np.asarray(values, dtype=np.float32)[:, None, None]
     maps_b = maps_a.copy()
     maps_b[1:] += 7.0
 
+    # The raw scorer accepts one correctly shaped image at a time. The runner
+    # scheduling check below substitutes only the expensive map scorer.
+    singleton_map = kng.paper_consistent_raw_map(model, maps_a[0], source_api)
+    assert singleton_map.shape == (224, 224)
+    assert np.isfinite(singleton_map).all() and float(singleton_map.max()) > 0
+    assert np.isfinite(float(singleton_map.max()))
+
+    monkeypatch.setattr(
+        kng, "paper_consistent_raw_image_score",
+        lambda _model, feature_map, _source_api: float(np.asarray(feature_map)[0, 0, 0]))
     runner_a = kng.FOADSKNGP0Runner(registration, copy.deepcopy(model), source_api)
     runner_b = kng.FOADSKNGP0Runner(registration, copy.deepcopy(model), source_api)
     events = registration.stream_events[:5]
@@ -225,13 +237,9 @@ def test_raw_singleton_and_sibling_independence_with_fixed_state(source_api):
     assert np.isfinite(raw).all() and raw[0] > 0
     normalized = (raw - raw.min()) / (raw.max() - raw.min())
     assert np.argsort(raw).tolist() == np.argsort(normalized).tolist()
-    singleton_map = kng.paper_consistent_raw_map(
-        model, _simple_features(1.0), source_api)
-    assert singleton_map.shape == (224, 224)
-    assert np.isfinite(singleton_map).all() and float(singleton_map.max()) > 0
 
 
-def test_two_groups_are_scored_before_one_batch10_update_call(source_api):
+def test_two_groups_are_scored_before_one_batch10_update_call(source_api, monkeypatch):
     registration = _registration()
     model = _SyntheticKlinks(np.zeros(100, dtype=np.float64))
     online_calls = []
@@ -239,10 +247,11 @@ def test_two_groups_are_scored_before_one_batch10_update_call(source_api):
         self.online_calls += 1
         online_calls.append(np.asarray(data).copy())
     model.online_fit = MethodType(record_online_fit, model)
-    maps = []
-    for value in (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0):
-        maps.append(_simple_features(value))
-    maps = np.stack(maps)
+    monkeypatch.setattr(
+        kng, "paper_consistent_raw_image_score",
+        lambda _model, feature_map, _source_api: float(np.asarray(feature_map)[0, 0, 0]))
+    maps = np.zeros((10, *kng.FEATURE_GRID, kng.FEATURE_DIMENSIONS), dtype=np.float32)
+    maps[..., 0] = np.arange(0.1, 1.1, 0.1, dtype=np.float32)[:, None, None]
     runner = kng.FOADSKNGP0Runner(registration, model, source_api)
 
     first = runner.process_group(registration.stream_events[:5], maps[:5])
@@ -262,6 +271,20 @@ def test_two_groups_are_scored_before_one_batch10_update_call(source_api):
         "final_unupdated_groups": 0, "final_unupdated_images": 0,
         "paid_labels": 0, "test_labels_or_masks_read": 0,
     }
+
+
+def test_feature_geometry_is_rejected_before_scoring_or_update(source_api):
+    model = _SyntheticKlinks(np.zeros(100, dtype=np.float64))
+    registration = _registration()
+    runner = kng.FOADSKNGP0Runner(registration, model, source_api)
+
+    with pytest.raises(kng.FOADSKNGError, match=r"\(56,56,100\)"):
+        kng.paper_consistent_raw_map(model, _simple_features(1.0), source_api)
+    with pytest.raises(kng.FOADSKNGError, match=r"\(5,56,56,100\)"):
+        runner.process_group(registration.stream_events[:5],
+                             np.zeros((5, 1, 1, 100), dtype=np.float32))
+    assert model.online_calls == 0
+    assert runner.next_position == runner.update_count == 0
 
 
 @pytest.mark.parametrize("channels,node_count", [(3, 4), (5, 2), (2, 5)])
@@ -350,7 +373,8 @@ def _train_four_node_kng(source_api):
     return model, centers
 
 
-def test_native_initial_assignment_and_batch10_update_match_pinned_online_fit(source_api):
+def test_native_initial_assignment_and_batch10_update_match_pinned_online_fit(
+        source_api, monkeypatch):
     registration = _registration()
     model, centers = _train_four_node_kng(source_api)
     reference = copy.deepcopy(model)
@@ -362,8 +386,13 @@ def test_native_initial_assignment_and_batch10_update_match_pinned_online_fit(so
     outlier_a = centers[0].copy(); outlier_a[0] += 1000
     outlier_b = centers[3].copy(); outlier_b[0] -= 1000
     samples.extend((outlier_a, outlier_b))
-    maps = np.stack([item.reshape(1, 1, 100) for item in samples])
-    online_data = maps.reshape(-1, 100).astype(np.float32)
+    online_data = np.stack(samples).astype(np.float32)
+    maps = np.broadcast_to(
+        online_data[:, None, None, :],
+        (10, *kng.FEATURE_GRID, kng.FEATURE_DIMENSIONS)).copy()
+    monkeypatch.setattr(
+        kng, "paper_consistent_raw_image_score",
+        lambda _model, feature_map, _source_api: float(np.asarray(feature_map)[0, 0, 0]))
 
     observed_pseudo_normal = {}
     source_distance = model.online_gpu_cal_dist
@@ -377,6 +406,11 @@ def test_native_initial_assignment_and_batch10_update_match_pinned_online_fit(so
         return values, indexes
     model.online_gpu_cal_dist = MethodType(capture_online_distance, model)
 
+    native_online_fit = model.online_fit
+    runner_batches = []
+    def capture_runner_online_fit(self, data):
+        runner_batches.append(np.asarray(data).copy())
+    model.online_fit = MethodType(capture_runner_online_fit, model)
     runner = kng.FOADSKNGP0Runner(registration, model, source_api)
     initial_state = _model_state(model)
     first = runner.process_group(registration.stream_events[:5], maps[:5])
@@ -384,16 +418,23 @@ def test_native_initial_assignment_and_batch10_update_match_pinned_online_fit(so
     _assert_model_state_equal(_model_state(model), initial_state)
     second = runner.process_group(registration.stream_events[5:], maps[5:])
     assert len(second) == 5 and runner.update_count == 1
-    assert observed_pseudo_normal["accepted"].shape == (10,)
-    assert observed_pseudo_normal["accepted"].any()
-    assert (~observed_pseudo_normal["accepted"]).any()
+    assert runner.finish()["completed_batch10_updates"] == 1
+    assert len(runner_batches) == 1
+    np.testing.assert_array_equal(runner_batches[0], maps.reshape(-1, 100))
+    _assert_model_state_equal(_model_state(model), initial_state)
+    # The native Klinks update is exercised on the same ten deterministic
+    # image-level synthetic observations after the runner's full-grid receipt.
+    model.online_fit = native_online_fit
+    model.online_fit(online_data)
 
+    assert observed_pseudo_normal["accepted"].shape == (10,)
     reference.online_fit(online_data)
     _assert_model_state_equal(_model_state(model), _model_state(reference))
     updated_state = _model_state(model)
+    assert observed_pseudo_normal["accepted"].any()
+    assert (~observed_pseudo_normal["accepted"]).any()
     assert any(not np.array_equal(old[1], new[1])
                for old, new in zip(initial_state[0], updated_state[0]))
-    assert runner.finish()["completed_batch10_updates"] == 1
 
 
 def test_registered_order_and_outcome_access_are_fail_closed():
@@ -408,6 +449,23 @@ def test_registered_order_and_outcome_access_are_fail_closed():
 
     manifest["stream_manifests"][0]["events"][0]["mask_path"] = "forbidden"
     with pytest.raises(kng.FOADSKNGError, match="prohibited outcome field"):
+        kng.build_registered_p0(
+            manifest, "synthetic_category",
+            expected_identity_manifest_sha256=_canonical_sha(manifest),
+            expected_role_manifest_sha256=_canonical_sha(role),
+            expected_dataset_release_sha256=role["dataset_release_sha256"],
+        )
+
+
+def test_registered_stream_rejects_missing_complete_five_view_group():
+    manifest = _identity_manifest()
+    role = manifest["role_manifests"][0]
+    stream = manifest["stream_manifests"][0]
+    stream["events"] = stream["events"][:5]
+    stream["event_count"] = len(stream["events"])
+
+    with pytest.raises(kng.FOADSKNGError,
+                       match="every registered TEST image identity exactly once"):
         kng.build_registered_p0(
             manifest, "synthetic_category",
             expected_identity_manifest_sha256=_canonical_sha(manifest),

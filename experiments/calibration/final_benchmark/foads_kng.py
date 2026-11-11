@@ -357,8 +357,8 @@ def paper_consistent_raw_map(model: Any, feature_map: np.ndarray,
                              source_api: KNGSourceAPI) -> np.ndarray:
     """Return the raw 224x224, sigma-4 map using Equation (11), before min-max."""
     features = np.asarray(feature_map)
-    if features.ndim != 3 or features.shape[2] != FEATURE_DIMENSIONS or not np.isfinite(features).all():
-        raise FOADSKNGError("feature map must be finite with shape (H,W,100)")
+    if features.shape != (*FEATURE_GRID, FEATURE_DIMENSIONS) or not np.isfinite(features).all():
+        raise FOADSKNGError("feature map must be finite with shape (56,56,100)")
     height, width, channels = features.shape
     flat = np.ascontiguousarray(features.reshape(-1, channels), dtype=np.float32)
     if not hasattr(model, "gpu_cal_dist") or not hasattr(model, "node_list"):
@@ -489,6 +489,15 @@ def build_registered_p0(identity_manifest: Mapping[str, Any], category: str, *,
                     if row.get("split") == "test"}
     if len(test_records) != len([row for row in category_records if row.get("split") == "test"]):
         raise FOADSKNGError("registered TEST identities are duplicated")
+    stream_image_ids = [str(row.get("image_identity_sha256", ""))
+                        for row in raw_events if isinstance(row, Mapping)]
+    registered_test_ids = set(test_records)
+    if (len(stream_image_ids) != len(raw_events) or
+            len(stream_image_ids) != len(registered_test_ids) or
+            len(set(stream_image_ids)) != len(stream_image_ids) or
+            set(stream_image_ids) != registered_test_ids):
+        raise FOADSKNGError(
+            "registered P0 stream must cover every registered TEST image identity exactly once")
     required_event_keys = {"position", "original_position", "event_id_sha256",
                            "image_identity_sha256", "image_content_sha256",
                            "source_group_sha256", "camera_id", "within_group_ordinal"}
@@ -620,9 +629,9 @@ class FOADSKNGP0Runner:
                 tuple(events) != expected):
             raise FOADSKNGError("runner accepts only the next complete registered P0 five-view group")
         maps = np.asarray(feature_maps)
-        if (maps.ndim != 4 or maps.shape[0] != KNG_VIEWS_PER_GROUP or
-                maps.shape[-1] != FEATURE_DIMENSIONS or not np.isfinite(maps).all()):
-            raise FOADSKNGError("group feature maps must have shape (5,H,W,100) and be finite")
+        if (maps.shape != (KNG_VIEWS_PER_GROUP, *FEATURE_GRID, FEATURE_DIMENSIONS) or
+                not np.isfinite(maps).all()):
+            raise FOADSKNGError("group feature maps must have shape (5,56,56,100) and be finite")
         group_sha = expected[0].source_group_sha256
         if any(event.source_group_sha256 != group_sha for event in expected):
             raise FOADSKNGError("a scoring batch cannot mix Source Groups")
