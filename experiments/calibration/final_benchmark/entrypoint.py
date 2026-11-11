@@ -43,6 +43,12 @@ def _digest(value: Any, name: str) -> str:
     return result
 
 
+def _git_commit_id(value: Any, name: str = "source commit") -> str:
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise EntryPointError(f"{name} must be a 40-character lowercase Git commit ID")
+    return value
+
+
 def validate_release_identity(*, identity_manifest: Mapping[str, Any],
                               role_manifest: Mapping[str, Any],
                               release_identity: Mapping[str, Any]) -> str:
@@ -123,7 +129,7 @@ class FinalBenchmarkEntrypoint:
                  test_private_locators: Mapping[str, Mapping[str, str]],
                  role_private_locators: Mapping[str, Mapping[str, str]], category: str,
                  condition_id: str):
-        self.source_commit = _digest(source_commit, "source commit")
+        self.source_commit = _git_commit_id(source_commit)
         self.identity_manifest = dict(identity_manifest)
         self.role_manifest = dict(role_manifest)
         self.release_identity = dict(release_identity)

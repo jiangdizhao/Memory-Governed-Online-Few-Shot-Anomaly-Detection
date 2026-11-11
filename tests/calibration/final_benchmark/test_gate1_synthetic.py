@@ -13,7 +13,8 @@ from experiments.calibration.final_benchmark.evaluation import (
     EvaluationProtocolError, LabelProjectionAuthorization, evaluate_sealed_category,
 )
 from experiments.calibration.final_benchmark.entrypoint import (
-    EntryPointError, FinalBenchmarkEntrypoint, validate_release_identity,
+    EntryPointError, FinalBenchmarkEntrypoint, _digest, _git_commit_id,
+    validate_release_identity,
 )
 from experiments.calibration.final_benchmark.metrics import (
     MetricContractError, binary_metrics, compare_query_budgets,
@@ -132,6 +133,67 @@ def event_group(start: int, group_index: int) -> list[TestEvent]:
 
 
 class IdentityTests(unittest.TestCase):
+    def test_git_commit_id_validator_accepts_only_unmodified_40_character_ids(self):
+        valid_commit = "a" * 40
+        self.assertEqual(_git_commit_id(valid_commit), valid_commit)
+        self.assertEqual(_digest("b" * 64, "synthetic sha256"), "b" * 64)
+        with self.assertRaisesRegex(EntryPointError, "lowercase SHA-256"):
+            _digest("b" * 40, "synthetic sha256")
+        for invalid_commit in ("a" * 39, "a" * 41, "A" * 40, "g" * 40, "c" * 64):
+            with self.subTest(invalid_commit=invalid_commit[:8], length=len(invalid_commit)):
+                with self.assertRaisesRegex(EntryPointError, "40-character lowercase Git commit ID"):
+                    _git_commit_id(invalid_commit)
+
+    def test_release_identity_and_manifest_fingerprints_remain_sha256(self):
+        def object_sha(value):
+            payload = json.dumps(value, sort_keys=True, separators=(",", ":"),
+                                 ensure_ascii=False, allow_nan=False).encode("utf-8")
+            return hashlib.sha256(payload).hexdigest()
+
+        snapshot_sha = sha("synthetic-approved-snapshot")
+        release_identifier = f"realiad-local-snapshot-v1:{snapshot_sha}"
+        release_sha = hashlib.sha256(("Gate0-local-release-v1\0realiad\0" +
+                                      release_identifier).encode("ascii")).hexdigest()
+        identity_manifest = {
+            "schema": "final-benchmark.identity-manifest.v1",
+            "dataset_id": "realiad",
+            "category_count": 30,
+            "categories": [{"category": f"synthetic-category-{i}"} for i in range(30)],
+            "identity_records": [],
+            "local_snapshot_sha256": snapshot_sha,
+        }
+        role_manifest = {"dataset_id": "realiad", "dataset_release_sha256": release_sha}
+        release_identity = {
+            "schema": "final-benchmark.dataset-release-identity.v1",
+            "status": "GATE0_CERTIFIED",
+            "gate0_freeze_commit": "a34b870fd4700bfe970e459d2963a602f04b1341",
+            "dataset_id": "realiad",
+            "dataset_release_sha256": release_sha,
+            "identity_manifest_sha256": object_sha(identity_manifest),
+            "role_manifest_sha256": object_sha(role_manifest),
+            "provenance_kind": "RESEARCHER_APPROVED_LOCAL_SNAPSHOT",
+            "local_snapshot_sha256": snapshot_sha,
+            "local_snapshot_identifier": release_identifier,
+            "researcher_decision_sha256": sha("synthetic-researcher-decision"),
+        }
+        self.assertEqual(validate_release_identity(
+            identity_manifest=identity_manifest, role_manifest=role_manifest,
+            release_identity=release_identity), release_sha)
+        for field in ("dataset_release_sha256", "identity_manifest_sha256", "role_manifest_sha256"):
+            with self.subTest(field=field):
+                malformed = dict(release_identity)
+                malformed[field] = "d" * 40
+                with self.assertRaisesRegex(EntryPointError, "lowercase SHA-256 digest"):
+                    validate_release_identity(identity_manifest=identity_manifest,
+                        role_manifest=role_manifest, release_identity=malformed)
+        malformed_role = dict(role_manifest)
+        malformed_role["dataset_release_sha256"] = "e" * 40
+        malformed_role_identity = dict(release_identity)
+        malformed_role_identity["role_manifest_sha256"] = object_sha(malformed_role)
+        with self.assertRaisesRegex(EntryPointError, "differs from the frozen"):
+            validate_release_identity(identity_manifest=identity_manifest,
+                role_manifest=malformed_role, release_identity=malformed_role_identity)
+
     def test_real_execution_rejects_uncertified_local_release_identifier(self):
         categories = [{"category": f"category-{index}"} for index in range(30)]
         identity_manifest = {"schema": "final-benchmark.identity-manifest.v1",
@@ -230,11 +292,13 @@ class IdentityTests(unittest.TestCase):
             "role_manifest_sha256": object_sha(role_manifest),
             "provenance_kind": "PUBLISHER_AUTHENTICATED",
             "publisher_release_sha256": release_sha}
-        entrypoint = FinalBenchmarkEntrypoint(source_commit=sha("synthetic-source"),
+        synthetic_commit = "a" * 40
+        entrypoint = FinalBenchmarkEntrypoint(source_commit=synthetic_commit,
             identity_manifest=identity_manifest, role_manifest=role_manifest,
             release_identity=release_identity, stream_records=stream_records,
             test_private_locators=test_locators, role_private_locators=role_locators,
             category="widget", condition_id="P0")
+        self.assertEqual(entrypoint.source_commit, synthetic_commit)
         authorization = {"schema": "final-benchmark.execution-authorization.v1",
             "status": "AUTHORIZED", "scope": "restricted_numerical_preflight",
             "source_commit": entrypoint.source_commit,
@@ -243,6 +307,12 @@ class IdentityTests(unittest.TestCase):
             "dataset_release_sha256": release_sha,
             "dataset_id": "realiad", "category": "widget", "condition_id": "P0",
             "max_events": 5, "label_access": "NONE", "stage_b_authorized": False}
+        mismatched_authorization = dict(authorization)
+        mismatched_authorization["source_commit"] = "b" * 40
+        with self.assertRaisesRegex(EntryPointError, "separate authorization"):
+            entrypoint.run_restricted_numerical_preflight(
+                authorization=mismatched_authorization, max_events=5,
+                encoder=FakeRuntime(role_locators, test_locators))
         result = entrypoint.run_restricted_numerical_preflight(
             authorization=authorization, max_events=5, encoder=FakeRuntime(role_locators, test_locators))
         self.assertEqual(result["status"], "BOUNDED_NUMERICAL_PREFLIGHT_INCOMPLETE_NOT_STAGE_A")
