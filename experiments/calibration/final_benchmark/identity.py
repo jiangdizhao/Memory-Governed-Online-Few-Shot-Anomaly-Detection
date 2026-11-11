@@ -260,6 +260,98 @@ def _realiad_identity_key(category: str, official_image_key: str) -> tuple[str, 
     return group_key, int(camera.group("camera"))
 
 
+def _path_error_code(error: BaseException) -> str | None:
+    """Map only the two audited official-path discrepancies to fixed codes."""
+    message = str(error)
+    if message.startswith("Directory layout "):
+        return "DIRECTORY_SESSION_CONTRADICTS_FILENAME_SESSION"
+    if message.startswith("Missing sample directory (S####)"):
+        return "SAMPLE_DIRECTORY_GRAMMAR_REJECTS_OFFICIAL_PATH"
+    return None
+
+
+def validate_realiad_source_path(*, path: str | Path, category: str, split: str,
+                                 annotation_sha256: str | None, official_image_key: str,
+                                 official_group_key: str, image_identity_sha256: str,
+                                 source_group_sha256: str, camera_id: int,
+                                 original_position: int | None,
+                                 image_content_sha256: str | None,
+                                 relative_id: str | None = None,
+                                 identity_manifest_sha256: str | None = None) -> dict[str, Any]:
+    """Validate a strict Real-IAD path, or one exact registered TEST exception.
+
+    The exception branch is identity-, annotation-, content-, group-, camera-,
+    position-, error-class-, and path-suffix-bound. It never searches by name.
+    The canonical identity-manifest commitment is additionally required by
+    downstream event execution; locator creation can verify the row-level
+    bindings before that full manifest is loaded.
+    """
+    from experiments.risk_safe.preflight import MalformedImageName, parse_image_name
+    from . import realiad_path_exceptions as registered
+
+    if (split not in {"train", "test"} or
+            (annotation_sha256 is not None and
+             not re.fullmatch(r"[0-9a-f]{64}", str(annotation_sha256))) or
+            not re.fullmatch(r"[0-9a-f]{64}", str(image_identity_sha256)) or
+            not re.fullmatch(r"[0-9a-f]{64}", str(source_group_sha256)) or
+            isinstance(camera_id, bool) or not isinstance(camera_id, int) or
+            (original_position is not None and
+             (isinstance(original_position, bool) or not isinstance(original_position, int) or
+              original_position < 0))):
+        raise IdentityAuditError("registered Real-IAD path metadata is malformed")
+    group, camera = _realiad_identity_key(category, official_image_key)
+    if (group != official_group_key or camera != camera_id or
+            _image_identity_digest(official_image_key) != image_identity_sha256 or
+            _source_group_digest(group) != source_group_sha256):
+        raise IdentityAuditError("registered Real-IAD path differs from its official identity binding")
+
+    try:
+        parsed = parse_image_name(path, expected_class=category)
+    except MalformedImageName as exc:
+        code = _path_error_code(exc)
+        spec = registered.REGISTERED_EXCEPTIONS.get(image_identity_sha256)
+        if (code is None or spec is None or split != "test" or
+                identity_manifest_sha256 != registered.REGISTERED_IDENTITY_MANIFEST_SHA256):
+            raise IdentityAuditError("Real-IAD source path fails the strict official parser") from None
+        if (spec.get("image_identity_sha256") != image_identity_sha256 or
+                spec.get("category") != category or
+                spec.get("annotation_sha256") != annotation_sha256 or
+                spec.get("source_group_sha256") != source_group_sha256 or
+                spec.get("camera_id") != camera_id or
+                spec.get("original_position") != original_position or
+                spec.get("validation_code") != code or
+                (image_content_sha256 is not None and
+                 spec.get("image_content_sha256") != image_content_sha256)):
+            raise IdentityAuditError("Real-IAD path exception differs from its registered identity record") from None
+        key_parts = tuple(part for part in official_image_key.replace("\\", "/").split("/")
+                          if part not in ("", "."))
+        if (not key_parts or any(part == ".." for part in key_parts) or
+                (relative_id is not None and relative_id.replace("\\", "/") != "/".join(key_parts))):
+            raise IdentityAuditError("registered exception path does not match its exact official locator")
+        try:
+            resolved = Path(path).resolve(strict=True)
+            if (not resolved.is_file() or
+                    tuple(resolved.parts[-len(key_parts):]) != key_parts):
+                raise IdentityAuditError("registered exception path suffix differs from its official locator")
+            actual_content_sha256, _ = _safe_file_hash(resolved, identity=image_identity_sha256)
+        except OSError:
+            raise IdentityAuditError("registered exception image is unavailable") from None
+        if actual_content_sha256 != spec.get("image_content_sha256"):
+            raise IdentityAuditError("registered exception image content differs from its source receipt")
+        if not re.fullmatch(r"[0-9a-f]{64}", str(identity_manifest_sha256)):
+            raise IdentityAuditError("identity-manifest commitment is malformed")
+        return {"official_group_key": group, "camera_id": camera,
+                "relative_id": "/".join(key_parts), "path_exception": code}
+
+    if (parsed.official_sample_key != group or parsed.camera_id != camera or
+            parsed.rel_path != official_image_key.replace("\\", "/") or
+            (relative_id is not None and
+             parsed.rel_path != relative_id.replace("\\", "/"))):
+        raise IdentityAuditError("strict Real-IAD path differs from its registered image/group/view")
+    return {"official_group_key": group, "camera_id": camera,
+            "relative_id": parsed.rel_path, "path_exception": None}
+
+
 def _hash_many(paths: Sequence[tuple[Path, str]], *, workers: int = 4) -> dict[str, tuple[str, int]]:
     if workers < 1:
         raise ValueError("workers must be positive")
@@ -442,7 +534,6 @@ def resolve_realiad_private_locators(*, dataset_root: str | Path,
     TEST outcome and mask fields are omitted by the identity-only projection;
     file contents are checked later immediately before the authorized encoding.
     """
-    from experiments.risk_safe.preflight import parse_image_name
     if split not in {"train", "test"} or not re.fullmatch(r"[0-9a-f]{64}", annotation_sha256):
         raise IdentityAuditError("private locator requires a registered split and annotation hash")
     requested = list(selected_image_ids)
@@ -457,7 +548,7 @@ def resolve_realiad_private_locators(*, dataset_root: str | Path,
     if not isinstance(normal_class, str) or not normal_class or not isinstance(prefix, str):
         raise IdentityAuditError("annotation lacks its normal class or image prefix")
     wanted, result = set(requested), {}
-    for row in train_rows if split == "train" else test_rows:
+    for original_position, row in enumerate(train_rows if split == "train" else test_rows):
         image_key = row.get("image_path")
         if not isinstance(image_key, str) or not image_key:
             raise IdentityAuditError("official image identity is missing")
@@ -468,11 +559,26 @@ def resolve_realiad_private_locators(*, dataset_root: str | Path,
             raise IdentityAuditError("a selected TRAIN image is not verified normal")
         group, camera = _realiad_identity_key(category, image_key)
         path = _safe_join(Path(dataset_root) / "images", prefix, image_key, identity=image_id)
-        parsed = parse_image_name(path, expected_class=category)
-        if parsed.official_sample_key != group or parsed.camera_id != camera or image_id in result:
+        registered_group_sha = _source_group_digest(group)
+        registered_content_sha = None
+        if split == "test":
+            from . import realiad_path_exceptions as registered
+            spec = registered.REGISTERED_EXCEPTIONS.get(image_id)
+            if spec is not None:
+                registered_content_sha = spec.get("image_content_sha256")
+        validated = validate_realiad_source_path(
+            path=path, category=category, split=split,
+            annotation_sha256=annotation_sha256, official_image_key=image_key,
+            official_group_key=group, image_identity_sha256=image_id,
+            source_group_sha256=registered_group_sha, camera_id=camera,
+            original_position=original_position,
+            image_content_sha256=registered_content_sha,
+            identity_manifest_sha256=(registered.REGISTERED_IDENTITY_MANIFEST_SHA256
+                                      if registered_content_sha is not None else None))
+        if image_id in result:
             raise IdentityAuditError("selected official image/group mapping is inconsistent")
         result[image_id] = {"official_image_key": image_key, "official_group_key": group,
-                            "image_path": str(path), "relative_id": parsed.rel_path}
+                            "image_path": str(path), "relative_id": validated["relative_id"]}
     if set(result) != wanted:
         raise IdentityAuditError("one or more registered image identities are absent from the official split")
     return result

@@ -61,9 +61,9 @@ class RealIADQueryLabelBroker:
                  dataset_release_sha256: str, annotation_path: str | Path,
                  annotation_sha256: str, stream_records: Sequence[Mapping[str, Any]],
                  private_locators: Mapping[str, Mapping[str, str]],
+                 identity_manifest_sha256: str | None = None,
                  sink: Any, private_feedback_path: str | Path):
         from experiments.calibration import r7_shuffled_correction_4class as r7
-        from experiments.risk_safe.preflight import parse_image_name
 
         if (condition_id not in {"P0", "P1", "P2"} or
                 stream_seed != {"P0": 0, "P1": 11, "P2": 0}[condition_id] or
@@ -84,12 +84,21 @@ class RealIADQueryLabelBroker:
             loc = private_locators[image_id]
             image_key, group_key = loc["official_image_key"], loc["official_group_key"]
             group, camera = identity._realiad_identity_key(category, image_key)
-            parsed = parse_image_name(loc["image_path"], expected_class=category)
             ordinal = row.get("within_group_ordinal")
+            path_binding = identity.validate_realiad_source_path(
+                path=loc["image_path"], category=category, split="test",
+                annotation_sha256=annotation_sha256, official_image_key=image_key,
+                official_group_key=group_key, image_identity_sha256=image_id,
+                source_group_sha256=str(row.get("source_group_sha256", "")),
+                camera_id=int(row.get("camera_id", -1)),
+                original_position=int(row.get("original_position", -1)),
+                image_content_sha256=str(row.get("image_content_sha256", "")),
+                relative_id=loc.get("relative_id"),
+                identity_manifest_sha256=identity_manifest_sha256)
             event_id = identity._domain_hash("Gate0-event-v1", dataset_release_sha256, category,
                                              str(stream_seed), group_key, str(camera), image_key, str(ordinal))
-            if (group != group_key or parsed.official_sample_key != group_key or
-                    parsed.camera_id != camera or ordinal != camera or row.get("camera_id") != camera or
+            if (group != group_key or path_binding["official_group_key"] != group_key or
+                    path_binding["camera_id"] != camera or ordinal != camera or row.get("camera_id") != camera or
                     identity._image_identity_digest(image_key) != image_id or
                     identity._source_group_digest(group_key) != row.get("source_group_sha256") or
                     event_id != row.get("event_id_sha256")):

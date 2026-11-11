@@ -128,12 +128,22 @@ class FinalBenchmarkEntrypoint:
                  release_identity: Mapping[str, Any], stream_records: Sequence[Mapping[str, Any]],
                  test_private_locators: Mapping[str, Mapping[str, str]],
                  role_private_locators: Mapping[str, Mapping[str, str]], category: str,
-                 condition_id: str):
+                 condition_id: str, campaign_run_id: str | None = None,
+                 execution_plan_sha256: str | None = None,
+                 stream_manifest_sha256: str | None = None,
+                 category_bundle_file_sha256: str | None = None,
+                 private_locator_manifest_file_sha256: str | None = None,
+                 annotation_sha256: str | None = None):
         self.source_commit = _git_commit_id(source_commit)
         self.identity_manifest = dict(identity_manifest)
         self.role_manifest = dict(role_manifest)
         self.release_identity = dict(release_identity)
         self.category, self.condition_id = str(category), str(condition_id)
+        self.campaign_run_id = campaign_run_id
+        self.execution_plan_sha256 = execution_plan_sha256
+        self.stream_manifest_sha256 = stream_manifest_sha256
+        self.category_bundle_file_sha256 = category_bundle_file_sha256
+        self.private_locator_manifest_file_sha256 = private_locator_manifest_file_sha256
         self.release_sha256 = validate_release_identity(
             identity_manifest=self.identity_manifest, role_manifest=self.role_manifest,
             release_identity=self.release_identity)
@@ -142,6 +152,11 @@ class FinalBenchmarkEntrypoint:
                                 release_sha256=self.release_sha256)
         self.identity_manifest_sha256 = _sha(self.identity_manifest)
         self.role_manifest_sha256 = _sha(self.role_manifest)
+        annotation_artifacts = [row.get("sha256") for row in self.identity_manifest.get("source_artifacts", ())
+                                if row.get("artifact_id") == f"annotation:{self.category}"]
+        self.annotation_sha256 = annotation_artifacts[0] if len(annotation_artifacts) == 1 else None
+        if annotation_sha256 is not None and annotation_sha256 != self.annotation_sha256:
+            raise EntryPointError("annotation hash differs from the registered category source artifact")
         self.stream_records = tuple(dict(row) for row in stream_records)
         self.test_private_locators = {str(key): dict(value)
                                       for key, value in test_private_locators.items()}
@@ -158,6 +173,16 @@ class FinalBenchmarkEntrypoint:
                row.get("category", self.category) != self.category or
                row.get("role", "TEST") != "TEST" for row in self.stream_records):
             raise EntryPointError("entry point accepts only the selected registered Real-IAD TEST stream")
+        from . import realiad_path_exceptions as registered_path_exceptions
+        exception_ids = ({row.get("image_identity_sha256") for row in self.stream_records} &
+                         set(registered_path_exceptions.REGISTERED_EXCEPTIONS))
+        if exception_ids:
+            if self.identity_manifest_sha256 != registered_path_exceptions.REGISTERED_IDENTITY_MANIFEST_SHA256:
+                raise EntryPointError("registered Real-IAD path exceptions require the exact Gate 1 identity manifest")
+            if (len(annotation_artifacts) != 1 or
+                    any(registered_path_exceptions.REGISTERED_EXCEPTIONS[image_id].get("annotation_sha256") !=
+                        self.annotation_sha256 for image_id in exception_ids)):
+                raise EntryPointError("registered Real-IAD path exceptions require their exact annotation artifact")
         records = [row for row in self.identity_manifest["identity_records"]
                    if row.get("category") == self.category]
         train_by_id = {row["image_identity_sha256"]: row for row in records
@@ -190,6 +215,21 @@ class FinalBenchmarkEntrypoint:
                 authorization.get("category") != self.category or
                 authorization.get("condition_id") != self.condition_id):
             raise EntryPointError(f"separate authorization for {scope} does not match this source/data/category")
+        if self.campaign_run_id is not None and authorization.get("campaign_run_id") != self.campaign_run_id:
+            raise EntryPointError("authorization campaign run identity differs from the frozen configuration")
+        if (self.execution_plan_sha256 is not None and
+                authorization.get("execution_plan_sha256") != self.execution_plan_sha256):
+            raise EntryPointError("authorization execution-plan identity differs from the frozen configuration")
+        if self.stream_manifest_sha256 is not None and authorization.get("stream_manifest_sha256") != self.stream_manifest_sha256:
+            raise EntryPointError("authorization stream-manifest identity differs from the frozen configuration")
+        if (self.category_bundle_file_sha256 is not None and
+                authorization.get("category_bundle_file_sha256") != self.category_bundle_file_sha256):
+            raise EntryPointError("authorization category-bundle file identity differs from the loaded registration")
+        if (self.private_locator_manifest_file_sha256 is not None and
+                authorization.get("private_locator_manifest_file_sha256") != self.private_locator_manifest_file_sha256):
+            raise EntryPointError("authorization private-locator file identity differs from the loaded locators")
+        if self.campaign_run_id is not None and authorization.get("annotation_sha256") != self.annotation_sha256:
+            raise EntryPointError("authorization annotation identity differs from the registered category source")
 
     @staticmethod
     def _load_encoder(encoder: Any | None) -> Any:
@@ -220,7 +260,9 @@ class FinalBenchmarkEntrypoint:
             event = runtime.encode_registered_realiad_event(
                 record=record, locator=self.test_private_locators[record["image_identity_sha256"]],
                 category=self.category, dataset_release_sha256=self.release_sha256,
-                stream_seed={"P0": 0, "P1": 11, "P2": 0}[self.condition_id])
+                stream_seed={"P0": 0, "P1": 11, "P2": 0}[self.condition_id],
+                annotation_sha256=self.annotation_sha256,
+                identity_manifest_sha256=self.identity_manifest_sha256)
             scores = {}
             arm_digests = {arm: backend.state_digest(arm) for arm in ("F-B", "K-B", "F-M", "K-M")}
             shadow_digest = backend.shadow_state_digest()
@@ -268,13 +310,16 @@ class FinalBenchmarkEntrypoint:
     def run_stage_a_category(self, *, authorization: Mapping[str, Any],
                              encoder: Any | None = None, output_directory: str | Path,
                              annotation_path: str | Path, annotation_sha256: str,
-                             stream_seed: int) -> tuple[Any, list[dict[str, Any]], list[dict[str, Any]]]:
+                             stream_seed: int,
+                             progress_callback: Callable[[str, int], None] | None = None
+                             ) -> tuple[Any, list[dict[str, Any]], list[dict[str, Any]]]:
         """Run exactly the authorized one-category Real-IAD trajectory."""
         self._validate_authorization(authorization, scope="stage_a_category")
         seed = {"P0": 0, "P1": 11, "P2": 0}[self.condition_id]
         if (stream_seed != seed or authorization.get("label_access") != "QUERY_ONLY" or
                 authorization.get("stage_b_authorized") is not False or
-                int(authorization.get("expected_event_count", -1)) != len(self.stream_records)):
+                int(authorization.get("expected_event_count", -1)) != len(self.stream_records) or
+                (self.annotation_sha256 is not None and annotation_sha256 != self.annotation_sha256)):
             raise EntryPointError("Stage A authorization differs from the frozen stream and query-only scope")
         root = Path(output_directory)
         if not root.is_dir():
@@ -283,12 +328,16 @@ class FinalBenchmarkEntrypoint:
                         root / "private_feedback.jsonl", root / "stage_a_category_report.json")
         if any(path.exists() for path in output_paths):
             raise EntryPointError("Stage A output files must all be fresh and non-overwriting")
+        if progress_callback is not None:
+            progress_callback("AUTHORIZED_START", 0)
         runtime = self._load_encoder(encoder)
         commissioning = runtime.prepare_commissioning(
             role_manifest=self.role_manifest, private_locators=self.role_private_locators,
             condition_id=self.condition_id)
         backend = runtime.build_backend(category=self.category, condition_id=self.condition_id,
                                         commissioning=commissioning)
+        if progress_callback is not None:
+            progress_callback("MODEL_INITIALIZED", 0)
         groups = []
         for row in self.stream_records:
             group = str(row["source_group_sha256"])
@@ -308,6 +357,7 @@ class FinalBenchmarkEntrypoint:
             broker = RealIADQueryLabelBroker(category=self.category, condition_id=self.condition_id,
                 stream_seed=seed, dataset_release_sha256=self.release_sha256,
                 annotation_path=annotation_path, annotation_sha256=annotation_sha256,
+                identity_manifest_sha256=self.identity_manifest_sha256,
                 stream_records=self.stream_records, private_locators=self.test_private_locators,
                 sink=sink, private_feedback_path=root / "private_feedback.jsonl")
             runner = GroupAtomicCategoryRunner(dataset_id="realiad", category=self.category,
@@ -315,14 +365,19 @@ class FinalBenchmarkEntrypoint:
                 stream_seed=seed, expected_event_count=len(self.stream_records),
                 expected_group_order=groups, rho=0.03, backend=backend, broker=broker, sink=sink)
             for start in range(0, len(self.stream_records), 5):
+                if progress_callback is not None:
+                    progress_callback("ENCODING_GROUP", start)
                 events = []
                 for record in self.stream_records[start:start + 5]:
                     event = runtime.encode_registered_realiad_event(
                         record=record, locator=self.test_private_locators[record["image_identity_sha256"]],
                         category=self.category, dataset_release_sha256=self.release_sha256,
-                        stream_seed=seed)
+                        stream_seed=seed, annotation_sha256=annotation_sha256,
+                        identity_manifest_sha256=self.identity_manifest_sha256)
                     events.append(event)
                 runner.process_group(events)
+                if progress_callback is not None:
+                    progress_callback("GROUP_COMMITTED", start + 5)
             seal = runner.seal()
             report = {"schema": "final-benchmark.stage-a-category-report.v1",
                 **asdict(seal), "source_commit": self.source_commit,
@@ -338,6 +393,8 @@ class FinalBenchmarkEntrypoint:
                 stream.flush()
                 import os
                 os.fsync(stream.fileno())
+            if progress_callback is not None:
+                progress_callback("CATEGORY_SEALED", len(self.stream_records))
             return seal, list(runner.rows), list(runner.group_seals)
         finally:
             if broker is not None:
@@ -348,8 +405,18 @@ class FinalBenchmarkEntrypoint:
     def evaluate_stage_b(*, dataset_id: str, category: str, rows: Sequence[Mapping[str, Any]],
                          seal: Any, unit_seals: Sequence[Mapping[str, Any]],
                          authorization: LabelProjectionAuthorization,
+                         attempt_status_path: str | Path,
+                         expected_attempt_identity: Mapping[str, Any],
                          projection_loader: Callable[[], Mapping[str, int]]) -> dict[str, Any]:
         """Invoke the label projection only after Stage A and its separate grant validate."""
+        from .execution_support import ExecutionBoundaryError, verify_attempt_receipt
+        try:
+            receipt = verify_attempt_receipt(attempt_status_path,
+                expected_identity=expected_attempt_identity, expected_kind="principal_stage_a")
+        except ExecutionBoundaryError as exc:
+            raise EntryPointError("Stage B requires a matching durable SEALED_COMPLETE Stage A attempt") from exc
+        if receipt["seal"].get("durable_seal_sha256") != getattr(seal, "durable_seal_sha256", None):
+            raise EntryPointError("Stage A attempt receipt seal differs from the supplied Stage B seal")
         if (authorization.status != "AUTHORIZED_POST_STAGE_A_LABEL_PROJECTION" or
                 authorization.scope != "stage_b_category_evaluation" or
                 authorization.dataset_id != dataset_id or authorization.category != category or

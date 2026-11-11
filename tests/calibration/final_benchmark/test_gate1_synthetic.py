@@ -229,7 +229,9 @@ class IdentityTests(unittest.TestCase):
                 return _SyntheticBackend()
 
             def encode_registered_realiad_event(self, *, record, locator, category,
-                                                dataset_release_sha256, stream_seed):
+                                                dataset_release_sha256, stream_seed,
+                                                annotation_sha256=None,
+                                                identity_manifest_sha256=None):
                 assert category == "widget" and stream_seed == 0
                 assert record["image_identity_sha256"] in self.test_ids
                 assert locator == {"synthetic_role": "TEST"}
@@ -730,6 +732,8 @@ class EvaluationAndSourceTests(unittest.TestCase):
         with self.assertRaises(EntryPointError):
             FinalBenchmarkEntrypoint.evaluate_stage_b(dataset_id="realiad", category="widget",
                 rows=[], seal=Seal(), unit_seals=[], authorization=authorization,
+                attempt_status_path=Path("missing-stage-a-attempt-status.json"),
+                expected_attempt_identity={},
                 projection_loader=lambda: called.append("read labels"))
         self.assertEqual(called, [])
 

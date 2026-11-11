@@ -82,9 +82,10 @@ class NativeInputEncoder:
 
     def encode_registered_realiad_event(self, *, record: Mapping[str, Any],
                                         locator: Mapping[str, str], category: str,
-                                        dataset_release_sha256: str, stream_seed: int) -> Any:
+                                        dataset_release_sha256: str, stream_seed: int,
+                                        annotation_sha256: str | None = None,
+                                        identity_manifest_sha256: str | None = None) -> Any:
         """Bind one frozen TEST identity to its bytes before the shared encoding."""
-        from experiments.risk_safe.preflight import parse_image_name
         from . import identity
         from .runner import TestEvent
         if (not re.fullmatch(r"[0-9a-f]{64}", str(dataset_release_sha256)) or
@@ -93,13 +94,23 @@ class NativeInputEncoder:
         image_key, group_key = locator["official_image_key"], locator["official_group_key"]
         parsed_group, camera = identity._realiad_identity_key(category, image_key)
         path = Path(locator["image_path"])
-        parsed_path = parse_image_name(path, expected_class=category)
         ordinal = record.get("within_group_ordinal")
+        path_binding = identity.validate_realiad_source_path(
+            path=path, category=category, split="test",
+            annotation_sha256=annotation_sha256 or locator.get("annotation_sha256"),
+            official_image_key=image_key, official_group_key=group_key,
+            image_identity_sha256=str(record.get("image_identity_sha256", "")),
+            source_group_sha256=str(record.get("source_group_sha256", "")),
+            camera_id=int(record.get("camera_id", -1)),
+            original_position=record.get("original_position"),
+            image_content_sha256=str(record.get("image_content_sha256", "")),
+            relative_id=locator.get("relative_id"),
+            identity_manifest_sha256=identity_manifest_sha256)
         event_id = identity._domain_hash(
             "Gate0-event-v1", dataset_release_sha256, category, str(stream_seed),
             group_key, str(camera), image_key, str(ordinal))
-        if (parsed_group != group_key or parsed_path.official_sample_key != group_key or
-                parsed_path.camera_id != camera or ordinal != camera or
+        if (parsed_group != group_key or path_binding["official_group_key"] != group_key or
+                path_binding["camera_id"] != camera or ordinal != camera or
                 record.get("camera_id") != camera or record.get("event_id_sha256") != event_id or
                 record.get("image_identity_sha256") != identity._image_identity_digest(image_key) or
                 record.get("source_group_sha256") != identity._source_group_digest(group_key)):
