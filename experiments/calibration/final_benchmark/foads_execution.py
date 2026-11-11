@@ -117,15 +117,26 @@ def _stable_state(value: Any) -> Any:
 
 
 def foads_model_state_sha256(model: Any) -> str:
-    """Hash node means/covariances/thresholds, node ordering and graph topology."""
+    """Hash centroids, node ordering, node state and graph topology."""
     network = getattr(model, "network", None)
     node_list = getattr(model, "node_list", None)
-    if network is None or node_list is None or not callable(getattr(network, "nodes", None)):
-        raise FOADSExecutionError("Klinks model lacks the registered node list or graph state")
+    centeroid = getattr(model, "centeroid", None)
+    if (network is None or node_list is None or centeroid is None or
+            not callable(getattr(network, "nodes", None))):
+        raise FOADSExecutionError("Klinks model lacks the registered node list, centroids or graph state")
+    node_ids = np.asarray(node_list)
+    centroids = np.asarray(centeroid)
     nodes = list(network.nodes(data=True))
-    if not nodes or not node_list:
+    if node_ids.ndim != 1 or node_ids.size == 0 or not nodes:
         raise FOADSExecutionError("Klinks graph has no initialized nodes")
-    state = {"node_list": _stable_state(list(node_list)),
+    if (centroids.ndim != 2 or centroids.shape[0] != node_ids.size or
+            centroids.shape[1] == 0):
+        raise FOADSExecutionError("Klinks centroid dimensions do not match the registered node list")
+    graph_node_ids = [node_id for node_id, _ in nodes]
+    if node_ids.tolist() != graph_node_ids:
+        raise FOADSExecutionError("Klinks centroid and registered node ordering differs from graph node ordering")
+    state = {"node_list": _stable_state(node_ids),
+             "centeroid": _stable_state(centroids),
              "network": _stable_state(network)}
     return hashlib.sha256(canonical_json(state)).hexdigest()
 
@@ -281,8 +292,9 @@ def build_foads_seal(*, registration: Any, score_journal_path: str | Path,
     scores, updates = _read_jsonl(score_path), _read_jsonl(update_path)
     events = registration.stream_events
     groups = [events[start:start + 5] for start in range(0, len(events), 5)]
-    if (any(len(group) != 5 for group in groups) or len(scores) != len(events) or
-            runner_summary.get("scored_images") != len(events)):
+    if (not groups or any(len(group) != 5 for group in groups) or len(scores) != len(events) or
+            runner_summary.get("scored_images") != len(events) or
+            not _HEX64.fullmatch(str(final_state_sha256))):
         raise FOADSExecutionError("FOADS score stream is incomplete or not group aligned")
     for position, (record, event) in enumerate(zip(scores, events)):
         if (record.get("position") != position or record.get("position") != event.position or
@@ -294,6 +306,13 @@ def build_foads_seal(*, registration: Any, score_journal_path: str | Path,
                 not math.isfinite(float(record["raw_image_score"])) or
                 not _HEX64.fullmatch(str(record.get("model_state_before_score_sha256", "")))):
             raise FOADSExecutionError("FOADS score journal differs from registered order or model state")
+    batch_state_digests = []
+    for start in range(0, len(scores), 10):
+        batch_scores = scores[start:start + 10]
+        state_digests = {record["model_state_before_score_sha256"] for record in batch_scores}
+        if len(state_digests) != 1:
+            raise FOADSExecutionError("FOADS model state changed within a Batch-10 scoring interval")
+        batch_state_digests.append(next(iter(state_digests)))
     expected_updates = len(groups) // 2
     if len(updates) != expected_updates or runner_summary.get("completed_batch10_updates") != expected_updates:
         raise FOADSExecutionError("FOADS native update receipt count differs from complete Batch-10 accounting")
@@ -308,6 +327,16 @@ def build_foads_seal(*, registration: Any, score_journal_path: str | Path,
                 update.get("source_group_sha256s") != expected_group_ids or
                 not _HEX64.fullmatch(str(update.get("model_state_after_update_sha256", "")))):
             raise FOADSExecutionError("FOADS update receipt is missing or differs from the registered Batch-10")
+    for batch_index in range(1, len(batch_state_digests)):
+        previous_update_index = batch_index - 1
+        if (previous_update_index >= len(updates) or
+                batch_state_digests[batch_index] !=
+                updates[previous_update_index]["model_state_after_update_sha256"]):
+            raise FOADSExecutionError("FOADS Batch-10 model-state chain is discontinuous")
+    expected_final_state = (updates[-1]["model_state_after_update_sha256"] if updates
+                            else batch_state_digests[0])
+    if final_state_sha256 != expected_final_state:
+        raise FOADSExecutionError("FOADS final model state differs from its last durable state receipt")
     final_groups = len(groups) % 2
     if (runner_summary.get("final_unupdated_groups") != final_groups or
             runner_summary.get("final_unupdated_images") != final_groups * 5 or

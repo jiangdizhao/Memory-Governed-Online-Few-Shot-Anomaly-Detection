@@ -5,7 +5,11 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
+
+import networkx as nx
+import numpy as np
 
 from experiments.calibration.final_benchmark.execution_support import (
     AttemptStatus, ExecutionBoundaryError, append_jsonl_records_fsync,
@@ -14,7 +18,7 @@ from experiments.calibration.final_benchmark.execution_support import (
 )
 from experiments.calibration.final_benchmark.foads_execution import (
     FOADSExecutionError, build_foads_identity_projection, build_foads_seal,
-    verify_foads_category_seal,
+    foads_model_state_sha256, verify_foads_category_seal,
 )
 from experiments.calibration.final_benchmark.foads_kng import RegisteredP0Event
 from experiments.calibration.final_benchmark.launch import (
@@ -37,41 +41,82 @@ def _event(position: int, group: int) -> RegisteredP0Event:
     return RegisteredP0Event(
         position=position, original_position=position,
         event_id_sha256=f"{position + 101:064x}", image_identity_sha256=(f"{position + 1:064x}"),
-        image_content_sha256=digest("2"), source_group_sha256=digest("a" if group == 0 else "b"),
+        image_content_sha256=digest("2"), source_group_sha256=f"{group + 1:064x}",
         camera_id=(position % 5) + 1, within_group_ordinal=(position % 5) + 1)
 
 
-def _foads_fixture_files(root: Path):
-    events = tuple([_event(position, position // 5) for position in range(10)])
-    state_before, state_after = "c" * 64, "d" * 64
+def _foads_fixture_files(root: Path, *, group_count: int = 2):
+    events = tuple([_event(position, position // 5) for position in range(group_count * 5)])
+    state_before = "c" * 64
+    update_count = group_count // 2
+    state_after = [hashlib.sha256(f"synthetic-post-update-{index}".encode()).hexdigest()
+                   for index in range(update_count)]
     scores = [{
         "position": event.position,
         "event_id_sha256": event.event_id_sha256,
         "image_identity_sha256": event.image_identity_sha256,
         "source_group_sha256": event.source_group_sha256,
         "raw_image_score": float(event.position) / 10.0,
-        "model_update_index": 0,
-        "model_state_before_score_sha256": state_before,
+        "model_update_index": event.position // 10,
+        "model_state_before_score_sha256": (state_before if event.position // 10 == 0
+                                             else state_after[event.position // 10 - 1]),
     } for event in events]
-    update = {
-        "schema": "final-benchmark.foads-native-update.v1",
-        "update_index": 1, "start_position": 0, "end_position_exclusive": 10,
-        "event_identity_sha256s": [event.image_identity_sha256 for event in events],
-        "source_group_sha256s": [events[0].source_group_sha256, events[5].source_group_sha256],
-        "model_state_after_update_sha256": state_after,
-    }
+    updates = []
+    for index in range(update_count):
+        start, stop = index * 10, (index + 1) * 10
+        updates.append({
+            "schema": "final-benchmark.foads-native-update.v1",
+            "update_index": index + 1, "start_position": start, "end_position_exclusive": stop,
+            "event_identity_sha256s": [event.image_identity_sha256 for event in events[start:stop]],
+            "source_group_sha256s": [events[start].source_group_sha256,
+                                     events[start + 5].source_group_sha256],
+            "model_state_after_update_sha256": state_after[index],
+        })
     registration = type("Registration", (), {"stream_events": events})()
-    summary = {"scored_images": 10, "completed_batch10_updates": 1,
-               "final_unupdated_groups": 0, "final_unupdated_images": 0,
+    final_state = state_after[-1] if state_after else state_before
+    summary = {"scored_images": len(events), "completed_batch10_updates": update_count,
+               "final_unupdated_groups": group_count % 2,
+               "final_unupdated_images": (group_count % 2) * 5,
                "paid_labels": 0, "test_labels_or_masks_read": 0}
     score_path = root / "foads_prediction_journal.jsonl"
     update_path = root / "foads_update_journal.jsonl"
     score_path.touch(exist_ok=False)
     update_path.touch(exist_ok=False)
-    return registration, scores, update, summary, score_path, update_path, state_after
+    return registration, scores, updates, summary, score_path, update_path, final_state
 
 
 class FinalLaunchIntegrationTests(unittest.TestCase):
+    def test_model_state_digest_handles_multinode_numpy_list_and_hashes_centeroids(self):
+        graph = nx.Graph()
+        node_ids = np.array([11, 23, 47], dtype=np.int64)
+        for node_id in node_ids:
+            graph.add_node(int(node_id), threshold=float(node_id) / 10)
+        model = SimpleNamespace(
+            network=graph,
+            node_list=node_ids.copy(),
+            centeroid=np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], dtype=np.float32),
+        )
+        with self.assertRaises(ValueError):
+            bool(model.node_list)  # Reproduces the ambiguous NumPy truth-value failure.
+        original = foads_model_state_sha256(model)
+
+        changed_centroid = copy.deepcopy(model)
+        changed_centroid.centeroid[1, 0] += 0.25
+        self.assertNotEqual(original, foads_model_state_sha256(changed_centroid))
+
+        bad_dimensions = copy.deepcopy(model)
+        bad_dimensions.centeroid = bad_dimensions.centeroid[:-1]
+        with self.assertRaisesRegex(FOADSExecutionError, "centroid dimensions"):
+            foads_model_state_sha256(bad_dimensions)
+
+        reversed_graph = nx.Graph()
+        for node_id in (23, 11, 47):
+            reversed_graph.add_node(node_id, threshold=float(node_id) / 10)
+        bad_order = SimpleNamespace(network=reversed_graph, node_list=node_ids.copy(),
+                                    centeroid=model.centeroid.copy())
+        with self.assertRaisesRegex(FOADSExecutionError, "ordering"):
+            foads_model_state_sha256(bad_order)
+
     def test_frozen_config_and_exact_ninety_trajectory_schedule(self):
         config = _read(TEMPLATE)
         report = validate_config(config)
@@ -280,7 +325,7 @@ class FinalLaunchIntegrationTests(unittest.TestCase):
     def test_foads_missing_scores_or_native_update_receipt_cannot_seal(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            registration, scores, update, summary, score_path, update_path, state = _foads_fixture_files(root)
+            registration, scores, updates, summary, score_path, update_path, state = _foads_fixture_files(root)
             identity = {"source_commit": "a" * 40, "category": "audiojack", "condition": "P0"}
             append_jsonl_records_fsync(score_path, scores[:-1])
             with self.assertRaises(FOADSExecutionError):
@@ -295,12 +340,54 @@ class FinalLaunchIntegrationTests(unittest.TestCase):
                 build_foads_seal(registration=registration, score_journal_path=score_path,
                     update_journal_path=update_path, identity=identity, runner_summary=summary,
                     final_state_sha256=state)
-            append_jsonl_records_fsync(update_path, [update])
+            append_jsonl_records_fsync(update_path, updates)
             seal = build_foads_seal(registration=registration, score_journal_path=score_path,
                 update_journal_path=update_path, identity=identity, runner_summary=summary,
                 final_state_sha256=state)
             self.assertEqual(seal["completed_batch10_updates"], 1)
             self.assertEqual(seal["final_unupdated_groups"], 0)
+
+    def test_foads_state_chain_seals_multiple_batches_and_final_unupdated_group(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            registration, scores, updates, summary, score_path, update_path, final_state = \
+                _foads_fixture_files(root, group_count=5)
+            append_jsonl_records_fsync(score_path, scores)
+            append_jsonl_records_fsync(update_path, updates)
+            seal = build_foads_seal(registration=registration, score_journal_path=score_path,
+                update_journal_path=update_path, identity={"category": "audiojack", "condition": "P0"},
+                runner_summary=summary, final_state_sha256=final_state)
+            self.assertEqual(seal["completed_batch10_updates"], 2)
+            self.assertEqual(seal["final_unupdated_groups"], 1)
+            self.assertEqual(seal["final_unupdated_group_sha256"],
+                             registration.stream_events[-5].source_group_sha256)
+            self.assertEqual(seal["final_model_state_sha256"], updates[-1]["model_state_after_update_sha256"])
+
+    def test_foads_state_chain_rejects_missing_reordered_and_inconsistent_state_records(self):
+        mutations = ("missing_score_state", "missing_update_state", "within_batch_change",
+                     "next_batch_discontinuity", "reordered_updates", "wrong_final_state")
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                registration, scores, updates, summary, score_path, update_path, final_state = \
+                    _foads_fixture_files(root, group_count=5)
+                if mutation == "missing_score_state":
+                    scores[0].pop("model_state_before_score_sha256")
+                elif mutation == "missing_update_state":
+                    updates[0].pop("model_state_after_update_sha256")
+                elif mutation == "within_batch_change":
+                    scores[4]["model_state_before_score_sha256"] = "e" * 64
+                elif mutation == "next_batch_discontinuity":
+                    scores[10]["model_state_before_score_sha256"] = "f" * 64
+                elif mutation == "reordered_updates":
+                    updates.reverse()
+                append_jsonl_records_fsync(score_path, scores)
+                append_jsonl_records_fsync(update_path, updates)
+                with self.assertRaises(FOADSExecutionError):
+                    build_foads_seal(registration=registration, score_journal_path=score_path,
+                        update_journal_path=update_path, identity={"category": "audiojack", "condition": "P0"},
+                        runner_summary=summary,
+                        final_state_sha256=("9" * 64 if mutation == "wrong_final_state" else final_state))
 
     def test_foads_sealed_receipt_binds_both_journals_and_rejects_mismatch(self):
         with tempfile.TemporaryDirectory() as td:
@@ -308,10 +395,10 @@ class FinalLaunchIntegrationTests(unittest.TestCase):
             attempt = AttemptStatus(root, identity={"source_commit": "a" * 40,
                 "category": "audiojack", "condition": "P0"}, expected_events=10,
                 execution_kind="foads_kng_p0")
-            registration, scores, update, summary, score_path, update_path, state = _foads_fixture_files(root)
+            registration, scores, updates, summary, score_path, update_path, state = _foads_fixture_files(root)
             identity = {"source_commit": "a" * 40, "category": "audiojack", "condition": "P0"}
             append_jsonl_records_fsync(score_path, scores)
-            append_jsonl_records_fsync(update_path, [update])
+            append_jsonl_records_fsync(update_path, updates)
             seal = build_foads_seal(registration=registration, score_journal_path=score_path,
                 update_journal_path=update_path, identity=identity, runner_summary=summary,
                 final_state_sha256=state)
