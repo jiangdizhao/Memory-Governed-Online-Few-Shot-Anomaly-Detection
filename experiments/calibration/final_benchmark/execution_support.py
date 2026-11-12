@@ -8,14 +8,23 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 import shutil
+import time
 from typing import Any, Mapping, Sequence
 
 
 class ExecutionBoundaryError(RuntimeError):
     pass
+
+
+_LOGGER = logging.getLogger(__name__)
+_WINDOWS_REPLACE_RETRYABLE_ERRORS = frozenset({5, 32, 33})
+_REPLACE_RETRY_BUDGET_SECONDS = 2.0
+_REPLACE_INITIAL_BACKOFF_SECONDS = 0.05
+_REPLACE_MAX_BACKOFF_SECONDS = 0.4
 
 
 def canonical_json(value: Any) -> bytes:
@@ -33,6 +42,43 @@ def sha256_file(path: str | Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _replace_with_bounded_windows_retry(source: Path, target: Path) -> None:
+    """Retry only transient Windows replacement conflicts within a fixed budget."""
+    started = time.monotonic()
+    deadline = started + _REPLACE_RETRY_BUDGET_SECONDS
+    delay = _REPLACE_INITIAL_BACKOFF_SECONDS
+    retry_count = 0
+    last_winerror: int | None = None
+    while True:
+        try:
+            os.replace(source, target)
+        except OSError as exc:
+            winerror = getattr(exc, "winerror", None)
+            if (os.name != "nt" or winerror not in _WINDOWS_REPLACE_RETRYABLE_ERRORS):
+                raise
+            last_winerror = int(winerror)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                elapsed = time.monotonic() - started
+                _LOGGER.error(
+                    "Exhausted transient Windows JSON replacement retries "
+                    "(retries=%d, winerror=%d, elapsed_seconds=%.3f); "
+                    "the prior destination remains in place.",
+                    retry_count, last_winerror, elapsed)
+                raise
+            retry_count += 1
+            time.sleep(min(delay, remaining))
+            delay = min(delay * 2.0, _REPLACE_MAX_BACKOFF_SECONDS)
+        else:
+            if retry_count:
+                elapsed = time.monotonic() - started
+                _LOGGER.warning(
+                    "Recovered transient Windows JSON replacement conflict "
+                    "(retries=%d, last_winerror=%d, elapsed_seconds=%.3f).",
+                    retry_count, last_winerror, elapsed)
+            return
 
 
 def utc_now() -> str:
@@ -60,7 +106,7 @@ def atomic_json_replace(path: str | Path, value: Mapping[str, Any]) -> str:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, target)
+        _replace_with_bounded_windows_retry(temporary, target)
     except Exception:
         try:
             temporary.unlink()

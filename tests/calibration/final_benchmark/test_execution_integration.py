@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import copy
+import ctypes
 import hashlib
 import json
+import os
 from pathlib import Path
 import tempfile
+import threading
+import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import networkx as nx
 import numpy as np
@@ -16,6 +21,7 @@ from experiments.calibration.final_benchmark.execution_support import (
     canonical_json, enforce_resource_limits, estimate_attempt_output_bytes,
     verify_attempt_receipt, write_json_exclusive,
 )
+from experiments.calibration.final_benchmark import execution_support
 from experiments.calibration.final_benchmark.foads_execution import (
     FOADSExecutionError, build_foads_identity_projection, build_foads_seal,
     foads_model_state_sha256, verify_foads_category_seal,
@@ -86,6 +92,283 @@ def _foads_fixture_files(root: Path, *, group_count: int = 2):
 
 
 class FinalLaunchIntegrationTests(unittest.TestCase):
+    @staticmethod
+    def _windows_replace_error(winerror: int) -> OSError:
+        error = PermissionError(winerror, "synthetic Windows replace conflict")
+        error.winerror = winerror
+        return error
+
+    def _open_windows_exclusive_reader(self, path: Path):
+        if os.name != "nt":
+            self.skipTest("Windows sharing semantics are required for this test")
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        create_file = kernel32.CreateFileW
+        create_file.argtypes = [ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32,
+                                ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32,
+                                ctypes.c_void_p]
+        create_file.restype = ctypes.c_void_p
+        handle = create_file(str(path), 0x80000000, 0, None, 3, 0x80, None)
+        if handle == ctypes.c_void_p(-1).value:
+            raise ctypes.WinError(ctypes.get_last_error())
+        close_handle = kernel32.CloseHandle
+        close_handle.argtypes = [ctypes.c_void_p]
+        close_handle.restype = ctypes.c_int
+        return kernel32, handle
+
+    @staticmethod
+    def _close_windows_handle(kernel32, handle) -> None:
+        if not kernel32.CloseHandle(handle):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def test_atomic_json_replace_replaces_existing_status_normally(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            target = root / "attempt_status.json"
+            write_json_exclusive(target, {"status": "RUNNING", "completed_event_count": 0})
+            payload = {"status": "RUNNING", "completed_event_count": 1}
+
+            digest = execution_support.atomic_json_replace(target, payload)
+
+            self.assertEqual(_read(target), payload)
+            self.assertEqual(digest, hashlib.sha256(canonical_json(payload) + b"\n").hexdigest())
+            self.assertEqual(list(root.glob(".attempt_status.json.*.tmp")), [])
+
+    def test_attempt_progress_update_recovers_winerror5_without_rewriting_temp(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "attempt_01"
+            attempt = AttemptStatus(root, identity={"source_commit": "a" * 40},
+                                   expected_events=5, execution_kind="principal_stage_a")
+            target = root / "attempt_status.json"
+            previous = target.read_bytes()
+            real_replace = os.replace
+            observed_sources = []
+            observed_payloads = []
+
+            def fail_once_then_replace(source, destination):
+                source_path = Path(source)
+                destination_path = Path(destination)
+                observed_sources.append(source_path)
+                observed_payloads.append(source_path.read_bytes())
+                self.assertEqual(source_path.parent, destination_path.parent)
+                if len(observed_sources) == 1:
+                    self.assertEqual(target.read_bytes(), previous)
+                    raise self._windows_replace_error(5)
+                self.assertEqual(source_path, observed_sources[0])
+                self.assertEqual(observed_payloads[-1], observed_payloads[0])
+                return real_replace(source, destination)
+
+            with self.assertLogs(execution_support.__name__, level="WARNING") as logs:
+                with patch.object(execution_support.os, "replace", side_effect=fail_once_then_replace):
+                    attempt.update(phase="ENCODING_GROUP", completed_events=1)
+
+            receipt = _read(target)
+            self.assertEqual(receipt["status"], "RUNNING")
+            self.assertEqual(receipt["completed_event_count"], 1)
+            self.assertEqual(len(observed_sources), 2)
+            self.assertTrue(any("Recovered transient Windows JSON replacement" in x
+                                for x in logs.output))
+            self.assertEqual(list(root.glob(".attempt_status.json.*.tmp")), [])
+
+    def test_winerror32_and33_are_retried_but_other_windows_errors_are_not(self):
+        for winerror in (32, 33):
+            with self.subTest(winerror=winerror), tempfile.TemporaryDirectory() as td:
+                target = Path(td) / "status.json"
+                write_json_exclusive(target, {"version": 1})
+                real_replace = os.replace
+                calls = 0
+
+                def fail_once(source, destination):
+                    nonlocal calls
+                    calls += 1
+                    if calls == 1:
+                        raise self._windows_replace_error(winerror)
+                    return real_replace(source, destination)
+
+                with patch.object(execution_support.os, "replace", side_effect=fail_once):
+                    execution_support.atomic_json_replace(target, {"version": 2})
+                self.assertEqual(calls, 2)
+                self.assertEqual(_read(target), {"version": 2})
+
+        with tempfile.TemporaryDirectory() as td:
+            target = Path(td) / "status.json"
+            previous = {"version": 1}
+            write_json_exclusive(target, previous)
+            calls = 0
+
+            def fail_non_transient(source, destination):
+                nonlocal calls
+                calls += 1
+                raise self._windows_replace_error(87)
+
+            with patch.object(execution_support.os, "replace", side_effect=fail_non_transient):
+                with self.assertRaises(OSError):
+                    execution_support.atomic_json_replace(target, {"version": 2})
+            self.assertEqual(calls, 1)
+            self.assertEqual(_read(target), previous)
+            self.assertEqual(list(Path(td).glob(".status.json.*.tmp")), [])
+
+    @unittest.skipUnless(os.name == "nt", "requires Windows file-sharing semantics")
+    def test_exclusive_windows_handle_blocks_replace_then_recovers(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            target = root / "attempt_status.json"
+            write_json_exclusive(target, {"version": 1})
+            kernel32, handle = self._open_windows_exclusive_reader(target)
+            closed = threading.Event()
+            close_lock = threading.Lock()
+
+            def close_once():
+                with close_lock:
+                    if closed.is_set():
+                        return
+                    self._close_windows_handle(kernel32, handle)
+                    closed.set()
+
+            release = threading.Timer(0.3, close_once)
+            release.daemon = True
+            release.start()
+            started = time.monotonic()
+            try:
+                digest = execution_support.atomic_json_replace(target, {"version": 2})
+            finally:
+                release.join(timeout=1.0)
+                close_once()
+            elapsed = time.monotonic() - started
+            self.assertTrue(closed.is_set())
+            self.assertGreaterEqual(elapsed, 0.2)
+            self.assertLess(elapsed, 1.5)
+            self.assertEqual(_read(target), {"version": 2})
+            self.assertEqual(digest, hashlib.sha256(canonical_json({"version": 2}) + b"\n").hexdigest())
+            self.assertEqual(list(root.glob(".attempt_status.json.*.tmp")), [])
+
+    @unittest.skipUnless(os.name == "nt", "requires Windows file-sharing semantics")
+    def test_exclusive_windows_handle_exhausts_budget_preserves_status_then_replaces_after_release(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            target = root / "attempt_status.json"
+            previous = {"schema": "synthetic", "status": "RUNNING", "completed_event_count": 3}
+            replacement = {"schema": "synthetic", "status": "RUNNING", "completed_event_count": 4}
+            write_json_exclusive(target, previous)
+            kernel32, handle = self._open_windows_exclusive_reader(target)
+            started = time.monotonic()
+            try:
+                with self.assertLogs(execution_support.__name__, level="ERROR") as logs:
+                    with self.assertRaises(OSError) as raised:
+                        execution_support.atomic_json_replace(target, replacement)
+                elapsed = time.monotonic() - started
+                self.assertIn(getattr(raised.exception, "winerror", None), {5, 32, 33})
+                self.assertGreaterEqual(elapsed, 1.8)
+                self.assertLess(elapsed, 3.0)
+                self.assertTrue(any("Exhausted transient Windows JSON replacement retries" in x
+                                    for x in logs.output))
+            finally:
+                self._close_windows_handle(kernel32, handle)
+
+            self.assertEqual(_read(target), previous)
+            self.assertEqual(list(root.glob(".attempt_status.json.*.tmp")), [])
+            execution_support.atomic_json_replace(target, replacement)
+            self.assertEqual(_read(target), replacement)
+
+    def test_recoverable_incomplete_and_sealed_complete_transitions(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            incomplete_root = root / "incomplete"
+            incomplete = AttemptStatus(incomplete_root, identity={"source_commit": "b" * 40},
+                                      expected_events=5, execution_kind="principal_stage_a")
+            incomplete.update(phase="ENCODING_GROUP", completed_events=2)
+            real_replace = os.replace
+            calls = 0
+
+            def fail_once(source, destination):
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    raise self._windows_replace_error(5)
+                return real_replace(source, destination)
+
+            with patch.object(execution_support.os, "replace", side_effect=fail_once):
+                incomplete.incomplete(phase="ENCODING_GROUP", completed_events=2,
+                                      exception=RuntimeError("synthetic failure"))
+            incomplete_receipt = _read(incomplete_root / "attempt_status.json")
+            self.assertEqual(incomplete_receipt["status"], "INCOMPLETE")
+            self.assertEqual(incomplete_receipt["completed_event_count"], 2)
+            self.assertEqual(incomplete_receipt["error_type"], "RuntimeError")
+
+            sealed_root = root / "sealed"
+            sealed = AttemptStatus(sealed_root, identity={"source_commit": "c" * 40},
+                                  expected_events=5, execution_kind="principal_stage_a")
+            seal_path = sealed_root / "stage_a_category_seal.json"
+            write_json_exclusive(seal_path, {"status": "SEALED_COMPLETE", "events": 5})
+            sealed.sealed_complete(phase="CATEGORY_SEALED", seal_path=seal_path,
+                                   completed_events=5)
+            sealed_receipt = _read(sealed_root / "attempt_status.json")
+            self.assertEqual(sealed_receipt["status"], "SEALED_COMPLETE")
+            self.assertEqual(sealed_receipt["completed_event_count"], 5)
+            self.assertEqual(sealed_receipt["completion_seal_sha256"], hashlib.sha256(
+                seal_path.read_bytes()).hexdigest())
+
+    def test_repeated_atomic_group_progress_updates_under_concurrent_monitoring(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "attempt_01"
+            attempt = AttemptStatus(root, identity={"source_commit": "d" * 40},
+                                   expected_events=40, execution_kind="principal_stage_a")
+            target = root / "attempt_status.json"
+            stop = threading.Event()
+            observed = []
+            errors = []
+
+            def monitor():
+                while not stop.is_set():
+                    try:
+                        receipt = _read(target)
+                        if (receipt.get("status") != "RUNNING" or
+                                receipt.get("expected_event_count") != 40 or
+                                not 0 <= receipt.get("completed_event_count", -1) <= 40):
+                            errors.append(AssertionError("invalid atomic status snapshot"))
+                            return
+                        observed.append(receipt["completed_event_count"])
+                    except PermissionError:
+                        if os.name == "nt":
+                            time.sleep(0.001)
+                            continue
+                        errors.append(PermissionError("status read was denied"))
+                        return
+                    except Exception as exc:
+                        errors.append(exc)
+                        return
+                    time.sleep(0.001)
+
+            watcher = threading.Thread(target=monitor, daemon=True)
+            watcher.start()
+            try:
+                for count in range(1, 41):
+                    attempt.update(phase="ENCODING_GROUP", completed_events=count)
+            finally:
+                stop.set()
+                watcher.join(timeout=2.0)
+
+            self.assertFalse(watcher.is_alive())
+            self.assertEqual(errors, [])
+            self.assertTrue(observed)
+            self.assertEqual(observed, sorted(observed))
+            final_running = _read(target)
+            self.assertEqual(final_running["completed_event_count"], 40)
+            with self.assertRaises(ExecutionBoundaryError):
+                attempt.update(phase="ENCODING_GROUP", completed_events=39)
+            self.assertEqual(_read(target)["completed_event_count"], 40)
+
+            seal_path = root / "stage_a_category_seal.json"
+            write_json_exclusive(seal_path, {"status": "SEALED_COMPLETE", "event_count": 40})
+            attempt.sealed_complete(phase="CATEGORY_SEALED", seal_path=seal_path,
+                                    completed_events=40)
+            final_receipt = _read(target)
+            self.assertEqual(final_receipt["status"], "SEALED_COMPLETE")
+            self.assertEqual(final_receipt["completed_event_count"], 40)
+            self.assertEqual(final_receipt["expected_event_count"], 40)
+            self.assertEqual(final_receipt["completion_seal_sha256"], hashlib.sha256(
+                seal_path.read_bytes()).hexdigest())
+            self.assertEqual(list(root.glob(".attempt_status.json.*.tmp")), [])
+
     def test_model_state_digest_handles_multinode_numpy_list_and_hashes_centeroids(self):
         graph = nx.Graph()
         node_ids = np.array([11, 23, 47], dtype=np.int64)
