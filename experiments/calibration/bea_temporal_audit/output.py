@@ -78,7 +78,7 @@ def write_outputs(destination: Path, *, aggregate: Sequence[Mapping[str, Any]],
                     for k in ("mean", "ci95_low", "ci95_high"))):
             raise AuditError("invalid aggregate output identifier")
     hashes = manifest.get("input_artifact_sha256")
-    if (not isinstance(hashes, Mapping) or not set(hashes).issubset({"original_plan", "continuation_plan", "amendment", "official_metrics", "audit_configuration"}) or
+    if (not isinstance(hashes, Mapping) or not set(hashes).issubset({"original_plan", "continuation_plan", "amendment", "official_metrics", "audit_configuration", "stage_b_authorization"}) or
             not hashes or any(not isinstance(v, str) or not re.fullmatch(r"[0-9a-f]{64}", v) for v in hashes.values()) or
             not isinstance(manifest.get("source_commits"), list) or not 1 <= len(manifest["source_commits"]) <= 3 or
             any(not isinstance(v, str) or not re.fullmatch(r"[0-9a-f]{40}", v) for v in manifest["source_commits"]) or

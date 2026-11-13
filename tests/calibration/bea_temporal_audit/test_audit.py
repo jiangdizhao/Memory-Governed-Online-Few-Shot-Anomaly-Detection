@@ -80,12 +80,13 @@ def make_rows(groups=20, cap=3):
     return rows
 
 
-def sealed_fixture(tmp_path, rows):
+def sealed_fixture(tmp_path, rows, stream_override=None, annotation_sha=None):
     stream = {"events": [{k: row[k] for k in ("position", "event_id_sha256", "image_identity_sha256", "source_group_sha256", "camera_id")} for row in rows]}
+    if stream_override is not None: stream = stream_override
     identity = {"source_commit": "a3688e87ac165866fa4c4ddb3501f96258500534", "category": "widget", "condition": "P0",
                 "identity_manifest_sha256": sha("identity"), "role_manifest_sha256": sha("role"),
                 "dataset_release_sha256": sha("release"), "stream_manifest_sha256": digest(stream),
-                "annotation_sha256": sha("annotation"), "campaign_run_id": "synthetic"}
+                "annotation_sha256": annotation_sha or sha("annotation"), "campaign_run_id": "synthetic"}
     root = tmp_path / "attempt_01"
     attempt = AttemptStatus(root, identity=identity, expected_events=len(rows), execution_kind="principal_stage_a")
     header = {"source_commit": identity["source_commit"], "identity_manifest_sha256": identity["identity_manifest_sha256"],
@@ -229,6 +230,8 @@ def authorized_synthetic(audit_tmp_path):
     result = evaluate_sealed_category(dataset_id="realiad", category="widget", rows=trajectory.rows,
         seal=trajectory.seal, group_seals=trajectory.groups, labels_by_event_id=labels, label_projection=auth)
     record["metrics"] = result["arm_metrics"]
+    record["queried_label_composition"] = result["queried_label_composition"]
+    record["first_queried_defect_position"] = result["first_queried_defect_position"]
     trajectory = load_verified(status_path=root / "attempt_status.json", expected_identity=identity,
         registered_stream_manifest=stream, expected_event_count=100, hard_cap=3, stage_b_record=record)
     payload = {"schema":"realiad.stage-b-event-label-projection.v1", "dataset_id":"realiad", "category":"widget",
@@ -271,6 +274,32 @@ def test_audit_only_authorized_synthetic_end_to_end(audit_tmp_path):
     assert (dest / "audit_summary.json").is_file()
 
 
+@pytest.mark.parametrize("field", ["queried_label_composition", "first_queried_defect_position"])
+def test_feedback_parity_rejects_changed_registered_outcomes(audit_tmp_path, field):
+    from dataclasses import replace
+    t, auth, audit, grant, path, _ = authorized_synthetic(audit_tmp_path)
+    changed = copy.deepcopy(t.stage_b_record)
+    if field == "queried_label_composition":
+        changed[field]["F-B"]["defect"] += 1
+    else:
+        changed[field]["F-B"] = None
+    with pytest.raises(AuditError, match=field):
+        projection._evaluate_authorized_trajectory(trajectory=replace(t, stage_b_record=changed),
+            stage_b_authorization=auth, projection_grant=grant, audit_authorization=audit, projection_path=path)
+
+
+def test_feedback_parity_null_and_types_are_exact():
+    record = {"queried_label_composition": {"F-B": {"normal": 1, "defect": 0}},
+              "first_queried_defect_position": {"F-B": None}}
+    projection.verify_feedback_parity(record, copy.deepcopy(record))
+    bad = copy.deepcopy(record); bad["first_queried_defect_position"]["F-B"] = 0
+    with pytest.raises(AuditError, match="first_queried_defect_position"):
+        projection.verify_feedback_parity(record, bad)
+    bad = copy.deepcopy(record); bad["queried_label_composition"]["F-B"]["normal"] = True
+    with pytest.raises(AuditError, match="queried_label_composition"):
+        projection.verify_feedback_parity(record, bad)
+
+
 def test_projection_rejected_before_label_open_and_missing_labels(audit_tmp_path, monkeypatch):
     t, auth, audit, grant, path, payload = authorized_synthetic(audit_tmp_path)
     calls = []
@@ -311,12 +340,16 @@ def test_real_nested_stage_b_summary_coverage_and_sources():
         records.append({"category":category, "condition":condition,
             "campaign_run_id":"realiad-final-20261111-r1-40d61c3" if source == OLD else "synthetic-continuation",
             "source_commit":source, "stage_a_category_seal_sha256":sha(index),
-            "metrics":{arm:{} for arm in (*ARMS, "N-shadow", "STATIC-4+64")}, "query_count":{arm:0 for arm in ARMS}})
+            "metrics":{arm:{} for arm in (*ARMS, "N-shadow", "STATIC-4+64")}, "query_count":{arm:0 for arm in ARMS},
+            "queried_label_composition":{arm:{"normal":0,"defect":0} for arm in ARMS},
+            "first_queried_defect_position":{arm:None for arm in ARMS}})
     summary = {"schema":"realiad.stage-b-final-metrics.v1", "status":"STAGE_B_ALL_90_CPU_EVALUATED", "scientific_results":records}
     assert len(validate_stage_b_summary(summary)) == 90
     bad = copy.deepcopy(summary); bad["scientific_results"][36]["source_commit"] = OLD
     with pytest.raises(AuditError): validate_stage_b_summary(bad)
     bad = copy.deepcopy(summary); bad["scientific_results"][-1] = bad["scientific_results"][0]
+    with pytest.raises(AuditError): validate_stage_b_summary(bad)
+    bad = copy.deepcopy(summary); del bad["scientific_results"][0]["first_queried_defect_position"]
     with pytest.raises(AuditError): validate_stage_b_summary(bad)
 
 
@@ -334,13 +367,13 @@ def test_clustered_aggregation_and_missing_condition():
 
 def test_authorization_and_metric_parity_fail_closed():
     seals = [sha(i) for i in range(90)]; plans = [sha("a"), sha("b")]
-    with pytest.raises(AuditError): validate_audit_authorization({}, audit_source_commit="a"*40, seal_hashes=seals, reference_sha256=sha("ref"), source_plan_sha256=plans, configuration_sha256=sha("config"))
+    with pytest.raises(AuditError): validate_audit_authorization({}, audit_source_commit="a"*40, seal_hashes=seals, reference_sha256=sha("ref"), source_plan_sha256=plans, configuration_sha256=sha("config"), stage_b_authorization_sha256=sha("stageb"))
     grant = {"schema":"bea-t1.audit-authorization.v1", "status":"RESEARCHER_AUTHORIZED_POST_SEAL_AUDIT",
              "independent_review_status":"PASS", "audit_source_commit":"a"*40, "seal_set_sha256":digest(sorted(seals)),
              "source_plan_sha256":sorted(plans), "dataset_release_sha256":RELEASE, "identity_manifest_sha256":IDENTITY,
-             "official_metrics_sha256":sha("ref"), "configuration_sha256":sha("config"), "trajectory_count":90, "mask_access":False, "output_scope":"AGGREGATE_ONLY"}
-    validate_audit_authorization(grant, audit_source_commit="a"*40, seal_hashes=seals, reference_sha256=sha("ref"), source_plan_sha256=plans, configuration_sha256=sha("config"))
-    with pytest.raises(AuditError): validate_audit_authorization(grant, audit_source_commit="a"*40, seal_hashes=seals, reference_sha256=sha("other"), source_plan_sha256=plans, configuration_sha256=sha("config"))
+             "official_metrics_sha256":sha("ref"), "configuration_sha256":sha("config"), "stage_b_authorization_sha256":sha("stageb"), "historical_source_commits":sorted([OLD, NEW]), "outcome_access_scope":"POST_SEAL_IMAGE_LEVEL_OUTCOMES", "trajectory_count":90, "mask_access":False, "output_scope":"AGGREGATE_ONLY"}
+    validate_audit_authorization(grant, audit_source_commit="a"*40, seal_hashes=seals, reference_sha256=sha("ref"), source_plan_sha256=plans, configuration_sha256=sha("config"), stage_b_authorization_sha256=sha("stageb"))
+    with pytest.raises(AuditError): validate_audit_authorization(grant, audit_source_commit="a"*40, seal_hashes=seals, reference_sha256=sha("other"), source_plan_sha256=plans, configuration_sha256=sha("config"), stage_b_authorization_sha256=sha("stageb"))
     verify_metric_parity({"F-B": {"ber": .2, "n": 10}}, {"F-B": {"ber": .2, "n": 10}})
     with pytest.raises(AuditError): verify_metric_parity({"F-B": {"ber": .2}}, {"F-B": {"ber": .3}})
     with pytest.raises(AuditError): verify_metric_parity({"F-B": {"worst_256": {"worst_ber": .3}}}, {"F-B": {"worst_256": {"worst_ber": .2}}})
@@ -367,7 +400,7 @@ def test_cli_default_and_missing_configuration_are_blocked(capsys, audit_tmp_pat
         "audit_authorization_path":str(audit_tmp_path / "missing-grant.json")}), encoding="utf-8")
     assert cli_main(["--run", "--config", str(config)]) == 2
     message = capsys.readouterr().out
-    assert '"status": "BLOCKED"' in message and "audit authorization is missing or unreadable" in message
+    assert '"status": "BLOCKED"' in message and "audit configuration schema is invalid" in message
 
 
 def test_real_output_requires_ignored_directory_before_creation(audit_tmp_path):

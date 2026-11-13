@@ -32,6 +32,8 @@ performed in this implementation task.
   loads the authorized event-label mapping, and calls the frozen
   `evaluation.evaluate_sealed_category`. Every full-stream metric field must
   match the hash-bound Stage B reference, including nested window metrics.
+  Queried-label composition and first queried-defect position must also match
+  exactly, including nulls and value types.
   The Stage B summary contains aggregates; it is never treated as an event-label
   source.
 * `core.analyze_trajectory` checks five-view source groups, exact query/cap
@@ -56,63 +58,48 @@ performed in this implementation task.
   Git-ignored `outputs/calibration/bea_temporal_audit/<new-run-id>` directory
   namespace; no ignore rule or authorization is created by this package.
 
-## Stage B reference and execution CLI
+## Existing-artifact integration and execution CLI (R2)
 
-The registered summary is `realiad.stage-b-final-metrics.v1` with status
-`STAGE_B_ALL_90_CPU_EVALUATED` and exactly 90 `scientific_results` records.
-Each record supplies `category`, `condition`, `campaign_run_id`,
-`source_commit`, `stage_a_category_seal_sha256`, `metrics`, and `query_count`.
-All 30 categories and P0/P1/P2 are required; the first 36 original trajectories
-and the remaining 54 continuation trajectories retain their respective source
-commits. The reference file's byte hash is bound by the audit authorization.
+`--preflight --config <absolute-path>` inspects source and artifact metadata only.
+It skips the values of scientific metrics and outcome fields, and reports only
+readiness categories. It never opens the annotation files. `--run --config`
+requires a committed reviewed source revision and a separate researcher-issued
+audit authorization before reading any image-level outcomes. Neither mode is an
+authorization to execute scientific analysis by itself.
 
-`python -m experiments.calibration.bea_temporal_audit --run --config <absolute-private-json>`
-is the real-execution entrypoint; without `--run`, `--config`, or the required
-authorizations it fails closed. The private configuration schema is
-`bea-t1.execution-config.v1` and contains:
+The private configuration schema `bea-t1.execution-config.v2` contains
+`audit_source_commit`, `audit_authorization_path`, `stage_b_authorization_path`,
+`official_stage_b_summary_path`, `output_directory`, and `campaign_plans`: two
+entries with `source_commit`, absolute `path` and `private_binding_root`. Each
+root contains the existing `<category>_<condition>_private_bundle.json`. The
+stream manifest is checked in its registered category bundle, not copied.
+The output must be a new direct child of the existing Git-ignored BEA-T1 output
+root. The audit authorization binds the exact configuration byte hash.
 
-* `audit_source_commit`, `audit_authorization_path`,
-  `official_stage_b_summary_path`, and `output_directory`;
-* two `campaign_plans` entries containing `source_commit` and absolute `path`;
-* 90 `trajectories` entries, each containing `category`, `condition`,
-  `attempt_status_path`, `expected_attempt_identity`, `stream_manifest_path`,
-  `stage_b_authorization_path`, `stage_b_authorization_file_sha256`,
-  `projection_authorization_path`, and `projection_file_path`.
+The original cross-campaign Stage B authorization is checked against its file
+hash in the official summary, the frozen evaluator and metric source hashes,
+both historical source commits and plans, and all 90 category-condition
+entries including annotation, stream, source, journal and seal hashes. Only a
+validated in-memory category view is passed to the frozen evaluator; this is
+provenance, not authority for this new audit. The separate audit grant must bind
+the reviewed source commit, both historical commits and plan hashes, all 90
+seals, original authorization hash, release and identity hashes, official
+summary and configuration hashes, `POST_SEAL_IMAGE_LEVEL_OUTCOMES`, no masks,
+and aggregate-only output. No grant is issued by this implementation.
 
-The audit grant binds the configuration's actual file SHA-256; it is issued
-after the configuration is finalized. The per-trajectory projection grant is
-issued afterward and binds the audit grant's canonical digest and Stage B
-authorization's canonical digest, avoiding a circular file-hash dependency.
-The external projection file uses schema
-`realiad.stage-b-event-label-projection.v1` and contains its source/category/
-condition/campaign/seal/annotation bindings and `labels_by_event_id`. Its byte
-hash is bound by the separately issued projection grant. This package does not
-produce that input or infer event labels from the metric summary.
+After all 90 trajectories are verified, the projector checks annotation bytes
+against the registered SHA-256 before decoding only `normal_class`, image keys
+and image-level `anomaly_class`. The original TEST positions, camera, group,
+image digest and sealed event digest must match. Mask values are traversed as
+opaque JSON values; mask files are never opened. The event-label map exists
+only in memory. The frozen evaluator runs on sealed rows, and every registered
+metric, query count, queried-label composition and first-defect position must
+match before aggregate output is created. No learning or query is replayed.
 
-## Remaining real-execution blockers
-
-1. Independent source review, a committed audit-source revision and the
-   audit-specific and per-trajectory label-projection grants are required.
-   Availability and provenance of the 90 separately authorized identity
-   projection files have not been established; no such files were accessed.
-2. `outputs/calibration/bea_temporal_audit/` is not currently Git-ignored. A
-   separately authorized ignore configuration and existing output root are
-   required. The existing unrelated `final_benchmark/__init__.py` modification
-   is substantive and the reviewed-source clean check also blocks real run
-   until its source identity is separately resolved.
-3. The project-provided outer Stage B schema is implemented and tested with
-   synthetic data. The actual files, their metric field coverage, campaign plan
-   paths and authorization paths were not inspected during this task. Exact
-   metric-schema mismatch remains fail-closed.
-
-The frozen `FinalBenchmarkEntrypoint.evaluate_stage_b` wrapper remains
-incompatible with the historical seal payload: it expects a self-digest field
-that the sink does not write. The audit-only adapter deliberately verifies the
-file/report/receipt/Stage B cross-bindings first and then calls the existing
-`evaluate_sealed_category` directly under both independently issued grants.
-It neither rewrites the seal nor weakens the evaluator's authorization checks.
-The synthetic suite uses the original sink and attempt-status writer only in
-temporary directories inside the authorized test tree, which are cleaned up.
+Formal execution remains blocked until independent review and a committed audit
+source, a separately issued scoped BEA-T1 grant, a suitable Git-ignored output
+root and resolution of the unrelated dirty `final_benchmark/__init__.py` source
+identity. No real outcome projection or audit is authorized by this task.
 
 Observed associations can be **OBSERVED**, **COMPATIBLE_WITH_HYPOTHESIS** or
 **INCONCLUSIVE**. The unobserved counterfactual value of an unpurchased query

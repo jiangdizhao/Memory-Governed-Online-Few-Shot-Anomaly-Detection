@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 from experiments.calibration.final_benchmark.evaluation import LabelProjectionAuthorization, evaluate_sealed_category
 from .core import AuditError
-from .campaign import IDENTITY, RELEASE, VerifiedCampaign
+from .campaign import IDENTITY, NEW, OLD, RELEASE, VerifiedCampaign
 from .integrity import VerifiedTrajectory, digest, load_verified
 from .reference import validate_stage_b_summary
 from experiments.calibration.final_benchmark.execution_support import sha256_file
@@ -18,11 +18,13 @@ from experiments.calibration.final_benchmark.execution_support import sha256_fil
 
 def validate_audit_authorization(authorization: Mapping[str, Any], *, audit_source_commit: str,
                                  seal_hashes: Sequence[str], reference_sha256: str,
-                                 source_plan_sha256: Sequence[str], configuration_sha256: str) -> None:
+                                 source_plan_sha256: Sequence[str], configuration_sha256: str,
+                                 stage_b_authorization_sha256: str) -> None:
     """The separate audit grant must be issued externally after independent review."""
     if (not re.fullmatch(r"[0-9a-f]{40}", audit_source_commit) or
             not re.fullmatch(r"[0-9a-f]{64}", reference_sha256) or
             not re.fullmatch(r"[0-9a-f]{64}", configuration_sha256) or
+            not re.fullmatch(r"[0-9a-f]{64}", stage_b_authorization_sha256) or
             any(not re.fullmatch(r"[0-9a-f]{64}", str(x)) for x in seal_hashes) or
             len(set(source_plan_sha256)) != 2 or any(not re.fullmatch(r"[0-9a-f]{64}", str(x)) for x in source_plan_sha256) or
             authorization.get("schema") != "bea-t1.audit-authorization.v1" or
@@ -35,6 +37,9 @@ def validate_audit_authorization(authorization: Mapping[str, Any], *, audit_sour
             authorization.get("identity_manifest_sha256") != IDENTITY or
             authorization.get("official_metrics_sha256") != reference_sha256 or
             authorization.get("configuration_sha256") != configuration_sha256 or
+            authorization.get("stage_b_authorization_sha256") != stage_b_authorization_sha256 or
+            authorization.get("historical_source_commits") != sorted([OLD, NEW]) or
+            authorization.get("outcome_access_scope") != "POST_SEAL_IMAGE_LEVEL_OUTCOMES" or
             authorization.get("trajectory_count") != 90 or len(seal_hashes) != 90 or
             len(set(seal_hashes)) != 90 or authorization.get("mask_access") is not False or
             authorization.get("output_scope") != "AGGREGATE_ONLY"):
@@ -57,6 +62,31 @@ def verify_metric_parity(actual: Mapping[str, Any], reference: Mapping[str, Any]
         elif type(left) is not type(right) or left != right:
             raise AuditError("full-stream metric parity failed")
     compare(actual, reference)
+
+
+def verify_feedback_parity(actual: Mapping[str, Any], reference: Mapping[str, Any]) -> None:
+    """Require exact queried-label composition and first-defect positions, including nulls."""
+    def exact(left: Any, right: Any) -> bool:
+        if isinstance(left, Mapping) and isinstance(right, Mapping):
+            return set(left) == set(right) and all(exact(left[key], right[key]) for key in left)
+        return type(left) is type(right) and left == right
+
+    for field in ("queried_label_composition", "first_queried_defect_position"):
+        if field not in actual or field not in reference or not exact(actual[field], reference[field]):
+            raise AuditError(f"Stage B {field} parity failed")
+
+
+def verify_evaluation_parity(evaluated: Mapping[str, Any], stage_b_record: Mapping[str, Any]) -> None:
+    if evaluated.get("query_count") != stage_b_record.get("query_count"):
+        raise AuditError("Stage B query-count parity failed")
+    verify_feedback_parity(evaluated, stage_b_record)
+    reference_metrics = stage_b_record.get("metrics")
+    actual_metrics = evaluated.get("arm_metrics")
+    required = {"F-B", "K-B", "F-M", "K-M", "N-shadow", "STATIC-4+64"}
+    if (not isinstance(reference_metrics, Mapping) or not isinstance(actual_metrics, Mapping) or
+            not required.issubset(reference_metrics) or not set(reference_metrics).issubset(actual_metrics)):
+        raise AuditError("Stage B metric reference has missing or unknown arms")
+    verify_metric_parity({arm: actual_metrics[arm] for arm in reference_metrics}, reference_metrics)
 
 
 def validate_projection_grant(*, trajectory: VerifiedTrajectory, stage_b_authorization: LabelProjectionAuthorization,
@@ -145,13 +175,7 @@ def _evaluate_authorized_trajectory(*, trajectory: VerifiedTrajectory,
         evaluated = evaluate_sealed_category(dataset_id="realiad", category=current.category,
             rows=current.rows, seal=current.seal, group_seals=current.groups,
             labels_by_event_id=labels, label_projection=stage_b_authorization)
-        if evaluated["query_count"] != current.stage_b_record.get("query_count"):
-            raise AuditError("Stage B query-count parity failed")
-        reference_metrics = current.stage_b_record["metrics"]
-        required = {"F-B", "K-B", "F-M", "K-M", "N-shadow", "STATIC-4+64"}
-        if not required.issubset(reference_metrics) or not set(reference_metrics).issubset(evaluated["arm_metrics"]):
-            raise AuditError("Stage B metric reference has missing or unknown arms")
-        verify_metric_parity({arm: evaluated["arm_metrics"][arm] for arm in reference_metrics}, reference_metrics)
+        verify_evaluation_parity(evaluated, current.stage_b_record)
         return [labels[row["event_id_sha256"]] for row in current.rows]
     except AuditError:
         raise
@@ -177,7 +201,8 @@ def project_after_all_seals(*, trajectory: VerifiedTrajectory,
         raise AuditError("trajectory is not a member of the verified campaign")
     validate_audit_authorization(audit_authorization, audit_source_commit=audit_source_commit,
         seal_hashes=[t.seal.durable_seal_sha256 for t in all_verified], reference_sha256=reference_sha256,
-        source_plan_sha256=campaign.source_plan_sha256, configuration_sha256=configuration_sha256)
+        source_plan_sha256=campaign.source_plan_sha256, configuration_sha256=configuration_sha256,
+        stage_b_authorization_sha256=str(audit_authorization.get("stage_b_authorization_sha256", "")))
     try:
         if sha256_file(official_reference_path) != reference_sha256:
             raise AuditError("official Stage B metric reference hash differs from audit authorization")
