@@ -536,6 +536,13 @@ def build_parser() -> argparse.ArgumentParser:
     for arg in ("config", "bundle", "authorization", "category", "attempt-id", "kng-source-root"):
         foads.add_argument("--" + arg, required=True)
     foads.add_argument("--locator-manifest", required=True)
+    foads_eval = sub.add_parser("foads-evaluate-one", help="evaluate one valid sealed FOADS P0 attempt in Stage B")
+    for arg in ("attempt-root", "category-bundle", "annotation", "authorization", "output-dir"):
+        foads_eval.add_argument("--" + arg, required=True)
+    aggregate = sub.add_parser("foads-aggregate-stage-b", help="aggregate registered Real-IAD P0 FOADS Stage B results")
+    aggregate.add_argument("--config", required=True)
+    aggregate.add_argument("--evaluation-summary", action="append", default=[], required=True)
+    aggregate.add_argument("--output-dir", required=True)
     verify = sub.add_parser("verify-attempt", help="verify a sealed attempt receipt for a later Stage B gate")
     verify.add_argument("--status", required=True)
     verify.add_argument("--expected-identity", required=True)
@@ -578,6 +585,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = execute_foads_one(config_path=args.config, bundle_path=args.bundle,
                 locator_manifest_path=args.locator_manifest, authorization_path=args.authorization,
                 category=args.category, attempt_id=args.attempt_id, kng_source_root=args.kng_source_root)
+            print(json.dumps(result, sort_keys=True))
+        elif args.command == "foads-evaluate-one":
+            from .foads_evaluation import evaluate_foads_sealed_category
+            result = evaluate_foads_sealed_category(
+                attempt_root=args.attempt_root, category_bundle_path=args.category_bundle,
+                annotation_path=args.annotation, stage_b_authorization=args.authorization,
+                output_directory=args.output_dir)
+            print(json.dumps(result, sort_keys=True))
+        elif args.command == "foads-aggregate-stage-b":
+            from .foads_evaluation import aggregate_foads_stage_b
+            result = aggregate_foads_stage_b(
+                config_path=args.config, evaluation_summaries=args.evaluation_summary,
+                output_directory=args.output_dir)
             print(json.dumps(result, sort_keys=True))
         elif args.command == "verify-attempt":
             identity = read_json(args.expected_identity)
