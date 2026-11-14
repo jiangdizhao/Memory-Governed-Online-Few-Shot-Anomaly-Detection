@@ -543,6 +543,27 @@ def build_parser() -> argparse.ArgumentParser:
     aggregate.add_argument("--config", required=True)
     aggregate.add_argument("--evaluation-summary", action="append", default=[], required=True)
     aggregate.add_argument("--output-dir", required=True)
+    visa_register = sub.add_parser("visa-register", help="register all 12 outcome-blind VisA 1cls P0 streams")
+    for arg in ("dataset-root", "identity-manifest", "output-root", "researcher-decision-sha256"):
+        visa_register.add_argument("--" + arg, required=True)
+    visa_plan = sub.add_parser("visa-plan", help="bind the local VisA registration to the committed source")
+    visa_plan.add_argument("--registration-root", required=True)
+    visa_plan.add_argument("--category", default="cashew")
+    visa_plan.add_argument("--researcher-decision-sha256")
+    visa_run = sub.add_parser("visa-run-one", help="run the explicitly authorized single VisA P0 category")
+    for arg in ("registration-root", "dataset-root", "attempt-id"):
+        visa_run.add_argument("--" + arg, required=True)
+    visa_run.add_argument("--category", default="cashew")
+    visa_run.add_argument("--authorization")
+    visa_evaluate = sub.add_parser("visa-evaluate-one", help="evaluate one sealed VisA category after source checks")
+    for arg in ("registration-root", "dataset-root", "attempt-id"):
+        visa_evaluate.add_argument("--" + arg, required=True)
+    visa_evaluate.add_argument("--evaluation-id", default="stage_b_attempt_01")
+    visa_evaluate.add_argument("--category", default="cashew")
+    visa_aggregate = sub.add_parser("visa-aggregate-stage-b", help="aggregate twelve completed VisA P0 Stage B results")
+    visa_aggregate.add_argument("--registration-root", required=True)
+    visa_aggregate.add_argument("--result", action="append", default=[], required=True)
+    visa_aggregate.add_argument("--output-directory", required=True)
     verify = sub.add_parser("verify-attempt", help="verify a sealed attempt receipt for a later Stage B gate")
     verify.add_argument("--status", required=True)
     verify.add_argument("--expected-identity", required=True)
@@ -598,6 +619,35 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = aggregate_foads_stage_b(
                 config_path=args.config, evaluation_summaries=args.evaluation_summary,
                 output_directory=args.output_dir)
+            print(json.dumps(result, sort_keys=True))
+        elif args.command == "visa-register":
+            from .visa_execution import register
+            result = register(dataset_root=args.dataset_root,
+                identity_manifest=args.identity_manifest, output_root=args.output_root,
+                researcher_decision_sha256=args.researcher_decision_sha256)
+            print(json.dumps(result, sort_keys=True))
+        elif args.command == "visa-plan":
+            from .visa_execution import create_source_bound_plan
+            result = create_source_bound_plan(registration_root=args.registration_root,
+                category=args.category,
+                researcher_decision_sha256=args.researcher_decision_sha256)
+            print(json.dumps(result, sort_keys=True))
+        elif args.command == "visa-run-one":
+            from .visa_execution import run_one
+            result = run_one(registration_root=args.registration_root,
+                dataset_root=args.dataset_root, attempt_id=args.attempt_id,
+                category=args.category, authorization_path=args.authorization)
+            print(json.dumps(result, sort_keys=True))
+        elif args.command == "visa-evaluate-one":
+            from .visa_execution import evaluate_one
+            result = evaluate_one(registration_root=args.registration_root,
+                dataset_root=args.dataset_root, attempt_id=args.attempt_id,
+                evaluation_id=args.evaluation_id, category=args.category)
+            print(json.dumps(result, sort_keys=True))
+        elif args.command == "visa-aggregate-stage-b":
+            from .visa_execution import aggregate_stage_b
+            result = aggregate_stage_b(registration_root=args.registration_root,
+                result_paths=args.result, output_directory=args.output_directory)
             print(json.dumps(result, sort_keys=True))
         elif args.command == "verify-attempt":
             identity = read_json(args.expected_identity)

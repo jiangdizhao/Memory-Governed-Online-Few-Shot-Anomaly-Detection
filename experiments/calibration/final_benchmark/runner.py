@@ -62,7 +62,7 @@ class TestEvent:
     event_id_sha256: str
     image_identity_sha256: str
     group_sha256: str
-    camera_id: int
+    camera_id: int | None
     feature_ref: Any = None
     role: str = "TEST"
     encoding_seconds: float | None = None
@@ -82,7 +82,10 @@ class TestEvent:
         if self.role != "TEST":
             raise CampaignProtocolError("only registered TEST observations may enter a stream")
         if (isinstance(self.position, bool) or not isinstance(self.position, numbers.Integral) or
-                isinstance(self.camera_id, bool) or not isinstance(self.camera_id, numbers.Integral)):
+                (self.camera_id is None and self.atomic_unit_kind not in
+                 {"VISA_SINGLE_IMAGE", "VISA_EXACT_DUPLICATE_CLUSTER"}) or
+                (self.camera_id is not None and
+                 (isinstance(self.camera_id, bool) or not isinstance(self.camera_id, numbers.Integral)))):
             raise CampaignProtocolError("event position and camera ID must be integers")
         if self.encoding_seconds is not None and (
                 not math.isfinite(float(self.encoding_seconds)) or float(self.encoding_seconds) < 0):

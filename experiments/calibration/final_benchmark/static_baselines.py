@@ -136,7 +136,7 @@ def build_static36_native(*, category: str, schedule: Any, reference_items: Sequ
         schedule_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
         allow_nan=False).encode("utf-8")).hexdigest()
     if (schedule.get("schedule_sha256") != schedule_digest or
-            schedule.get("dataset_id") != "realiad" or
+            schedule.get("dataset_id") not in {"realiad", "visa_1cls"} or
             schedule.get("category") != category or schedule.get("support_seed") != 0 or
             schedule.get("stream_seed") != 0 or len(reference_items) != 36 or
             len(c32_items) != 32 or len(support_paths) != 4):

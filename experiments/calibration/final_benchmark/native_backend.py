@@ -127,14 +127,64 @@ class NativeInputEncoder:
                          group_sha256=record["source_group_sha256"], camera_id=camera,
                          feature_ref=encoded, encoding_seconds=encoded.encoding_seconds)
 
+    def encode_registered_visa_event(self, *, record: Mapping[str, Any],
+                                     locator: Mapping[str, str], category: str,
+                                     dataset_release_sha256: str) -> Any:
+        """Bind a VisA image-level TEST unit to its registered bytes before encoding."""
+        from . import identity
+        from .runner import TestEvent
+        if (record.get("dataset_id") != "visa_1cls" or record.get("category") != category or
+                record.get("role") != "TEST" or
+                not re.fullmatch(r"[0-9a-f]{64}", str(dataset_release_sha256))):
+            raise NativeBackendError("VisA event does not belong to the registered local release/category")
+        image_key = str(locator.get("official_image_key", ""))
+        image_id = str(record.get("image_identity_sha256", ""))
+        unit_sha = str(record.get("source_group_sha256", ""))
+        kind = str(record.get("atomic_unit_kind", ""))
+        single_unit = identity.visa_image_unit_sha256(dataset_release_sha256, category, image_id)
+        duplicate_unit = hashlib.sha256(("visa-exact-duplicate-cluster-v1\0" +
+            dataset_release_sha256 + "\0" + category + "\0" +
+            str(record.get("image_content_sha256", ""))).encode("utf-8")).hexdigest()
+        expected_unit = (single_unit if kind == "VISA_SINGLE_IMAGE" else
+                         duplicate_unit if kind == "VISA_EXACT_DUPLICATE_CLUSTER" else None)
+        if (identity._image_identity_digest(image_key) != image_id or
+                unit_sha != expected_unit or int(record.get("original_position", -1)) < 0):
+            raise NativeBackendError("VisA event identity differs from its local snapshot registration")
+        path = Path(locator["image_path"]).resolve(strict=True)
+        dataset_root = Path(str(locator["dataset_root"])).resolve(strict=True)
+        try:
+            relative = path.relative_to(dataset_root).as_posix()
+        except ValueError as exc:
+            raise NativeBackendError("VisA image path escapes its registered dataset root") from exc
+        if relative != str(locator.get("relative_id", "")).replace("\\", "/"):
+            raise NativeBackendError("VisA locator differs from its registered relative image identity")
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            for block in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(block)
+        if digest.hexdigest() != record.get("image_content_sha256"):
+            raise NativeBackendError("VisA image bytes differ from their registered content digest")
+        event_id = identity._domain_hash(
+            "Gate0-visa-event-v1", dataset_release_sha256, category, "0", unit_sha,
+            image_id, str(record["original_position"]))
+        if event_id != record.get("event_id_sha256"):
+            raise NativeBackendError("VisA event ID differs from its registered identity and stream position")
+        encoded = self.encode_path(str(path))
+        return TestEvent(position=int(record["position"]), event_id_sha256=event_id,
+            image_identity_sha256=image_id, group_sha256=unit_sha, camera_id=None,
+            feature_ref=encoded, encoding_seconds=encoded.encoding_seconds,
+            atomic_unit_sha256=unit_sha, atomic_unit_kind=kind)
+
     def prepare_commissioning(self, *, role_manifest: Mapping[str, Any],
                               private_locators: Mapping[str, Mapping[str, str]],
-                              condition_id: str) -> dict[str, Any]:
+                              condition_id: str, dataset_root: str | Path | None = None) -> dict[str, Any]:
         """Verify frozen identities before encoding only their 4+64 TRAIN normals."""
         from . import identity
-        if role_manifest.get("dataset_id") != "realiad":
-            raise NativeBackendError("VisA commissioning remains disabled pending its registered group exception")
-        from experiments.risk_safe.preflight import parse_image_name
+        dataset_id = role_manifest.get("dataset_id")
+        if dataset_id not in {"realiad", "visa_1cls"}:
+            raise NativeBackendError("commissioning dataset is not registered")
+        if dataset_id == "realiad":
+            from experiments.risk_safe.preflight import parse_image_name
         rows = role_manifest.get("selected")
         release = str(role_manifest.get("dataset_release_sha256", ""))
         seed = {"P0": 0, "P1": 0, "P2": 1}.get(condition_id)
@@ -152,15 +202,31 @@ class NativeInputEncoder:
         for row in rows:
             image_id = str(row["image_identity_sha256"])
             loc = private_locators[image_id]
-            official_image, official_group = loc["official_image_key"], loc["official_group_key"]
-            if (identity._image_identity_digest(official_image) != image_id or
-                    identity._source_group_digest(official_group) != row["source_group_sha256"]):
-                raise NativeBackendError("private locator does not match its frozen official identity")
+            official_image = loc["official_image_key"]
             path = Path(loc["image_path"])
-            parsed = parse_image_name(path, expected_class=str(role_manifest["category"]))
-            if (parsed.official_sample_key != official_group or
-                    parsed.rel_path != str(loc["relative_id"]).replace("\\", "/")):
-                raise NativeBackendError("A4 candidate identity differs from the official path/group convention")
+            if identity._image_identity_digest(official_image) != image_id:
+                raise NativeBackendError("private locator does not match its frozen official image identity")
+            if dataset_id == "realiad":
+                official_group = loc["official_group_key"]
+                if identity._source_group_digest(official_group) != row["source_group_sha256"]:
+                    raise NativeBackendError("private locator does not match its frozen Source Group identity")
+                parsed = parse_image_name(path, expected_class=str(role_manifest["category"]))
+                if (parsed.official_sample_key != official_group or
+                        parsed.rel_path != str(loc["relative_id"]).replace("\\", "/")):
+                    raise NativeBackendError("A4 candidate identity differs from the official path/group convention")
+            else:
+                if dataset_root is None:
+                    raise NativeBackendError("VisA commissioning requires its registered dataset root")
+                resolved_root = Path(dataset_root).resolve(strict=True)
+                resolved_path = path.resolve(strict=True)
+                try:
+                    relative = resolved_path.relative_to(resolved_root).as_posix()
+                except ValueError as exc:
+                    raise NativeBackendError("VisA commissioning path escapes the registered dataset root") from exc
+                if (relative != str(loc.get("relative_id", "")).replace("\\", "/") or
+                        identity.visa_image_unit_sha256(release, str(role_manifest["category"]), image_id) !=
+                        row["source_group_sha256"]):
+                    raise NativeBackendError("VisA commissioning image unit/path differs from its registration")
             digest = hashlib.sha256()
             with path.open("rb") as stream:
                 for block in iter(lambda: stream.read(1024 * 1024), b""):

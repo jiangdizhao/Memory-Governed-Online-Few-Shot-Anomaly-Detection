@@ -62,6 +62,41 @@ def validate_release_identity(*, identity_manifest: Mapping[str, Any],
         identity_summary = identity.validate_identity_manifest(identity_manifest)
     except Exception as exc:
         raise EntryPointError("identity manifest failed its identity-only schema check") from exc
+    dataset_id = identity_manifest.get("dataset_id")
+    if dataset_id == "visa_1cls":
+        if (release_identity.get("schema") != "final-benchmark.dataset-release-identity.v1" or
+                release_identity.get("status") != "RESEARCHER_APPROVED_LOCAL_SNAPSHOT" or
+                release_identity.get("dataset_id") != "visa_1cls" or
+                identity_summary["dataset_id"] != "visa_1cls" or
+                role_manifest.get("dataset_id") != "visa_1cls" or
+                release_identity.get("provenance_kind") != "RESEARCHER_APPROVED_LOCAL_SNAPSHOT" or
+                identity_manifest.get("official_release_sha256") is not None):
+            raise EntryPointError("VisA requires its researcher-approved, explicitly local 1cls snapshot identity")
+        release_sha = _digest(release_identity.get("dataset_release_sha256"),
+                              "VisA dataset_release_sha256")
+        identity_sha = _digest(release_identity.get("identity_manifest_sha256"),
+                               "VisA identity manifest digest")
+        role_sha = _digest(release_identity.get("role_manifest_sha256"),
+                           "VisA role manifest digest")
+        snapshot_sha = _digest(release_identity.get("local_snapshot_sha256"),
+                               "VisA local snapshot digest")
+        _digest(release_identity.get("source_artifacts_sha256"),
+                "VisA source artifact-set digest")
+        _digest(release_identity.get("researcher_decision_sha256"),
+                "VisA researcher decision digest")
+        if (identity_sha != _sha(identity_manifest) or role_sha != _sha(role_manifest) or
+                snapshot_sha != identity_manifest.get("local_snapshot_sha256") or
+                release_identity.get("source_artifacts_sha256") != identity_manifest.get("source_artifacts_sha256") or
+                role_manifest.get("dataset_release_sha256") != release_sha):
+            raise EntryPointError("VisA local release does not bind these exact census and role manifests")
+        local_identifier = f"visa-1cls-local-snapshot-v1:{snapshot_sha}"
+        if release_identity.get("local_snapshot_identifier") != local_identifier:
+            raise EntryPointError("VisA local release identifier differs from its registered snapshot digest")
+        derived = hashlib.sha256(("Gate0-local-release-v1\0visa_1cls\0" +
+                                  local_identifier).encode("ascii")).hexdigest()
+        if release_sha != derived:
+            raise EntryPointError("VisA local release digest differs from its domain-separated snapshot derivation")
+        return release_sha
     if (release_identity.get("schema") != "final-benchmark.dataset-release-identity.v1" or
             release_identity.get("status") != "GATE0_CERTIFIED" or
             release_identity.get("gate0_freeze_commit") != GATE0_FREEZE_COMMIT or

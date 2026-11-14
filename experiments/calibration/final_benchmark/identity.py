@@ -827,7 +827,8 @@ def build_realiad_identity_manifest(dataset_root: str | Path,
 
 
 def _parse_csv_projected_line(line: bytes | str, header: Sequence[str], *,
-                              train_label_allowed: bool) -> dict[str, str]:
+                              train_label_allowed: bool,
+                              queried_test_label_allowed: bool = False) -> dict[str, str]:
     """Decode allowed CSV fields only; skip TEST outcome and mask bytes."""
     if isinstance(line, str):
         line = line.encode("utf-8")  # Synthetic callers may supply text.
@@ -857,7 +858,8 @@ def _parse_csv_projected_line(line: bytes | str, header: Sequence[str], *,
         if column in allowed:
             return True
         return bool(label_index is not None and column == label_index and
-                    train_label_allowed and split_value == "train")
+                    ((train_label_allowed and split_value == "train") or
+                     (queried_test_label_allowed and split_value == "test")))
 
     def finish_field() -> None:
         nonlocal chars, split_value
@@ -1049,6 +1051,78 @@ def build_visa_1cls_identity_manifest(dataset_root: str | Path, *,
         "test_label_access": "NOT_ACCESSED; TEST label cells were skipped by the identity-only CSV projection",
         "mask_access": "NOT_ACCESSED; mask cells and files were not opened",
         "image_decode_or_model_inference": "NOT_PERFORMED",
+    }
+
+
+def visa_image_unit_sha256(dataset_release_sha256: str, category: str,
+                           image_identity_sha256: str) -> str:
+    """Opaque VisA image-unit identity; it does not assert physical-object identity."""
+    if (not re.fullmatch(r"[0-9a-f]{64}", str(dataset_release_sha256)) or
+            not re.fullmatch(r"[0-9a-f]{64}", str(image_identity_sha256)) or
+            not isinstance(category, str) or not category):
+        raise IdentityAuditError("VisA image unit requires registered release/category/image digests")
+    return _sha256_text("visa-image-unit-v1\0" + dataset_release_sha256 + "\0" +
+                        _nfc_key(category) + "\0" + image_identity_sha256)
+
+
+def prepare_visa_role_manifest(identity_manifest: Mapping[str, Any], *,
+                               dataset_release_sha256: str, category: str,
+                               support_seed: int = 0) -> dict[str, Any]:
+    """Make a deterministic VisA image-level 4+64 draw from identity-only rows.
+
+    Since the official 1cls source has no physical-group field, each image is
+    an explicit protocol unit. The returned unit digest must not be described
+    as a physical specimen/group identity.
+    """
+    if identity_manifest.get("dataset_id") != "visa_1cls":
+        raise IdentityAuditError("VisA role selection requires the registered 1cls identity census")
+    validate_identity_manifest(identity_manifest)
+    release = str(dataset_release_sha256).lower()
+    if (not re.fullmatch(r"[0-9a-f]{64}", release) or
+            isinstance(support_seed, bool) or support_seed not in (0, 1)):
+        raise IdentityAuditError("VisA role release or Support Seed is invalid")
+    known_categories = {str(row.get("category")) for row in identity_manifest.get("categories", ())}
+    if category not in known_categories:
+        raise IdentityAuditError("VisA role category is not in the registered 1cls census")
+    rows = [row for row in identity_manifest["identity_records"]
+            if row.get("category") == category and row.get("split") == "train" and
+            row.get("train_normal_eligible") is True]
+    if len(rows) < 68:
+        raise IdentityAuditError("VisA category has fewer than 68 eligible TRAIN-normal images")
+    ranked = []
+    for row in rows:
+        image_id = str(row["image_identity_sha256"])
+        unit_sha = visa_image_unit_sha256(release, category, image_id)
+        role_rank = _domain_hash("Gate0-role-v1", release, category, str(support_seed), unit_sha)
+        ranked.append((role_rank, image_id, unit_sha, row))
+    ranked.sort(key=lambda item: (item[0], item[1].encode("ascii")))
+    selected = []
+    for index, (role_rank, image_id, unit_sha, row) in enumerate(ranked[:68]):
+        selected.append({
+            "role": "SUPPORT" if index < 4 else "C64",
+            "image_identity_sha256": image_id,
+            "image_content_sha256": row["image_content_sha256"],
+            "source_group_sha256": unit_sha,
+            "role_rank_sha256": role_rank,
+            "image_rank_sha256": _domain_hash(
+                "Gate0-image-v1", release, category, str(support_seed), unit_sha, image_id),
+        })
+    if (len({row["image_identity_sha256"] for row in selected}) != 68 or
+            len({row["source_group_sha256"] for row in selected}) != 68 or
+            len({row["image_content_sha256"] for row in selected}) != 68):
+        raise IdentityAuditError("VisA 4+64 selection contains duplicate image identities or bytes")
+    static_order = sorted((dict(row) for row in selected if row["role"] == "C64"), key=lambda row: (
+        _domain_hash("Gate0-static36-c64-v1", release, category, str(support_seed),
+                     row["source_group_sha256"], row["image_identity_sha256"]),
+        row["source_group_sha256"].encode("ascii"),
+        row["image_identity_sha256"].encode("ascii")))
+    for index, row in enumerate(static_order):
+        row["static36_role"] = "REFERENCE" if index < 32 else "C32"
+    return {
+        "dataset_id": "visa_1cls", "dataset_release_sha256": release,
+        "category": category, "support_seed": int(support_seed),
+        "unit_identity_kind": "VISA_IMAGE_IDENTITY_NOT_PHYSICAL_OBJECT",
+        "selected": selected, "static36_c64_partition": static_order,
     }
 
 
